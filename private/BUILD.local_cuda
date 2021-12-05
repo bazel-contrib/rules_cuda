@@ -88,10 +88,17 @@ cc_library(
     #     "cuda/include/nvblas.h",
     # ],
     includes = [
-        "cuda/include"
+        "cuda/include",
     ],
     deps = [
         ":cublasLt_so",
         ":cublas_so",
+    ],
+)
+
+cc_library(
+    name = "thrust",
+    includes = [
+        "cuda/include",
     ],
 )
