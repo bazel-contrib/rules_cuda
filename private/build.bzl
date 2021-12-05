@@ -9,7 +9,7 @@ load("@local_cuda//:defs.bzl", "if_local_cuda")
 def _cuda_targets_flag_impl(ctx):
     for cuda_target in ctx.build_setting_value:
         if cuda_target not in cuda_targets:
-            fail("%s is not a supported %s value." % (cuda_target, ctx.label))
+            fail("%s is not a supported %s value, supported values are: [%s]" % (cuda_target, ctx.label, ", ".join(cuda_targets)))
     return CudaTargetsInfo(cuda_targets = ctx.build_setting_value)
 
 cuda_targets_flag = rule(
