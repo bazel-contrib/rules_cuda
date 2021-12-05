@@ -1,3 +1,13 @@
+# Notes
+
+This repo is a subtree created from [tensorflow/runtime](https://github.com/tensorflow/runtime.git) via
+
+```sh
+git subtree split --prefix third_party/rules_cuda/ -b main
+```
+
+It serve as personal flavor of `cuda_library` **for personal purpose only**.
+
 # [CUDA](http://nvidia.com/cuda) rules for [Bazel](http://bazel.build)
 
 The `@rules_cuda` repository primarily provides a `cuda_library()` macro which
@@ -21,11 +31,13 @@ Add the following snippet to your `WORKSPACE` file:
 
 ```python
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+RULES_CUDA_SHA256 = "<sha256>"
+RULES_CUDA_COMMIT = "<commit>"
 http_archive(
     name = "rules_cuda",
-    sha256 = "f80438bee9906e9ecb1a8a4ae2365374ac1e8a283897281a2db2fb7fcf746333",
-    strip_prefix = "runtime-b1c7cce21ba4661c17ac72421c6a0e2015e7bef3/third_party/rules_cuda",
-    urls = ["https://github.com/tensorflow/runtime/archive/b1c7cce21ba4661c17ac72421c6a0e2015e7bef3.tar.gz"],
+    sha256 = RULES_CUDA_SHA256,
+    strip_prefix = "rules_cuda-{}".format(RULES_CUDA_COMMIT),
+    urls = ["https://github.com/cloudhan/rules_cuda/archive/{}.tar.gz".format(RULES_CUDA_COMMIT)],
 )
 load("//cuda:dependencies.bzl", "rules_cuda_dependencies")
 rules_cuda_dependencies()
