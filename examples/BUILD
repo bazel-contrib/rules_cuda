@@ -14,3 +14,10 @@ cc_binary(
     srcs = ["main_kernel.cc"],
     deps = [":kernel"],
 )
+
+# Run with 'bazel run --cuda //examples:main_cublas'
+cc_binary(
+    name = "main_cublas",
+    srcs = ["main_cublas.cc"],
+    deps = ["@local_cuda//:cublas"],
+)

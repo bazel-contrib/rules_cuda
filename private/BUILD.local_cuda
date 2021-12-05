@@ -65,3 +65,33 @@ cc_library(
     ],
     visibility = ["@rules_cuda//cuda:__pkg__"],
 )
+
+cc_import(
+    name = "cublas_so",
+    shared_library = "cuda/lib64/libcublas.so",
+)
+
+cc_import(
+    name = "cublasLt_so",
+    shared_library = "cuda/lib64/libcublasLt.so",
+)
+
+cc_library(
+    name = "cublas",
+    # hdrs = [
+    #     # confirmed by https://gitlab.com/nvidia/headers/cuda-individual/cublas
+    #     "cuda/include/cublas.h",
+    #     "cuda/include/cublas_api.h",
+    #     "cuda/include/cublas_v2.h",
+    #     "cuda/include/cublasLt.h",
+    #     "cuda/include/cublasXt.h",
+    #     "cuda/include/nvblas.h",
+    # ],
+    includes = [
+        "cuda/include"
+    ],
+    deps = [
+        ":cublasLt_so",
+        ":cublas_so",
+    ],
+)
