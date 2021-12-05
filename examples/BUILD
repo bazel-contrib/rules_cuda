@@ -7,9 +7,10 @@ cuda_library(
     target_compatible_with = requires_cuda_enabled(),
 )
 
-# Run with 'bazel run --cuda //examples:hello_cuda'
+# Run with 'bazel run --cuda //examples:main_kernel'
+# NOTE: --cuda is added via flag_alias in .bazelrc
 cc_binary(
-    name = "hello_cuda",
-    srcs = ["main.cc"],
+    name = "main_kernel",
+    srcs = ["main_kernel.cc"],
     deps = [":kernel"],
 )
