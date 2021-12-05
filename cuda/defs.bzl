@@ -17,6 +17,7 @@ cuda_targets = [
     "sm_72",
     "sm_75",
     "sm_80",
+    "sm_86",
 ]
 
 CudaTargetsInfo = provider(
