@@ -1,0 +1,13 @@
+load("//cuda:defs.bzl", "cuda_objects")
+
+cuda_objects(
+    name = "a",
+    srcs = ["a.cu"],
+    deps = [":b"]
+)
+
+cuda_objects(
+    name = "b",
+    srcs = ["b.cu"],
+    hdrs = ["b.cuh"],
+)

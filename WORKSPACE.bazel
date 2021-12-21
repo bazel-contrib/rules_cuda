@@ -1,0 +1,9 @@
+workspace(name = "rules_cuda")
+
+load("//cuda/private:repositories.bzl", "cuda_rules_dependencies")
+
+cuda_rules_dependencies()
+
+load("//cuda/private:cuda_toolkit.bzl", "detect_cuda_toolkit")
+
+detect_cuda_toolkit()

@@ -1,0 +1,25 @@
+load(":toolchain.bzl", "cuda_toolchain")
+
+cuda_toolchain(
+    name = "nvcc_ubuntu",
+    compiler_driver = "nvcc",
+    compiler_executable = "/usr/local/cuda-11.5/bin/nvcc",
+    include_directories = ["/usr/local/cuda-11.5/include"],
+    lib_directories = ["/usr/local/cuda-11.5/lib64"],
+    cuda_archs = ["compute_86:compute_86,sm_86"],
+)
+
+toolchain(
+    name = "nvcc-ubuntu-toolchain",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    toolchain = ":nvcc_ubuntu",
+    toolchain_type = "//cuda:toolchain_type",
+    visibility = ["//visibility:public"],
+)
