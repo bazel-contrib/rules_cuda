@@ -1,8 +1,8 @@
 workspace(name = "rules_cuda")
 
-load("//cuda/private:repositories.bzl", "cuda_rules_dependencies")
+load("//cuda/private:repositories.bzl", "rules_cuda_deps")
 
-cuda_rules_dependencies()
+rules_cuda_deps()
 
 load("//cuda/private:cuda_toolkit.bzl", "detect_cuda_toolkit")
 

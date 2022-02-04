@@ -43,29 +43,32 @@ def _check_src_extension(file, allowed_src_files):
 
 def _check_srcs_extensions(ctx, allowed_src_files, rule_name):
     for src in ctx.attr.srcs:
-        if DefaultInfo in src:
-            files = src[DefaultInfo].files.to_list()
-            if len(files) == 1 and files[0].is_source:
-                if not _check_src_extension(files[0], allowed_src_files) and not files[0].is_directory:
-                    fail("in srcs attribute of {} rule {}: source file '{}' is misplaced here".format(rule_name, ctx.label, str(src.label)))
-            else:
-                at_least_one_good = False
-                for file in files:
-                    if _check_src_extension(file, allowed_src_files) or file.is_directory:
-                        at_least_one_good = True
-                        break
-                if not at_least_one_good:
-                    fail("'{}' does not produce any {} srcs files".format(str(src.label), rule_name), attr = "srcs")
+        files = src[DefaultInfo].files.to_list()
+        if len(files) == 1 and files[0].is_source:
+            if not _check_src_extension(files[0], allowed_src_files) and not files[0].is_directory:
+                fail("in srcs attribute of {} rule {}: source file '{}' is misplaced here".format(rule_name, ctx.label, str(src.label)))
+        else:
+            at_least_one_good = False
+            for file in files:
+                if _check_src_extension(file, allowed_src_files) or file.is_directory:
+                    at_least_one_good = True
+                    break
+            if not at_least_one_good:
+                fail("'{}' does not produce any {} srcs files".format(str(src.label), rule_name), attr = "srcs")
 
-def _get_basename_without_ext(basename, allow_exts):
-    for ext in sorted(allow_exts):
+def _get_basename_without_ext(basename, allow_exts, fail_if_not_match=True):
+    for ext in sorted(allow_exts, key=len, reverse=True):
         if basename.endswith(ext):
             return basename[:-len(ext)]
-    fail("'{}' does not have valide extension, allowed extension(s): {}".format(basename, allow_exts))
+    if fail_if_not_match:
+        fail("'{}' does not have valide extension, allowed extension(s): {}".format(basename, allow_exts))
+    else:
+        return None
 
 cuda_helper = struct(
     get_arch_number = _get_arch_number,
     get_arch_specs = _get_arch_specs,
+    check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,
     get_basename_without_ext = _get_basename_without_ext,
 )

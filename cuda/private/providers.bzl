@@ -64,7 +64,7 @@ CudaObjectsInfo = provider(
         "objects": "A depset of objects.",  # but not rdc and pic
         "rdc_objects": "A depset of relocatable device code objects.",  # but not pic
         "pic_objects": "A depset of position indepentent code objects.",  # but not rdc
-        "pic_rdc_objects": "A depset of position indepentent code and relocatable device code objects.",
+        "rdc_pic_objects": "A depset of relocatable device code and position indepentent code objects.",
     }
 )
 
