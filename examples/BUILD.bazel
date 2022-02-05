@@ -20,15 +20,14 @@ cuda_objects(
 #     target_compatible_with = requires_cuda_enabled(),
 # )
 
-# # Run with 'bazel run --cuda //examples:main_kernel'
-# # NOTE: --cuda is added via flag_alias in .bazelrc
+# # Run with 'bazel run //examples:main_kernel'
 # cc_binary(
 #     name = "main_kernel",
 #     srcs = ["main_kernel.cc"],
 #     deps = [":kernel"],
 # )
 
-# # Run with 'bazel run --cuda //examples:main_cublas'
+# # Run with 'bazel run //examples:main_cublas'
 # cc_binary(
 #     name = "main_cublas",
 #     srcs = ["main_cublas.cc"],
@@ -44,7 +43,7 @@ cuda_objects(
 #     target_compatible_with = requires_cuda_enabled(),
 # )
 
-# # Run with 'bazel run --cuda //examples:main_thrust'
+# # Run with 'bazel run //examples:main_thrust'
 # cc_binary(
 #     name = "main_thrust",
 #     deps = [":main_thrust_cu"],
