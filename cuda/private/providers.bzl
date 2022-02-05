@@ -16,6 +16,14 @@ cuda_archs = [
     "86",
 ]
 
+ArchSpecInfo = provider(
+    "",
+    fields = {
+        "stage1_arch": "A virtual architecture, str",
+        "stage2_archs": "A list of virtual or gpu architecture, list of str",
+    },
+)
+
 CudaArchsInfo = provider(
     """Provides a list of CUDA archs to compile for.
 
@@ -54,7 +62,7 @@ CudaArchsInfo = provider(
     https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-compilation
     """,
     fields = {
-        "archs": "A list of ArchSpecInfo",
+        "arch_specs": "A list of ArchSpecInfo",
     },
 )
 

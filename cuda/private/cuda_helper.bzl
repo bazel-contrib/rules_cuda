@@ -1,12 +1,6 @@
 """private helpers"""
 
-ArchSpecInfo = provider(
-    "",
-    fields = {
-        "stage1_arch": "A virtual architecture",
-        "stage2_archs": "A list of virtual or gpu architecture",
-    },
-)
+load("//cuda/private:providers.bzl", "ArchSpecInfo", "cuda_archs")
 
 CUDA_SRC_FILES = [".cu", ".cu.cc"]
 DLINK_OBJ_FILES = [""]
@@ -16,23 +10,41 @@ def _get_arch_number(arch_str):
     arch_num = None
     if arch_str.startswith("compute_"):
         arch_num = arch_str[len("compute_"):]
-    if arch_str.startswith("sm_"):
+    elif arch_str.startswith("compute_"):
+        arch_num = arch_str[len("compute_"):]
+    elif arch_str.startswith("sm_"):
         arch_num = arch_str[len("sm_"):]
+    if arch_num not in cuda_archs:
+        fail("{} is not a supported cuda arch".format(arch_str))
     return int(arch_num)
 
-def _get_arch_specs(specs_str):
-    virtual_codes_pairs = [spec_str.strip().split(":") for spec_str in specs_str.strip().split(";")]
-    archs = []
-    for virtual_codes in virtual_codes_pairs:
-        virt = None
-        codes = None
-        if len(virtual_codes) == 2:
-            virt, codes = virtual_codes
-        else:
-            codes = virtual_codes
-            virt = "compute_" + str(min([_get_arch_number(c) for c in codes]))
-        archs.append(ArchSpecInfo(stage1_arch = virt, stage2_archs = virt))
+def _get_arch_spec(spec_str):
+    '''Convert string into an ArchSpecInfo.
 
+    aka, parse "compute_80:sm_80,sm_86"'''
+    virt = None
+    codes = None
+    virtual_codes = spec_str.split(":")
+    if len(virtual_codes) == 2:
+        virt, codes = virtual_codes
+        codes = codes.split(",")
+        check_invalid_arch = _get_arch_number(virt)
+        check_invalid_arch = [_get_arch_number(code) for code in codes]
+    else:
+        (codes,) = virtual_codes
+        codes = codes.split(",")
+        virt = "compute_" + str(min([_get_arch_number(c) for c in codes]))
+        check_invalid_arch = _get_arch_number(virt)
+    arch_spec = ArchSpecInfo(stage1_arch = virt, stage2_archs = codes)
+    return arch_spec
+
+def _get_arch_specs(specs_str):
+    '''Convert string into a list of ArchSpecInfo.
+
+    aka, parse "compute_70:sm_70;compute_80:sm_80,sm_86"'''
+    archs = []
+    for sepc_str in specs_str.split(";"):
+        archs.append(_get_arch_spec(sepc_str))
     return archs
 
 def _check_src_extension(file, allowed_src_files):
@@ -56,8 +68,8 @@ def _check_srcs_extensions(ctx, allowed_src_files, rule_name):
             if not at_least_one_good:
                 fail("'{}' does not produce any {} srcs files".format(str(src.label), rule_name), attr = "srcs")
 
-def _get_basename_without_ext(basename, allow_exts, fail_if_not_match=True):
-    for ext in sorted(allow_exts, key=len, reverse=True):
+def _get_basename_without_ext(basename, allow_exts, fail_if_not_match = True):
+    for ext in sorted(allow_exts, key = len, reverse = True):
         if basename.endswith(ext):
             return basename[:-len(ext)]
     if fail_if_not_match:
@@ -67,6 +79,7 @@ def _get_basename_without_ext(basename, allow_exts, fail_if_not_match=True):
 
 cuda_helper = struct(
     get_arch_number = _get_arch_number,
+    get_arch_spec = _get_arch_spec,
     get_arch_specs = _get_arch_specs,
     check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,

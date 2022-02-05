@@ -3,24 +3,24 @@ load(
     "string_flag",
     "string_list_flag",
 )
+load("//cuda/private:rules/flags.bzl", "cuda_archs_flag")
 
 package(default_visibility = ["//visibility:public"])
 
 toolchain_type(name = "toolchain_type")
 
 #TODO:
-# Command line flag to specify the list of CUDA compute architectures to
-# compile for.
+# Command line flag to specify the list of CUDA architectures to compile for.
 #
 # Provides CudaArchsInfo of the list of archs to build.
 #
 # Example usage: --@rules_cuda//cuda:archs=sm_70,sm_75;sm_80,sm_86
 #
 # See CudaArchsInfo for detailed grammar
-# cuda_archs_flag(
-#     name = "archs",
-#     build_setting_default = "compute_80:sm_80,sm_86",
-# )
+cuda_archs_flag(
+    name = "archs",
+    build_setting_default = "compute_80:sm_80,sm_86",
+)
 
 #TODO:
 # Command line flag to select compiler for cuda_library() code.

@@ -1,5 +1,4 @@
 def _cuda_toolchain_impl(ctx):
-    print(ctx.label.name)
     return [
      platform_common.ToolchainInfo(
         name = ctx.label.name,

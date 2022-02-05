@@ -96,6 +96,7 @@ cuda_library = rule(
         "hdrs": attr.label_list(allow_files = [".cuh", ".h", ".hpp", "hh"]),
         "deps": attr.label_list(providers = [[CcInfo], [CudaObjectsInfo]]),
         "rdc": attr.bool(default = False, doc = "whether to perform relocateable device code linking, otherwise, normal device link."),
+        "_default_cuda_archs": attr.label(default = Label("@rules_cuda//cuda:archs")),
         "_builtin_deps": attr.label_list(default = ["@rules_cuda//cuda:runtime"]),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
