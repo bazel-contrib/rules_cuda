@@ -68,6 +68,12 @@ cc_library(
     # visibility = ["@rules_cuda//cuda:__pkg__"],
 )
 
+cc_library(
+    name = "no_cuda_runtime",
+    # FIXME:
+    # visibility = ["@rules_cuda//cuda:__pkg__"],
+)
+
 cc_import(
     name = "cublas_so",
     shared_library = "cuda/lib64/libcublas.so",

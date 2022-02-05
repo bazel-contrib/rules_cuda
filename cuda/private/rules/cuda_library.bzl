@@ -60,6 +60,8 @@ def _cuda_library_impl(ctx):
     lib = create_library(ctx, cuda_toolchain, objects, attr.name, pic = False)
     pic_lib = create_library(ctx, cuda_toolchain, pic_objects, attr.name, pic = True)
 
+    builtin_linker_inputs = [dep[CcInfo].linking_context.linker_inputs for dep in ctx.attr._builtin_deps if CcInfo in dep]
+
     lib_to_link = cc_common.create_library_to_link(
         actions = ctx.actions,
         cc_toolchain = cc_toolchain,
@@ -71,7 +73,7 @@ def _cuda_library_impl(ctx):
     linking_ctx = cc_common.create_linking_context(
         linker_inputs = depset([
             cc_common.create_linker_input(owner = ctx.label, libraries = depset([lib_to_link])),
-        ]),
+        ], transitive = builtin_linker_inputs),
     )
 
     return [
@@ -94,6 +96,7 @@ cuda_library = rule(
         "hdrs": attr.label_list(allow_files = [".cuh", ".h", ".hpp", "hh"]),
         "deps": attr.label_list(providers = [[CcInfo], [CudaObjectsInfo]]),
         "rdc": attr.bool(default = False, doc = "whether to perform relocateable device code linking, otherwise, normal device link."),
+        "_builtin_deps": attr.label_list(default = ["@rules_cuda//cuda:runtime"]),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
     fragments = ["cpp"],

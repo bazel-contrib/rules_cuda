@@ -25,6 +25,5 @@ cc_binary(
     name = "main",
     deps = [
         ":librdc",
-        "@local_cuda//:cuda_runtime", # FIXME:
     ],
 )

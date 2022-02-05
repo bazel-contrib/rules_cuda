@@ -1,4 +1,52 @@
-toolchain_type(
-    name = "toolchain_type",
-    visibility = ["//visibility:public"],
+load(
+    "@bazel_skylib//rules:common_settings.bzl",
+    "string_flag",
+    "string_list_flag",
+)
+
+package(default_visibility = ["//visibility:public"])
+
+toolchain_type(name = "toolchain_type")
+
+#TODO:
+# Command line flag to specify the list of CUDA compute architectures to
+# compile for.
+#
+# Provides CudaArchsInfo of the list of archs to build.
+#
+# Example usage: --@rules_cuda//cuda:archs=sm_70,sm_75;sm_80,sm_86
+#
+# See CudaArchsInfo for detailed grammar
+# cuda_archs_flag(
+#     name = "archs",
+#     build_setting_default = "compute_80:sm_80,sm_86",
+# )
+
+#TODO:
+# Command line flag to select compiler for cuda_library() code.
+string_flag(
+    name = "compiler",
+    build_setting_default = "nvcc",
+    values = [
+        "nvcc",
+        "clang",
+    ],
+)
+
+#TODO:
+# Command line flag for copts to add to cuda_library() compile command.
+string_list_flag(
+    name = "copts",
+    build_setting_default = [],
+)
+
+# Command line flag to specify the CUDA runtime. Use this target as CUDA
+# runtime dependency.
+#
+# This target is implicitly added as a dependency to cuda_library() targets.
+#
+# Example usage: --@rules_cuda//cuda:runtime=@local_cuda//:cuda_runtime_static
+label_flag(
+    name = "runtime",
+    build_setting_default = "@local_cuda//:cuda_runtime",
 )
