@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:toolchain.bzl", "find_cuda_toolchain")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
-load("//cuda/private:providers.bzl", "CudaObjectsInfo")
+load("//cuda/private:providers.bzl", "CudaObjectsInfo", "CudaArchsInfo")
 load("//cuda/private:actions/nvcc_compile.bzl", "compile")
 load("//cuda/private:actions/nvcc_dlink.bzl", "device_link")
 load("//cuda/private:actions/nvcc_lib.bzl", "create_library")
@@ -19,6 +19,8 @@ def _cuda_library_impl(ctx):
 
     cc_toolchain = find_cpp_toolchain(ctx)
     cuda_toolchain = find_cuda_toolchain(ctx)
+
+    copts = cuda_helper.get_nvcc_arch_flags(ctx.attr._default_cuda_archs[CudaArchsInfo].arch_specs)
 
     includes = depset()
     system_includes = depset()
@@ -41,8 +43,8 @@ def _cuda_library_impl(ctx):
             basename = cuda_helper.get_basename_without_ext(translation_unit.basename, allow_srcs)
             if not basename:
                 continue
-            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, pic = False, rdc = rdc))
-            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, pic = True, rdc = rdc))
+            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers,  translation_unit, basename, copts, pic = False, rdc = rdc))
+            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = True, rdc = rdc))
 
     objects = depset(objects)
     pic_objects = depset(pic_objects)
@@ -52,8 +54,8 @@ def _cuda_library_impl(ctx):
         transitive_pic_objects = depset(transitive = [dep[CudaObjectsInfo].rdc_pic_objects for dep in attr.deps if CudaObjectsInfo in dep])
         objects = depset(transitive = [objects, transitive_objects])
         pic_objects = depset(transitive = [pic_objects, transitive_pic_objects])
-        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, attr.name, pic = False, rdc = rdc)])
-        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, attr.name, pic = True, rdc = rdc)])
+        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, attr.name, copts, pic = False, rdc = rdc)])
+        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, attr.name, copts, pic = True, rdc = rdc)])
         objects = depset(transitive = [objects, dlink_object])
         pic_objects = depset(transitive = [pic_objects, dlink_pic_object])
 
@@ -96,9 +98,9 @@ cuda_library = rule(
         "hdrs": attr.label_list(allow_files = [".cuh", ".h", ".hpp", "hh"]),
         "deps": attr.label_list(providers = [[CcInfo], [CudaObjectsInfo]]),
         "rdc": attr.bool(default = False, doc = "whether to perform relocateable device code linking, otherwise, normal device link."),
-        "_default_cuda_archs": attr.label(default = Label("@rules_cuda//cuda:archs")),
         "_builtin_deps": attr.label_list(default = ["@rules_cuda//cuda:runtime"]),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
+        "_default_cuda_archs": attr.label(default = "@rules_cuda//cuda:archs"),
     },
     fragments = ["cpp"],
     toolchains = ["//cuda:toolchain_type"],

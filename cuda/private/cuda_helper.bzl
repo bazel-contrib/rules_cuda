@@ -73,9 +73,21 @@ def _get_basename_without_ext(basename, allow_exts, fail_if_not_match = True):
         if basename.endswith(ext):
             return basename[:-len(ext)]
     if fail_if_not_match:
-        fail("'{}' does not have valide extension, allowed extension(s): {}".format(basename, allow_exts))
+        fail("'{}' does not have valid extension, allowed extension(s): {}".format(basename, allow_exts))
     else:
         return None
+
+def _get_nvcc_arch_flags(arch_specs):
+    tpl = "arch={},code={}"
+    ret = []
+    for arch_spec in arch_specs:
+        for stage2_arch in arch_spec.stage2_archs:
+            ret.append("-gencode")
+            ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
+    return ret
+
+def _get_clang_arch_flags(arch_specs):
+    fail("not implemented")
 
 cuda_helper = struct(
     get_arch_number = _get_arch_number,
@@ -84,4 +96,6 @@ cuda_helper = struct(
     check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,
     get_basename_without_ext = _get_basename_without_ext,
+    get_nvcc_arch_flags = _get_nvcc_arch_flags,
+    get_clang_arch_flags = _get_clang_arch_flags,
 )

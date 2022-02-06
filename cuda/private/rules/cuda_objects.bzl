@@ -1,6 +1,6 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
-load("//cuda/private:providers.bzl", "CudaObjectsInfo")
+load("//cuda/private:providers.bzl", "CudaObjectsInfo", "CudaArchsInfo")
 load("//cuda/private:toolchain.bzl", "find_cuda_toolchain")
 load("//cuda/private:actions/nvcc_compile.bzl", "compile")
 
@@ -18,6 +18,8 @@ def _cuda_objects_impl(ctx):
     cc_toolchain = find_cpp_toolchain(ctx)
     cuda_toolchain = find_cuda_toolchain(ctx)
 
+    copts = cuda_helper.get_nvcc_arch_flags(ctx.attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+
     includes = depset()
     system_includes = depset()
     quote_includes = depset()
@@ -33,10 +35,10 @@ def _cuda_objects_impl(ctx):
             basename = cuda_helper.get_basename_without_ext(translation_unit.basename, allow_srcs, fail_if_not_match=False)
             if not basename:
                 continue
-            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, pic = False, rdc = False))
-            rdc_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, pic = False, rdc = True))
-            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, pic = True, rdc = False))
-            rdc_pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, pic = True, rdc = True))
+            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = False, rdc = False))
+            rdc_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = False, rdc = True))
+            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = True, rdc = False))
+            rdc_pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = True, rdc = True))
 
     objects = depset(objects)
     pic_objects = depset(pic_objects)
@@ -68,6 +70,7 @@ cuda_objects = rule(
         "hdrs": attr.label_list(allow_files = [".cuh", ".h", ".hpp", "hh"]),
         "deps": attr.label_list(providers = [[CcInfo], [CudaObjectsInfo]]),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
+        "_default_cuda_archs": attr.label(default = "@rules_cuda//cuda:archs"),
     },
     fragments = ["cpp"],
     toolchains = ["//cuda:toolchain_type"],

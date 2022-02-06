@@ -1,10 +1,18 @@
 ""
 
-def device_link(ctx, cuda_toolchain, cc_toolchain, objects, output_basename, pic = False, rdc = False, dlto = False):
+def device_link(
+        ctx,
+        cuda_toolchain,
+        cc_toolchain,
+        objects,
+        output_basename,
+        link_flags = [],
+        pic = False,
+        rdc = False,
+        dlto = False):
     """perform device link, return a dlink-ed object file"""
 
     actions = ctx.actions
-    # host_compiler = cc_toolchain.compiler_executable
     cuda_compiler = cuda_toolchain.compiler_executable
 
     obj_ext = ".o"
@@ -13,7 +21,7 @@ def device_link(ctx, cuda_toolchain, cc_toolchain, objects, output_basename, pic
 
     obj = actions.declare_file(output_basename + dlink_suffix + pic_ext + obj_ext)
     args = actions.args()
-    # args.add("-ccbin", host_compiler)
+    args.add_all(link_flags)
     args.add("-dlink")
     args.add_all(objects)
     args.add("-o", obj.path)

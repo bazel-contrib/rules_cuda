@@ -1,4 +1,16 @@
-def compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, output_basename, pic = False, rdc = False):
+def compile(
+        ctx,
+        cuda_toolchain,
+        cc_toolchain,
+        includes,
+        system_includes,
+        quote_includes,
+        headers,
+        translation_unit,
+        output_basename,
+        compile_flags = [],
+        pic = False,
+        rdc = False):
     ""
     actions = ctx.actions
     host_compiler = cc_toolchain.compiler_executable
@@ -21,14 +33,15 @@ def compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_
     args = actions.args()
     args.add("-ccbin", host_compiler)
     host_compiler_options = "-xc++"
-    if pic: # FIXME: not MSVC
+    if pic:  # FIXME: not MSVC
         host_compiler_options += " -fPIC"
     args.add("-Xcompiler", host_compiler_options)
     args.add("-x", "cu")
+    args.add_all(compile_flags)
     args.add("-rdc", "true" if rdc else "false")
-    args.add_all(includes, before_each="-I", uniquify=True)
-    args.add_all(system_includes, before_each="-isystem", uniquify=True)
-    args.add_all(quote_includes, before_each="-iquote", uniquify=True)
+    args.add_all(includes, before_each = "-I", uniquify = True)
+    args.add_all(system_includes, before_each = "-isystem", uniquify = True)
+    args.add_all(quote_includes, before_each = "-iquote", uniquify = True)
     args.add("-c", translation_unit.path)
     args.add("-o", obj_file.path)
 
