@@ -37,7 +37,7 @@ CudaArchsInfo = provider(
         GPU_ARCHS    ::= GPU_ARCH [ ',' GPU_ARCHS ]
         GPU_ARCH     ::= ( 'sm_' | 'lto_' ) ARCH_NUMBER
                        | VIRTUAL_ARCH
-        VIRTUAL_ARCH ::= 'compute_' ARCH_NUMBER
+        VIRTUAL_ARCH ::= ( 'compute_' | 'lto_' ) ARCH_NUMBER
         ARCH_NUMBER  ::= (a string in predefined cuda_archs list)
 
     E.g.:

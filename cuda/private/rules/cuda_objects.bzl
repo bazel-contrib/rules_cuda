@@ -18,7 +18,7 @@ def _cuda_objects_impl(ctx):
     cc_toolchain = find_cpp_toolchain(ctx)
     cuda_toolchain = find_cuda_toolchain(ctx)
 
-    copts = cuda_helper.get_nvcc_arch_flags(ctx.attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+    compile_arch_flags = cuda_helper.get_nvcc_compile_arch_flags(ctx.attr._default_cuda_archs[CudaArchsInfo].arch_specs)
 
     includes = depset()
     system_includes = depset()
@@ -35,10 +35,10 @@ def _cuda_objects_impl(ctx):
             basename = cuda_helper.get_basename_without_ext(translation_unit.basename, allow_srcs, fail_if_not_match=False)
             if not basename:
                 continue
-            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = False, rdc = False))
-            rdc_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = False, rdc = True))
-            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = True, rdc = False))
-            rdc_pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = True, rdc = True))
+            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, compile_arch_flags, pic = False, rdc = False))
+            rdc_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, compile_arch_flags, pic = False, rdc = True))
+            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, compile_arch_flags, pic = True, rdc = False))
+            rdc_pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, compile_arch_flags, pic = True, rdc = True))
 
     objects = depset(objects)
     pic_objects = depset(pic_objects)

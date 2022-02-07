@@ -20,7 +20,7 @@ def _cuda_library_impl(ctx):
     cc_toolchain = find_cpp_toolchain(ctx)
     cuda_toolchain = find_cuda_toolchain(ctx)
 
-    copts = cuda_helper.get_nvcc_arch_flags(ctx.attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+    compile_arch_flags = cuda_helper.get_nvcc_compile_arch_flags(ctx.attr._default_cuda_archs[CudaArchsInfo].arch_specs)
 
     includes = depset()
     system_includes = depset()
@@ -43,19 +43,21 @@ def _cuda_library_impl(ctx):
             basename = cuda_helper.get_basename_without_ext(translation_unit.basename, allow_srcs)
             if not basename:
                 continue
-            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers,  translation_unit, basename, copts, pic = False, rdc = rdc))
-            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, copts, pic = True, rdc = rdc))
+            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers,  translation_unit, basename, compile_arch_flags, pic = False, rdc = rdc))
+            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, includes, system_includes, quote_includes, headers, translation_unit, basename, compile_arch_flags, pic = True, rdc = rdc))
 
     objects = depset(objects)
     pic_objects = depset(pic_objects)
+
+    dlink_arch_flags = cuda_helper.get_nvcc_dlink_arch_flags(ctx.attr._default_cuda_archs[CudaArchsInfo].arch_specs)
 
     if attr.rdc:
         transitive_objects = depset(transitive = [dep[CudaObjectsInfo].rdc_objects for dep in attr.deps if CudaObjectsInfo in dep])
         transitive_pic_objects = depset(transitive = [dep[CudaObjectsInfo].rdc_pic_objects for dep in attr.deps if CudaObjectsInfo in dep])
         objects = depset(transitive = [objects, transitive_objects])
         pic_objects = depset(transitive = [pic_objects, transitive_pic_objects])
-        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, attr.name, copts, pic = False, rdc = rdc)])
-        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, attr.name, copts, pic = True, rdc = rdc)])
+        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, attr.name, dlink_arch_flags, pic = False, rdc = rdc)])
+        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, attr.name, dlink_arch_flags, pic = True, rdc = rdc)])
         objects = depset(transitive = [objects, dlink_object])
         pic_objects = depset(transitive = [pic_objects, dlink_pic_object])
 

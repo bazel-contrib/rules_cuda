@@ -10,8 +10,8 @@ def _get_arch_number(arch_str):
     arch_num = None
     if arch_str.startswith("compute_"):
         arch_num = arch_str[len("compute_"):]
-    elif arch_str.startswith("compute_"):
-        arch_num = arch_str[len("compute_"):]
+    elif arch_str.startswith("lto_"):
+        arch_num = arch_str[len("lto_"):]
     elif arch_str.startswith("sm_"):
         arch_num = arch_str[len("sm_"):]
     if arch_num not in cuda_archs:
@@ -77,13 +77,29 @@ def _get_basename_without_ext(basename, allow_exts, fail_if_not_match = True):
     else:
         return None
 
-def _get_nvcc_arch_flags(arch_specs):
+def _get_nvcc_compile_arch_flags(arch_specs):
     tpl = "arch={},code={}"
     ret = []
     for arch_spec in arch_specs:
         for stage2_arch in arch_spec.stage2_archs:
             ret.append("-gencode")
             ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
+    return ret
+
+def _get_nvcc_dlink_arch_flags(arch_specs):
+    tpl = "arch={},code={}"
+    ret = []
+    lto = False
+    for arch_spec in arch_specs:
+        for stage2_arch in arch_spec.stage2_archs:
+            # https://forums.developer.nvidia.com/t/using-dlink-time-opt-together-with-gencode-in-cmake/165224/4
+            if stage2_arch.startswith("lto_"):
+                lto = True
+                stage2_arch = stage2_arch.replace("lto_", "sm_", 1)
+            ret.append("-gencode")
+            ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
+    if lto:
+        ret.append("-dlto")
     return ret
 
 def _get_clang_arch_flags(arch_specs):
@@ -96,6 +112,7 @@ cuda_helper = struct(
     check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,
     get_basename_without_ext = _get_basename_without_ext,
-    get_nvcc_arch_flags = _get_nvcc_arch_flags,
+    get_nvcc_compile_arch_flags = _get_nvcc_compile_arch_flags,
+    get_nvcc_dlink_arch_flags = _get_nvcc_dlink_arch_flags,
     get_clang_arch_flags = _get_clang_arch_flags,
 )
