@@ -1,0 +1,18 @@
+load("//cuda:defs.bzl", "cuda_library")
+
+cuda_library(
+    name = "kernel",
+    srcs = [
+        "kernel.cu",
+        "kernel.h",  # FIXME: support public hdrs
+    ],
+)
+
+cc_binary(
+    name = "main",
+    srcs = [
+        "main.cpp",
+        "kernel.h",  # FIXME: use public hdrs from cuda_library
+    ],
+    deps = [":kernel"],
+)
