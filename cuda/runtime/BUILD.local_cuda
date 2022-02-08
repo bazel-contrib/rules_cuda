@@ -37,7 +37,7 @@ cc_library(
 )
 
 # Note: do not use this target directly, use the configurable label_flag
-# @rules_cuda//cuda:cuda_runtime instead.
+# @rules_cuda//cuda:runtime instead.
 cc_library(
     name = "cuda_runtime",
     srcs = glob(["cuda/lib64/libcudart.so.*"]),
@@ -53,7 +53,7 @@ cc_library(
 )
 
 # Note: do not use this target directly, use the configurable label_flag
-# @rules_cuda//cuda:cuda_runtime instead.
+# @rules_cuda//cuda:runtime instead.
 cc_library(
     name = "cuda_runtime_static",
     srcs = ["cuda/lib64/libcudart_static.a"],
@@ -87,15 +87,25 @@ cc_import(
 cc_library(
     name = "cublas",
     deps = [
-        ":cuda_headers",
         ":cublasLt_so",
         ":cublas_so",
+        ":cuda_headers",
+    ],
+)
+
+cc_library(
+    name = "cub",
+    hdrs = glob(["cuda/include/cub/**"]),
+    includes = [
+        "cuda/include",
     ],
 )
 
 cc_library(
     name = "thrust",
+    hdrs = glob(["cuda/include/thrust/**"]),
     includes = [
         "cuda/include",
     ],
+    deps = [":cub"],
 )
