@@ -1,6 +1,8 @@
 """private helpers"""
 
 load("//cuda/private:providers.bzl", "ArchSpecInfo", "cuda_archs")
+load("@bazel_skylib//lib:paths.bzl", "paths")
+
 
 CUDA_SRC_FILES = [".cu", ".cu.cc"]
 DLINK_OBJ_FILES = [""]
@@ -105,6 +107,14 @@ def _get_nvcc_dlink_arch_flags(arch_specs):
 def _get_clang_arch_flags(arch_specs):
     fail("not implemented")
 
+def _resolve_includes(ctx, path):
+    if paths.is_absolute(path):
+        fail("invalid absolute path", path)
+
+    src_path = paths.normalize(paths.join(ctx.label.workspace_root, ctx.label.package, path))
+    bin_path = paths.join(ctx.bin_dir.path, src_path)
+    return src_path, bin_path
+
 cuda_helper = struct(
     get_arch_number = _get_arch_number,
     get_arch_spec = _get_arch_spec,
@@ -115,4 +125,6 @@ cuda_helper = struct(
     get_nvcc_compile_arch_flags = _get_nvcc_compile_arch_flags,
     get_nvcc_dlink_arch_flags = _get_nvcc_dlink_arch_flags,
     get_clang_arch_flags = _get_clang_arch_flags,
+
+    resolve_includes = _resolve_includes,
 )

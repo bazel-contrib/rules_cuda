@@ -9,6 +9,9 @@ def compile(
         translation_unit,
         output_basename,
         compile_flags = [],
+        defines = [],
+        host_compile_flags = [],
+        host_defines = [],
         pic = False,
         rdc = False):
     ""
@@ -30,18 +33,27 @@ def compile(
 
     obj_file = actions.declare_file(output_basename + ext)
 
+    cuda_flags = ["-x", "cu"]
+    for d in defines:
+        cuda_flags.append("-D" + d)
+
+    host_flags = ["-xc++"]
+    if pic:  # FIXME: not MSVC
+        host_flags.append("-fPIC")
+    host_flags.extend(host_compile_flags)
+    for d in host_defines: # FIXME: not MSVC
+        host_flags.append("-D" + d)
+
     args = actions.args()
     args.add("-ccbin", host_compiler)
-    host_compiler_options = "-xc++"
-    if pic:  # FIXME: not MSVC
-        host_compiler_options += " -fPIC"
-    args.add("-Xcompiler", host_compiler_options)
-    args.add("-x", "cu")
-    args.add_all(compile_flags)
+    for flag in host_flags:
+        args.add("-Xcompiler", flag)
+    if len(cuda_flags):
+        args.add_all(cuda_flags)
     args.add("-rdc", "true" if rdc else "false")
     args.add_all(includes, before_each = "-I", uniquify = True)
     args.add_all(system_includes, before_each = "-isystem", uniquify = True)
-    args.add_all(quote_includes, before_each = "-iquote", uniquify = True)
+    args.add_all(quote_includes, before_each = "-I", uniquify = True) # nvcc do not have -iquote
     args.add("-c", translation_unit.path)
     args.add("-o", obj_file.path)
 

@@ -76,21 +76,13 @@ CudaObjectsInfo = provider(
     }
 )
 
-CudaTargetInfo = provider(
-    """Provider that wraps all cuda build information.
+CudaInfo = provider(
+    """Provider that wraps cuda build information.
     """,
     fields = {
-        "defines": "",
-        "local_defines": "",
-        "host_defines": "",
-        "local_host_defines": "",
-        "direct_headers": "",
-        "direct_private_headers": "",
-        "direct_public_headers": "",
-        "direct_textual_headers": "",
-        "headers": "",
-        "includes": "",
-        "quote_includes": "",
-        "system_includes": "",
+        "defines": "A depset of strings",
+        "local_defines": "A depset of strings",
+        "copts": "A depset of strings",
+        "linkopts": "A depset of strings",
     },
 )

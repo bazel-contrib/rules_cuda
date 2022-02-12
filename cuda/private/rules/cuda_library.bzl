@@ -19,16 +19,35 @@ def _cuda_library_impl(ctx):
     cc_toolchain = find_cpp_toolchain(ctx)
     cuda_toolchain = find_cuda_toolchain(ctx)
 
-    compile_arch_flags = cuda_helper.get_nvcc_compile_arch_flags(ctx.attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+    compile_arch_flags = cuda_helper.get_nvcc_compile_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
 
-    includes = depset()
-    system_includes = depset()
-    quote_includes = depset()
+    includes = []
+    system_includes = []
+    quote_includes = []
+    for inc in attr.includes:
+        system_includes.extend(cuda_helper.resolve_includes(ctx, inc))
+    for dep in attr.deps:
+        if CcInfo in dep:
+            includes.extend(dep[CcInfo].compilation_context.includes.to_list())
+            system_includes.extend(dep[CcInfo].compilation_context.system_includes.to_list())
+            quote_includes.extend(dep[CcInfo].compilation_context.quote_includes.to_list())
+    includes = depset(includes)
+    system_includes = depset(system_includes)
+    quote_includes = depset(quote_includes)
+
+    public_headers = []
     private_headers = []
-    for src in ctx.attr.srcs:
-        hdrs = [f for f in src.files.to_list() if cuda_helper.check_src_extension(f, ALLOW_CUDA_HDRS)]
-        private_headers.append(depset(hdrs))
-    headers = depset(transitive = private_headers + [hdr[DefaultInfo].files for hdr in attr.hdrs])
+    for fs in attr.hdrs:
+        public_headers.extend(fs.files.to_list())
+    for fs in attr.srcs:
+        hdr = [f for f in fs.files.to_list() if cuda_helper.check_src_extension(f, ALLOW_CUDA_HDRS)]
+        private_headers.extend(hdr)
+
+    headers = public_headers + private_headers
+    for dep in attr.deps:
+        if CcInfo in dep:
+            headers.extend(dep[CcInfo].compilation_context.headers.to_list())
+    headers = depset(headers)
 
     rdc = attr.rdc
 
@@ -48,7 +67,9 @@ def _cuda_library_impl(ctx):
     objects = depset(objects)
     pic_objects = depset(pic_objects)
 
-    dlink_arch_flags = cuda_helper.get_nvcc_dlink_arch_flags(ctx.attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+    compilation_ctx = cc_common.create_compilation_context(headers=headers, includes=includes, system_includes=system_includes, quote_includes=quote_includes, defines=depset([]), local_defines=depset([]))
+
+    dlink_arch_flags = cuda_helper.get_nvcc_dlink_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
 
     if attr.rdc:
         transitive_objects = depset(transitive = [dep[CudaObjectsInfo].rdc_objects for dep in attr.deps if CudaObjectsInfo in dep])
@@ -63,7 +84,7 @@ def _cuda_library_impl(ctx):
     lib = create_library(ctx, cuda_toolchain, objects, attr.name, pic = False)
     pic_lib = create_library(ctx, cuda_toolchain, pic_objects, attr.name, pic = True)
 
-    builtin_linker_inputs = [dep[CcInfo].linking_context.linker_inputs for dep in ctx.attr._builtin_deps if CcInfo in dep]
+    builtin_linker_inputs = [dep[CcInfo].linking_context.linker_inputs for dep in attr._builtin_deps if CcInfo in dep]
 
     lib_to_link = cc_common.create_library_to_link(
         actions = ctx.actions,
@@ -88,6 +109,7 @@ def _cuda_library_impl(ctx):
             pic_lib = [pic_lib],
         ),
         CcInfo(
+            compilation_context = compilation_ctx,
             linking_context = linking_ctx,
         ),
     ]
@@ -99,6 +121,17 @@ cuda_library = rule(
         "hdrs": attr.label_list(allow_files = ALLOW_CUDA_HDRS),
         "deps": attr.label_list(providers = [[CcInfo], [CudaObjectsInfo]]),
         "rdc": attr.bool(default = False, doc = "whether to perform relocateable device code linking, otherwise, normal device link."),
+        "includes": attr.string_list(doc="List of include dirs to be added to the compile line."),
+        # host_* attrs will be passed transitively to cc_* and cuda_* targets
+        "host_copts": attr.string_list(doc="Add these options to the CUDA host compilation command."),
+        "host_defines": attr.string_list(doc="List of defines to add to the compile line."),
+        "host_local_defines": attr.string_list(doc="List of defines to add to the compile line, but only apply to this rule."),
+        "host_linkopts": attr.string_list(doc="Add these flags to the host linker command."),
+        # non-host attrs will be passed transitively to cuda_* targets only.
+        "copts": attr.string_list(doc="Add these options to the CUDA device compilation command."),
+        "defines": attr.string_list(doc="List of defines to add to the compile line."),
+        "local_defines": attr.string_list(doc="List of defines to add to the compile line, but only apply to this rule."),
+        "linkopts": attr.string_list(doc="Add these flags to the CUDA linker command."),
         "_builtin_deps": attr.label_list(default = ["@rules_cuda//cuda:runtime"]),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
         "_default_cuda_archs": attr.label(default = "@rules_cuda//cuda:archs"),
