@@ -84,6 +84,7 @@ def _cuda_library_impl(ctx):
     lib = create_library(ctx, cuda_toolchain, objects, attr.name, pic = False)
     pic_lib = create_library(ctx, cuda_toolchain, pic_objects, attr.name, pic = True)
 
+    transitive_linker_inputs = [dep[CcInfo].linking_context.linker_inputs for dep in attr.deps if CcInfo in dep]
     builtin_linker_inputs = [dep[CcInfo].linking_context.linker_inputs for dep in attr._builtin_deps if CcInfo in dep]
 
     lib_to_link = cc_common.create_library_to_link(
@@ -91,13 +92,14 @@ def _cuda_library_impl(ctx):
         cc_toolchain = cc_toolchain,
         static_library = lib,
         pic_static_library = pic_lib,
+        alwayslink = attr.alwayslink,
         # pic_objects = pic_objects, // Experimental, do not use
         # objects = objects, // Experimental, do not use
     )
     linking_ctx = cc_common.create_linking_context(
         linker_inputs = depset([
             cc_common.create_linker_input(owner = ctx.label, libraries = depset([lib_to_link])),
-        ], transitive = builtin_linker_inputs),
+        ], transitive = transitive_linker_inputs + builtin_linker_inputs),
     )
 
     return [
@@ -120,6 +122,7 @@ cuda_library = rule(
         "srcs": attr.label_list(allow_files = ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS),
         "hdrs": attr.label_list(allow_files = ALLOW_CUDA_HDRS),
         "deps": attr.label_list(providers = [[CcInfo], [CudaObjectsInfo]]),
+        "alwayslink": attr.bool(default = False),
         "rdc": attr.bool(default = False, doc = "whether to perform relocateable device code linking, otherwise, normal device link."),
         "includes": attr.string_list(doc="List of include dirs to be added to the compile line."),
         # host_* attrs will be passed transitively to cc_* and cuda_* targets
