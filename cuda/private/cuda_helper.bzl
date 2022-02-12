@@ -1,11 +1,8 @@
 """private helpers"""
 
-load("//cuda/private:providers.bzl", "ArchSpecInfo", "cuda_archs")
 load("@bazel_skylib//lib:paths.bzl", "paths")
-
-
-CUDA_SRC_FILES = [".cu", ".cu.cc"]
-DLINK_OBJ_FILES = [""]
+load("//cuda/private:providers.bzl", "ArchSpecInfo", "cuda_archs", "CudaArchsInfo")
+load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
 
 def _get_arch_number(arch_str):
     arch_str = arch_str.strip()
@@ -115,6 +112,67 @@ def _resolve_includes(ctx, path):
     bin_path = paths.join(ctx.bin_dir.path, src_path)
     return src_path, bin_path
 
+def _create_common(ctx):
+    attr = ctx.attr
+
+    # gather include info
+    includes = []
+    system_includes = []
+    quote_includes = []
+    for inc in attr.includes:
+        system_includes.extend(_resolve_includes(ctx, inc))
+    for dep in attr.deps:
+        if CcInfo in dep:
+            includes.extend(dep[CcInfo].compilation_context.includes.to_list())
+            system_includes.extend(dep[CcInfo].compilation_context.system_includes.to_list())
+            quote_includes.extend(dep[CcInfo].compilation_context.quote_includes.to_list())
+
+    # gather header info
+    public_headers = []
+    private_headers = []
+    for fs in attr.hdrs:
+        public_headers.extend(fs.files.to_list())
+    for fs in attr.srcs:
+        hdr = [f for f in fs.files.to_list() if cuda_helper.check_src_extension(f, ALLOW_CUDA_HDRS)]
+        private_headers.extend(hdr)
+    headers = public_headers + private_headers
+    for dep in attr.deps:
+        if CcInfo in dep:
+            headers.extend(dep[CcInfo].compilation_context.headers.to_list())
+
+    # gather linker info
+    builtin_linker_inputs = []
+    if hasattr(attr, "_builtin_deps"):
+        builtin_linker_inputs = [dep[CcInfo].linking_context.linker_inputs for dep in attr._builtin_deps if CcInfo in dep]
+
+    transitive_linker_inputs = [dep[CcInfo].linking_context.linker_inputs for dep in attr.deps if CcInfo in dep]
+
+    # gather compile info
+    defines = []
+    local_defines = []
+    compile_flags = _get_nvcc_compile_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+    link_flags = _get_nvcc_dlink_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+    host_defines = []
+    host_local_defines = []
+    host_compile_flags = []
+    host_link_flags = []
+
+    return struct(
+        includes = depset(includes),
+        system_includes = depset(system_includes),
+        quote_includes = depset(quote_includes),
+        headers = depset(headers),
+        transitive_linker_inputs = builtin_linker_inputs + transitive_linker_inputs,
+        defines = defines,
+        local_defines = local_defines,
+        compile_flags = compile_flags,
+        link_flags = link_flags,
+        host_defines = host_defines,
+        host_local_defines = host_local_defines,
+        host_compile_flags = host_compile_flags,
+        host_link_flags = host_link_flags,
+    )
+
 cuda_helper = struct(
     get_arch_number = _get_arch_number,
     get_arch_spec = _get_arch_spec,
@@ -122,9 +180,5 @@ cuda_helper = struct(
     check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,
     get_basename_without_ext = _get_basename_without_ext,
-    get_nvcc_compile_arch_flags = _get_nvcc_compile_arch_flags,
-    get_nvcc_dlink_arch_flags = _get_nvcc_dlink_arch_flags,
-    get_clang_arch_flags = _get_clang_arch_flags,
-
-    resolve_includes = _resolve_includes,
+    create_common = _create_common,
 )

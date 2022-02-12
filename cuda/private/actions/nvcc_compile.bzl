@@ -2,16 +2,16 @@ def compile(
         ctx,
         cuda_toolchain,
         cc_toolchain,
-        includes,
-        system_includes,
-        quote_includes,
-        headers,
         translation_unit,
         output_basename,
-        compile_flags = [],
+        includes = [],
+        system_includes = [],
+        quote_includes = [],
+        headers = [],
         defines = [],
-        host_compile_flags = [],
+        compile_flags = [],
         host_defines = [],
+        host_compile_flags = [],
         pic = False,
         rdc = False):
     ""
@@ -41,7 +41,7 @@ def compile(
     if pic:  # FIXME: not MSVC
         host_flags.append("-fPIC")
     host_flags.extend(host_compile_flags)
-    for d in host_defines: # FIXME: not MSVC
+    for d in host_defines:  # FIXME: not MSVC
         host_flags.append("-D" + d)
 
     args = actions.args()
@@ -53,7 +53,7 @@ def compile(
     args.add("-rdc", "true" if rdc else "false")
     args.add_all(includes, before_each = "-I", uniquify = True)
     args.add_all(system_includes, before_each = "-isystem", uniquify = True)
-    args.add_all(quote_includes, before_each = "-I", uniquify = True) # nvcc do not have -iquote
+    args.add_all(quote_includes, before_each = "-I", uniquify = True)  # nvcc do not have -iquote
     args.add("-c", translation_unit.path)
     args.add("-o", obj_file.path)
 
