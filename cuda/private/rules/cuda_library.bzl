@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:toolchain.bzl", "find_cuda_toolchain")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
-load("//cuda/private:providers.bzl", "CudaObjectsInfo")
+load("//cuda/private:providers.bzl", "CudaInfo")
 load("//cuda/private:actions/nvcc_compile.bzl", "compile")
 load("//cuda/private:actions/nvcc_dlink.bzl", "device_link")
 load("//cuda/private:actions/nvcc_lib.bzl", "create_library")
@@ -47,8 +47,8 @@ def _cuda_library_impl(ctx):
     )
 
     if attr.rdc:
-        transitive_objects = depset(transitive = [dep[CudaObjectsInfo].rdc_objects for dep in attr.deps if CudaObjectsInfo in dep])
-        transitive_pic_objects = depset(transitive = [dep[CudaObjectsInfo].rdc_pic_objects for dep in attr.deps if CudaObjectsInfo in dep])
+        transitive_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep])
+        transitive_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
         objects = depset(transitive = [objects, transitive_objects])
         pic_objects = depset(transitive = [pic_objects, transitive_pic_objects])
         dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, attr.name, link_flags = common.link_flags, pic = False, rdc = attr.rdc)])
@@ -70,7 +70,7 @@ def _cuda_library_impl(ctx):
     )
     linking_ctx = cc_common.create_linking_context(
         linker_inputs = depset([
-            cc_common.create_linker_input(owner = ctx.label, libraries = depset([lib_to_link])),
+            cc_common.create_linker_input(owner = ctx.label, libraries = depset([lib_to_link]), user_link_flags = common.host_link_flags),
         ], transitive = common.transitive_linker_inputs),
     )
 
@@ -86,6 +86,7 @@ def _cuda_library_impl(ctx):
             compilation_context = compilation_ctx,
             linking_context = linking_ctx,
         ),
+        cuda_helper.create_cuda_info(defines = depset(common.defines)),
     ]
 
 cuda_library = rule(
@@ -93,20 +94,18 @@ cuda_library = rule(
     attrs = {
         "srcs": attr.label_list(allow_files = ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS),
         "hdrs": attr.label_list(allow_files = ALLOW_CUDA_HDRS),
-        "deps": attr.label_list(providers = [[CcInfo], [CudaObjectsInfo]]),
+        "deps": attr.label_list(providers = [[CcInfo], [CudaInfo]]),
         "alwayslink": attr.bool(default = False),
         "rdc": attr.bool(default = False, doc = "whether to perform relocateable device code linking, otherwise, normal device link."),
         "includes": attr.string_list(doc = "List of include dirs to be added to the compile line."),
-        # host_* attrs will be passed transitively to cc_* and cuda_* targets
         "host_copts": attr.string_list(doc = "Add these options to the CUDA host compilation command."),
         "host_defines": attr.string_list(doc = "List of defines to add to the compile line."),
         "host_local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
-        "host_linkopts": attr.string_list(doc = "Add these flags to the host linker command."),
-        # non-host attrs will be passed transitively to cuda_* targets only.
+        "host_linkopts": attr.string_list(doc = "Add these flags to the host library link command."),
         "copts": attr.string_list(doc = "Add these options to the CUDA device compilation command."),
         "defines": attr.string_list(doc = "List of defines to add to the compile line."),
         "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
-        "linkopts": attr.string_list(doc = "Add these flags to the CUDA linker command."),
+        "linkopts": attr.string_list(doc = "Add these flags to the CUDA device link command."),
         "_builtin_deps": attr.label_list(default = ["@rules_cuda//cuda:runtime"]),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
         "_default_cuda_archs": attr.label(default = "@rules_cuda//cuda:archs"),

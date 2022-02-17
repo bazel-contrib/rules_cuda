@@ -66,23 +66,13 @@ CudaArchsInfo = provider(
     },
 )
 
-CudaObjectsInfo = provider(
-    "",
+CudaInfo = provider(
+    """Provider that wraps cuda build information.""",
     fields = {
+        "defines": "A depset of strings",
         "objects": "A depset of objects.",  # but not rdc and pic
         "rdc_objects": "A depset of relocatable device code objects.",  # but not pic
         "pic_objects": "A depset of position indepentent code objects.",  # but not rdc
         "rdc_pic_objects": "A depset of relocatable device code and position indepentent code objects.",
     }
-)
-
-CudaInfo = provider(
-    """Provider that wraps cuda build information.
-    """,
-    fields = {
-        "defines": "A depset of strings",
-        "local_defines": "A depset of strings",
-        "copts": "A depset of strings",
-        "linkopts": "A depset of strings",
-    },
 )

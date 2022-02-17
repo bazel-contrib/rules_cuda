@@ -1,6 +1,6 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
-load("//cuda/private:providers.bzl", "CudaArchsInfo", "CudaObjectsInfo")
+load("//cuda/private:providers.bzl", "CudaArchsInfo", "CudaInfo")
 load("//cuda/private:toolchain.bzl", "find_cuda_toolchain")
 load("//cuda/private:actions/nvcc_compile.bzl", "compile")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS", "ALLOW_CUDA_SRCS")
@@ -45,7 +45,7 @@ def _cuda_objects_impl(ctx):
             rdc_objects = rdc_objects,
             rdc_pic_objects = rdc_pic_objects,
         ),
-        CudaObjectsInfo(
+        cuda_helper.create_cuda_info(
             objects = objects,
             pic_objects = pic_objects,
             rdc_objects = rdc_objects,
@@ -58,7 +58,7 @@ cuda_objects = rule(
     attrs = {
         "srcs": attr.label_list(allow_files = ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS),
         "hdrs": attr.label_list(allow_files = ALLOW_CUDA_HDRS),
-        "deps": attr.label_list(providers = [[CcInfo], [CudaObjectsInfo]]),
+        "deps": attr.label_list(providers = [[CcInfo], [CudaInfo]]),
         "includes": attr.string_list(doc = "List of include dirs to be added to the compile line."),
         # host_* attrs will be passed transitively to cc_* and cuda_* targets
         "host_copts": attr.string_list(doc = "Add these options to the CUDA host compilation command."),

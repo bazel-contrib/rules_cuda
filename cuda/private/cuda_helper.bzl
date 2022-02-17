@@ -1,7 +1,7 @@
 """private helpers"""
 
 load("@bazel_skylib//lib:paths.bzl", "paths")
-load("//cuda/private:providers.bzl", "ArchSpecInfo", "cuda_archs", "CudaArchsInfo")
+load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "cuda_archs", "CudaInfo")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
 
 def _get_arch_number(arch_str):
@@ -112,6 +112,26 @@ def _resolve_includes(ctx, path):
     bin_path = paths.join(ctx.bin_dir.path, src_path)
     return src_path, bin_path
 
+def _check_opts(opt):
+    opt = opt.strip()
+    if (opt.startswith("--generate-code") or opt.startswith("-gencode") or
+        opt.startswith("--gpu-architecture") or opt.startswith("-arch") or
+        opt.startswith("--gpu-code") or opt.startswith("-code") or
+        opt.startswith("--relocatable-device-code") or opt.startswith("-rdc") or
+        opt.startswith("--cuda") or opt.startswith("-cuda") or
+        opt.startswith("--preprocess") or opt.startswith("-E") or
+        opt.startswith("--compile") or opt.startswith("-c") or
+        opt.startswith("--cubin") or opt.startswith("-cubin") or
+        opt.startswith("--ptx") or opt.startswith("-ptx") or
+        opt.startswith("--fatbin") or opt.startswith("-fatbin") or
+        opt.startswith("--device-link") or opt.startswith("-dlink") or
+        opt.startswith("--lib") or opt.startswith("-lib") or
+        opt.startswith("--generate-dependencies") or opt.startswith("-M") or
+        opt.startswith("--generate-nonsystem-dependencies") or opt.startswith("-MM") or
+        opt.startswith("--run") or opt.startswith("-run")):
+        fail(opt, "is not allowed to be specified directly via copts")
+    return True
+
 def _create_common(ctx):
     attr = ctx.attr
 
@@ -149,13 +169,25 @@ def _create_common(ctx):
 
     # gather compile info
     defines = []
-    local_defines = []
+    local_defines =  [ i for i in attr.local_defines]
     compile_flags = _get_nvcc_compile_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+    compile_flags.extend([o for o in attr.copts if _check_opts(o)])
     link_flags = _get_nvcc_dlink_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+    if hasattr(attr, "linkopts"):
+        link_flags.extend([o for o in attr.linkopts if _check_opts(o)])
     host_defines = []
-    host_local_defines = []
-    host_compile_flags = []
+    host_local_defines = [i for i in attr.host_local_defines]
+    host_compile_flags = [i for i in attr.host_copts]
     host_link_flags = []
+    if hasattr(attr, "host_linkopts"):
+        host_link_flags.extend([i for i in attr.host_linkopts])
+    for dep in attr.deps:
+        if CudaInfo in dep:
+            defines.extend(dep[CudaInfo].defines.to_list())
+        if CcInfo in dep:
+            host_defines.extend(dep[CcInfo].compilation_context.defines.to_list())
+    defines.extend(attr.defines)
+    host_defines.extend(attr.host_defines)
 
     return struct(
         includes = depset(includes),
@@ -173,6 +205,16 @@ def _create_common(ctx):
         host_link_flags = host_link_flags,
     )
 
+def _create_cuda_info(defines = None, objects = None, rdc_objects = None, pic_objects = None, rdc_pic_objects = None):
+    ret = CudaInfo(
+        defines = defines if defines != None else depset([]),
+        objects = objects if objects != None else depset([]),
+        rdc_objects = rdc_objects if rdc_objects != None else depset([]),
+        pic_objects = pic_objects if pic_objects != None else depset([]),
+        rdc_pic_objects = rdc_pic_objects if rdc_pic_objects != None else depset([]),
+    )
+    return ret
+
 cuda_helper = struct(
     get_arch_number = _get_arch_number,
     get_arch_spec = _get_arch_spec,
@@ -181,4 +223,5 @@ cuda_helper = struct(
     check_srcs_extensions = _check_srcs_extensions,
     get_basename_without_ext = _get_basename_without_ext,
     create_common = _create_common,
+    create_cuda_info = _create_cuda_info,
 )
