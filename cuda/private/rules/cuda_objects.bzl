@@ -18,6 +18,7 @@ def _cuda_objects_impl(ctx):
     cuda_toolchain = find_cuda_toolchain(ctx)
 
     common = cuda_helper.create_common(ctx)
+    print(ctx.label, common)
 
     for src in ctx.attr.srcs:
         files = src[DefaultInfo].files.to_list()
@@ -35,6 +36,15 @@ def _cuda_objects_impl(ctx):
     rdc_objects = depset(rdc_objects)
     rdc_pic_objects = depset(rdc_pic_objects)
 
+    compilation_ctx = cc_common.create_compilation_context(
+        headers = common.headers,
+        includes = common.includes,
+        system_includes = common.system_includes,
+        quote_includes = common.quote_includes,
+        defines = depset(common.host_defines),
+        local_defines = depset(common.host_local_defines),
+    )
+
     return [
         DefaultInfo(
             files = depset(transitive = [objects, pic_objects, rdc_objects, rdc_pic_objects]),
@@ -45,7 +55,11 @@ def _cuda_objects_impl(ctx):
             rdc_objects = rdc_objects,
             rdc_pic_objects = rdc_pic_objects,
         ),
+        CcInfo(
+            compilation_context = compilation_ctx,
+        ),
         cuda_helper.create_cuda_info(
+            defines = depset(common.defines),
             objects = objects,
             pic_objects = pic_objects,
             rdc_objects = rdc_objects,
