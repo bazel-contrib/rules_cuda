@@ -2,7 +2,7 @@ load("//cuda:defs.bzl", "cuda_objects", "cuda_library")
 
 cuda_objects(
     name = "a",
-    srcs = ["a.cu", "b.cuh"],
+    srcs = ["a.cu"],
     deps = [":b"]
 )
 
