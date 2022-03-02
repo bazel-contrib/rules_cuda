@@ -70,27 +70,21 @@ def _parse_flag_cache_test_impl(ctx):
 
 parse_flag_cache_test = unittest.make(_parse_flag_cache_test_impl)
 
-def create_var(var, path = None, path_list = None):
-    if path_list == None:
-        path_list = path.split(".")
-    v = access(var, path_list = path_list)
-    return create_var_from_value(var, v, path, path_list)
-
 def _var_test_impl(ctx):
     env = unittest.begin(ctx)
-    inner_var = struct(inner = "value")
-    outer_var = struct(struct = inner_var)
+
+    inner_value = struct(inner = "value")
+    outer_value = struct(struct = inner_value)
+    inner_var = create_var_from_value(inner_value)
+    outer_var = create_var_from_value(outer_value)
 
     asserts.false(env, exist(outer_var, "not_exist"))
     asserts.true(env, exist(outer_var, "struct"))
     asserts.true(env, exist(outer_var, "struct.inner"))
 
-    asserts.equals(env, inner_var, access(outer_var, "struct"))
+    asserts.equals(env, inner_value, access(outer_var, "struct"))
     asserts.equals(env, "value", access(outer_var, "struct.inner"))
 
-    asserts.equals(env, inner_var, create_var(inner_var, "inner"))
-    asserts.equals(env, outer_var, create_var(outer_var, "struct"))
-    asserts.equals(env, outer_var, create_var(outer_var, "struct.inner"))
     return unittest.end(env)
 
 var_test = unittest.make(_var_test_impl)

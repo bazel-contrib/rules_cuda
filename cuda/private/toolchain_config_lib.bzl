@@ -102,40 +102,68 @@ def parse_flag(raw_flag, cache = None):
         cache[raw_flag] = _copy_flag_info(flag_info)
     return flag_info
 
-def exist(var, path = None, path_list = None):
-    if path_list == None:
-        path_list = path.split(".")
-    v = var
-    for name in path_list:
-        if hasattr(v, name):
-            v = getattr(v, name)
-            continue
-        return False
+_NestingVarInfo = provider(
+    """""",
+    fields = {
+        "parent": "",
+        "this": "",
+    },
+)
 
-    return True
+_VAR_NESTING_MAX_DEPTH = 64
 
-def access(var, path = None, path_list = None, fail_if_not_available = True):
-    if path_list == None:
-        path_list = path.split(".")
-    v = var
+def _single_access(value, path_list, ret):
+    v = value
     for i, name in enumerate(path_list):
         if hasattr(v, name):
             v = getattr(v, name)
         else:
-            if fail_if_not_available:
-                fail("Cannot access", name)
-            else:
-                return None
-    return v
+            return False
+    ret.append(v)
+    return True
 
-def create_var_from_value(parent, value, path = None, path_list = None):
+def exist(input_var, path = None, path_list = None):
+    if path_list == None:
+        path_list = path.split(".")
+    var = None
+    parent_nesting_var = input_var
+    for _ in range(_VAR_NESTING_MAX_DEPTH):
+        if parent_nesting_var == None:
+            break
+        var = parent_nesting_var.this
+        parent_nesting_var = parent_nesting_var.parent
+        if _single_access(var, path_list, []):
+            return True
+    return False
+
+def access(var, path = None, path_list = None, fail_if_not_available = True):
+    if path_list == None:
+        path_list = path.split(".")
+    ret = []
+    value = None
+    parent_nesting_var = var
+    for _ in range(_VAR_NESTING_MAX_DEPTH):
+        if parent_nesting_var == None:
+            break
+        value = parent_nesting_var.this
+        parent_nesting_var = parent_nesting_var.parent
+        if _single_access(value, path_list, ret):
+            return ret[0]
+    if fail_if_not_available:
+        fail("Cannot access", ".".join(path_list))
+    else:
+        return None
+
+def create_var_from_value(value, parent = None, path = None, path_list = None):
+    if path == None and path_list == None:
+        return _NestingVarInfo(this = value, parent = parent)
     if path_list == None:
         path_list = path.split(".")
     v = value
     for i in range(len(path_list) - 1, -1, -1):
         name = path_list[i]
         v = struct(**{name: v})
-    return v
+    return _NestingVarInfo(this = v, parent = parent)
 
 def expand_flag(flag_info, var, name):
     if len(flag_info.expandables) == 0 or name not in flag_info.expandables:
@@ -154,9 +182,9 @@ def _can_be_expanded(fg, var):
         return False
     if fg.expand_if_not_available != None and exist(var, fg.expand_if_not_available):
         return False
-    if fg.expand_if_true != None and access(var, fg.expand_if_true, fail_if_not_available=False) not in [True, 1]:
+    if fg.expand_if_true != None and access(var, fg.expand_if_true, fail_if_not_available = False) not in [True, 1]:
         return False
-    if fg.expand_if_false != None and access(var, fg.expand_if_false, fail_if_not_available=False) not in [False, 0]:
+    if fg.expand_if_false != None and access(var, fg.expand_if_false, fail_if_not_available = False) not in [False, 0]:
         return False
     if fg.expand_if_equal != None and (not exist(var, fg.expand_if_equal.name) or access(var, fg.expand_if_equal.name) != fg.expand_if_equal.value):
         return False
@@ -182,13 +210,11 @@ def _eval_flags_or_flag_groups(stack, ret, fg, var, recursion_depth, parse_flag_
 
 def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations):
     parse_flag_cache = {}
-    root_var = var
     stack.append([fg, var, 1, False])
     recursion_depth = 0
     for _ in range(eval_iterations):
         if len(stack) == 0:
             break
-
         fg, var, recursion_depth, entered = stack[-1]
         if entered:  # return from a recursive call. We need to handle the returned value.
             # Since we are returning from another function, the variable socpe is different,
@@ -211,22 +237,20 @@ def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations):
 
         if _can_be_expanded(fg, var):
             if fg.iterate_over != None:
-                iterated_over_var = access(var, fg.iterate_over, fail_if_not_available = False)
-                if iterated_over_var == None:
-                    iterated_over_var = access(root_var, fg.iterate_over)
-                if type(iterated_over_var) != "list":
+                iterated_over_values = access(var, fg.iterate_over)
+                if type(iterated_over_values) != "list":
                     fail(fg.iterate_over, "is not an iterable")
 
                 path_list = fg.iterate_over.split(".")
                 if len(fg.flags) != 0:  # expanding flags
                     # expanding flags should iterate in order, no more recursion involved
-                    for v in iterated_over_var:
-                        new_var = create_var_from_value(v, path_list = path_list)
+                    for value in iterated_over_values:
+                        new_var = create_var_from_value(value, parent = var, path_list = path_list)
                         _eval_flags_or_flag_groups(stack, ret, fg, new_var, recursion_depth, parse_flag_cache)
                 else:  # expanding flag_groups
                     # expanding flag_groups should iterate in reversed order due to recursion
-                    for v in reversed(iterated_over_var):
-                        new_var = create_var_from_value(v, path_list = path_list)
+                    for value in reversed(iterated_over_values):
+                        new_var = create_var_from_value(value, parent = var, path_list = path_list)
                         _eval_flags_or_flag_groups(stack, ret, fg, new_var, recursion_depth, parse_flag_cache)
             else:
                 _eval_flags_or_flag_groups(stack, ret, fg, var, recursion_depth, parse_flag_cache)
@@ -235,9 +259,9 @@ def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations):
         fail("flag_group evaluation imcomplete")
     return ret
 
-def eval_flag_group(fg, vars, max_eval_iterations = 65536):
+def eval_flag_group(fg, value, max_eval_iterations = 65536):
     ret = []
-    _eval_flag_group_impl([], ret, fg, vars, max_eval_iterations)
+    _eval_flag_group_impl([], ret, fg, create_var_from_value(value), max_eval_iterations)
     processed_ret = []
     for flag_info in ret[0]:
         if len(flag_info.expandables) != 0:
