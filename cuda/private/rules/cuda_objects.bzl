@@ -1,7 +1,7 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:providers.bzl", "CudaArchsInfo", "CudaInfo")
-load("//cuda/private:toolchain.bzl", "find_cuda_toolchain")
+load("//cuda/private:toolchain.bzl", "find_cuda_toolchain", "use_cpp_toolchain", "use_cuda_toolchain")
 load("//cuda/private:actions/nvcc_compile.bzl", "compile")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS", "ALLOW_CUDA_SRCS")
 
@@ -82,9 +82,9 @@ cuda_objects = rule(
         "copts": attr.string_list(doc = "Add these options to the CUDA device compilation command."),
         "defines": attr.string_list(doc = "List of defines to add to the compile line."),
         "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
-        "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
+        "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
         "_default_cuda_archs": attr.label(default = "@rules_cuda//cuda:archs"),
     },
     fragments = ["cpp"],
-    toolchains = ["//cuda:toolchain_type"],
+    toolchains = use_cpp_toolchain() + use_cuda_toolchain(),
 )
