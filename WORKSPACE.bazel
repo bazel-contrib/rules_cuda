@@ -5,3 +5,7 @@ load("@rules_cuda//cuda:deps.bzl", "detect_cuda_toolkit", "rules_cuda_deps")
 rules_cuda_deps()
 
 detect_cuda_toolkit()
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
