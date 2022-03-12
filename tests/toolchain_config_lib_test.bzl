@@ -1,5 +1,6 @@
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
-load("//cuda/private:toolchain_config_lib.bzl", "access", "create_var_from_value", "eval_flag_group", "exist", "expand_flag", "flag_group", "parse_flag", "variable_with_value")
+load("//cuda/private:toolchain_config_lib.bzl", "feature", "flag_group", "feature_set")
+load("//cuda/private:toolchain_config_lib.bzl", "access", "create_var_from_value", "eval_flag_group", "exist", "expand_flag", "get_enabled_selectables", "parse_flag", "variable_with_value")
 
 def _parse_flag_test_impl(ctx):
     env = unittest.begin(ctx)
@@ -303,6 +304,139 @@ def _eval_flag_group_test_impl(ctx):
     return unittest.end(env)
 
 eval_flag_group_test = unittest.make(_eval_flag_group_test_impl)
+
+def _feature_constraint_test_impl(ctx):
+    env = unittest.begin(ctx)
+
+    features = [
+        feature(name = "a", implies = ["b", "c"]),
+        feature(name = "b"),
+        feature(name = "c", implies = ["d"]),
+        feature(name = "d"),
+        feature(name = "e"),
+    ]
+    asserts.equals(env, ["a", "b", "c", "d"], get_enabled_selectables(features, requested = ["a"]), "testImplies")
+
+    features = [
+        feature(name = "a", requires = [feature_set(features = ["b"])]),
+        feature(name = "b", requires = [feature_set(features = ["c"])]),
+        feature(name = "c"),
+    ]
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["a"]), "testRequires 0")
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["a", "b"]), "testRequires 1")
+    asserts.equals(env, ["c"], get_enabled_selectables(features, requested = ["a", "c"]), "testRequires 2")
+    asserts.equals(env, ["a", "b", "c"], get_enabled_selectables(features, requested = ["a", "b", "c"]), "testRequires 3")
+
+    features = [
+        feature(name = "a"),
+        feature(name = "b", implies = ["a"], requires = [feature_set(features = ["c"])]),
+        feature(name = "c"),
+    ]
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["b"]), "testDisabledRequirementChain 0")
+    features = [
+        feature(name = "a"),
+        feature(name = "b", implies = ["a"], requires = [feature_set(features = ["c"])]),
+        feature(name = "c"),
+        feature(name = "d", implies = ["e"], requires = [feature_set(features = ["c"])]),
+        feature(name = "e"),
+    ]
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["b", "d"]), "testDisabledRequirementChain 1")
+
+    features = [
+        feature(name = "0", implies = ["a"]),
+        feature(name = "a"),
+        feature(name = "b", implies = ["c"], requires = [feature_set(features = ["a"])]),
+        feature(name = "c"),
+        feature(name = "d", implies = ["e"], requires = [feature_set(features = ["c"])]),
+        feature(name = "e"),
+    ]
+    asserts.equals(env, ["0", "a", "b", "c", "d", "e"], get_enabled_selectables(features, requested = ["0", "b", "d"]), "testEnabledRequirementChain")
+
+    features = [
+        feature(name = "a", requires = [feature_set(features = ["b", "c"]), feature_set(features = ["d"])]),
+        feature(name = "b"),
+        feature(name = "c"),
+        feature(name = "d"),
+    ]
+    asserts.equals(env, ["a", "b", "c"], get_enabled_selectables(features, requested = ["a", "b", "c"]), "testLogicInRequirements 0")
+    asserts.equals(env, ["b"], get_enabled_selectables(features, requested = ["a", "b"]), "testLogicInRequirements 1")
+    asserts.equals(env, ["c"], get_enabled_selectables(features, requested = ["a", "c"]), "testLogicInRequirements 2")
+    asserts.equals(env, ["a", "d"], get_enabled_selectables(features, requested = ["a", "d"]), "testLogicInRequirements 3")
+
+    features = [
+        feature(name = "a", implies = ["b"]),
+        feature(name = "b", requires = [feature_set(features = ["c"])]),
+        feature(name = "c"),
+    ]
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["a"]), "testImpliesImpliesRequires")
+
+    features = [
+        feature(name = "a", implies = ["b", "c", "d"]),
+        feature(name = "b"),
+        feature(name = "c", requires = [feature_set(features = ["e"])]),
+        feature(name = "d"),
+        feature(name = "e"),
+    ]
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["a"]), "testMultipleImplies 0")
+    asserts.equals(env, ["a", "b", "c", "d", "e"], get_enabled_selectables(features, requested = ["a", "e"]), "testMultipleImplies 1")
+
+    features = [
+        feature(name = "a", implies = ["b"], requires = [feature_set(features = ["c"])]),
+        feature(name = "b"),
+        feature(name = "c"),
+    ]
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["a"]), "testDisabledFeaturesDoNotEnableImplications")
+
+    # testFeatureNameCollision failure test skipped
+    # testReferenceToUndefinedFeature failure test skipped
+
+    features = [
+        feature(name = "a", implies = ["b"]),
+        feature(name = "b", implies = ["a"]),
+    ]
+    asserts.equals(env, ["a", "b"], get_enabled_selectables(features, requested = ["a"]), "testImpliesWithCycle 0")
+    asserts.equals(env, ["a", "b"], get_enabled_selectables(features, requested = ["b"]), "testImpliesWithCycle 1")
+
+    features = [
+        feature(name = "a", implies = ["b", "c", "d"]),
+        feature(name = "b"),
+        feature(name = "c", requires = [feature_set(features = ["e"])]),
+        feature(name = "d", requires = [feature_set(features = ["f"])]),
+        feature(name = "e", requires = [feature_set(features = ["c"])]),
+        feature(name = "f"),
+    ]
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["a", "e"]), "testMultipleImpliesCycle 0")
+    asserts.equals(env, ["a", "b", "c", "d", "e", "f"], get_enabled_selectables(features, requested = ["a", "e", "f"]), "testMultipleImpliesCycle 1")
+
+    features = [
+        feature(name = "a", requires = [feature_set(features = ["b"])]),
+        feature(name = "b", requires = [feature_set(features = ["a"])]),
+        feature(name = "c", implies = ["a"]),
+        feature(name = "d", implies = ["b"]),
+    ]
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["c"]), "testRequiresWithCycle 0")
+    asserts.equals(env, [], get_enabled_selectables(features, requested = ["d"]), "testRequiresWithCycle 1")
+    asserts.equals(env, ["a", "b", "c", "d"], get_enabled_selectables(features, requested = ["c", "d"]), "testRequiresWithCycle 2")
+
+    features = [
+        feature(name = "a"),
+        feature(name = "b", implies = ["d"], requires = [feature_set(features = ["a"])]),
+        feature(name = "c", implies = ["d"]),
+        feature(name = "d"),
+    ]
+    asserts.equals(env, ["c", "d"], get_enabled_selectables(features, requested = ["b", "c"]), "testImpliedByOneEnabledAndOneDisabledFeature")
+
+    features = [
+        feature(name = "a", requires = [feature_set(features = ["b"]), feature_set(features = ["c"])]),
+        feature(name = "b"),
+        feature(name = "c", requires = [feature_set(features = ["d"])]),
+        feature(name = "d"),
+    ]
+    asserts.equals(env, ["a", "b"], get_enabled_selectables(features, requested = ["a", "b", "c"]), "testRequiresOneEnabledAndOneUnsupportedFeature")
+
+    return unittest.end(env)
+
+feature_constraint_test = unittest.make(_feature_constraint_test_impl)
 
 # def toolchain_config_lib_test_suite(name):
 #     unittest.suite(

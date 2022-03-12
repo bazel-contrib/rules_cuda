@@ -1,11 +1,21 @@
 load(
     "@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl",
+    _action_config = "action_config",
+    _artifact_name_pattern = "artifact_name_pattern",
     _feature = "feature",
+    _feature_set = "feature_set",
     _flag_group = "flag_group",
     _flag_set = "flag_set",
     _tool = "tool",
-    _tool_path = "tool_path",
     _variable_with_value = "variable_with_value",
+)
+
+CudaToolchainConfigInfo = provider(
+    """""",
+    fields = {
+        "features": "A list of features.",
+        "artifact_name_patterns": "A list of artifact_name_patterns.",
+    },
 )
 
 _MAX_FLAG_LEN = 1024
@@ -154,6 +164,14 @@ def access(var, path = None, path_list = None, fail_if_not_available = True):
     else:
         return None
 
+def eval_env_entry(ee, var, environ):
+    if ee.key in environ:
+        fail("key", ee.key, "occurs in multiple env_entry, unable to handle conflict.")
+    environ[ee.key] = access(var, ee.value)
+
+def eval_env_set(es, var):
+    fail("NotImplemented")
+
 def create_var_from_value(value, parent = None, path = None, path_list = None):
     if path == None and path_list == None:
         return _NestingVarInfo(this = value, parent = parent)
@@ -282,9 +300,153 @@ def eval_feature(feat, current_action, vars):
                 pass
     return ret
 
+_AllSelectablesInfo = provider(
+    "",
+    fields = {
+        "implies": "",
+        "implied_by": "",
+        "requires": "",
+        "required_by": "",
+        "requested": "",
+        "enabled": "",
+    },
+)
+
+def _collect_selectables_info(selectables, requested):
+    info = _AllSelectablesInfo(
+        implies = {},
+        implied_by = {},
+        requires = {},
+        required_by = {},
+        requested = {r: True for r in requested},
+        enabled = {},
+    )
+    for selectable in selectables:
+        if not hasattr(selectable, "implies"):
+            fail(selectable, "is not an selectable")
+        name = _get_name_from_selectable(selectable)
+
+        if selectable.enabled:
+            info.enabled[name] = True
+
+        info.implies[name] = selectable.implies[:]
+        for i in selectable.implies:
+            info.implied_by.setdefault(i, [])
+            info.implied_by[i].append(name)
+
+        if hasattr(selectable, "requires"):  # NOTE: action_config do not has this field
+            info.requires[name] = [required_feature_set.features[:] for required_feature_set in selectable.requires]
+            for required_feature_set_names in info.requires[name]:
+                for r in required_feature_set_names:
+                    info.required_by.setdefault(r, [])
+                    info.required_by[r].append(name)
+    return info
+
+def _get_name_from_selectable(selectable):
+    if hasattr(selectable, "name"):
+        return selectable.name
+    if hasattr(selectable, "action_name"):
+        return selectable.action_name
+    fail("Unreachable")
+
+def _is_enabled(info, name):
+    return info.enabled.get(name, False)
+
+def _enable_all_implied(info):
+    _MAX_ITER = 65536
+
+    to_enable = reversed(info.requested.keys())[:]
+
+    for _ in range(_MAX_ITER):
+        if len(to_enable) == 0:
+            break
+        name = to_enable.pop()
+        if name in info.implies and name not in info.enabled:
+            info.enabled[name] = True
+            to_enable.extend([new_name for new_name in reversed(info.implies[name])])
+
+    if len(to_enable) != 0:
+        fail("_enable_all_implied imcomplete")
+
+def _is_implied_by_enabled_activatable(info, name):
+    for implied_by in info.implied_by[name]:
+        if _is_enabled(info, implied_by):
+            return True
+    return False
+
+def _all_implications_enabled(info, name):
+    for implied in info.implies[name]:
+        if not _is_enabled(info, implied):
+            return False
+    return True
+
+def _all_requirements_met(info, name):
+    if len(info.requires.get(name, [])) == 0:
+        return True
+    for requires_all_of in info.requires[name]:
+        req_met = True
+        for required in requires_all_of:
+            if not _is_enabled(info, required):
+                req_met = False
+                break
+        if req_met:
+            return True
+    return False
+
+def _is_satisfied(info, name):
+    # print((name in info.requested or _is_implied_by_enabled_activatable(info, name)), _all_implications_enabled(info, name), _all_requirements_met(info, name))
+    return ((name in info.requested or _is_implied_by_enabled_activatable(info, name)) and
+            _all_implications_enabled(info, name) and
+            _all_requirements_met(info, name))
+
+def _check_activatable(info, to_check):
+    _MAX_ITER = 65536
+    for _ in range(_MAX_ITER):
+        if len(to_check) == 0:
+            break
+        name = to_check.pop()
+
+        if not _is_enabled(info, name) or _is_satisfied(info, name):
+            # print("keep", name)
+            continue
+
+        # print("disable", name)
+        info.enabled[name] = False
+
+        # Once we disable a selectable, we have to re-check all selectables
+        # that can be affected by that removal. Notice this is a loop unrolled
+        # recursive function, we should reversed the order here!
+
+        # 3. A selectable that this selectable implied may now be disabled if
+        # no other selectables also implies it.
+        to_check.extend(reversed(info.implies.get(name, [])))
+
+        # 2. A selectable that required the current selectable may now be
+        # disabled, depending on whether the requirement was optional.
+        to_check.extend(reversed(info.required_by.get(name, [])))
+
+        # 1. A selectable that implied the current selectable is now going to
+        # be disabled.
+        to_check.extend(reversed(info.implied_by.get(name, [])))
+
+    if len(to_check) != 0:
+        fail("_check_activatable imcomplete")
+
+def _disable_unsupported_activatables(info):
+    enabled = [k for k, v in reversed(info.enabled.items()) if v == True]
+    _check_activatable(info, enabled)
+
+def get_enabled_selectables(selectables, requested = None):
+    info = _collect_selectables_info(selectables, requested if requested != None else [])
+    _enable_all_implied(info)
+    _disable_unsupported_activatables(info)
+    return sorted([k for k, v in info.enabled.items() if v == True])
+
+action_config = _action_config
+artifact_name_pattern = _artifact_name_pattern
 feature = _feature
+feature_set = _feature_set
 flag_group = _flag_group
 flag_set = _flag_set
 tool = _tool
-tool_path = _tool_path
 variable_with_value = _variable_with_value
