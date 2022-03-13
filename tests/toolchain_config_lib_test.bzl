@@ -1,6 +1,6 @@
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
-load("//cuda/private:toolchain_config_lib.bzl", "feature", "flag_group", "feature_set")
-load("//cuda/private:toolchain_config_lib.bzl", "access", "create_var_from_value", "eval_flag_group", "exist", "expand_flag", "get_enabled_selectables", "parse_flag", "variable_with_value")
+load("//cuda/private:toolchain_config_lib.bzl", "feature", "feature_set", "flag_group", "flag_set", "variable_with_value")
+load("//cuda/private:toolchain_config_lib.bzl", "access", "create_var_from_value", "eval_feature", "eval_flag_group", "exist", "expand_flag", "get_enabled_selectables", "parse_flag")
 
 def _parse_flag_test_impl(ctx):
     env = unittest.begin(ctx)
@@ -438,10 +438,51 @@ def _feature_constraint_test_impl(ctx):
 
 feature_constraint_test = unittest.make(_feature_constraint_test_impl)
 
-# def toolchain_config_lib_test_suite(name):
-#     unittest.suite(
-#         name,
-#         parse_flag_test,
-#         expand_flag_test,
-#         eval_flag_group_test,
-#     )
+def _feature_flag_sets_test_impl(ctx):
+    env = unittest.begin(ctx)
+
+    feat = feature(
+        name = "a",
+        flag_sets = [
+            flag_set(actions = ["c"], flag_groups = [flag_group(expand_if_available = "v", flags = ["%{v}"])]),
+            flag_set(actions = ["c"], flag_groups = [flag_group(flags = ["unconditional"])]),
+        ],
+    )
+    asserts.equals(env, ["unconditional"], eval_feature(feat, struct(), "c", []), "testFlagGroupsWithMissingVariableIsNotExpanded")
+
+    # NOTE: expand_if_all_available is deprecated, use nested flag_group to express the same logic
+    feat = feature(
+        name = "a",
+        flag_sets = [
+            flag_set(actions = ["c"], flag_groups = [flag_group(expand_if_available = "v", flags = ["%{v}"])]),
+            flag_set(actions = ["c"], flag_groups = [
+                flag_group(
+                    expand_if_available = "v",
+                    flag_groups = [flag_group(expand_if_available = "w", flags = ["%{v}%{w}"])],
+                ),
+            ]),
+            flag_set(actions = ["c"], flag_groups = [flag_group(flags = ["unconditional"])]),
+        ],
+    )
+    asserts.equals(env, ["1", "unconditional"], eval_feature(feat, struct(v = "1"), "c", []), "testOnlyFlagGroupsWithAllVariablesPresentAreExpanded")
+
+    feat = feature(
+        name = "a",
+        flag_sets = [
+            flag_set(actions = ["c"], flag_groups = [flag_group(expand_if_available = "v", iterate_over = "v", flags = ["%{v}"])]),
+            flag_set(actions = ["c"], flag_groups = [
+                flag_group(
+                    expand_if_available = "v",
+                    iterate_over = "v",
+                    flag_groups = [flag_group(expand_if_available = "w", flags = ["%{v}%{w}"])],
+                ),
+            ]),
+            flag_set(actions = ["c"], flag_groups = [flag_group(flags = ["unconditional"])]),
+        ],
+    )
+    asserts.equals(env, ["1", "2", "unconditional"], eval_feature(feat, struct(v = ["1", "2"]), "c", []), "testOnlyInnerFlagGroupIsIteratedWithSequenceVariable")
+    asserts.equals(env, ["1", "2", "13", "23", "unconditional"], eval_feature(feat, struct(v = ["1", "2"], w = "3"), "c", []), "testFlagSetsAreIteratedIndividuallyForSequenceVariables")
+
+    return unittest.end(env)
+
+feature_flag_sets_test = unittest.make(_feature_flag_sets_test_impl)

@@ -287,19 +287,6 @@ def eval_flag_group(fg, value, max_eval_iterations = 65536):
         processed_ret.append("".join(flag_info.chunks))
     return processed_ret
 
-def eval_feature(feat, current_action, vars):
-    ret = []
-    if not feat.enabled:
-        return ret
-    enabled = False
-    for fs in feat.flag_sets:
-        if len(fs.with_features) != 0:
-            fail("NotImplemented")
-        if current_action in fs.actions:
-            for fg in fs.flag_groups:
-                pass
-    return ret
-
 _AllSelectablesInfo = provider(
     "",
     fields = {
@@ -441,6 +428,23 @@ def get_enabled_selectables(selectables, requested = None):
     _enable_all_implied(info)
     _disable_unsupported_activatables(info)
     return sorted([k for k, v in info.enabled.items() if v == True])
+
+def eval_flag_set(fs, value, action_name, features):
+    if action_name not in fs.actions:
+        return []
+    if len(fs.with_features) > 0:
+        fail("NotImplemented")
+
+    ret = []
+    for fg in fs.flag_groups:
+        ret.extend(eval_flag_group(fg, value))
+    return ret
+
+def eval_feature(feat, value, action_name, features):
+    ret = []
+    for fs in feat.flag_sets:
+        ret.extend(eval_flag_set(fs, value, action_name, features))
+    return ret
 
 action_config = _action_config
 artifact_name_pattern = _artifact_name_pattern

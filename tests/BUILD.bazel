@@ -1,4 +1,13 @@
-load(":toolchain_config_lib_test.bzl", "var_test", "eval_flag_group_test", "expand_flag_test", "parse_flag_test", "parse_flag_cache_test", "feature_constraint_test")
+load(
+    ":toolchain_config_lib_test.bzl",
+    "eval_flag_group_test",
+    "expand_flag_test",
+    "feature_constraint_test",
+    "feature_flag_sets_test",
+    "parse_flag_cache_test",
+    "parse_flag_test",
+    "var_test",
+)
 
 parse_flag_test(name = "parse_flag_test")
 
@@ -11,3 +20,5 @@ expand_flag_test(name = "expand_flag_test")
 eval_flag_group_test(name = "eval_flag_group_test")
 
 feature_constraint_test(name = "feature_constraint_test")
+
+feature_flag_sets_test(name = "feature_flag_sets_test")
