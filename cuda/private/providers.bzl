@@ -76,3 +76,14 @@ CudaInfo = provider(
         "rdc_pic_objects": "A depset of relocatable device code and position indepentent code objects.",
     }
 )
+
+CudaToolchainConfigInfo = provider(
+    """""",
+    fields = {
+        "action_configs": "A list of action_configs.",
+        "artifact_name_patterns": "A list of artifact_name_patterns.",
+        "cuda_path": "cuda toolkit root path",
+        "features": "A list of features.",
+        "toolchain_identifier": "nvcc or clang",
+    },
+)

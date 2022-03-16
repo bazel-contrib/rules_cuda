@@ -2,20 +2,15 @@ load(
     "@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl",
     _action_config = "action_config",
     _artifact_name_pattern = "artifact_name_pattern",
+    _env_entry = "env_entry",
+    _env_set = "env_set",
     _feature = "feature",
     _feature_set = "feature_set",
     _flag_group = "flag_group",
     _flag_set = "flag_set",
     _tool = "tool",
     _variable_with_value = "variable_with_value",
-)
-
-CudaToolchainConfigInfo = provider(
-    """""",
-    fields = {
-        "features": "A list of features.",
-        "artifact_name_patterns": "A list of artifact_name_patterns.",
-    },
+    _with_feature_set = "with_feature_set",
 )
 
 _MAX_FLAG_LEN = 1024
@@ -164,14 +159,6 @@ def access(var, path = None, path_list = None, fail_if_not_available = True):
     else:
         return None
 
-def eval_env_entry(ee, var, environ):
-    if ee.key in environ:
-        fail("key", ee.key, "occurs in multiple env_entry, unable to handle conflict.")
-    environ[ee.key] = access(var, ee.value)
-
-def eval_env_set(es, var):
-    fail("NotImplemented")
-
 def create_var_from_value(value, parent = None, path = None, path_list = None):
     if path == None and path_list == None:
         return _NestingVarInfo(this = value, parent = parent)
@@ -296,6 +283,8 @@ _AllSelectablesInfo = provider(
         "required_by": "",
         "requested": "",
         "enabled": "",
+        "default_enabled": "",
+        "selectables": "",
     },
 )
 
@@ -307,11 +296,16 @@ def _collect_selectables_info(selectables, requested):
         required_by = {},
         requested = {r: True for r in requested},
         enabled = {},
+        default_enabled = [],
+        selectables = {},
     )
     for selectable in selectables:
         if not hasattr(selectable, "implies"):
             fail(selectable, "is not an selectable")
         name = _get_name_from_selectable(selectable)
+        if name in info.selectables:
+            fail(name, "name collision")
+        info.selectables[name] = selectable
 
         if selectable.enabled:
             info.enabled[name] = True
@@ -327,6 +321,9 @@ def _collect_selectables_info(selectables, requested):
                 for r in required_feature_set_names:
                     info.required_by.setdefault(r, [])
                     info.required_by[r].append(name)
+
+    info.default_enabled.extend(info.enabled.keys())
+
     return info
 
 def _get_name_from_selectable(selectable):
@@ -423,34 +420,123 @@ def _disable_unsupported_activatables(info):
     enabled = [k for k, v in reversed(info.enabled.items()) if v == True]
     _check_activatable(info, enabled)
 
-def get_enabled_selectables(selectables, requested = None):
-    info = _collect_selectables_info(selectables, requested if requested != None else [])
+# FIXME: only for test, remove?
+def get_enabled_selectables(selectables = None, info = None, requested = None):
+    # reimplement https://github.com/bazelbuild/bazel/blob/0ba4caa5fc/src/main/java/com/google/devtools/build/lib/rules/cpp/FeatureSelection.java in starlark
+    if (selectables == None and info == None) or (selectables != None and info != None):
+        fail("only one of parameters selectables and info should be specified")
+    if info == None:
+        info = _collect_selectables_info(selectables, requested if requested != None else [])
     _enable_all_implied(info)
     _disable_unsupported_activatables(info)
     return sorted([k for k, v in info.enabled.items() if v == True])
 
-def eval_flag_set(fs, value, action_name, features):
-    if action_name not in fs.actions:
-        return []
-    if len(fs.with_features) > 0:
-        fail("NotImplemented")
+def eval_with_features(with_features, info):
+    if len(with_features) == 0:
+        return True
+    for with_feature in with_features:
+        req_met = True
+        for feat in with_feature.features:
+            if not _is_enabled(info, feat):
+                req_met = False
+                break
+        for not_feat in with_feature.not_features:
+            if _is_enabled(info, not_feat):
+                req_met = False
+                break
+        if req_met:
+            return True
+    return False
 
+def eval_flag_set(fs, value, action_name, info):
     ret = []
+    if action_name not in fs.actions:
+        return ret
+    if not eval_with_features(fs.with_features, info):
+        return ret
     for fg in fs.flag_groups:
         ret.extend(eval_flag_group(fg, value))
     return ret
 
-def eval_feature(feat, value, action_name, features):
+def eval_feature(feat, value, action_name, info):
     ret = []
     for fs in feat.flag_sets:
-        ret.extend(eval_flag_set(fs, value, action_name, features))
+        ret.extend(eval_flag_set(fs, value, action_name, info))
     return ret
+
+def _eval_env_entry(ee, var, environ):
+    if ee.key in environ:
+        fail("key", ee.key, "occurs in multiple env_entry, unable to handle conflict.")
+    flag_infos = [parse_flag(ee.value)]
+    _expand_flag_infos_in_current_scope(flag_infos, var)
+    (flag_info,) = flag_infos
+    environ[ee.key] = "".join(flag_info.chunks)
+
+def eval_env_set(es, value, action_name, info, ret = None):
+    if ret == None:
+        ret = {}
+    if action_name not in es.actions:
+        return ret
+    if not eval_with_features(es.with_features, info):
+        return ret
+    var = create_var_from_value(value)
+    for ee in es.env_entries:
+        _eval_env_entry(ee, var, ret)
+    return ret
+
+def _configure_features(toolchain_config, requested_features = None, unsupported_features = None):
+    requested_features = [] if requested_features == None else requested_features
+    if unsupported_features != None:
+        fail("unsupported_features parameter support is not implemented.")
+    info = _collect_selectables_info(toolchain_config.features, requested = requested_features)
+    _enable_all_implied(info)
+    _disable_unsupported_activatables(info)
+    return info
+
+def _get_default_features_and_action_configs(info):
+    return info.default_enabled
+
+def _get_enabled_feature(info):
+    return sorted([k for k, v in info.enabled.items() if v == True])
+
+def _get_command_line(info, action, value):
+    fail("NotImplemented")
+
+def _get_tool(info, action):
+    fail("NotImplemented")
+
+def _get_artifact_name_extension(info, action):
+    fail("NotImplemented")
+
+def _get_environment_variables(info, action, value):
+    environ = {}
+    for name in info.enabled:
+        s = info.selectables[name]
+        if s.type_name == "feature":
+            for es in s.env_sets:
+                eval_env_set(es, value, action, info, environ)
+    return environ
+
+config_helper = struct(
+    configure_features = _configure_features,
+    get_default_features_and_action_configs = _get_default_features_and_action_configs,
+    get_enabled_feature = _get_enabled_feature,
+    get_command_line = _get_command_line,
+    get_tool = _get_tool,
+    action_is_enabled = _is_enabled,
+    is_enabled = _is_enabled,
+    get_artifact_name_extension = _get_artifact_name_extension,
+    get_environment_variables = _get_environment_variables,
+)
 
 action_config = _action_config
 artifact_name_pattern = _artifact_name_pattern
+env_entry = _env_entry
+env_set = _env_set
 feature = _feature
 feature_set = _feature_set
 flag_group = _flag_group
 flag_set = _flag_set
 tool = _tool
 variable_with_value = _variable_with_value
+with_feature_set = _with_feature_set

@@ -1,6 +1,7 @@
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
-load("//cuda/private:toolchain_config_lib.bzl", "feature", "feature_set", "flag_group", "flag_set", "variable_with_value")
-load("//cuda/private:toolchain_config_lib.bzl", "access", "create_var_from_value", "eval_feature", "eval_flag_group", "exist", "expand_flag", "get_enabled_selectables", "parse_flag")
+load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
+load("//cuda/private:toolchain_config_lib.bzl", "env_entry", "env_set", "feature", "feature_set", "flag_group", "flag_set", "variable_with_value", "with_feature_set")
+load("//cuda/private:toolchain_config_lib.bzl", "access", "config_helper", "create_var_from_value", "eval_feature", "eval_flag_group", "exist", "expand_flag", "get_enabled_selectables", "parse_flag")
 
 def _parse_flag_test_impl(ctx):
     env = unittest.begin(ctx)
@@ -448,7 +449,7 @@ def _feature_flag_sets_test_impl(ctx):
             flag_set(actions = ["c"], flag_groups = [flag_group(flags = ["unconditional"])]),
         ],
     )
-    asserts.equals(env, ["unconditional"], eval_feature(feat, struct(), "c", []), "testFlagGroupsWithMissingVariableIsNotExpanded")
+    asserts.equals(env, ["unconditional"], eval_feature(feat, struct(), "c", None), "testFlagGroupsWithMissingVariableIsNotExpanded")
 
     # NOTE: expand_if_all_available is deprecated, use nested flag_group to express the same logic
     feat = feature(
@@ -464,7 +465,7 @@ def _feature_flag_sets_test_impl(ctx):
             flag_set(actions = ["c"], flag_groups = [flag_group(flags = ["unconditional"])]),
         ],
     )
-    asserts.equals(env, ["1", "unconditional"], eval_feature(feat, struct(v = "1"), "c", []), "testOnlyFlagGroupsWithAllVariablesPresentAreExpanded")
+    asserts.equals(env, ["1", "unconditional"], eval_feature(feat, struct(v = "1"), "c", None), "testOnlyFlagGroupsWithAllVariablesPresentAreExpanded")
 
     feat = feature(
         name = "a",
@@ -480,9 +481,96 @@ def _feature_flag_sets_test_impl(ctx):
             flag_set(actions = ["c"], flag_groups = [flag_group(flags = ["unconditional"])]),
         ],
     )
-    asserts.equals(env, ["1", "2", "unconditional"], eval_feature(feat, struct(v = ["1", "2"]), "c", []), "testOnlyInnerFlagGroupIsIteratedWithSequenceVariable")
-    asserts.equals(env, ["1", "2", "13", "23", "unconditional"], eval_feature(feat, struct(v = ["1", "2"], w = "3"), "c", []), "testFlagSetsAreIteratedIndividuallyForSequenceVariables")
+    asserts.equals(env, ["1", "2", "unconditional"], eval_feature(feat, struct(v = ["1", "2"]), "c", None), "testOnlyInnerFlagGroupIsIteratedWithSequenceVariable")
+    asserts.equals(env, ["1", "2", "13", "23", "unconditional"], eval_feature(feat, struct(v = ["1", "2"], w = "3"), "c", None), "testFlagSetsAreIteratedIndividuallyForSequenceVariables")
 
     return unittest.end(env)
 
 feature_flag_sets_test = unittest.make(_feature_flag_sets_test_impl)
+
+def create_toolchain_config(action_configs = [], features = [], artifact_name_patterns = [], toolchain_identifier = "nvcc", cuda_path = None):
+    return CudaToolchainConfigInfo(
+        action_configs = action_configs,
+        artifact_name_patterns = artifact_name_patterns,
+        features = features,
+        toolchain_identifier = toolchain_identifier,
+        cuda_path = cuda_path,
+    )
+
+def _feature_configuration_test_impl(ctx):
+    env = unittest.begin(ctx)
+
+    config_info = config_helper.configure_features(create_toolchain_config(features = [
+        feature(name = "a", flag_sets = [flag_set(actions = ["c"], flag_groups = [flag_group(flags = ["-f", "%{v}"])])]),
+        feature(name = "b", implies = ["a"]),
+    ]), ["b"])
+    asserts.equals(env, ["a", "b"], config_helper.get_enabled_feature(config_info), "testConfiguration")
+
+    return unittest.end(env)
+
+feature_configuration_test = unittest.make(_feature_configuration_test_impl)
+
+def _feature_configuration_env_test_impl(ctx):
+    env = unittest.begin(ctx)
+
+    config_info = config_helper.configure_features(create_toolchain_config(features = [
+        feature(
+            name = "a",
+            env_sets = [env_set(
+                actions = ["c++-compile"],
+                env_entries = [env_entry(key = "foo", value = "bar"), env_entry(key = "cat", value = "meow")],
+            )],
+            flag_sets = [flag_set(
+                actions = ["c++-compile"],
+                flag_groups = [flag_group(flags = ["-a-c++-compile"])],
+            )],
+        ),
+        feature(
+            name = "b",
+            env_sets = [
+                env_set(
+                    actions = ["c++-compile"],
+                    env_entries = [env_entry(key = "dog", value = "woof")],
+                ),
+                env_set(
+                    actions = ["c++-compile"],
+                    with_features = [with_feature_set(features = ["d"])],
+                    env_entries = [env_entry(key = "withFeature", value = "value1")],
+                ),
+                env_set(
+                    actions = ["c++-compile"],
+                    with_features = [with_feature_set(features = ["e"])],
+                    env_entries = [env_entry(key = "withoutFeature", value = "value2")],
+                ),
+                env_set(
+                    actions = ["c++-compile"],
+                    with_features = [with_feature_set(not_features = ["f"])],
+                    env_entries = [env_entry(key = "withNotFeature", value = "value3")],
+                ),
+                env_set(
+                    actions = ["c++-compile"],
+                    with_features = [with_feature_set(not_features = ["g"])],
+                    env_entries = [env_entry(key = "withoutNotFeature", value = "value4")],
+                ),
+            ],
+        ),
+        feature(
+            name = "c",
+            env_sets = [env_set(
+                actions = ["c++-compile"],
+                env_entries = [env_entry(key = "doNotInclude", value = "doNotIncludePlease")],
+            )],
+        ),
+        feature(name = "d"),
+        feature(name = "e"),
+        feature(name = "f"),
+        feature(name = "g"),
+    ]), ["a", "b", "d", "f"])
+    environ = config_helper.get_environment_variables(config_info, "c++-compile", struct())
+    ref_environ = {"foo": "bar", "cat": "meow", "dog": "woof", "withFeature": "value1", "withoutNotFeature": "value4"}
+    asserts.equals(env, ref_environ, environ, "testEnvVars")
+    asserts.equals(env, ref_environ.keys(), environ.keys(), "testEnvVars dict in order")
+
+    return unittest.end(env)
+
+feature_configuration_env_test = unittest.make(_feature_configuration_env_test_impl)
