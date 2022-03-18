@@ -3,11 +3,14 @@ load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "env_entry", "env_set", "feature", "feature_set", "flag_group", "flag_set", "variable_with_value", "with_feature_set")
 load("//cuda/private:toolchain_config_lib.bzl", "access", "config_helper", "create_var_from_value", "eval_feature", "eval_flag_group", "exist", "expand_flag", "get_enabled_selectables", "parse_flag")
 
+def test_parse_flag(env, flag_str, ref_chunks, ref_expandables):
+    f = parse_flag(flag_str)
+    asserts.equals(env, ref_chunks, f.chunks)
+    asserts.equals(env, ref_expandables, f.expandables)
+
 def _parse_flag_test_impl(ctx):
     env = unittest.begin(ctx)
-    f = parse_flag("")
-    asserts.equals(env, [], f.chunks)
-    asserts.equals(env, {}, f.expandables)
+    test_parse_flag(env, "", [], {})
 
     # f = parse_flag("%")
     # asserts.expect_failure(env, "expected '{'")
@@ -21,29 +24,17 @@ def _parse_flag_test_impl(ctx):
     # f = parse_flag("%{v1.v2 ")
     # asserts.expect_failure(env, "expected '}'")
 
-    f = parse_flag("%%")
-    asserts.equals(env, ["%"], f.chunks)
-    asserts.equals(env, {}, f.expandables)
+    test_parse_flag(env, "%%", ["%"], {})
 
-    f = parse_flag("%{v}")
-    asserts.equals(env, ["v"], f.chunks)
-    asserts.equals(env, {"v": [0]}, f.expandables)
+    test_parse_flag(env, "%{v}", ["v"], {"v": [0]})
 
-    f = parse_flag(" %{v}")
-    asserts.equals(env, [" ", "v"], f.chunks)
-    asserts.equals(env, {"v": [1]}, f.expandables)
+    test_parse_flag(env, " %{v}", [" ", "v"], {"v": [1]})
 
-    f = parse_flag("%%{var}")
-    asserts.equals(env, ["%{var}"], f.chunks)
-    asserts.equals(env, {}, f.expandables)
+    test_parse_flag(env, "%%{var}", ["%{var}"], {})
 
-    f = parse_flag(" %{v1} %{v2.v3} ")
-    asserts.equals(env, [" ", "v1", " ", "v2.v3", " "], f.chunks)
-    asserts.equals(env, {"v1": [1], "v2.v3": [3]}, f.expandables)
+    test_parse_flag(env, " %{v1} %{v2.v3} ", [" ", "v1", " ", "v2.v3", " "], {"v1": [1], "v2.v3": [3]})
 
-    f = parse_flag("%{v1} %{v2.v3}  --flag %{v1}")
-    asserts.equals(env, ["v1", " ", "v2.v3", "  --flag ", "v1"], f.chunks)
-    asserts.equals(env, {"v1": [0, 4], "v2.v3": [2]}, f.expandables)
+    test_parse_flag(env, "%{v1} %{v2.v3}  --flag %{v1}", ["v1", " ", "v2.v3", "  --flag ", "v1"], {"v1": [0, 4], "v2.v3": [2]})
 
     return unittest.end(env)
 
