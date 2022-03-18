@@ -91,26 +91,22 @@ def _var_test_impl(ctx):
 
 var_test = unittest.make(_var_test_impl)
 
+def test_expand_flag(env, flag_info, value, name_to_expand, ref_chunks, ref_expandables):
+    var = create_var_from_value(value)
+    expand_flag(flag_info, var, name_to_expand)
+    asserts.equals(env, ref_chunks, flag_info.chunks)
+    asserts.equals(env, ref_expandables, flag_info.expandables)
+
 def _expand_flag_test_impl(ctx):
     env = unittest.begin(ctx)
-    f = parse_flag("--flag=%{v}")
-    expand_flag(f, struct(v = "the-value"), "v")
-    asserts.equals(env, ["--flag=", "the-value"], f.chunks)
-    asserts.equals(env, {}, f.expandables)
+    test_expand_flag(env, parse_flag("--flag=%{v}"), struct(v = "the-value"), "v", ["--flag=", "the-value"], {})
 
-    f = parse_flag("--flag=%{v}")
-    expand_flag(f, struct(v = "the-value"), "not_exist")
-    asserts.equals(env, ["--flag=", "v"], f.chunks)
-    asserts.equals(env, {"v": [1]}, f.expandables)
+    test_expand_flag(env, parse_flag("--flag=%{v}"), struct(v = "the-value"), "not_exist", ["--flag=", "v"], {"v": [1]})
 
-    f = parse_flag("--flag=%{v1}x%{v2}")
-    var = struct(v1 = "v1-value", v2 = "v2-value")
-    expand_flag(f, var, "v2")
-    asserts.equals(env, ["--flag=", "v1", "x", "v2-value"], f.chunks)
-    asserts.equals(env, {"v1": [1]}, f.expandables)
-    expand_flag(f, var, "v1")
-    asserts.equals(env, ["--flag=", "v1-value", "x", "v2-value"], f.chunks)
-    asserts.equals(env, {}, f.expandables)
+    value = struct(v1 = "v1-value", v2 = "v2-value")
+    flag_info = parse_flag("--flag=%{v1}x%{v2}")
+    test_expand_flag(env, flag_info, value, "v2", ["--flag=", "v1", "x", "v2-value"], {"v1": [1]})
+    test_expand_flag(env, flag_info, value, "v1", ["--flag=", "v1-value", "x", "v2-value"], {})
 
     return unittest.end(env)
 
