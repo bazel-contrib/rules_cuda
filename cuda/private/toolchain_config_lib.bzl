@@ -516,7 +516,11 @@ def _get_enabled_feature(info):
     return sorted([k for k, v in info.enabled.items() if v == True])
 
 def _get_command_line(info, action, value):
-    fail("NotImplemented")
+    ret = []
+    for name in info.enabled:
+        feature_or_action_config = info.selectables_info.selectables[name]
+        ret.extend(eval_feature(feature_or_action_config, value, action, info))
+    return ret
 
 def _get_tool(info, action):
     fail("NotImplemented")

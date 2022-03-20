@@ -484,14 +484,141 @@ def create_toolchain_config(action_configs = [], features = [], artifact_name_pa
         cuda_path = cuda_path,
     )
 
+def create_config_info(features, requested = []):
+    return config_helper.configure_features(create_toolchain_config(features = features), requested)
+
 def _feature_configuration_test_impl(ctx):
     env = unittest.begin(ctx)
 
-    config_info = config_helper.configure_features(create_toolchain_config(features = [
-        feature(name = "a", flag_sets = [flag_set(actions = ["c"], flag_groups = [flag_group(flags = ["-f", "%{v}"])])]),
-        feature(name = "b", implies = ["a"]),
-    ]), ["b"])
-    asserts.equals(env, ["a", "b"], config_helper.get_enabled_feature(config_info), "testConfiguration")
+    config_info = create_config_info(
+        [
+            feature(name = "a", flag_sets = [flag_set(actions = ["c"], flag_groups = [flag_group(flags = ["-f", "%{v}"])])]),
+            feature(name = "b", implies = ["a"]),
+        ],
+        ["b"],
+    )
+    asserts.equals(env, ["a", "b"], config_helper.get_enabled_feature(config_info), "testConfiguration get_enabled_feature")
+    asserts.equals(env, ["-f", "1"], config_helper.get_command_line(config_info, "c", struct(v = "1")), "testConfiguration get_enabled_feature")
+
+    config_info = create_config_info([feature(name = "a"), feature(name = "b", enabled = True)])
+    asserts.equals(env, ["b"], config_helper.get_default_features_and_action_configs(config_info), "testDefaultFeatures")
+
+    config_info = create_config_info([action_config(action_name = "a"), action_config(action_name = "b", enabled = True)])
+    asserts.equals(env, ["b"], config_helper.get_default_features_and_action_configs(config_info), "testDefaultActionConfigs")
+
+    config_info = create_config_info(
+        [
+            feature(
+                name = "a",
+                flag_sets = [flag_set(
+                    actions = ["c++-compile"],
+                    with_features = [with_feature_set(features = ["b"])],
+                    flag_groups = [flag_group(flags = ["dummy_flag"])],
+                )],
+            ),
+            feature(name = "b"),
+        ],
+        ["a", "b"],
+    )
+    asserts.equals(env, ["dummy_flag"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_oneSetOneFeature")
+
+    config_info = create_config_info(
+        [
+            feature(
+                name = "a",
+                flag_sets = [flag_set(
+                    actions = ["c++-compile"],
+                    with_features = [with_feature_set(features = ["b", "c"])],
+                    flag_groups = [flag_group(flags = ["dummy_flag"])],
+                )],
+            ),
+            feature(name = "b"),
+            feature(name = "c"),
+        ],
+        ["a", "b", "c"],
+    )
+    asserts.equals(env, ["dummy_flag"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_oneSetMultipleFeatures")
+
+    features = [
+        feature(
+            name = "a",
+            flag_sets = [flag_set(
+                actions = ["c++-compile"],
+                with_features = [
+                    with_feature_set(features = ["b1", "c1"]),
+                    with_feature_set(features = ["b2", "c2"]),
+                ],
+                flag_groups = [flag_group(flags = ["dummy_flag"])],
+            )],
+        ),
+        feature(name = "b1"),
+        feature(name = "c1"),
+        feature(name = "b2"),
+        feature(name = "c2"),
+    ]
+    config_info = create_config_info(features, ["a", "b1", "c1", "b2", "c2"])
+    asserts.equals(env, ["dummy_flag"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_mulipleSetsMultipleFeatures 0")
+    config_info = create_config_info(features, ["a", "b1", "c1"])
+    asserts.equals(env, ["dummy_flag"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_mulipleSetsMultipleFeatures 1")
+    config_info = create_config_info(features, ["a", "b1", "b2"])
+    asserts.equals(env, [], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_mulipleSetsMultipleFeatures 2")
+
+    features = [
+        feature(
+            name = "a",
+            flag_sets = [flag_set(
+                actions = ["c++-compile"],
+                with_features = [
+                    with_feature_set(not_features = ["x", "y"], features = ["z"]),
+                    with_feature_set(not_features = ["q"]),
+                ],
+                flag_groups = [flag_group(flags = ["dummy_flag"])],
+            )],
+        ),
+        feature(name = "x"),
+        feature(name = "y"),
+        feature(name = "z"),
+        feature(name = "q"),
+    ]
+    config_info = create_config_info(features, ["a"])
+    asserts.equals(env, ["dummy_flag"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_notFeature 0")
+    config_info = create_config_info(features, ["a", "q"])
+    asserts.equals(env, [], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_notFeature 1")
+    config_info = create_config_info(features, ["a", "q", "z"])
+    asserts.equals(env, ["dummy_flag"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_notFeature 2")
+    config_info = create_config_info(features, ["a", "q", "x", "z"])
+    asserts.equals(env, [], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_notFeature 3")
+    config_info = create_config_info(features, ["a", "q", "x", "y", "z"])
+    asserts.equals(env, [], config_helper.get_command_line(config_info, "c++-compile", struct()), "testWithFeature_notFeature 4")
+
+    features = [
+        action_config(
+            action_name = "action-a",
+            tools = [tool(path = "toolchain/feature-a", with_features = [with_feature_set(features = ["feature-a"])])],
+        ),
+        feature(
+            name = "activates-action-a",
+            implies = ["action-a"],
+        ),
+    ]
+    config_info = create_config_info(features, ["activates-action-a"])
+    asserts.true(env, config_helper.action_is_enabled(config_info, "action-a"), "testActivateActionConfigFromFeature")
+
+    features = [
+        action_config(
+            action_name = "action-a",
+            tools = [tool(path = "toolchain/feature-a", with_features = [with_feature_set(features = ["feature-a"])])],
+        ),
+        feature(
+            name = "requires-action-a",
+            requires = [feature_set(features = ["action-a"])],
+        ),
+    ]
+    config_info = create_config_info(features, ["requires-action-a"])
+    asserts.false(env, config_helper.is_enabled(config_info, "requires-action-a"), "testFeatureCanRequireActionConfig 0")
+    config_info = create_config_info(features, ["action-a", "requires-action-a"])
+    asserts.true(env, config_helper.is_enabled(config_info, "requires-action-a"), "testFeatureCanRequireActionConfig 1")
+
 
     return unittest.end(env)
 
