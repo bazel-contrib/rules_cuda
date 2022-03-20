@@ -169,7 +169,7 @@ def _create_common(ctx):
 
     # gather compile info
     defines = []
-    local_defines =  [ i for i in attr.local_defines]
+    local_defines = [i for i in attr.local_defines]
     compile_flags = _get_nvcc_compile_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
     compile_flags.extend([o for o in attr.copts if _check_opts(o)])
     link_flags = _get_nvcc_dlink_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
