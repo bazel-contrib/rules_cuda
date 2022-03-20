@@ -200,10 +200,10 @@ def _expand_flag_infos_in_current_scope(flag_infos, var):
         for name in flag_info.expandables.keys():
             expand_flag(flag_info, var, name)
 
-def _eval_flags_or_flag_groups(stack, ret, fg, var, recursion_depth, parse_flag_cache):
+def _eval_flags_or_flag_groups(stack, ret, fg, var, recursion_depth, _parse_flag_cache = None):
     if len(fg.flags) > 0 and len(fg.flag_groups) == 0:
         # no need to reverse, because it is not push stack
-        flag_infos = [parse_flag(flag_str, parse_flag_cache) for flag_str in fg.flags]
+        flag_infos = [parse_flag(flag_str, _parse_flag_cache) for flag_str in fg.flags]
         _expand_flag_infos_in_current_scope(flag_infos, var)
         ret[-1].extend(flag_infos)
     elif len(fg.flags) == 0 and len(fg.flag_groups) > 0:
@@ -213,8 +213,9 @@ def _eval_flags_or_flag_groups(stack, ret, fg, var, recursion_depth, parse_flag_
     else:
         fail(fg, "is invalid, either flags or flag_groups must be specified.")
 
-def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations):
-    parse_flag_cache = {}
+def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations, _parse_flag_cache = None):
+    if _parse_flag_cache == None:
+        _parse_flag_cache = {}
     stack.append([fg, var, 1, False])
     recursion_depth = 0
     for _ in range(eval_iterations):
@@ -251,22 +252,22 @@ def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations):
                     # expanding flags should iterate in order, no more recursion involved
                     for value in iterated_over_values:
                         new_var = create_var_from_value(value, parent = var, path_list = path_list)
-                        _eval_flags_or_flag_groups(stack, ret, fg, new_var, recursion_depth, parse_flag_cache)
+                        _eval_flags_or_flag_groups(stack, ret, fg, new_var, recursion_depth, _parse_flag_cache)
                 else:  # expanding flag_groups
                     # expanding flag_groups should iterate in reversed order due to recursion
                     for value in reversed(iterated_over_values):
                         new_var = create_var_from_value(value, parent = var, path_list = path_list)
-                        _eval_flags_or_flag_groups(stack, ret, fg, new_var, recursion_depth, parse_flag_cache)
+                        _eval_flags_or_flag_groups(stack, ret, fg, new_var, recursion_depth, _parse_flag_cache)
             else:
-                _eval_flags_or_flag_groups(stack, ret, fg, var, recursion_depth, parse_flag_cache)
+                _eval_flags_or_flag_groups(stack, ret, fg, var, recursion_depth, _parse_flag_cache)
 
     if len(stack) != 0:
         fail("flag_group evaluation imcomplete")
     return ret
 
-def eval_flag_group(fg, value, max_eval_iterations = 65536):
+def eval_flag_group(fg, value, max_eval_iterations = 65536, _parse_flag_cache = None):
     ret = []
-    _eval_flag_group_impl([], ret, fg, create_var_from_value(value), max_eval_iterations)
+    _eval_flag_group_impl([], ret, fg, create_var_from_value(value), max_eval_iterations, _parse_flag_cache)
     processed_ret = []
     for flag_info in ret[0]:
         if len(flag_info.expandables) != 0:
@@ -455,7 +456,7 @@ def eval_flag_set(fs, value, action_name, info):
     if not eval_with_features(fs.with_features, info):
         return ret
     for fg in fs.flag_groups:
-        ret.extend(eval_flag_group(fg, value))
+        ret.extend(eval_flag_group(fg, value, _parse_flag_cache = info._parse_flag_cache if info != None else None))
     return ret
 
 def eval_feature(feat, value, action_name, info):
@@ -471,10 +472,10 @@ def eval_feature(feat, value, action_name, info):
                 ret.extend(eval_flag_set(fs, value, None, info))
     return ret
 
-def _eval_env_entry(ee, var, environ):
+def _eval_env_entry(ee, var, environ, _parse_flag_cache = None):
     if ee.key in environ:
         fail("key", ee.key, "occurs in multiple env_entry, unable to handle conflict.")
-    flag_infos = [parse_flag(ee.value)]
+    flag_infos = [parse_flag(ee.value, cache = _parse_flag_cache)]
     _expand_flag_infos_in_current_scope(flag_infos, var)
     (flag_info,) = flag_infos
     environ[ee.key] = "".join(flag_info.chunks)
@@ -497,6 +498,7 @@ _FeatureConfigurationInfo = provider(
         "selectables_info": "A _SelectablesInfo, it is immutable.",
         "requested": "the requested features in configure_features",
         "enabled": "enabled action_config or feature after configure_features",
+        "_parse_flag_cache": "",
     },
 )
 
@@ -522,6 +524,7 @@ def _configure_features(selectables = None, selectables_info = None, requested_f
         selectables_info = selectables_info,
         requested = {r: True for r in requested_features},
         enabled = {},
+        _parse_flag_cache = {},
     )
     _enable_all_implied(info)
     _disable_unsupported_activatables(info)
