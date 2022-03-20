@@ -464,12 +464,11 @@ def eval_feature(feat, value, action_name, info):
     if feat.type_name == "feature":
         for fs in feat.flag_sets:
             ret.extend(eval_flag_set(fs, value, action_name, info))
-    else:
-        if _get_name_from_selectable(feat) == action_name:
-            for fs in feat.flag_sets:
-                if len(fs.actions) != 0:
-                    fail("flag_set in action_config '" + action_name + "' must not specify actions")
-                ret.extend(eval_flag_set(fs, value, None, info))
+    elif _get_name_from_selectable(feat) == action_name:
+        for fs in feat.flag_sets:
+            if len(fs.actions) != 0:
+                fail("flag_set in action_config '" + action_name + "' must not specify actions")
+            ret.extend(eval_flag_set(fs, value, None, info))
     return ret
 
 def _eval_env_entry(ee, var, environ, _parse_flag_cache = None):
