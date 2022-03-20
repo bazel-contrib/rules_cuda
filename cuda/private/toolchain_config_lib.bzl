@@ -431,24 +431,6 @@ def _check_provides_conflict(info):
         if len(features) > 1:
             fail("Symbol", s, "is provided by all of the following features:", " ".join(features))
 
-
-# FIXME: only for test, remove?
-def get_enabled_selectables(selectables = None, info = None, requested = None):
-    # reimplement https://github.com/bazelbuild/bazel/blob/0ba4caa5fc/src/main/java/com/google/devtools/build/lib/rules/cpp/FeatureSelection.java in starlark
-    if (selectables == None and info == None) or (selectables != None and info != None):
-        fail("only one of parameters selectables and info should be specified")
-    if info == None:
-        info = _collect_selectables_info(selectables)
-    info = _FeatureConfigurationInfo(
-        selectables_info = info,
-        requested = {r: True for r in (requested if requested != None else [])},
-        enabled = {},
-    )
-    _enable_all_implied(info)
-    _disable_unsupported_activatables(info)
-    _check_provides_conflict(info)
-    return sorted([k for k, v in info.enabled.items() if v == True])
-
 def eval_with_features(with_features, info):
     if len(with_features) == 0:
         return True
@@ -518,13 +500,26 @@ _FeatureConfigurationInfo = provider(
     },
 )
 
-def _configure_features(toolchain_config, requested_features = None, unsupported_features = None):
+def _configure_features(selectables = None, selectables_info = None, requested_features = None, unsupported_features = None):
+    """_configure_features
+
+    Args:
+        selectables: list of action_configs and/or features
+        selectables_info: info return by _collect_selectables_info
+        requested_features: list of action_config/feature name to be enabled
+        unsupported_features: list of action_config/feature name to be disabled
+    """
+    if (selectables == None and selectables_info == None) or (selectables != None and selectables_info != None):
+        fail("one and only one of selectables and selectables_info must be specified")
+    if selectables_info == None:
+        selectables_info = _collect_selectables_info(selectables)
+
     # reimplement https://github.com/bazelbuild/bazel/blob/0ba4caa5fc/src/main/java/com/google/devtools/build/lib/rules/cpp/FeatureSelection.java in starlark
     requested_features = [] if requested_features == None else requested_features
     if unsupported_features != None:
         fail("unsupported_features parameter support is not implemented.")
     info = _FeatureConfigurationInfo(
-        selectables_info = _collect_selectables_info(toolchain_config.features),
+        selectables_info = selectables_info,
         requested = {r: True for r in requested_features},
         enabled = {},
     )

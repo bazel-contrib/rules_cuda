@@ -1,7 +1,7 @@
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "action_config", "env_entry", "env_set", "feature", "feature_set", "flag_group", "flag_set", "tool", "variable_with_value", "with_feature_set")
-load("//cuda/private:toolchain_config_lib.bzl", "access", "config_helper", "create_var_from_value", "eval_feature", "eval_flag_group", "exist", "expand_flag", "get_enabled_selectables", "parse_flag")
+load("//cuda/private:toolchain_config_lib.bzl", "access", "config_helper", "create_var_from_value", "eval_feature", "eval_flag_group", "exist", "expand_flag", "parse_flag")
 
 def test_parse_flag(env, flag_str, ref_chunks, ref_expandables):
     f = parse_flag(flag_str)
@@ -293,6 +293,10 @@ def _eval_flag_group_test_impl(ctx):
 
 eval_flag_group_test = unittest.make(_eval_flag_group_test_impl)
 
+def get_enabled_selectables(selectables = None, info = None, requested = None):
+    info = config_helper.configure_features(selectables = selectables, selectables_info = info, requested_features = requested)
+    return sorted([k for k, v in info.enabled.items() if v == True])
+
 def _feature_constraint_test_impl(ctx):
     env = unittest.begin(ctx)
 
@@ -485,7 +489,7 @@ def create_toolchain_config(action_configs = [], features = [], artifact_name_pa
     )
 
 def create_config_info(features, requested = []):
-    return config_helper.configure_features(create_toolchain_config(features = features), requested)
+    return config_helper.configure_features(selectables = features, requested_features = requested)
 
 def _feature_configuration_test_impl(ctx):
     env = unittest.begin(ctx)
@@ -740,7 +744,7 @@ feature_configuration_test = unittest.make(_feature_configuration_test_impl)
 def _feature_configuration_env_test_impl(ctx):
     env = unittest.begin(ctx)
 
-    config_info = config_helper.configure_features(create_toolchain_config(features = [
+    config_info = create_config_info([
         feature(
             name = "a",
             env_sets = [env_set(
@@ -792,7 +796,7 @@ def _feature_configuration_env_test_impl(ctx):
         feature(name = "e"),
         feature(name = "f"),
         feature(name = "g"),
-    ]), ["a", "b", "d", "f"])
+    ], ["a", "b", "d", "f"])
     environ = config_helper.get_environment_variables(config_info, "c++-compile", struct())
     ref_environ = {"foo": "bar", "cat": "meow", "dog": "woof", "withFeature": "value1", "withoutNotFeature": "value4"}
     asserts.equals(env, ref_environ, environ, "testEnvVars")
