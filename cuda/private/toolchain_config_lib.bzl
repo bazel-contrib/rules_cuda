@@ -522,8 +522,14 @@ def _get_command_line(info, action, value):
         ret.extend(eval_feature(feature_or_action_config, value, action, info))
     return ret
 
-def _get_tool(info, action):
-    fail("NotImplemented")
+def _get_tool_for_action(info, action_name):
+    ac = info.selectables_info.selectables.get(action_name, None)
+    if ac == None:
+        fail("Cannot find", action_name)
+    for t in ac.tools:
+        if eval_with_features(t.with_features, info):
+            return t.path
+    fail("Matching tool for action", action_name, "not found for given feature configuration")
 
 def _get_artifact_name_extension(info, action):
     fail("NotImplemented")
@@ -542,7 +548,7 @@ config_helper = struct(
     get_default_features_and_action_configs = _get_default_features_and_action_configs,
     get_enabled_feature = _get_enabled_feature,
     get_command_line = _get_command_line,
-    get_tool = _get_tool,
+    get_tool_for_action = _get_tool_for_action,
     action_is_enabled = _is_enabled,
     is_enabled = _is_enabled,
     get_artifact_name_extension = _get_artifact_name_extension,

@@ -619,6 +619,85 @@ def _feature_configuration_test_impl(ctx):
     config_info = create_config_info(features, ["action-a", "requires-action-a"])
     asserts.true(env, config_helper.is_enabled(config_info, "requires-action-a"), "testFeatureCanRequireActionConfig 1")
 
+    features = [
+        action_config(
+            action_name = "action-a",
+            tools = [tool(path = "toolchain/a")],
+        ),
+        feature(
+            name = "activates-action-a",
+            implies = ["action-a"],
+        ),
+    ]
+    config_info = create_config_info(features, ["activates-action-a"])
+    asserts.equals(env, "toolchain/a", config_helper.get_tool_for_action(config_info, "action-a"), "testSimpleActionTool")
+
+    features = [
+        action_config(
+            action_name = "action-a",
+            tools = [
+                tool(
+                    path = "toolchain/feature-a-and-b",
+                    with_features = [with_feature_set(features = ["feature-a", "feature-b"])],
+                ),
+                tool(
+                    path = "toolchain/feature-a-and-not-c",
+                    with_features = [with_feature_set(features = ["feature-a"], not_features = ["feature-c"])],
+                ),
+                tool(
+                    path = "toolchain/feature-b-or-c",
+                    with_features = [
+                        with_feature_set(features = ["feature-b"]),
+                        with_feature_set(features = ["feature-c"]),
+                    ],
+                ),
+                tool(path = "toolchain/default"),
+            ],
+        ),
+        feature(name = "feature-a"),
+        feature(name = "feature-b"),
+        feature(name = "feature-c"),
+        feature(name = "activates-action-a", implies = ["action-a"]),
+    ]
+    config_info = create_config_info(features, ["feature-a", "activates-action-a"])
+    asserts.equals(env, "toolchain/feature-a-and-not-c", config_helper.get_tool_for_action(config_info, "action-a"), "testActionToolFromFeatureSet 0")
+
+    config_info = create_config_info(features, ["feature-a", "feature-c", "activates-action-a"])
+    asserts.equals(env, "toolchain/feature-b-or-c", config_helper.get_tool_for_action(config_info, "action-a"), "testActionToolFromFeatureSet 1")
+
+    config_info = create_config_info(features, ["feature-b", "activates-action-a"])
+    asserts.equals(env, "toolchain/feature-b-or-c", config_helper.get_tool_for_action(config_info, "action-a"), "testActionToolFromFeatureSet 2")
+
+    config_info = create_config_info(features, ["feature-c", "activates-action-a"])
+    asserts.equals(env, "toolchain/feature-b-or-c", config_helper.get_tool_for_action(config_info, "action-a"), "testActionToolFromFeatureSet 3")
+
+    config_info = create_config_info(features, ["feature-a", "feature-b", "activates-action-a"])
+    asserts.equals(env, "toolchain/feature-a-and-b", config_helper.get_tool_for_action(config_info, "action-a"), "testActionToolFromFeatureSet 4")
+
+    config_info = create_config_info(features, ["activates-action-a"])
+    asserts.equals(env, "toolchain/default", config_helper.get_tool_for_action(config_info, "action-a"), "testActionToolFromFeatureSet 5")
+
+    # testErrorForNoMatchingTool failure test skipped
+
+    features = [
+        action_config(
+            action_name = "action-a",
+            tools = [tool(path = "toolchain/feature-a", with_features = [with_feature_set(features = ["feature-a"])])],
+        ),
+    ]
+    config_info = create_config_info(features, ["action-a"])
+    asserts.true(env, config_helper.action_is_enabled(config_info, "action-a"), "testActivateActionConfigDirectly")
+
+    features = [
+        action_config(
+            action_name = "action-a",
+            tools = [tool(path = "toolchain/feature-a", with_features = [with_feature_set(features = ["feature-a"])])],
+            implies = ["activated-feature"],
+        ),
+        feature(name = "activated-feature"),
+    ]
+    config_info = create_config_info(features, ["action-a"])
+    asserts.true(env, config_helper.action_is_enabled(config_info, "activated-feature"), "testActionConfigCanActivateFeature")
 
     return unittest.end(env)
 
