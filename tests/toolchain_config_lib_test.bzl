@@ -1,6 +1,6 @@
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
-load("//cuda/private:toolchain_config_lib.bzl", "env_entry", "env_set", "feature", "feature_set", "flag_group", "flag_set", "variable_with_value", "with_feature_set")
+load("//cuda/private:toolchain_config_lib.bzl", "action_config", "env_entry", "env_set", "feature", "feature_set", "flag_group", "flag_set", "tool", "variable_with_value", "with_feature_set")
 load("//cuda/private:toolchain_config_lib.bzl", "access", "config_helper", "create_var_from_value", "eval_feature", "eval_flag_group", "exist", "expand_flag", "get_enabled_selectables", "parse_flag")
 
 def test_parse_flag(env, flag_str, ref_chunks, ref_expandables):
@@ -698,6 +698,40 @@ def _feature_configuration_test_impl(ctx):
     ]
     config_info = create_config_info(features, ["action-a"])
     asserts.true(env, config_helper.action_is_enabled(config_info, "activated-feature"), "testActionConfigCanActivateFeature")
+
+    # testInvalidActionConfigurationDuplicateActionConfigs
+    # create_config_info([action_config(action_name = "action-a"), action_config(action_name = "action-a")])
+
+    # testInvalidActionConfigurationMultipleActionConfigsForAction failure test skipped
+
+    features = [
+        action_config(
+            action_name = "c++-compile",
+            flag_sets = [flag_set(flag_groups = [flag_group(flags = ["foo"])])],
+        ),
+    ]
+    config_info = create_config_info(features, ["c++-compile"])
+    asserts.equals(env, ["foo"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testFlagsFromActionConfig")
+
+    # features = [
+    #     action_config(
+    #         action_name = "c++-compile",
+    #         flag_sets = [flag_set(
+    #             actions = ["c++-compile"],
+    #             flag_groups = [flag_group(flags = ["foo"])],
+    #         )],
+    #     ),
+    # ]
+    # config_info = create_config_info(features, ["c++-compile"])
+    ## NOTE: This is implemented action_config evaluation
+    # asserts.equals(env, ["foo"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testErrorForFlagFromActionConfigWithSpecifiedAction")
+
+    # testProvidesCollision
+    # features = [
+    #     feature(name = "a", provides = ["provides_string"]),
+    #     feature(name = "b", provides = ["provides_string"]),
+    # ]
+    # config_info = create_config_info(features, ["a", "b"])
 
     return unittest.end(env)
 

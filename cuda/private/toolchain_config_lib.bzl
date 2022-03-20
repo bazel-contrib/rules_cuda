@@ -301,7 +301,7 @@ def _collect_selectables_info(selectables):
             fail(selectable, "is not an selectable")
         name = _get_name_from_selectable(selectable)
         if name in info.selectables:
-            fail(name, "name collision")
+            fail("feature or action config '" + name + "' was specified multiple times.")
         info.selectables[name] = selectable
 
         if selectable.enabled:
@@ -417,6 +417,21 @@ def _disable_unsupported_activatables(info):
     enabled = [k for k, v in reversed(info.enabled.items()) if v == True]
     _check_activatable(info, enabled)
 
+def _check_provides_conflict(info):
+    provides = {}
+    for enabled_name in [k for k, v in info.enabled.items() if v == True]:
+        provides.setdefault(enabled_name, [])
+        provides[enabled_name].append(enabled_name)
+        s = info.selectables_info.selectables[enabled_name]
+        if hasattr(s, "provides"):
+            for p in s.provides:
+                provides.setdefault(p, [])
+                provides[p].append(enabled_name)
+    for s, features in provides.items():
+        if len(features) > 1:
+            fail("Symbol", s, "is provided by all of the following features:", " ".join(features))
+
+
 # FIXME: only for test, remove?
 def get_enabled_selectables(selectables = None, info = None, requested = None):
     # reimplement https://github.com/bazelbuild/bazel/blob/0ba4caa5fc/src/main/java/com/google/devtools/build/lib/rules/cpp/FeatureSelection.java in starlark
@@ -431,6 +446,7 @@ def get_enabled_selectables(selectables = None, info = None, requested = None):
     )
     _enable_all_implied(info)
     _disable_unsupported_activatables(info)
+    _check_provides_conflict(info)
     return sorted([k for k, v in info.enabled.items() if v == True])
 
 def eval_with_features(with_features, info):
@@ -452,7 +468,7 @@ def eval_with_features(with_features, info):
 
 def eval_flag_set(fs, value, action_name, info):
     ret = []
-    if action_name not in fs.actions:
+    if action_name != None and action_name not in fs.actions:
         return ret
     if not eval_with_features(fs.with_features, info):
         return ret
@@ -462,8 +478,15 @@ def eval_flag_set(fs, value, action_name, info):
 
 def eval_feature(feat, value, action_name, info):
     ret = []
-    for fs in feat.flag_sets:
-        ret.extend(eval_flag_set(fs, value, action_name, info))
+    if feat.type_name == "feature":
+        for fs in feat.flag_sets:
+            ret.extend(eval_flag_set(fs, value, action_name, info))
+    else:
+        if _get_name_from_selectable(feat) == action_name:
+            for fs in feat.flag_sets:
+                if len(fs.actions) != 0:
+                    fail("flag_set in action_config '" + action_name + "' must not specify actions")
+                ret.extend(eval_flag_set(fs, value, None, info))
     return ret
 
 def _eval_env_entry(ee, var, environ):
@@ -507,6 +530,7 @@ def _configure_features(toolchain_config, requested_features = None, unsupported
     )
     _enable_all_implied(info)
     _disable_unsupported_activatables(info)
+    _check_provides_conflict(info)
     return info
 
 def _get_default_features_and_action_configs(info):
