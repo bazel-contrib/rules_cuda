@@ -324,6 +324,15 @@ def _collect_selectables_info(selectables):
 
     return info
 
+def _is_configured(selectables_info, name):
+    """Whether an action or a feature exists
+
+    Args:
+        selectables_info: the _SelectablesInfo returned from _collect_selectables_info
+        name: name of action_config or feature
+    """
+    return name in selectables_info.selectables
+
 def _get_name_from_selectable(selectable):
     if hasattr(selectable, "name"):
         return selectable.name
@@ -565,6 +574,8 @@ def _get_environment_variables(info, action, value):
     return environ
 
 config_helper = struct(
+    collect_selectables_info = _collect_selectables_info,
+    is_configured = _is_configured,
     configure_features = _configure_features,
     get_default_features_and_action_configs = _get_default_features_and_action_configs,
     get_enabled_feature = _get_enabled_feature,
