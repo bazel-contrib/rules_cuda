@@ -1,12 +1,19 @@
-load(":toolchain.bzl", "cuda_toolchain")
+load("//cuda/private:toolchain_config/linux.bzl", "cuda_toolchain_config")
+load("//cuda/private:toolchain.bzl", "cuda_toolchain")
+
+cuda_toolchain_config(
+    name = "nvcc_ubuntu_config",
+    toolchain_identifier = "nvcc",
+)
 
 cuda_toolchain(
     name = "nvcc_ubuntu",
     compiler_driver = "nvcc",
     compiler_executable = "/usr/local/cuda-11.5/bin/nvcc",
+    cuda_archs = ["compute_86:compute_86,sm_86"],
     include_directories = ["/usr/local/cuda-11.5/include"],
     lib_directories = ["/usr/local/cuda-11.5/lib64"],
-    cuda_archs = ["compute_86:compute_86,sm_86"],
+    toolchain_config = ":nvcc_ubuntu_config",
 )
 
 toolchain(
@@ -20,6 +27,6 @@ toolchain(
         "@platforms//cpu:x86_64",
     ],
     toolchain = ":nvcc_ubuntu",
-    toolchain_type = "@rules_cuda//cuda:toolchain_type",
+    toolchain_type = "//cuda:toolchain_type",
     visibility = ["//visibility:public"],
 )

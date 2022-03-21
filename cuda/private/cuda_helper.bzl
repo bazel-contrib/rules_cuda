@@ -1,8 +1,11 @@
 """private helpers"""
 
 load("@bazel_skylib//lib:paths.bzl", "paths")
-load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "cuda_archs", "CudaInfo")
+load("//cuda/private:action_names.bzl", "ACTION_NAMES")
+load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
+load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "cuda_archs")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
+load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
 
 def _get_arch_number(arch_str):
     arch_str = arch_str.strip()
@@ -76,6 +79,7 @@ def _get_basename_without_ext(basename, allow_exts, fail_if_not_match = True):
     else:
         return None
 
+# TODO: Remove, impl use cuda_toolchain_config
 def _get_nvcc_compile_arch_flags(arch_specs):
     tpl = "arch={},code={}"
     ret = []
@@ -85,6 +89,7 @@ def _get_nvcc_compile_arch_flags(arch_specs):
             ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
     return ret
 
+# TODO: Remove, impl use cuda_toolchain_config
 def _get_nvcc_dlink_arch_flags(arch_specs):
     tpl = "arch={},code={}"
     ret = []
@@ -170,9 +175,8 @@ def _create_common(ctx):
     # gather compile info
     defines = []
     local_defines = [i for i in attr.local_defines]
-    compile_flags = _get_nvcc_compile_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
-    compile_flags.extend([o for o in attr.copts if _check_opts(o)])
-    link_flags = _get_nvcc_dlink_arch_flags(attr._default_cuda_archs[CudaArchsInfo].arch_specs)
+    compile_flags = [o for o in attr.copts if _check_opts(o)]
+    link_flags = []
     if hasattr(attr, "linkopts"):
         link_flags.extend([o for o in attr.linkopts if _check_opts(o)])
     host_defines = []
@@ -190,9 +194,9 @@ def _create_common(ctx):
     host_defines.extend(attr.host_defines)
 
     return struct(
-        includes = depset(includes),
-        system_includes = depset(system_includes),
-        quote_includes = depset(quote_includes),
+        includes = includes,
+        quote_includes = quote_includes,
+        system_includes = system_includes,
         headers = depset(headers),
         transitive_linker_inputs = builtin_linker_inputs + transitive_linker_inputs,
         defines = defines,
@@ -215,13 +219,105 @@ def _create_cuda_info(defines = None, objects = None, rdc_objects = None, pic_ob
     )
     return ret
 
+def _get_artifact_category_from_action(action_name, use_pic = None, use_rdc = None):
+    if action_name == ACTION_NAMES.cuda_compile:
+        if use_pic:
+            if use_rdc:
+                return ARTIFACT_CATEGORIES.rdc_pic_object_file
+            else:
+                return ARTIFACT_CATEGORIES.pic_object_file
+        elif use_rdc:
+            return ARTIFACT_CATEGORIES.rdc_object_file
+        else:
+            return ARTIFACT_CATEGORIES.object_file
+    elif action_name == ACTION_NAMES.device_link:
+        if not use_rdc:
+            fail("non relocatable device code cannot be device linked")
+        if use_pic:
+            return ARTIFACT_CATEGORIES.rdc_pic_object_file
+        else:
+            return ARTIFACT_CATEGORIES.rdc_object_file
+    elif action_name == ACTION_NAMES.create_library:
+        if use_pic:
+            return ARTIFACT_CATEGORIES.pic_archive
+        else:
+            return ARTIFACT_CATEGORIES.archive
+    else:
+        fail("NotImplemented")
+
+def _get_artifact_name(cuda_toolchain, category_name, output_basename):
+    return config_helper.get_artifact_name(cuda_toolchain.artifact_name_patterns, category_name, output_basename)
+
+def _create_compile_variables(
+        cuda_toolchain,
+        feature_configuration,
+        source_file = [],
+        output_file = [],
+        host_compiler = [],
+        user_compile_flags = [],
+        include_paths = [],
+        quote_include_paths = [],
+        system_include_paths = [],
+        defines = [],
+        host_defines = [],
+        use_pic = False,
+        use_rdc = False):
+    return struct(
+        source_file = source_file,
+        output_file = output_file,
+        host_compiler = host_compiler,
+        user_compile_flags = user_compile_flags,
+        include_paths = include_paths,
+        quote_include_paths = quote_include_paths,
+        system_include_paths = system_include_paths,
+        defines = defines,
+        host_defines = host_defines,
+        use_pic = use_pic,
+        use_rdc = use_rdc,
+    )
+
+def _create_device_link_variables(
+        cuda_toolchain,
+        feature_configuration,
+        library_search_paths = None,
+        runtime_library_search_paths = None,
+        user_link_flags = None,
+        output_file = None):
+    return struct(
+        library_search_paths = library_search_paths,
+        runtime_library_search_paths = runtime_library_search_paths,
+        user_link_flags = user_link_flags,
+        output_file = output_file,
+    )
+
+def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None):
+    return config_helper.configure_features(
+        selectables_info = cuda_toolchain.selectables_info,
+        requested_features = requested_features,
+        unsupported_features = unsupported_features,
+    )
+
 cuda_helper = struct(
-    get_arch_number = _get_arch_number,
-    get_arch_spec = _get_arch_spec,
-    get_arch_specs = _get_arch_specs,
     check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,
     get_basename_without_ext = _get_basename_without_ext,
     create_common = _create_common,
     create_cuda_info = _create_cuda_info,
+    get_artifact_category_from_action = _get_artifact_category_from_action,
+    get_artifact_name = _get_artifact_name,
+    create_compile_variables = _create_compile_variables,
+    create_device_link_variables = _create_device_link_variables,
+    configure_features = _configure_features,  # wrapped for collecting info from ctx and cuda_toolchain
+    get_default_features_and_action_configs = config_helper.get_default_features_and_action_configs,
+    get_enabled_feature = config_helper.get_enabled_feature,
+    get_command_line = config_helper.get_command_line,
+    get_tool_for_action = config_helper.get_tool_for_action,
+    action_is_enabled = config_helper.is_enabled,
+    is_enabled = config_helper.is_enabled,
+    get_environment_variables = config_helper.get_environment_variables,
+
+    # TODO: Remove or hide
+    get_arch_number = _get_arch_number,
+    get_arch_spec = _get_arch_spec,
+    get_arch_specs = _get_arch_specs,
 )

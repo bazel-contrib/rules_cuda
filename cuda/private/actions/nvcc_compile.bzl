@@ -1,17 +1,13 @@
+load("//cuda/private:action_names.bzl", "ACTION_NAMES")
+load("//cuda/private:cuda_helper.bzl", "cuda_helper")
+load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_SRCS")
+
 def compile(
         ctx,
         cuda_toolchain,
         cc_toolchain,
-        translation_unit,
-        output_basename,
-        includes = [],
-        system_includes = [],
-        quote_includes = [],
-        headers = [],
-        defines = [],
-        compile_flags = [],
-        host_defines = [],
-        host_compile_flags = [],
+        srcs,
+        common,
         pic = False,
         rdc = False):
     ""
@@ -19,52 +15,46 @@ def compile(
     host_compiler = cc_toolchain.compiler_executable
     cuda_compiler = cuda_toolchain.compiler_executable
 
-    obj_ext = ".o"  # TODO: platform dependent
-    rdc_ext = ".rdc"
-    pic_ext = ".pic"
-    ext = []
+    cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.cuda_compile] + ctx.attr.features)
+    artifact_category_name = cuda_helper.get_artifact_category_from_action(ACTION_NAMES.cuda_compile, pic, rdc)
 
-    if rdc:
-        ext.append(rdc_ext)
-    if pic:
-        ext.append(pic_ext)
-    ext.append(obj_ext)
-    ext = "".join(ext)
+    ret = []
+    for src in srcs:
+        # this also filter out all header files
+        basename = cuda_helper.get_basename_without_ext(src.basename, ALLOW_CUDA_SRCS, fail_if_not_match = False)
+        if not basename:
+            continue
 
-    obj_file = actions.declare_file(output_basename + ext)
+        filename = cuda_helper.get_artifact_name(cuda_toolchain, artifact_category_name, basename)
+        obj_file = actions.declare_file(filename)
+        ret.append(obj_file)
 
-    cuda_flags = ["-x", "cu"]
-    for d in defines:
-        cuda_flags.append("-D" + d)
+        var = cuda_helper.create_compile_variables(
+            cuda_toolchain,
+            cuda_feature_config,
+            source_file = src.path,
+            output_file = obj_file.path,
+            host_compiler = host_compiler,
+            user_compile_flags = common.compile_flags,
+            include_paths = common.includes,
+            quote_include_paths = common.quote_includes,
+            system_include_paths = common.system_includes,
+            defines = common.local_defines + common.defines,
+            host_defines = common.host_local_defines + common.host_defines,
+            use_pic = pic,
+            use_rdc = rdc,
+        )
+        cmd = cuda_helper.get_command_line(cuda_feature_config, ACTION_NAMES.cuda_compile, var)
+        env = cuda_helper.get_environment_variables(cuda_feature_config, ACTION_NAMES.cuda_compile, var)
 
-    host_flags = ["-xc++"]
-    if pic:  # FIXME: not MSVC
-        host_flags.append("-fPIC")
-    host_flags.extend(host_compile_flags)
-    for d in host_defines:  # FIXME: not MSVC
-        host_flags.append("-D" + d)
+        args = actions.args()
+        args.add_all(cmd)
 
-    args = actions.args()
-    args.add("-ccbin", host_compiler)
-    for flag in host_flags:
-        args.add("-Xcompiler", flag)
-    if len(cuda_flags):
-        args.add_all(cuda_flags)
-    args.add("-rdc", "true" if rdc else "false")
-    args.add_all(includes, before_each = "-I", uniquify = True)
-    args.add_all(system_includes, before_each = "-isystem", uniquify = True)
-    args.add_all(quote_includes, before_each = "-I", uniquify = True)  # nvcc do not have -iquote
-    args.add("-c", translation_unit.path)
-    args.add("-o", obj_file.path)
-
-    actions.run(
-        executable = cuda_compiler,
-        arguments = [args],
-        outputs = [obj_file],
-        inputs = depset([translation_unit], transitive = [headers, cc_toolchain.all_files]),
-        env = {
-            "PATH": "/usr/bin",
-        },
-    )
-
-    return obj_file
+        actions.run(
+            executable = cuda_compiler,
+            arguments = [args],
+            outputs = [obj_file],
+            inputs = depset([src], transitive = [common.headers, cc_toolchain.all_files]),
+            env = env,
+        )
+    return ret

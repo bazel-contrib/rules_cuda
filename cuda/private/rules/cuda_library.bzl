@@ -27,21 +27,17 @@ def _cuda_library_impl(ctx):
 
     for src in attr.srcs:
         files = src[DefaultInfo].files.to_list()
-        for translation_unit in files:
-            basename = cuda_helper.get_basename_without_ext(translation_unit.basename, ALLOW_CUDA_SRCS, fail_if_not_match = False)
-            if not basename:
-                continue
-            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, translation_unit, basename, includes = common.includes, system_includes = common.system_includes, quote_includes = common.quote_includes, headers = common.headers, defines = common.defines, compile_flags = common.compile_flags, host_defines = common.host_defines + common.host_local_defines, host_compile_flags = common.host_compile_flags, pic = False, rdc = attr.rdc))
-            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, translation_unit, basename, includes = common.includes, system_includes = common.system_includes, quote_includes = common.quote_includes, headers = common.headers, defines = common.defines, compile_flags = common.compile_flags, host_defines = common.host_defines + common.host_local_defines, host_compile_flags = common.host_compile_flags, pic = True, rdc = attr.rdc))
+        objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = attr.rdc))
+        pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = attr.rdc))
 
     objects = depset(objects)
     pic_objects = depset(pic_objects)
 
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
-        includes = common.includes,
-        system_includes = common.system_includes,
-        quote_includes = common.quote_includes,
+        includes = depset(common.includes),
+        quote_includes = depset(common.quote_includes),
+        system_includes = depset(common.system_includes),
         defines = depset(common.host_defines),
         local_defines = depset(common.host_local_defines),
     )

@@ -1,23 +1,36 @@
+load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
+load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
+
 def _cuda_toolchain_impl(ctx):
+    cuda_toolchain_config = ctx.attr.toolchain_config[CudaToolchainConfigInfo]
+    selectables_info = config_helper.collect_selectables_info(cuda_toolchain_config.action_configs + cuda_toolchain_config.features)
+    must_have_selectables = []
+    for name in must_have_selectables:
+        if not config_helper.is_configured(selectables_info, name):
+            fail(name, "is not configured (not exists) in the provided toolchain_config")
+
+    artifact_name_patterns = {}
+    for pattern in cuda_toolchain_config.artifact_name_patterns:
+        artifact_name_patterns[pattern.category_name] = pattern
+
     return [
-     platform_common.ToolchainInfo(
-        name = ctx.label.name,
-        compiler_driver = ctx.attr.compiler_driver,
-        compiler_executable = ctx.attr.compiler_executable,
-        cuda_archs = ctx.attr.cuda_archs,
-        include_directories = ctx.attr.include_directories,
-        lib_directories = ctx.attr.lib_directories,
-        bin_directories = ctx.attr.bin_directories,
-        actions = struct(
-            # compile = compile,
-            # device_link = device_link,
-        )
-     )
+        platform_common.ToolchainInfo(
+            name = ctx.label.name,
+            compiler_executable = ctx.attr.compiler_executable,
+            selectables_info = selectables_info,
+            artifact_name_patterns = artifact_name_patterns,
+        ),
     ]
 
 cuda_toolchain = rule(
     implementation = _cuda_toolchain_impl,
     attrs = {
+        "toolchain_config": attr.label(
+            mandatory = True,
+            providers = [CudaToolchainConfigInfo],
+        ),
+
+        # TODO: to be removed
         "compiler_driver": attr.string(
             mandatory = True,
         ),
@@ -50,7 +63,6 @@ def use_cpp_toolchain(mandatory = True):
 
 def use_cuda_toolchain():
     return [CUDA_TOOLCHAIN_TYPE]
-
 
 def find_cuda_toolchain(ctx):
     return ctx.toolchains[CUDA_TOOLCHAIN_TYPE]
