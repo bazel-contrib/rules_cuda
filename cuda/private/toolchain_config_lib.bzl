@@ -561,9 +561,6 @@ def _get_tool_for_action(info, action_name):
             return t.path
     fail("Matching tool for action", action_name, "not found for given feature configuration")
 
-def _get_artifact_name_extension(info, action):
-    fail("NotImplemented")
-
 def _get_environment_variables(info, action, value):
     environ = {}
     for name in info.enabled:
@@ -572,6 +569,12 @@ def _get_environment_variables(info, action, value):
             for es in s.env_sets:
                 eval_env_set(es, value, action, info, environ)
     return environ
+
+def _get_artifact_name(artifact_name_patterns, category_name, basename):
+    pattern = artifact_name_patterns.get(category_name, None)
+    if pattern == None:
+        fail(category_name, "is not configured")
+    return pattern.prefix + basename + pattern.extension
 
 config_helper = struct(
     collect_selectables_info = _collect_selectables_info,
@@ -583,8 +586,8 @@ config_helper = struct(
     get_tool_for_action = _get_tool_for_action,
     action_is_enabled = _is_enabled,
     is_enabled = _is_enabled,
-    get_artifact_name_extension = _get_artifact_name_extension,
     get_environment_variables = _get_environment_variables,
+    get_artifact_name = _get_artifact_name,
 )
 
 action_config = _action_config
