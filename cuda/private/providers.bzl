@@ -16,11 +16,21 @@ cuda_archs = [
     "86",
 ]
 
+Stage2ArchInfo = provider(
+    "",
+    fields = {
+        "arch": "str, arch number",
+        "virtual": "bool, use virtual arch, default False",
+        "gpu": "bool, use gpu arch, default False",
+        "lto": "bool, use lto, default False",
+    },
+)
+
 ArchSpecInfo = provider(
     "",
     fields = {
-        "stage1_arch": "A virtual architecture, str",
-        "stage2_archs": "A list of virtual or gpu architecture, list of str",
+        "stage1_arch": "A virtual architecture, str, arch number only",
+        "stage2_archs": "A list of virtual or gpu architecture, list of Stage2ArchInfo",
     },
 )
 

@@ -21,7 +21,7 @@ def _cuda_library_impl(ctx):
 
     common = cuda_helper.create_common(ctx)
 
-    # inputs
+    # outputs
     objects = []
     pic_objects = []
 

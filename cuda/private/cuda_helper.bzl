@@ -3,7 +3,7 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
-load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "cuda_archs")
+load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
 
@@ -20,24 +20,37 @@ def _get_arch_number(arch_str):
         fail("{} is not a supported cuda arch".format(arch_str))
     return int(arch_num)
 
+def _get_stage2_arch_info(code_str):
+    return Stage2ArchInfo(
+        arch = str(_get_arch_number(code_str)),
+        virtual = code_str.startswith("compute_"),
+        gpu = code_str.startswith("sm_"),
+        lto = code_str.startswith("lto_"),
+    )
+
 def _get_arch_spec(spec_str):
     '''Convert string into an ArchSpecInfo.
 
     aka, parse "compute_80:sm_80,sm_86"'''
-    virt = None
-    codes = None
+    stage1_arch = None
+    stage2_archs = []
+
+    virt = None  # stage1 str
+    codes = None  # stage2 str
     virtual_codes = spec_str.split(":")
     if len(virtual_codes) == 2:
         virt, codes = virtual_codes
         codes = codes.split(",")
-        check_invalid_arch = _get_arch_number(virt)
-        check_invalid_arch = [_get_arch_number(code) for code in codes]
+        if not virt.startswith("compute_"):
+            fail("expect a virtual architecture, got", virt)
+        stage1_arch = str(_get_arch_number(virt))
+        stage2_archs = [_get_stage2_arch_info(code) for code in codes]
     else:
         (codes,) = virtual_codes
         codes = codes.split(",")
-        virt = "compute_" + str(min([_get_arch_number(c) for c in codes]))
-        check_invalid_arch = _get_arch_number(virt)
-    arch_spec = ArchSpecInfo(stage1_arch = virt, stage2_archs = codes)
+        stage1_arch = str(min([_get_arch_number(c) for c in codes]))
+        stage2_archs = [_get_stage2_arch_info(code) for code in codes]
+    arch_spec = ArchSpecInfo(stage1_arch = stage1_arch, stage2_archs = stage2_archs)
     return arch_spec
 
 def _get_arch_specs(specs_str):
@@ -79,32 +92,32 @@ def _get_basename_without_ext(basename, allow_exts, fail_if_not_match = True):
     else:
         return None
 
-# TODO: Remove, impl use cuda_toolchain_config
-def _get_nvcc_compile_arch_flags(arch_specs):
-    tpl = "arch={},code={}"
-    ret = []
-    for arch_spec in arch_specs:
-        for stage2_arch in arch_spec.stage2_archs:
-            ret.append("-gencode")
-            ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
-    return ret
+# # TODO: Remove, impl use cuda_toolchain_config
+# def _get_nvcc_compile_arch_flags(arch_specs):
+#     tpl = "arch={},code={}"
+#     ret = []
+#     for arch_spec in arch_specs:
+#         for stage2_arch in arch_spec.stage2_archs:
+#             ret.append("-gencode")
+#             ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
+#     return ret
 
-# TODO: Remove, impl use cuda_toolchain_config
-def _get_nvcc_dlink_arch_flags(arch_specs):
-    tpl = "arch={},code={}"
-    ret = []
-    lto = False
-    for arch_spec in arch_specs:
-        for stage2_arch in arch_spec.stage2_archs:
-            # https://forums.developer.nvidia.com/t/using-dlink-time-opt-together-with-gencode-in-cmake/165224/4
-            if stage2_arch.startswith("lto_"):
-                lto = True
-                stage2_arch = stage2_arch.replace("lto_", "sm_", 1)
-            ret.append("-gencode")
-            ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
-    if lto:
-        ret.append("-dlto")
-    return ret
+# # TODO: Remove, impl use cuda_toolchain_config
+# def _get_nvcc_dlink_arch_flags(arch_specs):
+#     tpl = "arch={},code={}"
+#     ret = []
+#     lto = False
+#     for arch_spec in arch_specs:
+#         for stage2_arch in arch_spec.stage2_archs:
+#             # https://forums.developer.nvidia.com/t/using-dlink-time-opt-together-with-gencode-in-cmake/165224/4
+#             if stage2_arch.startswith("lto_"):
+#                 lto = True
+#                 stage2_arch = stage2_arch.replace("lto_", "sm_", 1)
+#             ret.append("-gencode")
+#             ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
+#     if lto:
+#         ret.append("-dlto")
+#     return ret
 
 def _get_clang_arch_flags(arch_specs):
     fail("not implemented")
@@ -251,6 +264,7 @@ def _get_artifact_name(cuda_toolchain, category_name, output_basename):
 def _create_compile_variables(
         cuda_toolchain,
         feature_configuration,
+        cuda_archs_info,
         source_file = [],
         output_file = [],
         host_compiler = [],
@@ -262,7 +276,15 @@ def _create_compile_variables(
         host_defines = [],
         use_pic = False,
         use_rdc = False):
+    arch_specs = cuda_archs_info.arch_specs
+    if not use_rdc:
+        for arch_spec in arch_specs:
+            for stage2_arch in arch_spec.stage2_archs:
+                if stage2_arch.lto:
+                    use_rdc = True
+                    break
     return struct(
+        arch_specs = arch_specs,
         source_file = source_file,
         output_file = output_file,
         host_compiler = host_compiler,
@@ -298,6 +320,7 @@ def _configure_features(ctx, cuda_toolchain, requested_features = None, unsuppor
     )
 
 cuda_helper = struct(
+    get_arch_specs = _get_arch_specs,
     check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,
     get_basename_without_ext = _get_basename_without_ext,
@@ -319,5 +342,4 @@ cuda_helper = struct(
     # TODO: Remove or hide
     get_arch_number = _get_arch_number,
     get_arch_spec = _get_arch_spec,
-    get_arch_specs = _get_arch_specs,
 )

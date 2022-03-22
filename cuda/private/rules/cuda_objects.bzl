@@ -6,7 +6,13 @@ load("//cuda/private:actions/nvcc_compile.bzl", "compile")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS", "ALLOW_CUDA_SRCS")
 
 def _cuda_objects_impl(ctx):
+    attr = ctx.attr
     cuda_helper.check_srcs_extensions(ctx, ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS, "cuda_object")
+
+    cc_toolchain = find_cpp_toolchain(ctx)
+    cuda_toolchain = find_cuda_toolchain(ctx)
+
+    common = cuda_helper.create_common(ctx)
 
     # outputs
     objects = []
@@ -14,22 +20,14 @@ def _cuda_objects_impl(ctx):
     pic_objects = []
     rdc_pic_objects = []
 
-    cc_toolchain = find_cpp_toolchain(ctx)
-    cuda_toolchain = find_cuda_toolchain(ctx)
-
-    common = cuda_helper.create_common(ctx)
-    print(ctx.label, common)
-
     for src in ctx.attr.srcs:
         files = src[DefaultInfo].files.to_list()
-        for translation_unit in files:
-            basename = cuda_helper.get_basename_without_ext(translation_unit.basename, ALLOW_CUDA_SRCS, fail_if_not_match = False)
-            if not basename:
-                continue
-            objects.append(compile(ctx, cuda_toolchain, cc_toolchain, translation_unit, basename, includes = common.includes, system_includes = common.system_includes, quote_includes = common.quote_includes, headers = common.headers, defines = common.defines, compile_flags = common.compile_flags, host_defines = common.host_defines + common.host_local_defines, host_compile_flags = common.host_compile_flags, pic = False, rdc = False))
-            rdc_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, translation_unit, basename, includes = common.includes, system_includes = common.system_includes, quote_includes = common.quote_includes, headers = common.headers, defines = common.defines, compile_flags = common.compile_flags, host_defines = common.host_defines + common.host_local_defines, host_compile_flags = common.host_compile_flags, pic = False, rdc = True))
-            pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, translation_unit, basename, includes = common.includes, system_includes = common.system_includes, quote_includes = common.quote_includes, headers = common.headers, defines = common.defines, compile_flags = common.compile_flags, host_defines = common.host_defines + common.host_local_defines, host_compile_flags = common.host_compile_flags, pic = True, rdc = False))
-            rdc_pic_objects.append(compile(ctx, cuda_toolchain, cc_toolchain, translation_unit, basename, includes = common.includes, system_includes = common.system_includes, quote_includes = common.quote_includes, headers = common.headers, defines = common.defines, compile_flags = common.compile_flags, host_defines = common.host_defines + common.host_local_defines, host_compile_flags = common.host_compile_flags, pic = True, rdc = True))
+
+        objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = False))
+        pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = False))
+        rdc_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = True))
+        rdc_pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = True))
+
 
     objects = depset(objects)
     pic_objects = depset(pic_objects)
@@ -38,9 +36,9 @@ def _cuda_objects_impl(ctx):
 
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
-        includes = common.includes,
-        system_includes = common.system_includes,
-        quote_includes = common.quote_includes,
+        includes = depset(common.includes),
+        system_includes = depset(common.system_includes),
+        quote_includes = depset(common.quote_includes),
         defines = depset(common.host_defines),
         local_defines = depset(common.host_local_defines),
     )

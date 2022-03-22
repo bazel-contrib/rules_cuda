@@ -65,7 +65,34 @@ def _impl(ctx):
 
     cuda_compile_action = action_config(
         action_name = ACTION_NAMES.cuda_compile,
-        flag_sets = [flag_set(flag_groups = [flag_group(flags = ["-x", "cu"])])],
+        flag_sets = [
+            flag_set(flag_groups = [
+                flag_group(flags = ["-x", "cu"]),
+                flag_group(
+                    iterate_over = "arch_specs",
+                    flag_groups = [
+                        flag_group(
+                            iterate_over = "arch_specs.stage2_archs",
+                            flag_groups = [
+                                flag_group(
+                                    expand_if_true = "arch_specs.stage2_archs.virtual",
+                                    flags = ["-gencode", "arch=compute_%{arch_specs.stage1_arch},code=compute_%{arch_specs.stage2_archs.arch}"],
+                                ),
+                                flag_group(
+                                    expand_if_true = "arch_specs.stage2_archs.gpu",
+                                    flags = ["-gencode", "arch=compute_%{arch_specs.stage1_arch},code=sm_%{arch_specs.stage2_archs.arch}"],
+                                ),
+                                flag_group(
+                                    expand_if_true = "arch_specs.stage2_archs.lto",
+                                    flags = ["-gencode", "arch=compute_%{arch_specs.stage1_arch},code=lto_%{arch_specs.stage2_archs.arch}"],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+                flag_group(flags = ["-rdc=true"], expand_if_true = "use_rdc"),
+            ]),
+        ],
         implies = ["host_compiler_path", "include_paths", "defines", "host_defines", "compiler_input_flags", "compiler_output_flags", "nvcc_compile_env"],
     )
 

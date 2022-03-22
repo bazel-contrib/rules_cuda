@@ -1,5 +1,6 @@
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
+load("//cuda/private:providers.bzl", "CudaArchsInfo")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_SRCS")
 
 def compile(
@@ -32,6 +33,7 @@ def compile(
         var = cuda_helper.create_compile_variables(
             cuda_toolchain,
             cuda_feature_config,
+            ctx.attr._default_cuda_archs[CudaArchsInfo],
             source_file = src.path,
             output_file = obj_file.path,
             host_compiler = host_compiler,
