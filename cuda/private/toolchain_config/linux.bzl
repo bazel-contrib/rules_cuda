@@ -114,7 +114,15 @@ def _impl(ctx):
                 flag_group(flags = ["-rdc=true"], expand_if_true = "use_rdc"),
             ]),
         ],
-        implies = ["host_compiler_path", "include_paths", "defines", "host_defines", "compiler_input_flags", "compiler_output_flags", "nvcc_compile_env"],
+        implies = [
+            "host_compiler_path",
+            "include_paths",
+            "defines",
+            "host_defines",
+            "compiler_input_flags",
+            "compiler_output_flags",
+            "nvcc_compile_env",
+        ],
     )
 
     cuda_device_link_action = action_config(
