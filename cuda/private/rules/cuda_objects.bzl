@@ -44,9 +44,15 @@ def _cuda_objects_impl(ctx):
     )
 
     return [
-        DefaultInfo(
-            files = depset(transitive = [objects, pic_objects, rdc_objects, rdc_pic_objects]),
-        ),
+        # default output is not enabled, otherwise, when you build with
+        #
+        # > bazel build //cuda_objects/that/needs/rdc/...
+        #
+        # a compiling error will be trigger due to objects and pic_objects been built
+        #
+        # DefaultInfo(
+        #     files = depset(transitive = [objects, pic_objects, rdc_objects, rdc_pic_objects]),
+        # ),
         OutputGroupInfo(
             objects = objects,
             pic_objects = pic_objects,
