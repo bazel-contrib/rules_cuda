@@ -1,6 +1,6 @@
 workspace(name = "rules_cuda")
 
-load("@rules_cuda//cuda:deps.bzl", "detect_cuda_toolkit", "rules_cuda_deps")
+load("//cuda:deps.bzl", "detect_cuda_toolkit", "rules_cuda_deps")
 
 rules_cuda_deps()
 
