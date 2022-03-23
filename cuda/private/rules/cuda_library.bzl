@@ -33,6 +33,17 @@ def _cuda_library_impl(ctx):
     objects = depset(objects)
     pic_objects = depset(pic_objects)
 
+    # if rdc is enabled for this cuda_library, then we need futher do a pass of device link
+    if attr.rdc:
+        transitive_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep])
+        transitive_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
+        objects = depset(transitive = [objects, transitive_objects])
+        pic_objects = depset(transitive = [pic_objects, transitive_pic_objects])
+        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, common, pic = False, rdc = attr.rdc)])
+        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, common, pic = True, rdc = attr.rdc)])
+        objects = depset(transitive = [objects, dlink_object])
+        pic_objects = depset(transitive = [pic_objects, dlink_pic_object])
+
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
         includes = depset(common.includes),
@@ -41,16 +52,6 @@ def _cuda_library_impl(ctx):
         defines = depset(common.host_defines),
         local_defines = depset(common.host_local_defines),
     )
-
-    if attr.rdc:
-        transitive_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep])
-        transitive_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
-        objects = depset(transitive = [objects, transitive_objects])
-        pic_objects = depset(transitive = [pic_objects, transitive_pic_objects])
-        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, attr.name, link_flags = common.link_flags, pic = False, rdc = attr.rdc)])
-        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, attr.name, link_flags = common.link_flags, pic = True, rdc = attr.rdc)])
-        objects = depset(transitive = [objects, dlink_object])
-        pic_objects = depset(transitive = [pic_objects, dlink_pic_object])
 
     lib = create_library(ctx, cuda_toolchain, objects, attr.name, pic = False)
     pic_lib = create_library(ctx, cuda_toolchain, pic_objects, attr.name, pic = True)

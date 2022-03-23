@@ -265,9 +265,9 @@ def _create_compile_variables(
         cuda_toolchain,
         feature_configuration,
         cuda_archs_info,
-        source_file = [],
-        output_file = [],
-        host_compiler = [],
+        source_file = None,
+        output_file = None,
+        host_compiler = None,
         user_compile_flags = [],
         include_paths = [],
         quote_include_paths = [],
@@ -301,15 +301,27 @@ def _create_compile_variables(
 def _create_device_link_variables(
         cuda_toolchain,
         feature_configuration,
-        library_search_paths = None,
-        runtime_library_search_paths = None,
-        user_link_flags = None,
-        output_file = None):
+        cuda_archs_info,
+        output_file = None,
+        host_compiler = None,
+        library_search_paths = [],
+        runtime_library_search_paths = [],
+        user_link_flags = []):
+    arch_specs = cuda_archs_info.arch_specs
+    use_dlto = False
+    for arch_spec in arch_specs:
+        for stage2_arch in arch_spec.stage2_archs:
+            if stage2_arch.lto:
+                use_lto = True
+                break
     return struct(
+        arch_specs = arch_specs,
+        output_file = output_file,
+        host_compiler = host_compiler,
         library_search_paths = library_search_paths,
         runtime_library_search_paths = runtime_library_search_paths,
         user_link_flags = user_link_flags,
-        output_file = output_file,
+        use_dlto = use_dlto,
     )
 
 def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None):

@@ -63,6 +63,27 @@ def _impl(ctx):
         ],
     )
 
+    nvcc_device_link_env_feature = feature(
+        name = "nvcc_device_link_env",
+        env_sets = [
+            env_set(
+                actions = [ACTION_NAMES.device_link],
+                env_entries = [env_entry("PATH", paths.dirname(cc_toolchain.compiler_executable))],
+            ),
+        ],
+    )
+
+    host_compiler_feature = feature(
+        name = "host_compiler_path",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-ccbin", "%{host_compiler}"])],
+            ),
+        ],
+    )
+
     cuda_compile_action = action_config(
         action_name = ACTION_NAMES.cuda_compile,
         flag_sets = [
@@ -98,16 +119,39 @@ def _impl(ctx):
 
     cuda_device_link_action = action_config(
         action_name = ACTION_NAMES.device_link,
-    )
-
-    host_compiler_feature = feature(
-        name = "host_compiler_path",
-        enabled = True,
         flag_sets = [
-            flag_set(
-                actions = [ACTION_NAMES.cuda_compile],
-                flag_groups = [flag_group(flags = ["-ccbin", "%{host_compiler}"])],
-            ),
+            flag_set(flag_groups = [
+                flag_group(flags = ["-dlink"]),
+                flag_group(
+                    iterate_over = "arch_specs",
+                    flag_groups = [
+                        flag_group(
+                            iterate_over = "arch_specs.stage2_archs",
+                            flag_groups = [
+                                flag_group(
+                                    expand_if_true = "arch_specs.stage2_archs.virtual",
+                                    flags = ["-gencode", "arch=compute_%{arch_specs.stage1_arch},code=compute_%{arch_specs.stage2_archs.arch}"],
+                                ),
+                                flag_group(
+                                    expand_if_true = "arch_specs.stage2_archs.gpu",
+                                    flags = ["-gencode", "arch=compute_%{arch_specs.stage1_arch},code=sm_%{arch_specs.stage2_archs.arch}"],
+                                ),
+                                flag_group(
+                                    expand_if_true = "arch_specs.stage2_archs.lto",
+                                    flags = ["-gencode", "arch=compute_%{arch_specs.stage1_arch},code=sm_%{arch_specs.stage2_archs.arch}"],
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+                flag_group(flags = ["-dlto"], expand_if_true = "use_dlto"),
+            ]),
+        ],
+        implies = [
+            "host_compiler_path",
+            "linker_input_flags",
+            "compiler_output_flags",
+            "nvcc_device_link_env",
         ],
     )
 
@@ -191,6 +235,7 @@ def _impl(ctx):
             flag_set(
                 actions = [
                     ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
                 ],
                 flag_groups = [flag_group(flags = ["-o", "%{output_file}"])],
             ),
@@ -204,6 +249,7 @@ def _impl(ctx):
 
     features = [
         nvcc_compile_env_feature,
+        nvcc_device_link_env_feature,
         host_compiler_feature,
         include_paths_feature,
         defines_feature,
