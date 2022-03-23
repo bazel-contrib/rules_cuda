@@ -261,6 +261,15 @@ def _get_artifact_category_from_action(action_name, use_pic = None, use_rdc = No
 def _get_artifact_name(cuda_toolchain, category_name, output_basename):
     return config_helper.get_artifact_name(cuda_toolchain.artifact_name_patterns, category_name, output_basename)
 
+def _check_must_enforce_rdc(*, arch_specs = None, cuda_archs_info = None):
+    if arch_specs == None:
+        arch_specs = cuda_archs_info.arch_specs
+    for arch_spec in arch_specs:
+        for stage2_arch in arch_spec.stage2_archs:
+            if stage2_arch.lto:
+                return True
+    return False
+
 def _create_compile_variables(
         cuda_toolchain,
         feature_configuration,
@@ -278,11 +287,8 @@ def _create_compile_variables(
         use_rdc = False):
     arch_specs = cuda_archs_info.arch_specs
     if not use_rdc:
-        for arch_spec in arch_specs:
-            for stage2_arch in arch_spec.stage2_archs:
-                if stage2_arch.lto:
-                    use_rdc = True
-                    break
+        use_rdc = _check_must_enforce_rdc(arch_specs = arch_specs)
+
     return struct(
         arch_specs = arch_specs,
         source_file = source_file,
@@ -335,6 +341,7 @@ cuda_helper = struct(
     get_arch_specs = _get_arch_specs,
     check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,
+    check_must_enforce_rdc = _check_must_enforce_rdc,
     get_basename_without_ext = _get_basename_without_ext,
     create_common = _create_common,
     create_cuda_info = _create_cuda_info,

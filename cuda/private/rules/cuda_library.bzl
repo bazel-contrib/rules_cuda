@@ -1,6 +1,6 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
-load("//cuda/private:providers.bzl", "CudaInfo")
+load("//cuda/private:providers.bzl", "CudaArchsInfo", "CudaInfo")
 load("//cuda/private:toolchain.bzl", "find_cuda_toolchain", "use_cpp_toolchain", "use_cuda_toolchain")
 load("//cuda/private:actions/nvcc_compile.bzl", "compile")
 load("//cuda/private:actions/nvcc_dlink.bzl", "device_link")
@@ -20,6 +20,9 @@ def _cuda_library_impl(ctx):
     cuda_toolchain = find_cuda_toolchain(ctx)
 
     common = cuda_helper.create_common(ctx)
+    use_rdc = attr.rdc
+    if not use_rdc:
+        use_rdc = cuda_helper.check_must_enforce_rdc(cuda_archs_info = ctx.attr._default_cuda_archs[CudaArchsInfo])
 
     # outputs
     objects = []
@@ -27,20 +30,20 @@ def _cuda_library_impl(ctx):
 
     for src in attr.srcs:
         files = src[DefaultInfo].files.to_list()
-        objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = attr.rdc))
-        pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = attr.rdc))
+        objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = use_rdc))
+        pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = use_rdc))
 
     objects = depset(objects)
     pic_objects = depset(pic_objects)
 
     # if rdc is enabled for this cuda_library, then we need futher do a pass of device link
-    if attr.rdc:
+    if use_rdc:
         transitive_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep])
         transitive_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
         objects = depset(transitive = [objects, transitive_objects])
         pic_objects = depset(transitive = [pic_objects, transitive_pic_objects])
-        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, common, pic = False, rdc = attr.rdc)])
-        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, common, pic = True, rdc = attr.rdc)])
+        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, common, pic = False, rdc = use_rdc)])
+        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, common, pic = True, rdc = use_rdc)])
         objects = depset(transitive = [objects, dlink_object])
         pic_objects = depset(transitive = [pic_objects, dlink_pic_object])
 
