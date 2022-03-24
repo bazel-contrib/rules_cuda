@@ -47,5 +47,7 @@ def device_link(
         outputs = [obj_file],
         inputs = depset(transitive = [objects, cc_toolchain.all_files]),
         env = env,
+        mnemonic = "CudaDeviceLink",
+        progress_message = "Device linking %{output}",
     )
     return obj_file

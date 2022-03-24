@@ -30,5 +30,7 @@ def create_library(ctx, cuda_toolchain, cc_toolchain, objects, pic = False):
         outputs = [lib_file],
         inputs = depset(transitive = [objects, cc_toolchain.all_files]),
         env = env,
+        mnemonic = "CreateLibrary",
+        progress_message = "Creating library %{output}",
     )
     return lib_file

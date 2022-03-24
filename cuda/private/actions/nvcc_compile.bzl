@@ -58,5 +58,7 @@ def compile(
             outputs = [obj_file],
             inputs = depset([src], transitive = [common.headers, cc_toolchain.all_files]),
             env = env,
+            mnemonic = "CudaCompile",
+            progress_message = "Compiling %s" % src.path,
         )
     return ret
