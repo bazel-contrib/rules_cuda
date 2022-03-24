@@ -73,6 +73,16 @@ def _impl(ctx):
         ],
     )
 
+    nvcc_create_library_env_feature = feature(
+        name = "nvcc_create_library_env",
+        env_sets = [
+            env_set(
+                actions = [ACTION_NAMES.create_library],
+                env_entries = [env_entry("PATH", paths.dirname(cc_toolchain.ar_executable))],
+            ),
+        ],
+    )
+
     host_compiler_feature = feature(
         name = "host_compiler_path",
         enabled = True,
@@ -163,6 +173,20 @@ def _impl(ctx):
         ],
     )
 
+    create_library_action = action_config(
+        action_name = ACTION_NAMES.create_library,
+        flag_sets = [
+            flag_set(flag_groups = [
+                flag_group(flags = ["-lib"]),
+            ]),
+        ],
+        implies = [
+            "host_compiler_path",
+            "compiler_output_flags",
+            "nvcc_create_library_env",
+        ],
+    )
+
     include_paths_feature = feature(
         name = "include_paths",
         enabled = True,
@@ -244,6 +268,7 @@ def _impl(ctx):
                 actions = [
                     ACTION_NAMES.cuda_compile,
                     ACTION_NAMES.device_link,
+                    ACTION_NAMES.create_library,
                 ],
                 flag_groups = [flag_group(flags = ["-o", "%{output_file}"])],
             ),
@@ -253,11 +278,13 @@ def _impl(ctx):
     action_configs = [
         cuda_compile_action,
         cuda_device_link_action,
+        create_library_action,
     ]
 
     features = [
         nvcc_compile_env_feature,
         nvcc_device_link_env_feature,
+        nvcc_create_library_env_feature,
         host_compiler_feature,
         include_paths_feature,
         defines_feature,

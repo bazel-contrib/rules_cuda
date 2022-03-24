@@ -56,8 +56,8 @@ def _cuda_library_impl(ctx):
         local_defines = depset(common.host_local_defines),
     )
 
-    lib = create_library(ctx, cuda_toolchain, objects, attr.name, pic = False)
-    pic_lib = create_library(ctx, cuda_toolchain, pic_objects, attr.name, pic = True)
+    lib = create_library(ctx, cuda_toolchain, cc_toolchain, objects, pic = False)
+    pic_lib = create_library(ctx, cuda_toolchain, cc_toolchain, pic_objects, pic = True)
 
     lib_to_link = cc_common.create_library_to_link(
         actions = ctx.actions,
