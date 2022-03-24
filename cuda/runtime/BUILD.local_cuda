@@ -1,3 +1,5 @@
+load(":defs.bzl", "if_linux", "if_local_cuda", "if_windows")
+
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -29,25 +31,25 @@ cc_library(
 cc_library(
     name = "cuda_stub",
     srcs = ["cuda/lib64/stubs/libcuda.so"],
-    linkopts = [
+    linkopts = if_linux([
         "-ldl",
         "-lpthread",
         "-lrt",
-    ],
+    ]),
 )
 
 # Note: do not use this target directly, use the configurable label_flag
 # @rules_cuda//cuda:runtime instead.
 cc_library(
     name = "cuda_runtime",
-    srcs = glob(["cuda/lib64/libcudart.so.*"]),
+    srcs = glob(["cuda/lib64/libcudart.so.*"]) + glob(["cuda/lib/x64/cudart.lib"]),
     hdrs = [":_cuda_header_files"],
     includes = ["cuda/include"],
-    linkopts = [
+    linkopts = if_linux([
         "-ldl",
         "-lpthread",
         "-lrt",
-    ],
+    ]),
     # FIXME:
     # visibility = ["@rules_cuda//cuda:__pkg__"],
 )
@@ -59,11 +61,11 @@ cc_library(
     srcs = ["cuda/lib64/libcudart_static.a"],
     hdrs = [":_cuda_header_files"],
     includes = ["cuda/include"],
-    linkopts = [
+    linkopts = if_linux([
         "-ldl",
         "-lpthread",
         "-lrt",
-    ],
+    ]),
     # FIXME:
     # visibility = ["@rules_cuda//cuda:__pkg__"],
 )
@@ -77,20 +79,40 @@ cc_library(
 cc_import(
     name = "cublas_so",
     shared_library = "cuda/lib64/libcublas.so",
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 cc_import(
     name = "cublasLt_so",
     shared_library = "cuda/lib64/libcublasLt.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cublas_lib",
+    interface_library = "cuda/lib/x64/cublas.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_import(
+    name = "cublasLt_lib",
+    interface_library = "cuda/lib/x64/cublasLt.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
 )
 
 cc_library(
     name = "cublas",
     deps = [
+        ":cuda_headers",
+    ] + if_linux([
         ":cublasLt_so",
         ":cublas_so",
-        ":cuda_headers",
-    ],
+    ]) + if_windows([
+        ":cublasLt_lib",
+        ":cublas_lib",
+    ]),
 )
 
 cc_library(
