@@ -29,24 +29,9 @@ cuda_toolchain = rule(
             mandatory = True,
             providers = [CudaToolchainConfigInfo],
         ),
-
-        # TODO: to be removed
-        "compiler_driver": attr.string(
-            mandatory = True,
-        ),
         "compiler_executable": attr.string(
             mandatory = True,
         ),
-        "cuda_archs": attr.string_list(
-            mandatory = True,
-        ),
-        "include_directories": attr.string_list(
-            mandatory = True,
-        ),
-        "lib_directories": attr.string_list(
-            mandatory = True,
-        ),
-        "bin_directories": attr.string_list(),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
 )
