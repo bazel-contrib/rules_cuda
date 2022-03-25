@@ -13,7 +13,7 @@ load(
     _with_feature_set = "with_feature_set",
 )
 
-_MAX_FLAG_LEN = 1024
+_MAX_FLAG_LEN = 32768
 
 def _tok_var(chars):
     if len(chars) == 0 or chars[-1] != "{":
@@ -55,6 +55,11 @@ def _copy_flag_info(flag_info):
 def parse_flag(raw_flag, cache = None):
     if len(raw_flag) > _MAX_FLAG_LEN:
         fail(raw_flag, "is too long!")
+    if len(raw_flag) > 256 and "%" not in raw_flag:
+        return _FlagInfo(
+            chunks = [raw_flag],
+            expandables = {},
+        )
     if cache != None and raw_flag in cache:
         return _copy_flag_info(cache[raw_flag])
     curr = None
