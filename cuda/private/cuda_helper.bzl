@@ -357,8 +357,4 @@ cuda_helper = struct(
     action_is_enabled = config_helper.is_enabled,
     is_enabled = config_helper.is_enabled,
     get_environment_variables = config_helper.get_environment_variables,
-
-    # TODO: Remove or hide
-    get_arch_number = _get_arch_number,
-    get_arch_spec = _get_arch_spec,
 )
