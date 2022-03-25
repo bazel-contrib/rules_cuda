@@ -28,7 +28,6 @@ def _cuda_objects_impl(ctx):
         rdc_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = True))
         rdc_pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = True))
 
-
     objects = depset(objects)
     pic_objects = depset(pic_objects)
     rdc_objects = depset(rdc_objects)
@@ -44,15 +43,19 @@ def _cuda_objects_impl(ctx):
     )
 
     return [
-        # default output is not enabled, otherwise, when you build with
+        # default output is only enabled for rdc_objects, otherwise, when you build with
         #
         # > bazel build //cuda_objects/that/needs/rdc/...
         #
-        # a compiling error will be trigger due to objects and pic_objects been built
-        #
-        # DefaultInfo(
-        #     files = depset(transitive = [objects, pic_objects, rdc_objects, rdc_pic_objects]),
-        # ),
+        # compiling errors might be trigger due to objects and pic_objects been built if srcs require device link
+        DefaultInfo(
+            files = depset(transitive = [
+                # objects,
+                # pic_objects,
+                rdc_objects,
+                # rdc_pic_objects,
+            ]),
+        ),
         OutputGroupInfo(
             objects = objects,
             pic_objects = pic_objects,

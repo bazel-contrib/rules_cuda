@@ -76,7 +76,10 @@ def _cuda_library_impl(ctx):
 
     return [
         DefaultInfo(
-            files = depset([lib, pic_lib]),
+            files = depset([
+                lib,
+                # pic_lib,
+            ]),
         ),
         OutputGroupInfo(
             lib = [lib],
