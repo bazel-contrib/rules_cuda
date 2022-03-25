@@ -4,3 +4,6 @@ build --flag_alias=cuda_archs=//cuda:cuda_archs
 # Use --config=clang to build with clang instead of gcc and nvcc.
 build:clang --repo_env=CC=clang
 build:clang --//cuda:compiler=clang
+
+# https://github.com/cloudhan/rules_cuda/issues/1
+build --ui_event_filters=-INFO
