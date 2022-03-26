@@ -7,12 +7,6 @@ load("//cuda/private:rules/flags.bzl", "cuda_archs_flag")
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
-    name = "private_files",
-    srcs = glob(["private/**/*"]),
-    visibility = ["//:..."],
-)
-
 toolchain_type(name = "toolchain_type")
 
 #TODO:
