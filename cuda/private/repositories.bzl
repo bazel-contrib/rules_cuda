@@ -1,3 +1,5 @@
+"""Generate @local_cuda//"""
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
@@ -17,17 +19,31 @@ def if_windows(if_true, if_false = []):
 
 """
 
+def _to_forward_slash(s):
+    return s.replace("\\", "/")
+
+def _is_linux(ctx):
+    return ctx.os.name.startswith("linux")
+
 def _local_cuda_impl(repository_ctx):
+    ## Detect CUDA Toolkit
     # Path to CUDA Toolkit is
     # - taken from CUDA_PATH environment variable or
     # - determined through 'which ptxas' or
     # - defaults to '/usr/local/cuda'
-    cuda_path = "/usr/local/cuda"
-    ptxas_path = repository_ctx.which("ptxas")
-    if ptxas_path:
-        cuda_path = ptxas_path.dirname.dirname
-    cuda_path = repository_ctx.os.environ.get("CUDA_PATH", cuda_path)
+    cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
+    if cuda_path == None:
+        ptxas_path = repository_ctx.which("ptxas")
+        if ptxas_path:
+            # ${CUDA_PATH}/bin/ptxas
+            cuda_path = ptxas_path.dirname.dirname
+    if cuda_path == None and _is_linux(repository_ctx):
+        cuda_path = "/usr/local/cuda"
 
+    # if cuda_path == None:
+    #     fail("Cannot determine CUDA Toolkit root, abort!")
+
+    # Generate @local_cuda//BUILD and @local_cuda//defs.bzl and
     defs_bzl_content = defs_bzl_shared
     defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"
     if repository_ctx.path(cuda_path).exists:
@@ -38,6 +54,17 @@ def _local_cuda_impl(repository_ctx):
         repository_ctx.file("BUILD")  # Empty file
         defs_bzl_content += defs_if_local_cuda % "if_false"
     repository_ctx.file("defs.bzl", defs_bzl_content)
+
+    # Generate @local_cuda//toolchain/BUILD
+    tpl_label = Label(
+        "@rules_cuda//cuda:templates/BUILD.local_toolchain_" +
+        ("linux" if _is_linux(repository_ctx) else "windows"),
+    )
+    substitutions = {"%{cuda_path}": _to_forward_slash(cuda_path)}
+    env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
+    if env_tmp != None:
+        substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
+    repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
 
 _local_cuda = repository_rule(
     implementation = _local_cuda_impl,

@@ -4,7 +4,7 @@ def register_rule_dev_toolchains():
         "//cuda/private/toolchain_configs/windows:nvcc-windows-toolchain",
     )
 
-def register_detect_cuda_toolchains():
+def register_detected_cuda_toolchains():
     native.register_toolchains(
         "@local_cuda//toolchain:nvcc-local-toolchain",
     )
