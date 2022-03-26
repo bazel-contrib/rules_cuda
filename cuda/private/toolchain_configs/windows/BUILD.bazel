@@ -1,0 +1,41 @@
+# Toolchain defined in this file for local rules_cuda dev only
+
+load("//cuda/private/toolchain_configs/windows:toolchain_config.bzl", "cuda_toolchain_config")
+load("//cuda/private:toolchain.bzl", "cuda_toolchain")
+
+package(
+    default_visibility = ["//visibility:private"],
+)
+
+filegroup(
+    name = "bzls",
+    srcs = glob(["**/*.bzl"]),
+)
+
+cuda_toolchain_config(
+    name = "nvcc_windows_config",
+    toolchain_identifier = "nvcc",
+    # FIXME: this is my local path
+    msvc_env_tmp = "C:/Users/cloud/AppData/Local/Temp",
+)
+
+cuda_toolchain(
+    name = "nvcc_windows",
+    compiler_executable = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.5/bin/nvcc.exe",
+    toolchain_config = ":nvcc_windows_config",
+)
+
+toolchain(
+    name = "nvcc-windows-toolchain",
+    exec_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+    toolchain = ":nvcc_windows",
+    toolchain_type = "@rules_cuda//cuda:toolchain_type",
+    visibility = ["//visibility:public"],
+)
