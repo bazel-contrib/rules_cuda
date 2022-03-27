@@ -330,7 +330,26 @@ def _create_device_link_variables(
         use_dlto = use_dlto,
     )
 
+def _get_requested_features(ctx, cuda_toolchain, cc_toolchain, requested_features):
+    all_features = []
+    compilation_mode = ctx.var.get("COMPILATION_MODE", None)
+    if compilation_mode == None:
+        print("unknown COMPILATION_MODE, use opt")
+        compilation_mode = "opt"
+    all_features.append(compilation_mode)
+
+    # https://github.com/bazelbuild/bazel/blob/41feb616ae/src/main/java/com/google/devtools/build/lib/rules/cpp/CcCommon.java#L953-L967
+    if "static_link_msvcrt" in requested_features:
+        all_features.append("static_link_msvcrt_debug" if compilation_mode == "dbg" else "static_link_msvcrt_no_debug")
+    else:
+        all_features.append("dynamic_link_msvcrt_debug" if compilation_mode == "dbg" else "dynamic_link_msvcrt_no_debug")
+
+    all_features.extend(requested_features)
+    # TODO: we should add default features and action configs from cuda_toolchain and cc_toolchain
+    return all_features
+
 def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None):
+    requested_features = _get_requested_features(ctx, cuda_toolchain, None, requested_features + ctx.features + ctx.attr.features)
     return config_helper.configure_features(
         selectables_info = cuda_toolchain.selectables_info,
         requested_features = requested_features,

@@ -11,6 +11,7 @@ load(
     "env_entry",
     "env_set",
     "feature",
+    "feature_set",
     "flag_group",
     "flag_set",
 )
@@ -288,6 +289,74 @@ def _impl(ctx):
         ],
     )
 
+    static_link_msvcrt_feature = feature(name = "static_link_msvcrt")
+
+    static_link_msvcrt_debug_feature = feature(
+        name = "static_link_msvcrt_debug",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "/MTd"])],
+            ),
+            flag_set(
+                actions = [ACTION_NAMES.create_library],
+                flag_groups = [flag_group(flags = ["-Xlinker", "/DEFAULTLIB:libcmtd.lib"])],
+            ),
+        ],
+        requires = [feature_set(features = ["dbg"])],
+    )
+
+    static_link_msvcrt_no_debug_feature = feature(
+        name = "static_link_msvcrt_no_debug",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "/MT"])],
+            ),
+            flag_set(
+                actions = [ACTION_NAMES.create_library],
+                flag_groups = [flag_group(flags = ["-Xlinker", "/DEFAULTLIB:libcmt.lib"])],
+            ),
+        ],
+        requires = [
+            feature_set(features = ["fastbuild"]),
+            feature_set(features = ["opt"]),
+        ],
+    )
+
+    dynamic_link_msvcrt_debug_feature = feature(
+        name = "dynamic_link_msvcrt_debug",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "/MDd"])],
+            ),
+            flag_set(
+                actions = [ACTION_NAMES.create_library],
+                flag_groups = [flag_group(flags = ["-Xlinker", "/DEFAULTLIB:msvcrtd.lib"])],
+            ),
+        ],
+        requires = [feature_set(features = ["dbg"])],
+    )
+
+    dynamic_link_msvcrt_no_debug_feature = feature(
+        name = "dynamic_link_msvcrt_no_debug",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "/MD"])],
+            ),
+            flag_set(
+                actions = [ACTION_NAMES.create_library],
+                flag_groups = [flag_group(flags = ["-Xlinker", "/DEFAULTLIB:msvcrt.lib"])],
+            ),
+        ],
+        requires = [
+            feature_set(features = ["fastbuild"]),
+            feature_set(features = ["opt"]),
+        ],
+    )
+
     action_configs = [
         cuda_compile_action,
         cuda_device_link_action,
@@ -304,6 +373,10 @@ def _impl(ctx):
         host_defines_feature,
         compiler_input_flags_feature,
         compiler_output_flags_feature,
+        static_link_msvcrt_debug_feature,
+        static_link_msvcrt_no_debug_feature,
+        dynamic_link_msvcrt_debug_feature,
+        dynamic_link_msvcrt_no_debug_feature,
     ]
 
     return [CudaToolchainConfigInfo(

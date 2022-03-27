@@ -18,7 +18,7 @@ def device_link(
     host_compiler = cc_toolchain.compiler_executable
     cuda_compiler = cuda_toolchain.compiler_executable
 
-    cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.device_link] + ctx.attr.features)
+    cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.device_link])
     artifact_category_name = cuda_helper.get_artifact_category_from_action(ACTION_NAMES.device_link, pic, rdc)
     basename = ctx.attr.name + "_dlink"
     filename = cuda_helper.get_artifact_name(cuda_toolchain, artifact_category_name, basename)
