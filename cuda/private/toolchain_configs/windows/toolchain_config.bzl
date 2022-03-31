@@ -289,6 +289,68 @@ def _impl(ctx):
         ],
     )
 
+    use_local_env_feature = feature(
+        name = "use_local_env",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                    ACTION_NAMES.create_library,
+                ],
+                flag_groups = [flag_group(flags = ["-use-local-env"])],
+            ),
+        ],
+    )
+
+    dbg_feature = feature(
+        name = "dbg",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "/Od", "-Xcompiler", "/Z7"])],
+            ),
+        ],
+        implies = ["generate_pdb_file"],
+    )
+
+    opt_feature = feature(
+        name = "opt",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "/O2"])],
+            ),
+        ],
+        implies = ["frame_pointer"],
+    )
+
+    fastbuild_feature = feature(
+        name = "fastbuild",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "/Od", "-Xcompiler", "/Z7"])],
+            ),
+        ],
+        implies = ["generate_pdb_file"],
+    )
+
+    generate_pdb_file_feature = feature(
+        name = "generate_pdb_file",
+    )
+
+    frame_pointer_feature = feature(
+        name = "frame_pointer",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "/Oy-"])],
+            ),
+        ],
+    )
+
     static_link_msvcrt_feature = feature(name = "static_link_msvcrt")
 
     static_link_msvcrt_debug_feature = feature(
@@ -368,11 +430,17 @@ def _impl(ctx):
         nvcc_device_link_env_feature,
         nvcc_create_library_env_feature,
         host_compiler_feature,
+        use_local_env_feature,
         include_paths_feature,
         defines_feature,
         host_defines_feature,
         compiler_input_flags_feature,
         compiler_output_flags_feature,
+        dbg_feature,
+        opt_feature,
+        fastbuild_feature,
+        generate_pdb_file_feature,
+        frame_pointer_feature,
         static_link_msvcrt_debug_feature,
         static_link_msvcrt_no_debug_feature,
         dynamic_link_msvcrt_debug_feature,
