@@ -741,6 +741,57 @@ def _feature_configuration_test_impl(ctx):
 
 feature_configuration_test = unittest.make(_feature_configuration_test_impl)
 
+def _feature_configuration_flags_order_test_impl(ctx):
+    env = unittest.begin(ctx)
+
+    config_info = create_config_info(
+        [
+            feature(
+                name = "a",
+                flag_sets = [
+                    flag_set(actions = ["c++-compile"], flag_groups = [flag_group(flags = ["-a-c++-compile"])]),
+                    flag_set(actions = ["link"], flag_groups = [flag_group(flags = ["-a-c++-compile"])]),
+                ],
+            ),
+            feature(
+                name = "b",
+                flag_sets = [
+                    flag_set(actions = ["c++-compile"], flag_groups = [flag_group(flags = ["-b-c++-compile"])]),
+                    flag_set(actions = ["link"], flag_groups = [flag_group(flags = ["-b-link"])]),
+                ],
+            ),
+        ],
+        ["a", "b"],
+    )
+    asserts.equals(env, ["-a-c++-compile", "-b-c++-compile"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testFlagOrderEqualsSpecOrder")
+
+    # test by me, flag order should not be affect by enable order
+    config_info = create_config_info(
+        [
+            feature(
+                name = "a",
+                flag_sets = [
+                    flag_set(actions = ["c++-compile"], flag_groups = [flag_group(flags = ["-a-c++-compile"])]),
+                    flag_set(actions = ["link"], flag_groups = [flag_group(flags = ["-a-c++-compile"])]),
+                ],
+            ),
+            feature(
+                name = "b",
+                enabled = True,
+                flag_sets = [
+                    flag_set(actions = ["c++-compile"], flag_groups = [flag_group(flags = ["-b-c++-compile"])]),
+                    flag_set(actions = ["link"], flag_groups = [flag_group(flags = ["-b-link"])]),
+                ],
+            ),
+        ],
+        ["a"],
+    )
+    asserts.equals(env, ["-a-c++-compile", "-b-c++-compile"], config_helper.get_command_line(config_info, "c++-compile", struct()), "testFlagOrderEqualsSpecOrderNotEnableOrder (my test)")
+
+    return unittest.end(env)
+
+feature_configuration_flags_order_test = unittest.make(_feature_configuration_flags_order_test_impl)
+
 def _feature_configuration_env_test_impl(ctx):
     env = unittest.begin(ctx)
 

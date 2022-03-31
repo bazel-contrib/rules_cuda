@@ -365,7 +365,7 @@ def _enable_all_implied(info):
         fail("_enable_all_implied imcomplete")
 
 def _is_implied_by_enabled_activatable(info, name):
-    for implied_by in info.selectables_info.implied_by[name]:
+    for implied_by in info.selectables_info.implied_by.get(name, []):
         if _is_enabled(info, implied_by):
             return True
     return False
@@ -390,7 +390,12 @@ def _all_requirements_met(info, name):
     return False
 
 def _is_satisfied(info, name):
-    # print((name in info.requested or _is_implied_by_enabled_activatable(info, name)), _all_implications_enabled(info, name), _all_requirements_met(info, name))
+    # print(
+    #     name,
+    #     name in info.requested or _is_implied_by_enabled_activatable(info, name),
+    #     _all_implications_enabled(info, name),
+    #     _all_requirements_met(info, name),
+    # )
     return ((name in info.requested or _is_implied_by_enabled_activatable(info, name)) and
             _all_implications_enabled(info, name) and
             _all_requirements_met(info, name))
@@ -535,7 +540,7 @@ def _configure_features(selectables = None, selectables_info = None, requested_f
         fail("unsupported_features parameter support is not implemented.")
     info = _FeatureConfigurationInfo(
         selectables_info = selectables_info,
-        requested = {r: True for r in requested_features},
+        requested = {r: True for r in selectables_info.default_enabled + requested_features},
         enabled = {},
         _parse_flag_cache = {},
     )
@@ -552,7 +557,9 @@ def _get_enabled_feature(info):
 
 def _get_command_line(info, action, value):
     ret = []
-    for name in info.enabled:
+    for name in info.selectables_info.selectables:
+        if not _is_enabled(info, name):
+            continue
         feature_or_action_config = info.selectables_info.selectables[name]
         ret.extend(eval_feature(feature_or_action_config, value, action, info))
     return ret
