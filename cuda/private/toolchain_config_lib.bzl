@@ -283,7 +283,8 @@ def eval_flag_group(fg, value, max_eval_iterations = 65536, _parse_flag_cache = 
 _SelectablesInfo = provider(
     "Contains info collected from action_configs and features",
     fields = {
-        "default_enabled": "",
+        "default_enabled_action_configs": "",
+        "default_enabled_features": "",
         "implies": "",
         "implied_by": "",
         "requires": "",
@@ -298,10 +299,12 @@ def _collect_selectables_info(selectables):
         implied_by = {},
         requires = {},
         required_by = {},
-        default_enabled = [],
+        default_enabled_action_configs = [],
+        default_enabled_features = [],
         selectables = {},
     )
-    enabled = {}
+    enabled_action_configs = {}
+    enabled_features = {}
     for selectable in selectables:
         if not hasattr(selectable, "implies"):
             fail(selectable, "is not an selectable")
@@ -311,7 +314,11 @@ def _collect_selectables_info(selectables):
         info.selectables[name] = selectable
 
         if selectable.enabled:
-            enabled[name] = True
+            if selectable.type_name == "action_config" or hasattr(selectable, "action_name"):
+                enabled_action_configs[name] = True
+            else:
+                enabled_features[name] = True
+
 
         info.implies[name] = selectable.implies[:]
         for i in selectable.implies:
@@ -325,7 +332,8 @@ def _collect_selectables_info(selectables):
                     info.required_by.setdefault(r, [])
                     info.required_by[r].append(name)
 
-    info.default_enabled.extend(enabled.keys())
+    info.default_enabled_action_configs.extend(enabled_action_configs.keys())
+    info.default_enabled_features.extend(enabled_features.keys())
 
     return info
 
@@ -540,7 +548,7 @@ def _configure_features(selectables = None, selectables_info = None, requested_f
         fail("unsupported_features parameter support is not implemented.")
     info = _FeatureConfigurationInfo(
         selectables_info = selectables_info,
-        requested = {r: True for r in selectables_info.default_enabled + requested_features},
+        requested = {r: True for r in selectables_info.default_enabled_features + requested_features},
         enabled = {},
         _parse_flag_cache = {},
     )
@@ -550,7 +558,7 @@ def _configure_features(selectables = None, selectables_info = None, requested_f
     return info
 
 def _get_default_features_and_action_configs(info):
-    return info.selectables_info.default_enabled[:]
+    return info.selectables_info.default_enabled_action_configs[:] + info.selectables_info.default_enabled_features[:]
 
 def _get_enabled_feature(info):
     return sorted([k for k, v in info.enabled.items() if v == True])
