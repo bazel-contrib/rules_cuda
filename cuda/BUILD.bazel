@@ -9,7 +9,6 @@ package(default_visibility = ["//visibility:public"])
 
 toolchain_type(name = "toolchain_type")
 
-#TODO:
 # Command line flag to specify the list of CUDA architectures to compile for.
 #
 # Provides CudaArchsInfo of the list of archs to build.

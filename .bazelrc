@@ -1,5 +1,5 @@
 # Convenient flag shortcuts.
-build --flag_alias=cuda_archs=//cuda:cuda_archs
+build --flag_alias=cuda_archs=//cuda:archs
 
 # Use --config=clang to build with clang instead of gcc and nvcc.
 build:clang --repo_env=CC=clang
