@@ -58,23 +58,12 @@ def _impl(ctx):
         name = "nvcc_compile_env",
         env_sets = [
             env_set(
-                actions = [ACTION_NAMES.cuda_compile],
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
                 env_entries = [
                     env_entry("INCLUDE", ";".join(cc_toolchain.built_in_include_directories)),
-                    env_entry("PATH", paths.dirname(cc_toolchain.compiler_executable) + ";C:/Windows/system32"),
-                    env_entry("TEMP", ctx.attr.msvc_env_tmp),
-                    env_entry("TMP", ctx.attr.msvc_env_tmp),
-                ],
-            ),
-        ],
-    )
-
-    nvcc_device_link_env_feature = feature(
-        name = "nvcc_device_link_env",
-        env_sets = [
-            env_set(
-                actions = [ACTION_NAMES.device_link],
-                env_entries = [
                     env_entry("PATH", paths.dirname(cc_toolchain.compiler_executable) + ";C:/Windows/system32"),
                     env_entry("TEMP", ctx.attr.msvc_env_tmp),
                     env_entry("TMP", ctx.attr.msvc_env_tmp),
@@ -183,7 +172,7 @@ def _impl(ctx):
             "host_compiler_path",
             # "linker_input_flags",
             "compiler_output_flags",
-            "nvcc_device_link_env",
+            "nvcc_compile_env",
         ],
     )
 
@@ -427,7 +416,6 @@ def _impl(ctx):
 
     features = [
         nvcc_compile_env_feature,
-        nvcc_device_link_env_feature,
         nvcc_create_library_env_feature,
         host_compiler_feature,
         use_local_env_feature,
