@@ -249,6 +249,45 @@ def _impl(ctx):
         ],
     )
 
+    dbg_feature = feature(
+        name = "dbg",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-g"])],
+            ),
+        ],
+    )
+
+    opt_feature = feature(
+        name = "opt",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = [
+                    "-Xcompiler",
+                    "-g0",
+                    "-O2",
+                    "-DNDEBUG",
+                    "-Xcompiler",
+                    "-ffunction-sections",
+                    "-Xcompiler",
+                    "-fdata-sections",
+                ])],
+            ),
+        ],
+    )
+
+    fastbuild_feature = feature(
+        name = "fastbuild",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "-g1", "-DNDEBUG"])],
+            ),
+        ],
+    )
+
     compiler_input_flags_feature = feature(
         name = "compiler_input_flags",
         flag_sets = [
@@ -289,6 +328,9 @@ def _impl(ctx):
         include_paths_feature,
         defines_feature,
         host_defines_feature,
+        dbg_feature,
+        opt_feature,
+        fastbuild_feature,
         compiler_input_flags_feature,
         compiler_output_flags_feature,
     ]
