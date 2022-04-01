@@ -181,7 +181,7 @@ def _impl(ctx):
         ],
         implies = [
             "host_compiler_path",
-            "linker_input_flags",
+            # "linker_input_flags",
             "compiler_output_flags",
             "nvcc_device_link_env",
         ],
