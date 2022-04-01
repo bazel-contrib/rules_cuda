@@ -348,12 +348,13 @@ def _get_requested_features(ctx, cuda_toolchain, cc_toolchain, requested_feature
     # TODO: we should add default features and action configs from cuda_toolchain and cc_toolchain
     return all_features
 
-def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None):
+def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None, _debug = False):
     requested_features = _get_requested_features(ctx, cuda_toolchain, None, requested_features + ctx.features + ctx.attr.features)
     return config_helper.configure_features(
         selectables_info = cuda_toolchain.selectables_info,
         requested_features = requested_features,
         unsupported_features = unsupported_features,
+        _debug = _debug,
     )
 
 cuda_helper = struct(

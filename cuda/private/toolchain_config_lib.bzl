@@ -319,7 +319,6 @@ def _collect_selectables_info(selectables):
             else:
                 enabled_features[name] = True
 
-
         info.implies[name] = selectable.implies[:]
         for i in selectable.implies:
             info.implied_by.setdefault(i, [])
@@ -398,15 +397,22 @@ def _all_requirements_met(info, name):
     return False
 
 def _is_satisfied(info, name):
-    # print(
-    #     name,
-    #     name in info.requested or _is_implied_by_enabled_activatable(info, name),
-    #     _all_implications_enabled(info, name),
-    #     _all_requirements_met(info, name),
-    # )
-    return ((name in info.requested or _is_implied_by_enabled_activatable(info, name)) and
-            _all_implications_enabled(info, name) and
-            _all_requirements_met(info, name))
+    requested_or_implied = name in info.requested or _is_implied_by_enabled_activatable(info, name)
+    implies_met = _all_implications_enabled(info, name)
+    requires_met = _all_requirements_met(info, name)
+
+    satisfied = requested_or_implied and implies_met and requires_met
+
+    if info._debug and not satisfied:
+        print(
+            "Disable {}, requested/implied: {}, implies met: {}, requires met: {}".format(
+                name,
+                requested_or_implied,
+                implies_met,
+                requires_met,
+            ),
+        )
+    return satisfied
 
 def _check_activatable(info, to_check):
     _MAX_ITER = 65536
@@ -416,10 +422,8 @@ def _check_activatable(info, to_check):
         name = to_check.pop()
 
         if not _is_enabled(info, name) or _is_satisfied(info, name):
-            # print("keep", name)
             continue
 
-        # print("disable", name)
         info.enabled[name] = False
 
         # Once we disable a selectable, we have to re-check all selectables
@@ -525,10 +529,16 @@ _FeatureConfigurationInfo = provider(
         "requested": "the requested features in configure_features",
         "enabled": "enabled action_config or feature after configure_features",
         "_parse_flag_cache": "",
+        "_debug": "print why a feature is disabled during configuration",
     },
 )
 
-def _configure_features(selectables = None, selectables_info = None, requested_features = None, unsupported_features = None):
+def _configure_features(
+        selectables = None,
+        selectables_info = None,
+        requested_features = None,
+        unsupported_features = None,
+        _debug = False):
     """_configure_features
 
     Args:
@@ -551,10 +561,13 @@ def _configure_features(selectables = None, selectables_info = None, requested_f
         requested = {r: True for r in selectables_info.default_enabled_features + requested_features},
         enabled = {},
         _parse_flag_cache = {},
+        _debug = _debug,
     )
     _enable_all_implied(info)
     _disable_unsupported_activatables(info)
     _check_provides_conflict(info)
+    if info._debug:
+        print("Enabled features after configuration:", _get_enabled_feature(info))
     return info
 
 def _get_default_features_and_action_configs(info):
