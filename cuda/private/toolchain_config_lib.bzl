@@ -127,6 +127,14 @@ def _single_access(value, path_list, ret):
     for i, name in enumerate(path_list):
         if hasattr(v, name):
             v = getattr(v, name)
+            if i < len(path_list) - 1:
+                type_str = type(v)
+                if type_str == "list" or type_str == "string":
+                    fail("Cannot expand variable '{}': variable '{}' is {}, expected structure".format(
+                        ".".join(path_list),
+                        name,
+                        "sequence" if type_str == "list" else type_str,
+                    ))
         else:
             return False
     ret.append(v)
@@ -179,7 +187,7 @@ def expand_flag(flag_info, var, name):
     if len(flag_info.expandables) == 0 or name not in flag_info.expandables:
         return
     if not exist(var, name):
-        return
+        fail("Cannot expand variable '{}'".format(name))
     value = access(var, name)
     if type(value) != "string":
         fail("Cannot expand variable '" + name + "': expected string, found", value)
