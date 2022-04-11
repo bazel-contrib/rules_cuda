@@ -301,6 +301,13 @@ _SelectablesInfo = provider(
     },
 )
 
+def _check_action_config(ac):
+    for fs in ac.flag_sets:
+        if len(fs.actions) != 0:
+            fail("action_config", ac.action_name, "specifies actions.  An action_config's flag sets automatically " +
+                                                  "apply to the configured action.  Thus, you must not specify " +
+                                                  "action lists in an action_config's flag set.")
+
 def _collect_selectables_info(selectables):
     info = _SelectablesInfo(
         implies = {},
@@ -321,14 +328,21 @@ def _collect_selectables_info(selectables):
             fail("feature or action config '" + name + "' was specified multiple times.")
         info.selectables[name] = selectable
 
+    for name, selectable in info.selectables.items():
+        is_action_config = selectable.type_name == "action_config" or hasattr(selectable, "action_name")
         if selectable.enabled:
-            if selectable.type_name == "action_config" or hasattr(selectable, "action_name"):
+            if is_action_config:
                 enabled_action_configs[name] = True
             else:
                 enabled_features[name] = True
 
+        if is_action_config:
+            _check_action_config(selectable)
+
         info.implies[name] = selectable.implies[:]
         for i in selectable.implies:
+            if i not in info.selectables:
+                fail("{} implies {}, but {} is not defined".format(name, i, i))
             info.implied_by.setdefault(i, [])
             info.implied_by[i].append(name)
 

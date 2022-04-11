@@ -816,10 +816,11 @@ test_feature_name_collision = rule(_test_feature_name_collision)
 test_feature_name_collision_msg = "<<<collision>>>"  # testFeatureNameCollision
 
 def _test_reference_to_undefined_feature(ctx):
-    create_config_info([feature(name = "a", implies = ["<<<undefined>>>"])])
+    implies = ["<<<undefined>>>"]
+    create_config_info([feature(name = "a", implies = implies)])
 
 test_reference_to_undefined_feature = rule(_test_reference_to_undefined_feature)
-test_reference_to_undefined_feature_msg = "<<<undefined>>>"  # testReferenceToUndefinedFeature
+test_reference_to_undefined_feature_msg = "<<<undefined>>> is not defined"  # testReferenceToUndefinedFeature
 
 def _test_error_for_no_matching_tool(ctx):
     config_info = create_config_info([
@@ -860,7 +861,7 @@ def _error_for_flag_from_action_config_with_specified_action(ctx):
 
 error_for_flag_from_action_config_with_specified_action = rule(_error_for_flag_from_action_config_with_specified_action)
 error_for_flag_from_action_config_with_specified_action_msg = (
-    "action_config %s specifies actions.  An action_config's flag sets automatically apply to the " +
+    "action_config {} specifies actions.  An action_config's flag sets automatically apply to the " +
     "configured action.  Thus, you must not specify action lists in an action_config's flag set."
 ).format("c++-compile")  # testErrorForFlagFromActionConfigWithSpecifiedAction
 
