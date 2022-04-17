@@ -1,15 +1,19 @@
 load(
     ":flag_validation_test.bzl",
     "cuda_library_c_dbg_flag_test",
+    "cuda_library_c_dbg_static_msvcrt_flag_test",
     "cuda_library_c_fastbuild_flag_test",
+    "cuda_library_c_fastbuild_static_msvcrt_flag_test",
     "cuda_library_c_opt_flag_test",
-    "cuda_library_flag_test",
-    "num_actions_test",
-    "cuda_library_sm61_flag_test",
+    "cuda_library_c_opt_static_msvcrt_flag_test",
     "cuda_library_compute60_flag_test",
     "cuda_library_compute60_sm61_flag_test",
     "cuda_library_compute61_sm61_flag_test",
+    "cuda_library_flag_test",
+    "cuda_library_sm61_flag_test",
+    "num_actions_test",
 )
+load("@local_cuda//:defs.bzl", "if_linux", "if_windows")
 
 num_actions_test(
     name = "cuda_library_num_actions_test",
@@ -34,6 +38,7 @@ cuda_library_c_dbg_flag_test(
     name = "cuda_library_c_dbg_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = ["-g"],
+    target_compatible_with = ["@platforms//os:linux"],
     target_under_test = "//examples/basic:kernel",
 )
 
@@ -42,17 +47,131 @@ cuda_library_c_fastbuild_flag_test(
     action_mnemonic = "CudaCompile",
     contain_flags = ["-g1"],
     not_contain_flags = ["-DNDEBUG"],
+    target_compatible_with = ["@platforms//os:linux"],
     target_under_test = "//examples/basic:kernel",
 )
 
 cuda_library_c_opt_flag_test(
     name = "cuda_library_c_opt_flag_test",
     action_mnemonic = "CudaCompile",
-    contain_flags = ["-g0", "-O2", "-DNDEBUG"],
+    contain_flags = [
+        "-g0",
+        "-O2",
+        "-DNDEBUG",
+    ],
     not_contain_flags = ["-g"],
+    target_compatible_with = ["@platforms//os:linux"],
     target_under_test = "//examples/basic:kernel",
 )
 
+# Windows dynamic msvcrt and static msvcrt test
+cuda_library_c_dbg_flag_test(
+    name = "cuda_library_c_dbg_dynamic_msvcrt_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "/Od",
+        "/Z7",
+        "/MDd",
+    ],
+    not_contain_flags = [
+        "-DNDEBUG",
+        "/MD",
+        "/MT",
+        "/MTd",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_c_fastbuild_flag_test(
+    name = "cuda_library_c_fastbuild_dynamic_msvcrt_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "/Od",
+        "/Z7",
+        "/MD",
+    ],
+    not_contain_flags = [
+        "-DNDEBUG",
+        "/MDd",
+        "/MT",
+        "/MTd",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_c_opt_flag_test(
+    name = "cuda_library_c_opt_dynamic_msvcrt_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "/O2",
+        "/Oy-",
+        "/MD",
+        "-DNDEBUG",
+    ],
+    not_contain_flags = [
+        "/MDd",
+        "/MT",
+        "/MTd",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_c_dbg_static_msvcrt_flag_test(
+    name = "cuda_library_c_dbg_static_msvcrt_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "/Od",
+        "/Z7",
+        "/MTd",
+    ],
+    not_contain_flags = [
+        "-DNDEBUG",
+        "/MD",
+        "/MDd",
+        "/MT",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_c_fastbuild_static_msvcrt_flag_test(
+    name = "cuda_library_c_fastbuild_static_msvcrt_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "/Od",
+        "/Z7",
+        "/MT",
+    ],
+    not_contain_flags = [
+        "-DNDEBUG",
+        "/MD",
+        "/MDd",
+        "/MTd",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_c_opt_static_msvcrt_flag_test(
+    name = "cuda_library_c_opt_dynamic_static_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "/O2",
+        "/Oy-",
+        "/MT",
+        "-DNDEBUG",
+    ],
+    not_contain_flags = [
+        "/MD",
+        "/MDd",
+        "/MTd",
+    ],
+    target_compatible_with = ["@platforms//os:windows"],
+    target_under_test = "//examples/basic:kernel",
+)
 
 ###########################################
 # Test arch if no cuda_arch is specified
@@ -67,7 +186,6 @@ cuda_library_flag_test(
     ],
     target_under_test = "//examples/basic:kernel",
 )
-
 
 ######################
 # Tests with -gencode

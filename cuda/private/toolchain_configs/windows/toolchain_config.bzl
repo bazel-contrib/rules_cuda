@@ -309,7 +309,7 @@ def _impl(ctx):
         flag_sets = [
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                flag_groups = [flag_group(flags = ["-Xcompiler", "/O2"])],
+                flag_groups = [flag_group(flags = ["-DNDEBUG", "-Xcompiler", "/O2"])],
             ),
         ],
         implies = ["frame_pointer"],
@@ -418,7 +418,7 @@ def _impl(ctx):
         nvcc_compile_env_feature,
         nvcc_create_library_env_feature,
         host_compiler_feature,
-        use_local_env_feature,
+        # use_local_env_feature,  # -use-local-env is only added in 11.6, TODO:
         include_paths_feature,
         defines_feature,
         host_defines_feature,

@@ -25,15 +25,22 @@ def cuda_library_flag_test_impl(ctx):
 
     asserts.true(env, len(ctx.attr.contain_flags) + len(ctx.attr.not_contain_flags) > 0, "Invalid test config")
 
+    def has_flag(cmd, single_flag):
+        if (" " + single_flag + " ") in cmd:
+            return True
+        if cmd.endswith(" " + single_flag):
+            return True
+        return False
+
     has_matched_action = False
     for action in actions:
         if ctx.attr.action_mnemonic == action.mnemonic:
             has_matched_action = True
             cmd = " ".join(action.argv)
             for flag in ctx.attr.contain_flags:
-                asserts.true(env, (" " + flag + " ") in cmd, 'flag "{}" not in command line "{}"'.format(flag, cmd))
+                asserts.true(env, has_flag(cmd, flag), 'flag "{}" not in command line "{}"'.format(flag, cmd))
             for flag in ctx.attr.not_contain_flags:
-                asserts.true(env, (" " + flag + " ") not in cmd, 'flag "{}" in command line "{}"'.format(flag, cmd))
+                asserts.true(env, not has_flag(cmd, flag), 'flag "{}" in command line "{}"'.format(flag, cmd))
 
     asserts.true(env, has_matched_action, 'target "{}" do not have action with mnemonic "{}"'.format(
         str(target_under_test),
@@ -42,17 +49,20 @@ def cuda_library_flag_test_impl(ctx):
 
     return analysistest.end(env)
 
-def _create_cuda_library_flag_test(config_settings):
+def _create_cuda_library_flag_test(*config_settings):
+    merged_config_settings = {}
+    for cs in config_settings:
+        for k, v in cs.items():
+            merged_config_settings[k] = v
     return analysistest.make(
         cuda_library_flag_test_impl,
-        config_settings = config_settings,
+        config_settings = merged_config_settings,
         attrs = {
             "action_mnemonic": attr.string(mandatory = True),
             "contain_flags": attr.string_list(),
             "not_contain_flags": attr.string_list(),
         },
     )
-
 
 cuda_library_flag_test = _create_cuda_library_flag_test({})
 
@@ -63,6 +73,12 @@ config_settings_opt = {"//command_line_option:compilation_mode": "opt"}
 cuda_library_c_dbg_flag_test = _create_cuda_library_flag_test(config_settings_dbg)
 cuda_library_c_fastbuild_flag_test = _create_cuda_library_flag_test(config_settings_fastbuild)
 cuda_library_c_opt_flag_test = _create_cuda_library_flag_test(config_settings_opt)
+
+static_link_msvcrt = {"//command_line_option:features": ["static_link_msvcrt"]}
+
+cuda_library_c_dbg_static_msvcrt_flag_test = _create_cuda_library_flag_test(config_settings_dbg, static_link_msvcrt)
+cuda_library_c_fastbuild_static_msvcrt_flag_test = _create_cuda_library_flag_test(config_settings_fastbuild, static_link_msvcrt)
+cuda_library_c_opt_static_msvcrt_flag_test = _create_cuda_library_flag_test(config_settings_opt, static_link_msvcrt)
 
 # NOTE: @rules_cuda//cuda:archs does not work
 config_settings_sm61 = {"@//cuda:archs": "sm_61"}
