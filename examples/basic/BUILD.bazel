@@ -1,5 +1,7 @@
 load("//cuda:defs.bzl", "cuda_library")
 
+package(default_visibility = ["//visibility:public"])
+
 cuda_library(
     name = "kernel",
     srcs = ["kernel.cu"],

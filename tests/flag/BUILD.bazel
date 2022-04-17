@@ -1,0 +1,112 @@
+load(
+    ":flag_validation_test.bzl",
+    "cuda_library_c_dbg_flag_test",
+    "cuda_library_c_fastbuild_flag_test",
+    "cuda_library_c_opt_flag_test",
+    "cuda_library_flag_test",
+    "num_actions_test",
+    "cuda_library_sm61_flag_test",
+    "cuda_library_compute60_flag_test",
+    "cuda_library_compute60_sm61_flag_test",
+    "cuda_library_compute61_sm61_flag_test",
+)
+
+num_actions_test(
+    name = "cuda_library_num_actions_test",
+    target_under_test = "//examples/basic:kernel",
+    # 2 compiling, 2 lib, non-pic and pic respectively
+    # num_actions = 4,
+)
+
+cuda_library_flag_test(
+    name = "cuda_library_common_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-x cu",
+        "-o",
+        "-ccbin",
+    ],
+    target_under_test = "//examples/basic:kernel",
+)
+
+# https://docs.bazel.build/versions/main/user-manual.html#flag--compilation_mode
+cuda_library_c_dbg_flag_test(
+    name = "cuda_library_c_dbg_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-g"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_c_fastbuild_flag_test(
+    name = "cuda_library_c_fastbuild_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-g1"],
+    not_contain_flags = ["-DNDEBUG"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_c_opt_flag_test(
+    name = "cuda_library_c_opt_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-g0", "-O2", "-DNDEBUG"],
+    not_contain_flags = ["-g"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+
+###########################################
+# Test arch if no cuda_arch is specified
+# TODO: switch default to use -arch=native
+###########################################
+cuda_library_flag_test(
+    name = "cuda_library_default_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_80,code=sm_80",
+        "-gencode arch=compute_80,code=sm_86",
+    ],
+    target_under_test = "//examples/basic:kernel",
+)
+
+
+######################
+# Tests with -gencode
+######################
+cuda_library_sm61_flag_test(
+    name = "cuda_library_sm61_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_61,code=sm_61",
+    ],
+    target_under_test = "//examples/basic:kernel",
+    # target_under_test = "//cuda:archs",
+)
+
+cuda_library_compute60_flag_test(
+    name = "cuda_library_compute60_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_60,code=compute_60",
+    ],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_compute60_sm61_flag_test(
+    name = "cuda_library_compute60_sm61_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_60,code=compute_60",
+        "-gencode arch=compute_60,code=sm_61",
+    ],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_compute61_sm61_flag_test(
+    name = "cuda_library_compute61_sm61_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_61,code=compute_61",
+        "-gencode arch=compute_61,code=sm_61",
+    ],
+    target_under_test = "//examples/basic:kernel",
+)

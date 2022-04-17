@@ -283,7 +283,7 @@ def _impl(ctx):
         flag_sets = [
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                flag_groups = [flag_group(flags = ["-Xcompiler", "-g1", "-DNDEBUG"])],
+                flag_groups = [flag_group(flags = ["-Xcompiler", "-g1"])],
             ),
         ],
     )
