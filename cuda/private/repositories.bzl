@@ -36,7 +36,7 @@ def _local_cuda_impl(repository_ctx):
         ptxas_path = repository_ctx.which("ptxas")
         if ptxas_path:
             # ${CUDA_PATH}/bin/ptxas
-            cuda_path = ptxas_path.dirname.dirname
+            cuda_path = str(ptxas_path.dirname.dirname)
     if cuda_path == None and _is_linux(repository_ctx):
         cuda_path = "/usr/local/cuda"
 
