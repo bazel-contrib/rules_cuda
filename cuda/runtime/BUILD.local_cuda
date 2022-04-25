@@ -38,17 +38,51 @@ cc_library(
     ]),
 )
 
+cc_import(
+    name = "cudart_so",
+    shared_library = "cuda/lib64/libcudart.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_library(
+    name = "cudadevrt_a",
+    srcs = ["cuda/lib64/libcudadevrt.a"],
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cudart_lib",
+    interface_library = "cuda/lib/x64/cudart.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_import(
+    name = "cudadevrt_lib",
+    interface_library = "cuda/lib/x64/cudadevrt.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
 # Note: do not use this target directly, use the configurable label_flag
 # @rules_cuda//cuda:runtime instead.
 cc_library(
     name = "cuda_runtime",
-    srcs = glob(["cuda/lib64/libcudart.so.*"]) + glob(["cuda/lib/x64/cudart.lib"]),
-    hdrs = [":_cuda_header_files"],
-    includes = ["cuda/include"],
     linkopts = if_linux([
         "-ldl",
         "-lpthread",
         "-lrt",
+    ]),
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        # devrt is require for jit linking when rdc is enabled
+        ":cudadevrt_a",
+        ":cudart_so",
+    ]) + if_windows([
+        # devrt is require for jit linking when rdc is enabled
+        ":cudadevrt_lib",
+        ":cudart_lib",
     ]),
     # FIXME:
     # visibility = ["@rules_cuda//cuda:__pkg__"],
@@ -66,6 +100,7 @@ cc_library(
         "-lpthread",
         "-lrt",
     ]),
+    deps = [":cudadevrt_a"],
     # FIXME:
     # visibility = ["@rules_cuda//cuda:__pkg__"],
 )
