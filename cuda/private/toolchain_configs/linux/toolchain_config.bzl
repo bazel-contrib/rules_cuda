@@ -348,6 +348,8 @@ cuda_toolchain_config = rule(
     attrs = {
         "cuda_path": attr.string(default = "/usr/local/cuda"),
         "toolchain_identifier": attr.string(values = ["nvcc", "clang"], mandatory = True),
+        "nvcc_version_major": attr.int(),
+        "nvcc_version_minor": attr.int(),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
     },
     provides = [CudaToolchainConfigInfo],

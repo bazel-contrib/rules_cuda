@@ -25,6 +25,19 @@ def _to_forward_slash(s):
 def _is_linux(ctx):
     return ctx.os.name.startswith("linux")
 
+def _get_cuda_version_from_nvcc(repository_ctx, cuda_path):
+    result = repository_ctx.execute([cuda_path + "/bin/nvcc", "--version"])
+    if result.return_code != 0:
+        return [-1, -1]
+    for l in [l for l in result.stdout.split("\n") if ", release " in l]:
+        segments = l.split(", release ")
+        if len(segments) != 2:
+            continue
+        version = [int(v) for v in segments[-1].split(", ")[0].split(".")]
+        if len(version) >= 2:
+            return version[:2]
+    return [-1, -1]
+
 def _local_cuda_impl(repository_ctx):
     ## Detect CUDA Toolkit
     # Path to CUDA Toolkit is
@@ -43,12 +56,16 @@ def _local_cuda_impl(repository_ctx):
     # if cuda_path == None:
     #     fail("Cannot determine CUDA Toolkit root, abort!")
 
+    nvcc_version_major = -1
+    nvcc_version_minor = -1
+
     # Generate @local_cuda//BUILD and @local_cuda//defs.bzl and
     defs_bzl_content = defs_bzl_shared
     defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"
     if repository_ctx.path(cuda_path).exists:
         repository_ctx.symlink(cuda_path, "cuda")
         repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
+        nvcc_version_major, nvcc_version_minor = _get_cuda_version_from_nvcc(repository_ctx, cuda_path)
         defs_bzl_content += defs_if_local_cuda % "if_true"
     else:
         repository_ctx.file("BUILD")  # Empty file
@@ -60,7 +77,11 @@ def _local_cuda_impl(repository_ctx):
         "//cuda:templates/BUILD.local_toolchain_" +
         ("linux" if _is_linux(repository_ctx) else "windows"),
     )
-    substitutions = {"%{cuda_path}": _to_forward_slash(cuda_path)}
+    substitutions = {
+        "%{cuda_path}": _to_forward_slash(cuda_path),
+        "%{nvcc_version_major}": str(nvcc_version_major),
+        "%{nvcc_version_minor}": str(nvcc_version_minor),
+    }
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:
         substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)

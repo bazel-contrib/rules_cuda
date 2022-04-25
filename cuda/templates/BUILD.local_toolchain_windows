@@ -11,6 +11,8 @@ cuda_toolchain_config(
     cuda_path = "%{cuda_path}",
     msvc_env_tmp = "%{env_tmp}",
     toolchain_identifier = "nvcc",
+    nvcc_version_major = %{nvcc_version_major},
+    nvcc_version_minor = %{nvcc_version_minor},
 )
 
 cuda_toolchain(

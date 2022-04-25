@@ -4,6 +4,7 @@ load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
 load("//cuda/private:toolchain.bzl", "use_cpp_toolchain")
+load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
 load(
     "//cuda/private:toolchain_config_lib.bzl",
     "action_config",
@@ -280,7 +281,7 @@ def _impl(ctx):
 
     use_local_env_feature = feature(
         name = "use_local_env",
-        enabled = True,
+        enabled = nvcc_version_ge(ctx, 11, 6),
         flag_sets = [
             flag_set(
                 actions = [
@@ -418,7 +419,7 @@ def _impl(ctx):
         nvcc_compile_env_feature,
         nvcc_create_library_env_feature,
         host_compiler_feature,
-        # use_local_env_feature,  # -use-local-env is only added in 11.6, TODO:
+        use_local_env_feature,
         include_paths_feature,
         defines_feature,
         host_defines_feature,
@@ -448,6 +449,8 @@ cuda_toolchain_config = rule(
     attrs = {
         "cuda_path": attr.string(default = "/usr/local/cuda"),
         "toolchain_identifier": attr.string(values = ["nvcc", "clang"], mandatory = True),
+        "nvcc_version_major": attr.int(),
+        "nvcc_version_minor": attr.int(),
         "msvc_env_tmp": attr.string(),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
     },

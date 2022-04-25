@@ -15,6 +15,8 @@ filegroup(
 cuda_toolchain_config(
     name = "nvcc_windows_config",
     toolchain_identifier = "nvcc",
+    nvcc_version_major = 11,
+    nvcc_version_minor = 5,
     # FIXME: this is my local path
     msvc_env_tmp = "C:/Users/cloud/AppData/Local/Temp",
 )
