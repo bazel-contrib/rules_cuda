@@ -1,6 +1,6 @@
 #include "kernel.h"
 
 int main() {
-  Launch();
+  launch();
   return 0;
 }

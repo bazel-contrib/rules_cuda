@@ -2,7 +2,6 @@
 
 __device__ int g[N];
 
-__device__ void bar (void)
-{
+__device__ void bar() {
   g[threadIdx.x]++;
 }

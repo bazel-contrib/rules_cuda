@@ -2,15 +2,22 @@
 
 #include <iostream>
 
-__global__ void Kernel() { printf("cuda kernel called!\n"); }
+#define CUDA_CHECK(expr)                                                \
+  do {                                                                  \
+    cudaError_t err = (expr);                                           \
+    if (err != cudaSuccess) {                                           \
+      fprintf(stderr, "CUDA Error Code  : %d\n     Error String: %s\n", \
+              err, cudaGetErrorString(err));                            \
+      exit(err);                                                        \
+    }                                                                   \
+  } while (0)
 
-void ReportIfError(cudaError_t error) {
-  if (error != cudaSuccess)
-    std::cerr << "CUDA error: " << cudaGetErrorString(error) << std::endl;
+__global__ void kernel() {
+  printf("cuda kernel called!\n");
 }
 
-void Launch() {
-  Kernel<<<1, 1>>>();
-  ReportIfError(cudaGetLastError());
-  ReportIfError(cudaDeviceSynchronize());
+void launch() {
+  kernel<<<1, 1>>>();
+  CUDA_CHECK(cudaGetLastError());
+  CUDA_CHECK(cudaDeviceSynchronize());
 }

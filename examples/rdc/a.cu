@@ -1,33 +1,34 @@
-#include <stdio.h>
 #include "b.cuh"
+#include <stdio.h>
 
-__global__ void foo (void) {
+#define CUDA_CHECK(expr)                                                \
+  do {                                                                  \
+    cudaError_t err = (expr);                                           \
+    if (err != cudaSuccess) {                                           \
+      fprintf(stderr, "CUDA Error Code  : %d\n     Error String: %s\n", \
+              err, cudaGetErrorString(err));                            \
+      exit(err);                                                        \
+    }                                                                   \
+  } while (0)
 
+__global__ void foo() {
   __shared__ int a[N];
   a[threadIdx.x] = threadIdx.x;
-
   __syncthreads();
 
   g[threadIdx.x] = a[blockDim.x - threadIdx.x - 1];
-
   bar();
 }
 
-int main (void) {
+int main(void) {
   unsigned int i;
   int *dg, hg[N];
   int sum = 0;
 
   foo<<<1, N>>>();
-
-  if(cudaGetSymbolAddress((void**)&dg, g)){
-      printf("couldn't get the symbol addr\n");
-      return 1;
-  }
-  if(cudaMemcpy(hg, dg, N * sizeof(int), cudaMemcpyDeviceToHost)){
-      printf("couldn't memcpy\n");
-      return 1;
-  }
+  CUDA_CHECK(cudaGetLastError());
+  CUDA_CHECK(cudaGetSymbolAddress((void**)&dg, g));
+  CUDA_CHECK(cudaMemcpy(hg, dg, N * sizeof(int), cudaMemcpyDeviceToHost));
 
   for (i = 0; i < N; i++) {
     sum += hg[i];
