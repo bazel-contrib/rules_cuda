@@ -294,6 +294,25 @@ def _impl(ctx):
         ],
     )
 
+    arch_native_feature = feature(
+        name = "arch_native",
+        enabled = nvcc_version_ge(ctx, 11, 6),
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        expand_if_true = "use_arch_native",
+                        flags = ["-arch=native"],
+                    ),
+                ],
+            ),
+        ],
+    )
+
     dbg_feature = feature(
         name = "dbg",
         flag_sets = [
@@ -420,6 +439,7 @@ def _impl(ctx):
         nvcc_create_library_env_feature,
         host_compiler_feature,
         use_local_env_feature,
+        arch_native_feature,
         include_paths_feature,
         defines_feature,
         host_defines_feature,

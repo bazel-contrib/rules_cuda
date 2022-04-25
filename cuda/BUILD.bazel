@@ -18,7 +18,7 @@ toolchain_type(name = "toolchain_type")
 # See CudaArchsInfo for detailed grammar
 cuda_archs_flag(
     name = "archs",
-    build_setting_default = "compute_80:sm_80,sm_86",
+    build_setting_default = "",
 )
 
 #TODO:

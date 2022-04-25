@@ -4,6 +4,7 @@ load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
 load("//cuda/private:toolchain.bzl", "use_cpp_toolchain")
+load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
 load(
     "//cuda/private:toolchain_config_lib.bzl",
     "action_config",
@@ -187,6 +188,25 @@ def _impl(ctx):
         ],
     )
 
+    arch_native_feature = feature(
+        name = "arch_native",
+        enabled = nvcc_version_ge(ctx, 11, 6),
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        expand_if_true = "use_arch_native",
+                        flags = ["-arch=native"],
+                    ),
+                ],
+            ),
+        ],
+    )
+
     include_paths_feature = feature(
         name = "include_paths",
         enabled = True,
@@ -324,6 +344,7 @@ def _impl(ctx):
         nvcc_compile_env_feature,
         nvcc_device_link_env_feature,
         nvcc_create_library_env_feature,
+        arch_native_feature,
         host_compiler_feature,
         include_paths_feature,
         defines_feature,

@@ -32,6 +32,10 @@ def _get_arch_spec(spec_str):
     '''Convert string into an ArchSpecInfo.
 
     aka, parse "compute_80:sm_80,sm_86"'''
+    spec_str = spec_str.strip()
+    if spec_str == "":
+        return None
+
     stage1_arch = None
     stage2_archs = []
 
@@ -59,7 +63,9 @@ def _get_arch_specs(specs_str):
     aka, parse "compute_70:sm_70;compute_80:sm_80,sm_86"'''
     archs = []
     for sepc_str in specs_str.split(";"):
-        archs.append(_get_arch_spec(sepc_str))
+        spec = _get_arch_spec(sepc_str)
+        if spec != None:
+            archs.append(spec)
     return archs
 
 def _check_src_extension(file, allowed_src_files):
@@ -291,6 +297,7 @@ def _create_compile_variables(
 
     return struct(
         arch_specs = arch_specs,
+        use_arch_native = len(arch_specs) == 0,
         source_file = source_file,
         output_file = output_file,
         host_compiler = host_compiler,
