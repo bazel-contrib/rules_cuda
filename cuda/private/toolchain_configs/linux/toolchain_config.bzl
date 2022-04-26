@@ -207,6 +207,22 @@ def _impl(ctx):
         ],
     )
 
+    pic_feature = feature(
+        name = "pic",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(flags = ["-Xcompiler", "-fPIC"], expand_if_true = "use_pic"),
+                ],
+            ),
+        ],
+    )
+
     include_paths_feature = feature(
         name = "include_paths",
         enabled = True,
@@ -345,6 +361,7 @@ def _impl(ctx):
         nvcc_device_link_env_feature,
         nvcc_create_library_env_feature,
         arch_native_feature,
+        pic_feature,
         host_compiler_feature,
         include_paths_feature,
         defines_feature,

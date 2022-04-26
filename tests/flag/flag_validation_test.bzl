@@ -33,8 +33,16 @@ def cuda_library_flag_test_impl(ctx):
         return False
 
     has_matched_action = False
+    has_name_match = True
     for action in actions:
         if ctx.attr.action_mnemonic == action.mnemonic:
+            if ctx.attr.output_name != "":
+                has_name_match = False
+                for output in action.outputs.to_list():
+                    has_name_match = has_name_match or output.basename == ctx.attr.output_name
+                if not has_name_match:
+                    continue
+
             has_matched_action = True
             cmd = " ".join(action.argv)
             for flag in ctx.attr.contain_flags:
@@ -42,10 +50,11 @@ def cuda_library_flag_test_impl(ctx):
             for flag in ctx.attr.not_contain_flags:
                 asserts.true(env, not has_flag(cmd, flag), 'flag "{}" in command line "{}"'.format(flag, cmd))
 
+    msg = "" if has_name_match else ' has output named "{}"'.format(ctx.attr.output_name)
     asserts.true(env, has_matched_action, 'target "{}" do not have action with mnemonic "{}"'.format(
         str(target_under_test),
         ctx.attr.action_mnemonic,
-    ))
+    ) + msg)
 
     return analysistest.end(env)
 
@@ -59,6 +68,7 @@ def _create_cuda_library_flag_test(*config_settings):
         config_settings = merged_config_settings,
         attrs = {
             "action_mnemonic": attr.string(mandatory = True),
+            "output_name": attr.string(),
             "contain_flags": attr.string_list(),
             "not_contain_flags": attr.string_list(),
         },

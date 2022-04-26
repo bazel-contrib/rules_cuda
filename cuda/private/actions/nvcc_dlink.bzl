@@ -34,6 +34,7 @@ def device_link(
         library_search_paths = [],
         runtime_library_search_paths = [],
         user_link_flags = common.link_flags,
+        use_pic = pic,
     )
     cmd = cuda_helper.get_command_line(cuda_feature_config, ACTION_NAMES.device_link, var)
     env = cuda_helper.get_environment_variables(cuda_feature_config, ACTION_NAMES.device_link, var)

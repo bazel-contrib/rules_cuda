@@ -190,6 +190,51 @@ cuda_library_flag_test(
     target_under_test = "//examples/basic:kernel",
 )
 
+# -fPIC is only meaningful for linux targets
+cuda_library_flag_test(
+    name = "cuda_library_nonpic_compile_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = [
+        "-fPIC",
+    ],
+    output_name = "kernel.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_flag_test(
+    name = "cuda_library_nonpic_dlink_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = [
+        "-fPIC",
+    ],
+    output_name = "kernel.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_flag_test(
+    name = "cuda_library_pic_compile_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-Xcompiler -fPIC",
+    ],
+    output_name = "kernel.pic.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library_flag_test(
+    name = "cuda_library_pic_dlink_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-Xcompiler -fPIC",
+    ],
+    output_name = "kernel.pic.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "//examples/basic:kernel",
+)
+
 ######################
 # Tests with -gencode
 ######################

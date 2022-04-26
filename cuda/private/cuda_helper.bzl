@@ -319,7 +319,8 @@ def _create_device_link_variables(
         host_compiler = None,
         library_search_paths = [],
         runtime_library_search_paths = [],
-        user_link_flags = []):
+        user_link_flags = [],
+        use_pic = False):
     arch_specs = cuda_archs_info.arch_specs
     use_dlto = False
     for arch_spec in arch_specs:
@@ -335,6 +336,7 @@ def _create_device_link_variables(
         runtime_library_search_paths = runtime_library_search_paths,
         user_link_flags = user_link_flags,
         use_dlto = use_dlto,
+        use_pic = use_pic,
     )
 
 def _get_requested_features(ctx, cuda_toolchain, cc_toolchain, requested_features):
