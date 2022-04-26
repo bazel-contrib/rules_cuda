@@ -330,6 +330,7 @@ def _create_device_link_variables(
                 break
     return struct(
         arch_specs = arch_specs,
+        use_arch_native = len(arch_specs) == 0,
         output_file = output_file,
         host_compiler = host_compiler,
         library_search_paths = library_search_paths,

@@ -14,6 +14,9 @@ def device_link(
         rdc = False,
         dlto = False):
     """perform device link, return a dlink-ed object file"""
+    if not rdc:
+        fail("device link is only meaningful on building relocatable device code")
+
     actions = ctx.actions
     host_compiler = cc_toolchain.compiler_executable
     cuda_compiler = cuda_toolchain.compiler_executable
