@@ -285,6 +285,43 @@ def _impl(ctx):
         ],
     )
 
+    compile_flags_feature = feature(
+        name = "compile_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{compile_flags}"],
+                        iterate_over = "compile_flags",
+                    )
+                ]
+            )
+        ]
+    )
+
+    host_compile_flags_feature = feature(
+        name = "host_compile_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-Xcompiler", "%{host_compile_flags}"],
+                        iterate_over = "host_compile_flags",
+                    )
+                ]
+            )
+        ]
+    )
+
     dbg_feature = feature(
         name = "dbg",
         flag_sets = [
@@ -366,6 +403,8 @@ def _impl(ctx):
         include_paths_feature,
         defines_feature,
         host_defines_feature,
+        compile_flags_feature,
+        host_compile_flags_feature,
         dbg_feature,
         opt_feature,
         fastbuild_feature,

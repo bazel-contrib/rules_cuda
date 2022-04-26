@@ -34,6 +34,7 @@ def device_link(
         ctx.attr._default_cuda_archs[CudaArchsInfo],
         output_file = obj_file.path,
         host_compiler = host_compiler,
+        host_compile_flags = common.host_compile_flags,
         library_search_paths = [],
         runtime_library_search_paths = [],
         user_link_flags = common.link_flags,

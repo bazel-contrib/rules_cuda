@@ -13,6 +13,7 @@ load(
     "cuda_library_sm61_flag_test",
     "num_actions_test",
 )
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 load("@local_cuda//:defs.bzl", "if_linux", "if_windows")
 
 num_actions_test(
@@ -188,6 +189,41 @@ cuda_library_flag_test(
         "-gencode"
     ],
     target_under_test = "//examples/basic:kernel",
+)
+
+cuda_library(
+    name = "examples_basic_kernel_with_flags",
+    srcs = ["//examples/basic:kernel.cu"],
+    hdrs = ["//examples/basic:kernel.h"],
+    copts = ["-G"],
+    host_copts = ["-O1"],
+    rdc = 1,
+    tags = ["manual"],
+)
+
+cuda_library_flag_test(
+    name = "cuda_library_copts_and_host_copts_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-G",
+        "-Xcompiler -O1",
+    ],
+    not_contain_flags = [
+        "-Xcompiler -G",
+    ],
+    target_under_test = "examples_basic_kernel_with_flags",
+)
+
+cuda_library_flag_test(
+    name = "cuda_library_dlink_copts_and_host_copts_flag_test",
+    action_mnemonic = "CudaDeviceLink",
+    contain_flags = [
+        "-Xcompiler -O1",
+    ],
+    not_contain_flags = [
+        "-G",
+    ],
+    target_under_test = "examples_basic_kernel_with_flags",
 )
 
 # -fPIC is only meaningful for linux targets
