@@ -23,7 +23,7 @@ def device_link(
     basename = ctx.attr.name + "_dlink"
     filename = cuda_helper.get_artifact_name(cuda_toolchain, artifact_category_name, basename)
 
-    obj_file = actions.declare_file(filename)
+    obj_file = actions.declare_file("_objs/{}/{}".format(ctx.attr.name, filename))
 
     var = cuda_helper.create_device_link_variables(
         cuda_toolchain,

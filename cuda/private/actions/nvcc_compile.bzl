@@ -27,7 +27,7 @@ def compile(
             continue
 
         filename = cuda_helper.get_artifact_name(cuda_toolchain, artifact_category_name, basename)
-        obj_file = actions.declare_file(filename)
+        obj_file = actions.declare_file("_objs/{}/{}".format(ctx.attr.name, filename))
         ret.append(obj_file)
 
         var = cuda_helper.create_compile_variables(
