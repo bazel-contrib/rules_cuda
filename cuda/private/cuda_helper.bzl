@@ -180,9 +180,10 @@ def _create_common(ctx):
         hdr = [f for f in fs.files.to_list() if cuda_helper.check_src_extension(f, ALLOW_CUDA_HDRS)]
         private_headers.extend(hdr)
     headers = public_headers + private_headers
+    transitive_headers = []
     for dep in attr.deps:
         if CcInfo in dep:
-            headers.extend(dep[CcInfo].compilation_context.headers.to_list())
+            transitive_headers.append(dep[CcInfo].compilation_context.headers)
 
     # gather linker info
     builtin_linker_inputs = []
@@ -216,7 +217,7 @@ def _create_common(ctx):
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,
-        headers = depset(headers),
+        headers = depset(headers, transitive = transitive_headers),
         transitive_linker_inputs = builtin_linker_inputs + transitive_linker_inputs,
         defines = defines,
         local_defines = local_defines,
