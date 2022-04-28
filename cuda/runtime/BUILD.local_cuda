@@ -112,6 +112,30 @@ cc_library(
 )
 
 cc_import(
+    name = "cuda_so",
+    shared_library = "cuda/lib64/stubs/libcuda.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cuda_lib",
+    interface_library = "cuda/lib/x64/cuda.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cuda",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":cuda_so",
+    ]) + if_windows([
+        ":cuda_lib",
+    ]),
+)
+
+cc_import(
     name = "cublas_so",
     shared_library = "cuda/lib64/libcublas.so",
     target_compatible_with = ["@platforms//os:linux"],
@@ -165,4 +189,112 @@ cc_library(
         "cuda/include",
     ],
     deps = [":cub"],
+)
+
+# CUPTI
+cc_import(
+    name = "cupti_so",
+    shared_library = "cuda/lib64/libcupti.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cupti_lib",
+    interface_library = "cuda/extras/CUPTI/lib64/cupti.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cupti_headers",
+    hdrs = glob(["cuda/extras/CUPTI/include/*.h"]),
+    includes = ["cuda/extras/CUPTI/include"],
+)
+
+cc_library(
+    name = "cupti",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":cupti_so",
+    ]) + if_windows([
+        ":cupti_headers",
+        ":cupti_lib",
+    ]),
+)
+
+# nvperf
+cc_import(
+    name = "nvperf_host_so",
+    shared_library = "cuda/lib64/libnvperf_host.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "nvperf_host_lib",
+    interface_library = "cuda/extras/CUPTI/lib64/nvperf_host.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvperf_host",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":nvperf_host_so",
+    ]) + if_windows([
+        ":cupti_headers",
+        ":nvperf_host_lib",
+    ]),
+)
+
+cc_import(
+    name = "nvperf_target_so",
+    shared_library = "cuda/lib64/libnvperf_target.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "nvperf_target_lib",
+    interface_library = "cuda/extras/CUPTI/lib64/nvperf_target.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvperf_target",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":nvperf_target_so",
+    ]) + if_windows([
+        ":cupti_headers",
+        ":nvperf_target_lib",
+    ]),
+)
+
+# NVML
+cc_import(
+    name = "nvidia-ml_so",
+    shared_library = "cuda/lib64/stubs/libnvidia-ml.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "nvml_lib",
+    interface_library = "cuda/lib/x64/nvml.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvml",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":nvidia-ml_so",
+    ]) + if_windows([
+        ":nvml_lib",
+    ]),
 )
