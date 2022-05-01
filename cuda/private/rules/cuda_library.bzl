@@ -65,8 +65,8 @@ def _cuda_library_impl(ctx):
         static_library = lib,
         pic_static_library = pic_lib,
         alwayslink = attr.alwayslink,
-        # pic_objects = pic_objects, // Experimental, do not use
-        # objects = objects, // Experimental, do not use
+        # objects = objects.to_list(),  # Experimental, do not use
+        # pic_objects = pic_objects.to_list(),  # Experimental, do not use
     )
     linking_ctx = cc_common.create_linking_context(
         linker_inputs = depset([
@@ -84,6 +84,8 @@ def _cuda_library_impl(ctx):
         OutputGroupInfo(
             lib = [lib],
             pic_lib = [pic_lib],
+            objects = objects,
+            pic_objects = pic_objects,
         ),
         CcInfo(
             compilation_context = compilation_ctx,
