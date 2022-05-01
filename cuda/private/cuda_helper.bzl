@@ -186,11 +186,12 @@ def _create_common(ctx):
             transitive_headers.append(dep[CcInfo].compilation_context.headers)
 
     # gather linker info
-    builtin_linker_inputs = []
+    builtin_linking_contexts = []
     if hasattr(attr, "_builtin_deps"):
-        builtin_linker_inputs = [dep[CcInfo].linking_context.linker_inputs for dep in attr._builtin_deps if CcInfo in dep]
+        builtin_linking_contexts = [dep[CcInfo].linking_context for dep in attr._builtin_deps if CcInfo in dep]
 
-    transitive_linker_inputs = [dep[CcInfo].linking_context.linker_inputs for dep in attr.deps if CcInfo in dep]
+    transitive_linking_contexts= [dep[CcInfo].linking_context for dep in attr.deps if CcInfo in dep]
+    transitive_linking_contexts.extend(builtin_linking_contexts)
 
     # gather compile info
     defines = []
@@ -218,7 +219,8 @@ def _create_common(ctx):
         quote_includes = quote_includes,
         system_includes = system_includes,
         headers = depset(headers, transitive = transitive_headers),
-        transitive_linker_inputs = builtin_linker_inputs + transitive_linker_inputs,
+        transitive_linker_inputs = [ctx.linker_inputs for ctx in transitive_linking_contexts],
+        transitive_linking_contexts = transitive_linking_contexts,
         defines = defines,
         local_defines = local_defines,
         compile_flags = compile_flags,
