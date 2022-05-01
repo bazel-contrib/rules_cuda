@@ -50,7 +50,7 @@ bazel build --@rules_cuda//cuda:archs=compute_61:compute_61,sm_61
 In `.bazelrc` file, you can define shortcut alias for the flag, for example:
 ```
 # Convenient flag shortcuts.
-build --flag_alias=cuda_archs=//cuda:archs
+build --flag_alias=cuda_archs=@rules_cuda//cuda:archs
 ```
 and then you can use it as following:
 ```
@@ -59,4 +59,6 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
 ## Examples
 
-See [examples](./examples).
+See [examples](./examples) for basic usage.
+
+See [this examples repo](https://github.com/cloudhan/rules_cuda_examples) for extended real world usage.
