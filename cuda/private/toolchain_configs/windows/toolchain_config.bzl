@@ -191,6 +191,32 @@ def _impl(ctx):
         ],
     )
 
+    default_compile_flags_feature = feature(
+        name = "default_compile_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = [
+                            "-Xcompiler=-DCOMPILER_MSVC",
+                            "-DNOMINMAX",
+                            "-Xcompiler=-D_WIN32_WINNT=0x0601",
+                            "-D_CRT_SECURE_NO_DEPRECATE",
+                            "-D_CRT_SECURE_NO_WARNINGS",
+                            "-Xcompiler=/bigobj,/Zm500,/EHsc",
+                            "-Xcompiler=/wd4351,/wd4291,/wd4250,/wd4996",
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
     include_paths_feature = feature(
         name = "include_paths",
         enabled = True,
@@ -477,6 +503,7 @@ def _impl(ctx):
         host_compiler_feature,
         use_local_env_feature,
         arch_native_feature,
+        default_compile_flags_feature,
         include_paths_feature,
         defines_feature,
         host_defines_feature,
