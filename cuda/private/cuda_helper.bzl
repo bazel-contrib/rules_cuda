@@ -362,7 +362,6 @@ def _get_requested_features(ctx, cuda_toolchain, cc_toolchain, requested_feature
         all_features.append("dynamic_link_msvcrt_debug" if compilation_mode == "dbg" else "dynamic_link_msvcrt_no_debug")
 
     all_features.extend(requested_features)
-    # TODO: we should add default features and action configs from cuda_toolchain and cc_toolchain
     return all_features
 
 def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None, _debug = False):
