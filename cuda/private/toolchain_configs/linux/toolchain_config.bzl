@@ -330,6 +330,7 @@ def _impl(ctx):
                 flag_groups = [flag_group(flags = ["-g"])],
             ),
         ],
+        provides = ["compilation_mode"],
     )
 
     opt_feature = feature(
@@ -349,6 +350,7 @@ def _impl(ctx):
                 ])],
             ),
         ],
+        provides = ["compilation_mode"],
     )
 
     fastbuild_feature = feature(
@@ -359,6 +361,7 @@ def _impl(ctx):
                 flag_groups = [flag_group(flags = ["-Xcompiler", "-g1"])],
             ),
         ],
+        provides = ["compilation_mode"],
     )
 
     compiler_input_flags_feature = feature(

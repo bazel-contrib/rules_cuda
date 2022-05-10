@@ -385,6 +385,7 @@ def _impl(ctx):
             ),
         ],
         implies = ["generate_pdb_file"],
+        provides = ["compilation_mode"],
     )
 
     opt_feature = feature(
@@ -396,6 +397,7 @@ def _impl(ctx):
             ),
         ],
         implies = ["frame_pointer"],
+        provides = ["compilation_mode"],
     )
 
     fastbuild_feature = feature(
@@ -407,6 +409,7 @@ def _impl(ctx):
             ),
         ],
         implies = ["generate_pdb_file"],
+        provides = ["compilation_mode"],
     )
 
     generate_pdb_file_feature = feature(
