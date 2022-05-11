@@ -390,6 +390,20 @@ def _impl(ctx):
         ],
     )
 
+    nvcc_allow_unsupported_compiler_feature = feature(
+        name = "nvcc_allow_unsupported_compiler",
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                    ACTION_NAMES.create_library,
+                ],
+                flag_groups = [flag_group(flags = ["--allow-unsupported-compiler"])],
+            ),
+        ],
+    )
+
     action_configs = [
         cuda_compile_action,
         cuda_device_link_action,
@@ -413,6 +427,7 @@ def _impl(ctx):
         fastbuild_feature,
         compiler_input_flags_feature,
         compiler_output_flags_feature,
+        nvcc_allow_unsupported_compiler_feature,
     ]
 
     return [CudaToolchainConfigInfo(
