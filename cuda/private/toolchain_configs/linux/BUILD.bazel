@@ -14,9 +14,9 @@ filegroup(
 
 cuda_toolchain_config(
     name = "nvcc_ubuntu_config",
-    toolchain_identifier = "nvcc",
     nvcc_version_major = 11,
     nvcc_version_minor = 5,
+    toolchain_identifier = "nvcc",
 )
 
 cuda_toolchain(

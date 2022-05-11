@@ -3,7 +3,7 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
-load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
+load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper", "unique")
 
@@ -190,7 +190,7 @@ def _create_common(ctx):
     if hasattr(attr, "_builtin_deps"):
         builtin_linking_contexts = [dep[CcInfo].linking_context for dep in attr._builtin_deps if CcInfo in dep]
 
-    transitive_linking_contexts= [dep[CcInfo].linking_context for dep in attr.deps if CcInfo in dep]
+    transitive_linking_contexts = [dep[CcInfo].linking_context for dep in attr.deps if CcInfo in dep]
     transitive_linking_contexts.extend(builtin_linking_contexts)
 
     # gather compile info

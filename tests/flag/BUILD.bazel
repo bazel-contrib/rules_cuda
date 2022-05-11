@@ -186,7 +186,7 @@ cuda_library_flag_test(
     #     "-arch=native",
     # ],
     not_contain_flags = [
-        "-gencode"
+        "-gencode",
     ],
     target_under_test = "//examples/basic:kernel",
 )

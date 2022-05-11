@@ -297,10 +297,10 @@ def _impl(ctx):
                     flag_group(
                         flags = ["%{compile_flags}"],
                         iterate_over = "compile_flags",
-                    )
-                ]
-            )
-        ]
+                    ),
+                ],
+            ),
+        ],
     )
 
     host_compile_flags_feature = feature(
@@ -316,10 +316,10 @@ def _impl(ctx):
                     flag_group(
                         flags = ["-Xcompiler", "%{host_compile_flags}"],
                         iterate_over = "host_compile_flags",
-                    )
-                ]
-            )
-        ]
+                    ),
+                ],
+            ),
+        ],
     )
 
     dbg_feature = feature(
