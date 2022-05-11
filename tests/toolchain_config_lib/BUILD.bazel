@@ -7,6 +7,7 @@ load(
     "feature_configuration_failure_tests",
     "feature_configuration_flags_order_test",
     "feature_configuration_test",
+    "feature_configuration_unsuppoted_features_test",
     "feature_constraint_test",
     "feature_flag_sets_test",
     "parse_flag_cache_test",
@@ -40,3 +41,5 @@ feature_configuration_failure_tests()
 feature_configuration_flags_order_test(name = "feature_configuration_flags_order_test")
 
 feature_configuration_env_test(name = "feature_configuration_env_test")
+
+feature_configuration_unsuppoted_features_test(name = "feature_configuration_unsuppoted_features_test")

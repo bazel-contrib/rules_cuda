@@ -555,6 +555,9 @@ _FeatureConfigurationInfo = provider(
     },
 )
 
+def unique(seq):
+    return {elem: None for elem in seq}.keys()
+
 def _configure_features(
         selectables = None,
         selectables_info = None,
@@ -575,13 +578,12 @@ def _configure_features(
         selectables_info = _collect_selectables_info(selectables)
 
     # reimplement https://github.com/bazelbuild/bazel/blob/0ba4caa5fc/src/main/java/com/google/devtools/build/lib/rules/cpp/FeatureSelection.java in starlark
-    requested_features = [] if requested_features == None else requested_features
-    if unsupported_features != None:
-        fail("unsupported_features parameter support is not implemented.")
+    requested_features = [] if requested_features == None else unique(requested_features)
+    unsupported_features = [] if unsupported_features == None else unique(unsupported_features)
     info = _FeatureConfigurationInfo(
         selectables_info = selectables_info,
         requested = {r: True for r in selectables_info.default_enabled_features + requested_features},
-        enabled = {},
+        enabled = {f: False for f in unsupported_features if f in selectables_info.selectables},
         _parse_flag_cache = {},
         _debug = _debug,
     )

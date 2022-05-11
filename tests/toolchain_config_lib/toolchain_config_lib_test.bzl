@@ -583,8 +583,8 @@ def create_toolchain_config(action_configs = [], features = [], artifact_name_pa
         cuda_path = cuda_path,
     )
 
-def create_config_info(features, requested = []):
-    return config_helper.configure_features(selectables = features, requested_features = requested)
+def create_config_info(features, requested = [], unsupported = []):
+    return config_helper.configure_features(selectables = features, requested_features = requested, unsupported_features = unsupported)
 
 def _feature_configuration_test_impl(ctx):
     env = unittest.begin(ctx)
@@ -1022,3 +1022,27 @@ def _feature_configuration_env_test_impl(ctx):
     return unittest.end(env)
 
 feature_configuration_env_test = unittest.make(_feature_configuration_env_test_impl)
+
+def _feature_configuration_test_unsuppoted_features_impl(ctx):
+    env = unittest.begin(ctx)
+
+    features = [
+        feature(name = "a", implies = ["b", "c", "d"]),
+        feature(name = "b"),
+        feature(name = "c", requires = [feature_set(features = ["e"])]),
+        feature(name = "d", requires = [feature_set(features = ["f"])]),
+        feature(name = "e", requires = [feature_set(features = ["c"])]),
+        feature(name = "f"),
+    ]
+    config_info = create_config_info(features, requested = ["a", "b", "c", "d", "e", "f"], unsupported = ["a"])
+    asserts.equals(env, ["b", "c", "d", "e", "f"], config_helper.get_enabled_feature(config_info), "configure_features with unsupported_features 0")
+
+    config_info = create_config_info(features, requested = ["a", "b", "c", "d", "e", "f"], unsupported = ["b"])
+    asserts.equals(env, ["c", "d", "e", "f"], config_helper.get_enabled_feature(config_info), "configure_features with unsupported_features 1")
+
+    config_info = create_config_info(features, requested = ["a", "b", "c", "d", "e", "f"], unsupported = ["f"])
+    asserts.equals(env, ["b", "c", "e"], config_helper.get_enabled_feature(config_info), "configure_features with unsupported_features 3")
+
+    return unittest.end(env)
+
+feature_configuration_unsuppoted_features_test = unittest.make(_feature_configuration_test_unsuppoted_features_impl)

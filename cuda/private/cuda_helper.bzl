@@ -5,7 +5,7 @@ load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
-load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
+load("//cuda/private:toolchain_config_lib.bzl", "config_helper", "unique")
 
 def _get_arch_number(arch_str):
     arch_str = arch_str.strip()
@@ -347,7 +347,14 @@ def _create_device_link_variables(
         use_pic = use_pic,
     )
 
-def _get_requested_features(ctx, cuda_toolchain, cc_toolchain, requested_features):
+def _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features):
+    all_unsupported = list(ctx.disabled_features)
+    all_unsupported.extend([f[1:] for f in ctx.attr.features if f.startswith("-")])
+    if unsupported_features != None:
+        all_unsupported.extend(unsupported_features)
+    return unique(all_unsupported)
+
+def _get_all_requested_features(ctx, cuda_toolchain, requested_features):
     all_features = []
     compilation_mode = ctx.var.get("COMPILATION_MODE", None)
     if compilation_mode == None:
@@ -361,15 +368,19 @@ def _get_requested_features(ctx, cuda_toolchain, cc_toolchain, requested_feature
     else:
         all_features.append("dynamic_link_msvcrt_debug" if compilation_mode == "dbg" else "dynamic_link_msvcrt_no_debug")
 
+    all_features.extend(ctx.features)
+    all_features.extend([f for f in ctx.attr.features if not f.startswith("-")])
     all_features.extend(requested_features)
+    all_features = unique(all_features)
     return all_features
 
 def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None, _debug = False):
-    requested_features = _get_requested_features(ctx, cuda_toolchain, None, requested_features + ctx.features + ctx.attr.features)
+    all_requested_features = _get_all_requested_features(ctx, cuda_toolchain, requested_features)
+    all_unsupported_features = _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features)
     return config_helper.configure_features(
         selectables_info = cuda_toolchain.selectables_info,
-        requested_features = requested_features,
-        unsupported_features = unsupported_features,
+        requested_features = all_requested_features,
+        unsupported_features = all_unsupported_features,
         _debug = _debug,
     )
 
