@@ -98,6 +98,11 @@ def _get_basename_without_ext(basename, allow_exts, fail_if_not_match = True):
     else:
         return None
 
+def _resolve_workspace_root_includes(ctx):
+    src_path = paths.normalize(ctx.label.workspace_root)
+    bin_path = paths.normalize(paths.join(ctx.bin_dir.path, src_path))
+    return src_path, bin_path
+
 def _resolve_includes(ctx, path):
     if paths.is_absolute(path):
         fail("invalid absolute path", path)
@@ -133,6 +138,7 @@ def _create_common(ctx):
     includes = []
     system_includes = []
     quote_includes = []
+    quote_includes.extend(_resolve_workspace_root_includes(ctx))
     for inc in attr.includes:
         system_includes.extend(_resolve_includes(ctx, inc))
     for dep in attr.deps:
