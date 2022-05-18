@@ -98,36 +98,6 @@ def _get_basename_without_ext(basename, allow_exts, fail_if_not_match = True):
     else:
         return None
 
-# # TODO: Remove, impl use cuda_toolchain_config
-# def _get_nvcc_compile_arch_flags(arch_specs):
-#     tpl = "arch={},code={}"
-#     ret = []
-#     for arch_spec in arch_specs:
-#         for stage2_arch in arch_spec.stage2_archs:
-#             ret.append("-gencode")
-#             ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
-#     return ret
-
-# # TODO: Remove, impl use cuda_toolchain_config
-# def _get_nvcc_dlink_arch_flags(arch_specs):
-#     tpl = "arch={},code={}"
-#     ret = []
-#     lto = False
-#     for arch_spec in arch_specs:
-#         for stage2_arch in arch_spec.stage2_archs:
-#             # https://forums.developer.nvidia.com/t/using-dlink-time-opt-together-with-gencode-in-cmake/165224/4
-#             if stage2_arch.startswith("lto_"):
-#                 lto = True
-#                 stage2_arch = stage2_arch.replace("lto_", "sm_", 1)
-#             ret.append("-gencode")
-#             ret.append(tpl.format(arch_spec.stage1_arch, stage2_arch))
-#     if lto:
-#         ret.append("-dlto")
-#     return ret
-
-def _get_clang_arch_flags(arch_specs):
-    fail("not implemented")
-
 def _resolve_includes(ctx, path):
     if paths.is_absolute(path):
         fail("invalid absolute path", path)
@@ -328,11 +298,16 @@ def _create_device_link_variables(
         user_link_flags = [],
         use_pic = False):
     arch_specs = cuda_archs_info.arch_specs
+
+    # For using -gencode with lto, see
+    # https://forums.developer.nvidia.com/t/using-dlink-time-opt-together-with-gencode-in-cmake/165224/4
+    # compile: -gencode=arch=compute_52,code=[compute_52,lto_52,lto_61]
+    # dlink  : -gencode=arch=compute_52,code=[sm_52,sm_61] -dlto
     use_dlto = False
     for arch_spec in arch_specs:
         for stage2_arch in arch_spec.stage2_archs:
             if stage2_arch.lto:
-                use_lto = True
+                use_dlto = True
                 break
     return struct(
         arch_specs = arch_specs,
