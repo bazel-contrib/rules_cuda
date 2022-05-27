@@ -235,11 +235,6 @@ def _get_artifact_category_from_action(action_name, use_pic = None, use_rdc = No
             return ARTIFACT_CATEGORIES.rdc_pic_object_file
         else:
             return ARTIFACT_CATEGORIES.rdc_object_file
-    elif action_name == ACTION_NAMES.create_library:
-        if use_pic:
-            return ARTIFACT_CATEGORIES.pic_archive
-        else:
-            return ARTIFACT_CATEGORIES.archive
     else:
         fail("NotImplemented")
 

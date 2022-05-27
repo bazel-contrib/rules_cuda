@@ -40,17 +40,6 @@ def _impl(ctx):
             prefix = "",
             extension = ".rdc.pic.obj",
         ),
-        # artifact_name_pattern for static libraries
-        artifact_name_pattern(
-            category_name = ARTIFACT_CATEGORIES.archive,
-            prefix = "",
-            extension = ".lib",
-        ),
-        artifact_name_pattern(
-            category_name = ARTIFACT_CATEGORIES.pic_archive,
-            prefix = "",
-            extension = ".pic.lib",
-        ),
     ]
 
     cc_toolchain = find_cpp_toolchain(ctx)
@@ -66,20 +55,6 @@ def _impl(ctx):
                 env_entries = [
                     env_entry("INCLUDE", ";".join(cc_toolchain.built_in_include_directories)),
                     env_entry("PATH", paths.dirname(cc_toolchain.compiler_executable) + ";C:/Windows/system32"),
-                    env_entry("TEMP", ctx.attr.msvc_env_tmp),
-                    env_entry("TMP", ctx.attr.msvc_env_tmp),
-                ],
-            ),
-        ],
-    )
-
-    nvcc_create_library_env_feature = feature(
-        name = "nvcc_create_library_env",
-        env_sets = [
-            env_set(
-                actions = [ACTION_NAMES.create_library],
-                env_entries = [
-                    env_entry("PATH", paths.dirname(cc_toolchain.ar_executable) + ";C:/Windows/system32"),
                     env_entry("TEMP", ctx.attr.msvc_env_tmp),
                     env_entry("TMP", ctx.attr.msvc_env_tmp),
                 ],
@@ -174,20 +149,6 @@ def _impl(ctx):
             # "linker_input_flags",
             "compiler_output_flags",
             "nvcc_compile_env",
-        ],
-    )
-
-    create_library_action = action_config(
-        action_name = ACTION_NAMES.create_library,
-        flag_sets = [
-            flag_set(flag_groups = [
-                flag_group(flags = ["-lib"]),
-            ]),
-        ],
-        implies = [
-            "host_compiler_path",
-            "compiler_output_flags",
-            "nvcc_create_library_env",
         ],
     )
 
@@ -335,7 +296,6 @@ def _impl(ctx):
                 actions = [
                     ACTION_NAMES.cuda_compile,
                     ACTION_NAMES.device_link,
-                    ACTION_NAMES.create_library,
                 ],
                 flag_groups = [flag_group(flags = ["-o", "%{output_file}"])],
             ),
@@ -350,7 +310,6 @@ def _impl(ctx):
                 actions = [
                     ACTION_NAMES.cuda_compile,
                     ACTION_NAMES.device_link,
-                    ACTION_NAMES.create_library,
                 ],
                 flag_groups = [flag_group(flags = ["-use-local-env"])],
             ),
@@ -435,10 +394,6 @@ def _impl(ctx):
                 actions = [ACTION_NAMES.cuda_compile],
                 flag_groups = [flag_group(flags = ["-Xcompiler", "/MTd"])],
             ),
-            flag_set(
-                actions = [ACTION_NAMES.create_library],
-                flag_groups = [flag_group(flags = ["-Xlinker", "/DEFAULTLIB:libcmtd.lib"])],
-            ),
         ],
         requires = [feature_set(features = ["dbg"])],
     )
@@ -449,10 +404,6 @@ def _impl(ctx):
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
                 flag_groups = [flag_group(flags = ["-Xcompiler", "/MT"])],
-            ),
-            flag_set(
-                actions = [ACTION_NAMES.create_library],
-                flag_groups = [flag_group(flags = ["-Xlinker", "/DEFAULTLIB:libcmt.lib"])],
             ),
         ],
         requires = [
@@ -468,10 +419,6 @@ def _impl(ctx):
                 actions = [ACTION_NAMES.cuda_compile],
                 flag_groups = [flag_group(flags = ["-Xcompiler", "/MDd"])],
             ),
-            flag_set(
-                actions = [ACTION_NAMES.create_library],
-                flag_groups = [flag_group(flags = ["-Xlinker", "/DEFAULTLIB:msvcrtd.lib"])],
-            ),
         ],
         requires = [feature_set(features = ["dbg"])],
     )
@@ -482,10 +429,6 @@ def _impl(ctx):
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
                 flag_groups = [flag_group(flags = ["-Xcompiler", "/MD"])],
-            ),
-            flag_set(
-                actions = [ACTION_NAMES.create_library],
-                flag_groups = [flag_group(flags = ["-Xlinker", "/DEFAULTLIB:msvcrt.lib"])],
             ),
         ],
         requires = [
@@ -501,7 +444,6 @@ def _impl(ctx):
                 actions = [
                     ACTION_NAMES.cuda_compile,
                     ACTION_NAMES.device_link,
-                    ACTION_NAMES.create_library,
                 ],
                 flag_groups = [flag_group(flags = ["--allow-unsupported-compiler"])],
             ),
@@ -511,12 +453,10 @@ def _impl(ctx):
     action_configs = [
         cuda_compile_action,
         cuda_device_link_action,
-        create_library_action,
     ]
 
     features = [
         nvcc_compile_env_feature,
-        nvcc_create_library_env_feature,
         host_compiler_feature,
         use_local_env_feature,
         arch_native_feature,

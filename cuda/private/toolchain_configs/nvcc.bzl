@@ -39,17 +39,6 @@ def _impl(ctx):
             prefix = "",
             extension = ".rdc.pic.o",
         ),
-        # artifact_name_pattern for static libraries
-        artifact_name_pattern(
-            category_name = ARTIFACT_CATEGORIES.archive,
-            prefix = "lib",
-            extension = ".a",
-        ),
-        artifact_name_pattern(
-            category_name = ARTIFACT_CATEGORIES.pic_archive,
-            prefix = "lib",
-            extension = ".pic.a",
-        ),
     ]
 
     cc_toolchain = find_cpp_toolchain(ctx)
@@ -70,16 +59,6 @@ def _impl(ctx):
             env_set(
                 actions = [ACTION_NAMES.device_link],
                 env_entries = [env_entry("PATH", paths.dirname(cc_toolchain.compiler_executable))],
-            ),
-        ],
-    )
-
-    nvcc_create_library_env_feature = feature(
-        name = "nvcc_create_library_env",
-        env_sets = [
-            env_set(
-                actions = [ACTION_NAMES.create_library],
-                env_entries = [env_entry("PATH", paths.dirname(cc_toolchain.ar_executable))],
             ),
         ],
     )
@@ -171,20 +150,6 @@ def _impl(ctx):
             # "linker_input_flags",
             "compiler_output_flags",
             "nvcc_device_link_env",
-        ],
-    )
-
-    create_library_action = action_config(
-        action_name = ACTION_NAMES.create_library,
-        flag_sets = [
-            flag_set(flag_groups = [
-                flag_group(flags = ["-lib"]),
-            ]),
-        ],
-        implies = [
-            "host_compiler_path",
-            "compiler_output_flags",
-            "nvcc_create_library_env",
         ],
     )
 
@@ -383,7 +348,6 @@ def _impl(ctx):
                 actions = [
                     ACTION_NAMES.cuda_compile,
                     ACTION_NAMES.device_link,
-                    ACTION_NAMES.create_library,
                 ],
                 flag_groups = [flag_group(flags = ["-o", "%{output_file}"])],
             ),
@@ -397,7 +361,6 @@ def _impl(ctx):
                 actions = [
                     ACTION_NAMES.cuda_compile,
                     ACTION_NAMES.device_link,
-                    ACTION_NAMES.create_library,
                 ],
                 flag_groups = [flag_group(flags = ["--allow-unsupported-compiler"])],
             ),
@@ -407,13 +370,11 @@ def _impl(ctx):
     action_configs = [
         cuda_compile_action,
         cuda_device_link_action,
-        create_library_action,
     ]
 
     features = [
         nvcc_compile_env_feature,
         nvcc_device_link_env_feature,
-        nvcc_create_library_env_feature,
         arch_native_feature,
         pic_feature,
         host_compiler_feature,
