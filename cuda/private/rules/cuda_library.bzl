@@ -4,7 +4,6 @@ load("//cuda/private:providers.bzl", "CudaArchsInfo", "CudaInfo")
 load("//cuda/private:toolchain.bzl", "find_cuda_toolchain", "use_cpp_toolchain", "use_cuda_toolchain")
 load("//cuda/private:actions/nvcc_compile.bzl", "compile")
 load("//cuda/private:actions/nvcc_dlink.bzl", "device_link")
-load("//cuda/private:actions/nvcc_lib.bzl", "create_library")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS", "ALLOW_CUDA_SRCS")
 
 def _cuda_library_impl(ctx):
@@ -56,34 +55,34 @@ def _cuda_library_impl(ctx):
         local_defines = depset(common.host_local_defines),
     )
 
-    lib = create_library(ctx, cuda_toolchain, cc_toolchain, objects, pic = False)
-    pic_lib = create_library(ctx, cuda_toolchain, cc_toolchain, pic_objects, pic = True)
-
-    lib_to_link = cc_common.create_library_to_link(
-        actions = ctx.actions,
+    cc_feature_config = cc_common.configure_features(
+        ctx = ctx,
         cc_toolchain = cc_toolchain,
-        static_library = lib,
-        pic_static_library = pic_lib,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
+    linking_ctx, linking_outputs = cc_common.create_linking_context_from_compilation_outputs(
+        name = ctx.attr.name,
+        actions = ctx.actions,
+        feature_configuration = cc_feature_config,
+        cc_toolchain = cc_toolchain,
+        compilation_outputs = cc_common.create_compilation_outputs(objects = objects, pic_objects = pic_objects),
+        user_link_flags = common.host_link_flags,
         alwayslink = attr.alwayslink,
-        # objects = objects.to_list(),  # Experimental, do not use
-        # pic_objects = pic_objects.to_list(),  # Experimental, do not use
+        linking_contexts = common.transitive_linking_contexts,
+        disallow_dynamic_library = True,
     )
-    linking_ctx = cc_common.create_linking_context(
-        linker_inputs = depset([
-            cc_common.create_linker_input(owner = ctx.label, libraries = depset([lib_to_link]), user_link_flags = common.host_link_flags),
-        ], transitive = common.transitive_linker_inputs),
-    )
+
+    lib = linking_outputs.library_to_link.static_library
+    pic_lib = linking_outputs.library_to_link.pic_static_library
+    libs = [] if lib == None else [lib]
+    pic_libs = [] if pic_lib == None else [pic_lib]
 
     return [
-        DefaultInfo(
-            files = depset([
-                lib,
-                # pic_lib,
-            ]),
-        ),
+        DefaultInfo(files = depset(libs + pic_libs)),
         OutputGroupInfo(
-            lib = [lib],
-            pic_lib = [pic_lib],
+            lib = libs,
+            pic_lib = pic_libs,
             objects = objects,
             pic_objects = pic_objects,
         ),
