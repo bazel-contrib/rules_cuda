@@ -1,11 +1,11 @@
 workspace(name = "rules_cuda")
 
 load("//cuda:deps.bzl", "rules_cuda_deps")
-load("//cuda/private:cuda_toolkit.bzl", "register_rule_dev_toolchains")
+load("//cuda/private:cuda_toolkit.bzl", "register_detected_cuda_toolchains")
 
 rules_cuda_deps()
 
-register_rule_dev_toolchains(use_detected = True)
+register_detected_cuda_toolchains()
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 

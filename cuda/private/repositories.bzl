@@ -75,7 +75,7 @@ def _local_cuda_impl(repository_ctx):
     # Generate @local_cuda//toolchain/BUILD
     tpl_label = Label(
         "//cuda:templates/BUILD.local_toolchain_" +
-        ("linux" if _is_linux(repository_ctx) else "windows"),
+        ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
     substitutions = {
         "%{cuda_path}": _to_forward_slash(cuda_path),

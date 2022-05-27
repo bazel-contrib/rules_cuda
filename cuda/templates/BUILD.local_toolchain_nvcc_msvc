@@ -3,7 +3,7 @@
 load(
     "@rules_cuda//cuda:defs.bzl",
     "cuda_toolchain",
-    cuda_toolchain_config = "cuda_toolchain_config_windows",
+    cuda_toolchain_config = "cuda_toolchain_config_nvcc_msvc",
 )
 
 cuda_toolchain_config(

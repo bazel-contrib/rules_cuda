@@ -552,7 +552,7 @@ cuda_toolchain_config = rule(
     implementation = _impl,
     attrs = {
         "cuda_path": attr.string(default = "/usr/local/cuda"),
-        "toolchain_identifier": attr.string(values = ["nvcc", "clang"], mandatory = True),
+        "toolchain_identifier": attr.string(values = ["nvcc"], mandatory = True),
         "nvcc_version_major": attr.int(),
         "nvcc_version_minor": attr.int(),
         "msvc_env_tmp": attr.string(),

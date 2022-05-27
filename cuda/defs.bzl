@@ -7,14 +7,14 @@ load(
     _find_cuda_toolchain = "find_cuda_toolchain",
     _use_cuda_toolchain = "use_cuda_toolchain",
 )
-load("//cuda/private/toolchain_configs/windows:toolchain_config.bzl", _cuda_toolchain_config_windows = "cuda_toolchain_config")
-load("//cuda/private/toolchain_configs/linux:toolchain_config.bzl", _cuda_toolchain_config_linux = "cuda_toolchain_config")
+load("//cuda/private:toolchain_configs/nvcc.bzl", _cuda_toolchain_config_nvcc = "cuda_toolchain_config")
+load("//cuda/private:toolchain_configs/nvcc_msvc.bzl", _cuda_toolchain_config_nvcc_msvc = "cuda_toolchain_config")
 
 cuda_toolchain = _cuda_toolchain
 find_cuda_toolchain = _find_cuda_toolchain
 use_cuda_toolchain = _use_cuda_toolchain
-cuda_toolchain_config_windows = _cuda_toolchain_config_windows
-cuda_toolchain_config_linux = _cuda_toolchain_config_linux
+cuda_toolchain_config_nvcc_msvc = _cuda_toolchain_config_nvcc_msvc
+cuda_toolchain_config_nvcc = _cuda_toolchain_config_nvcc
 
 cuda_archs = _cuda_archs
 CudaArchsInfo = _CudaArchsInfo
