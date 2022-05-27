@@ -299,8 +299,6 @@ def _create_device_link_variables(
         output_file = None,
         host_compiler = None,
         host_compile_flags = [],
-        library_search_paths = [],
-        runtime_library_search_paths = [],
         user_link_flags = [],
         use_pic = False):
     arch_specs = cuda_archs_info.arch_specs
@@ -321,8 +319,6 @@ def _create_device_link_variables(
         output_file = output_file,
         host_compiler = host_compiler,
         host_compile_flags = host_compile_flags,
-        library_search_paths = library_search_paths,
-        runtime_library_search_paths = runtime_library_search_paths,
         user_link_flags = user_link_flags,
         use_dlto = use_dlto,
         use_pic = use_pic,
