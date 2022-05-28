@@ -25,7 +25,7 @@ def _to_forward_slash(s):
 def _is_linux(ctx):
     return ctx.os.name.startswith("linux")
 
-def _get_cuda_version_from_nvcc(repository_ctx, cuda_path):
+def _get_nvcc_version(repository_ctx, cuda_path):
     result = repository_ctx.execute([cuda_path + "/bin/nvcc", "--version"])
     if result.return_code != 0:
         return [-1, -1]
@@ -38,7 +38,18 @@ def _get_cuda_version_from_nvcc(repository_ctx, cuda_path):
             return version[:2]
     return [-1, -1]
 
-def _local_cuda_impl(repository_ctx):
+CudaToolkitInfo = provider(
+    "",
+    fields = {
+        "path": "path, e.g. /usr/local/cuda",
+        "version_major": "int, e.g. 11",
+        "version_minor": "int, e.g. 6",
+        "nvcc_version_major": "int, e.g. 11",
+        "nvcc_version_minor": "int, e.g. 6",
+    },
+)
+
+def detect_cuda_toolkit(repository_ctx):
     ## Detect CUDA Toolkit
     # Path to CUDA Toolkit is
     # - taken from CUDA_PATH environment variable or
@@ -59,13 +70,26 @@ def _local_cuda_impl(repository_ctx):
     nvcc_version_major = -1
     nvcc_version_minor = -1
 
+    if repository_ctx.path(cuda_path).exists:
+        nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, cuda_path)
+
+    return CudaToolkitInfo(
+        path = cuda_path,
+        # this should have been extracted from cuda.h, reuse nvcc for now
+        version_major = nvcc_version_major,
+        version_minor = nvcc_version_minor,
+        # this is extracted from `nvcc --version`
+        nvcc_version_major = nvcc_version_major,
+        nvcc_version_minor = nvcc_version_minor,
+    )
+
+def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     # Generate @local_cuda//BUILD and @local_cuda//defs.bzl and
     defs_bzl_content = defs_bzl_shared
     defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"
-    if repository_ctx.path(cuda_path).exists:
-        repository_ctx.symlink(cuda_path, "cuda")
+    if repository_ctx.path(cuda.path).exists:
+        repository_ctx.symlink(cuda.path, "cuda")
         repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
-        nvcc_version_major, nvcc_version_minor = _get_cuda_version_from_nvcc(repository_ctx, cuda_path)
         defs_bzl_content += defs_if_local_cuda % "if_true"
     else:
         repository_ctx.file("BUILD")  # Empty file
@@ -78,14 +102,18 @@ def _local_cuda_impl(repository_ctx):
         ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
     substitutions = {
-        "%{cuda_path}": _to_forward_slash(cuda_path),
-        "%{nvcc_version_major}": str(nvcc_version_major),
-        "%{nvcc_version_minor}": str(nvcc_version_minor),
+        "%{cuda_path}": _to_forward_slash(cuda.path),
+        "%{nvcc_version_major}": str(cuda.nvcc_version_major),
+        "%{nvcc_version_minor}": str(cuda.nvcc_version_minor),
     }
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:
         substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
     repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
+
+def _local_cuda_impl(repository_ctx):
+    cuda = detect_cuda_toolkit(repository_ctx)
+    config_cuda_toolkit_and_nvcc(repository_ctx, cuda)
 
 _local_cuda = repository_rule(
     implementation = _local_cuda_impl,
