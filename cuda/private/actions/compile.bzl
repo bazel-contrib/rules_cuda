@@ -43,6 +43,7 @@ def compile(
             system_include_paths = common.system_includes,
             defines = common.local_defines + common.defines,
             host_defines = common.host_local_defines + common.host_defines,
+            ptxas_flags = common.ptxas_flags,
             use_pic = pic,
             use_rdc = rdc,
         )

@@ -89,6 +89,7 @@ cuda_objects = rule(
         "copts": attr.string_list(doc = "Add these options to the CUDA device compilation command."),
         "defines": attr.string_list(doc = "List of defines to add to the compile line."),
         "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
+        "ptxasopts": attr.string_list(doc = "Add these flags to the ptxas command."),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
         "_default_cuda_archs": attr.label(default = "//cuda:archs"),
     },

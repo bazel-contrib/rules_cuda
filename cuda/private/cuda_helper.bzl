@@ -193,6 +193,8 @@ def _create_common(ctx):
     defines.extend(attr.defines)
     host_defines.extend(attr.host_defines)
 
+    ptxas_flags = [o for o in attr.ptxasopts if _check_opts(o)]
+
     return struct(
         cuda_archs_info = _get_cuda_archs_info(ctx),
         includes = includes,
@@ -209,6 +211,7 @@ def _create_common(ctx):
         host_local_defines = host_local_defines,
         host_compile_flags = host_compile_flags,
         host_link_flags = host_link_flags,
+        ptxas_flags = ptxas_flags,
     )
 
 def _create_cuda_info(defines = None, objects = None, rdc_objects = None, pic_objects = None, rdc_pic_objects = None):
@@ -268,6 +271,7 @@ def _create_compile_variables(
         system_include_paths = [],
         defines = [],
         host_defines = [],
+        ptxas_flags = [],
         use_pic = False,
         use_rdc = False):
     arch_specs = cuda_archs_info.arch_specs
@@ -287,6 +291,7 @@ def _create_compile_variables(
         system_include_paths = system_include_paths,
         defines = defines,
         host_defines = host_defines,
+        ptxas_flags = ptxas_flags,
         use_pic = use_pic,
         use_rdc = use_rdc,
     )

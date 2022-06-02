@@ -329,6 +329,24 @@ def _impl(ctx):
         provides = ["compilation_mode"],
     )
 
+    ptxas_flags_feature = feature(
+        name = "ptxas_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-Xptxas", "%{ptxas_flags}"],
+                        iterate_over = "ptxas_flags",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     compiler_input_flags_feature = feature(
         name = "compiler_input_flags",
         flag_sets = [
@@ -386,6 +404,7 @@ def _impl(ctx):
         dbg_feature,
         opt_feature,
         fastbuild_feature,
+        ptxas_flags_feature,
         compiler_input_flags_feature,
         compiler_output_flags_feature,
         nvcc_allow_unsupported_compiler_feature,

@@ -437,6 +437,24 @@ def _impl(ctx):
         ],
     )
 
+    ptxas_flags_feature = feature(
+        name = "ptxas_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-Xptxas", "%{ptxas_flags}"],
+                        iterate_over = "ptxas_flags",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     nvcc_allow_unsupported_compiler_feature = feature(
         name = "nvcc_allow_unsupported_compiler",
         flag_sets = [
@@ -475,6 +493,7 @@ def _impl(ctx):
         static_link_msvcrt_no_debug_feature,
         dynamic_link_msvcrt_debug_feature,
         dynamic_link_msvcrt_no_debug_feature,
+        ptxas_flags_feature,
         compiler_input_flags_feature,
         compiler_output_flags_feature,
         nvcc_allow_unsupported_compiler_feature,
