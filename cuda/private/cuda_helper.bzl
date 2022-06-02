@@ -3,7 +3,7 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
-load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
+load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper", "unique")
 
@@ -131,6 +131,9 @@ def _check_opts(opt):
         fail(opt, "is not allowed to be specified directly via copts")
     return True
 
+def _get_cuda_archs_info(ctx):
+    return ctx.attr._default_cuda_archs[CudaArchsInfo]
+
 def _create_common(ctx):
     attr = ctx.attr
 
@@ -191,6 +194,7 @@ def _create_common(ctx):
     host_defines.extend(attr.host_defines)
 
     return struct(
+        cuda_archs_info = _get_cuda_archs_info(ctx),
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,

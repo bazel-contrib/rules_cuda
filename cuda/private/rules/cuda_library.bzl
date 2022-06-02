@@ -1,6 +1,6 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
-load("//cuda/private:providers.bzl", "CudaArchsInfo", "CudaInfo")
+load("//cuda/private:providers.bzl", "CudaInfo")
 load("//cuda/private:toolchain.bzl", "find_cuda_toolchain", "use_cpp_toolchain", "use_cuda_toolchain")
 load("//cuda/private:actions/compile.bzl", "compile")
 load("//cuda/private:actions/dlink.bzl", "device_link")
@@ -21,7 +21,7 @@ def _cuda_library_impl(ctx):
     common = cuda_helper.create_common(ctx)
     use_rdc = attr.rdc
     if not use_rdc:
-        use_rdc = cuda_helper.check_must_enforce_rdc(cuda_archs_info = ctx.attr._default_cuda_archs[CudaArchsInfo])
+        use_rdc = cuda_helper.check_must_enforce_rdc(cuda_archs_info = common.cuda_archs_info)
 
     # outputs
     objects = []

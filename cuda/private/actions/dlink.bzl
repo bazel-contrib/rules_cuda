@@ -2,7 +2,6 @@
 
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
-load("//cuda/private:providers.bzl", "CudaArchsInfo")
 
 def device_link(
         ctx,
@@ -31,7 +30,7 @@ def device_link(
     var = cuda_helper.create_device_link_variables(
         cuda_toolchain,
         cuda_feature_config,
-        ctx.attr._default_cuda_archs[CudaArchsInfo],
+        common.cuda_archs_info,
         output_file = obj_file.path,
         host_compiler = host_compiler,
         host_compile_flags = common.host_compile_flags,
