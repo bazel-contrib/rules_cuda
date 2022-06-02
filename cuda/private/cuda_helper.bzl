@@ -134,6 +134,42 @@ def _check_opts(opt):
 def _get_cuda_archs_info(ctx):
     return ctx.attr._default_cuda_archs[CudaArchsInfo]
 
+def _create_common_info(
+        cuda_archs_info = None,
+        includes = [],
+        quote_includes = [],
+        system_includes = [],
+        headers = [],
+        transitive_headers = [],
+        defines = [],
+        local_defines = [],
+        compile_flags = [],
+        link_flags = [],
+        host_defines = [],
+        host_local_defines = [],
+        host_compile_flags = [],
+        host_link_flags = [],
+        ptxas_flags = [],
+        transitive_linking_contexts = []):
+    return struct(
+        cuda_archs_info = cuda_archs_info,
+        includes = includes,
+        quote_includes = quote_includes,
+        system_includes = system_includes,
+        headers = depset(headers, transitive = transitive_headers),
+        defines = defines,
+        local_defines = local_defines,
+        compile_flags = compile_flags,
+        link_flags = link_flags,
+        host_defines = host_defines,
+        host_local_defines = host_local_defines,
+        host_compile_flags = host_compile_flags,
+        host_link_flags = host_link_flags,
+        ptxas_flags = ptxas_flags,
+        transitive_linker_inputs = [ctx.linker_inputs for ctx in transitive_linking_contexts],
+        transitive_linking_contexts = transitive_linking_contexts,
+    )
+
 def _create_common(ctx):
     attr = ctx.attr
 
@@ -195,14 +231,13 @@ def _create_common(ctx):
 
     ptxas_flags = [o for o in attr.ptxasopts if _check_opts(o)]
 
-    return struct(
+    return _create_common_info(
         cuda_archs_info = _get_cuda_archs_info(ctx),
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,
-        headers = depset(headers, transitive = transitive_headers),
-        transitive_linker_inputs = [ctx.linker_inputs for ctx in transitive_linking_contexts],
-        transitive_linking_contexts = transitive_linking_contexts,
+        headers = headers,
+        transitive_headers = transitive_headers,
         defines = defines,
         local_defines = local_defines,
         compile_flags = compile_flags,
@@ -212,6 +247,7 @@ def _create_common(ctx):
         host_compile_flags = host_compile_flags,
         host_link_flags = host_link_flags,
         ptxas_flags = ptxas_flags,
+        transitive_linking_contexts = transitive_linking_contexts,
     )
 
 def _create_cuda_info(defines = None, objects = None, rdc_objects = None, pic_objects = None, rdc_pic_objects = None):
@@ -372,6 +408,7 @@ cuda_helper = struct(
     check_srcs_extensions = _check_srcs_extensions,
     check_must_enforce_rdc = _check_must_enforce_rdc,
     get_basename_without_ext = _get_basename_without_ext,
+    create_common_info = _create_common_info,
     create_common = _create_common,
     create_cuda_info = _create_cuda_info,
     get_artifact_category_from_action = _get_artifact_category_from_action,
