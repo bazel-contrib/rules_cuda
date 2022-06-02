@@ -2,8 +2,8 @@ load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:providers.bzl", "CudaArchsInfo", "CudaInfo")
 load("//cuda/private:toolchain.bzl", "find_cuda_toolchain", "use_cpp_toolchain", "use_cuda_toolchain")
-load("//cuda/private:actions/nvcc_compile.bzl", "compile")
-load("//cuda/private:actions/nvcc_dlink.bzl", "device_link")
+load("//cuda/private:actions/compile.bzl", "compile")
+load("//cuda/private:actions/dlink.bzl", "device_link")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS", "ALLOW_CUDA_SRCS")
 
 def _cuda_library_impl(ctx):
