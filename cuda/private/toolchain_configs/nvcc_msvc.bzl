@@ -466,8 +466,6 @@ def _impl(ctx):
         host_defines_feature,
         compile_flags_feature,
         host_compile_flags_feature,
-        compiler_input_flags_feature,
-        compiler_output_flags_feature,
         dbg_feature,
         opt_feature,
         fastbuild_feature,
@@ -477,6 +475,8 @@ def _impl(ctx):
         static_link_msvcrt_no_debug_feature,
         dynamic_link_msvcrt_debug_feature,
         dynamic_link_msvcrt_no_debug_feature,
+        compiler_input_flags_feature,
+        compiler_output_flags_feature,
         nvcc_allow_unsupported_compiler_feature,
     ]
 

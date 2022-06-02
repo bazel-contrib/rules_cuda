@@ -338,16 +338,17 @@ def _get_all_requested_features(ctx, cuda_toolchain, requested_features):
         compilation_mode = "opt"
     all_features.append(compilation_mode)
 
-    # https://github.com/bazelbuild/bazel/blob/41feb616ae/src/main/java/com/google/devtools/build/lib/rules/cpp/CcCommon.java#L953-L967
-    if "static_link_msvcrt" in requested_features:
-        all_features.append("static_link_msvcrt_debug" if compilation_mode == "dbg" else "static_link_msvcrt_no_debug")
-    else:
-        all_features.append("dynamic_link_msvcrt_debug" if compilation_mode == "dbg" else "dynamic_link_msvcrt_no_debug")
-
     all_features.extend(ctx.features)
     all_features.extend([f for f in ctx.attr.features if not f.startswith("-")])
     all_features.extend(requested_features)
     all_features = unique(all_features)
+
+    # https://github.com/bazelbuild/bazel/blob/41feb616ae/src/main/java/com/google/devtools/build/lib/rules/cpp/CcCommon.java#L953-L967
+    if "static_link_msvcrt" in all_features:
+        all_features.append("static_link_msvcrt_debug" if compilation_mode == "dbg" else "static_link_msvcrt_no_debug")
+    else:
+        all_features.append("dynamic_link_msvcrt_debug" if compilation_mode == "dbg" else "dynamic_link_msvcrt_no_debug")
+
     return all_features
 
 def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None, _debug = False):
