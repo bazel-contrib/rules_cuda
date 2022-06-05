@@ -1,4 +1,4 @@
-load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
+load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
 
 def _cuda_toolchain_impl(ctx):
@@ -19,6 +19,7 @@ def _cuda_toolchain_impl(ctx):
             compiler_executable = ctx.attr.compiler_executable,
             selectables_info = selectables_info,
             artifact_name_patterns = artifact_name_patterns,
+            cuda_toolkit = cuda_toolchain_config.cuda_toolkit,
         ),
     ]
 
@@ -51,3 +52,6 @@ def use_cuda_toolchain():
 
 def find_cuda_toolchain(ctx):
     return ctx.toolchains[CUDA_TOOLCHAIN_TYPE]
+
+def find_cuda_toolkit(ctx):
+    return ctx.toolchains[CUDA_TOOLCHAIN_TYPE].cuda_toolkit[CudaToolkitInfo]

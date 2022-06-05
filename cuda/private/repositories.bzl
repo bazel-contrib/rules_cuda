@@ -25,6 +25,9 @@ def _to_forward_slash(s):
 def _is_linux(ctx):
     return ctx.os.name.startswith("linux")
 
+def _is_windows(ctx):
+    return ctx.os.name.lower().startswith("windows")
+
 def _get_nvcc_version(repository_ctx, cuda_path):
     result = repository_ctx.execute([cuda_path + "/bin/nvcc", "--version"])
     if result.return_code != 0:
@@ -37,17 +40,6 @@ def _get_nvcc_version(repository_ctx, cuda_path):
         if len(version) >= 2:
             return version[:2]
     return [-1, -1]
-
-CudaToolkitInfo = provider(
-    "",
-    fields = {
-        "path": "path, e.g. /usr/local/cuda",
-        "version_major": "int, e.g. 11",
-        "version_minor": "int, e.g. 6",
-        "nvcc_version_major": "int, e.g. 11",
-        "nvcc_version_minor": "int, e.g. 6",
-    },
-)
 
 def detect_cuda_toolkit(repository_ctx):
     ## Detect CUDA Toolkit
@@ -67,13 +59,27 @@ def detect_cuda_toolkit(repository_ctx):
     # if cuda_path == None:
     #     fail("Cannot determine CUDA Toolkit root, abort!")
 
+    bin_ext = ".exe" if _is_windows(repository_ctx) else ""
+    nvlink = "@rules_cuda//cuda/dummy:nvlink"
+    link_stub = "@rules_cuda//cuda/dummy:link.stub"
+    bin2c = "@rules_cuda//cuda/dummy:bin2c"
+    fatbinary = "@rules_cuda//cuda/dummy:fatbinary"
+    if repository_ctx.path(cuda_path + "/bin/nvlink" + bin_ext).exists:
+        nvlink = "@local_cuda//:cuda/bin/nvlink" + bin_ext
+    if repository_ctx.path(cuda_path + "/bin/crt/link.stub").exists:
+        link_stub = "@local_cuda//:cuda/bin/crt/link.stub"
+    if repository_ctx.path(cuda_path + "/bin/bin2c" + bin_ext).exists:
+        bin2c = "@local_cuda//:cuda/bin/bin2c" + bin_ext
+    if repository_ctx.path(cuda_path + "/bin/fatbinary" + bin_ext).exists:
+        fatbinary = "@local_cuda//:cuda/bin/fatbinary" + bin_ext
+
     nvcc_version_major = -1
     nvcc_version_minor = -1
 
     if repository_ctx.path(cuda_path).exists:
         nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, cuda_path)
 
-    return CudaToolkitInfo(
+    return struct(
         path = cuda_path,
         # this should have been extracted from cuda.h, reuse nvcc for now
         version_major = nvcc_version_major,
@@ -81,6 +87,10 @@ def detect_cuda_toolkit(repository_ctx):
         # this is extracted from `nvcc --version`
         nvcc_version_major = nvcc_version_major,
         nvcc_version_minor = nvcc_version_minor,
+        nvlink_label = nvlink,
+        link_stub_label = link_stub,
+        bin2c_label = bin2c,
+        fatbinary_label = fatbinary,
     )
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
@@ -103,8 +113,13 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     )
     substitutions = {
         "%{cuda_path}": _to_forward_slash(cuda.path),
+        "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_version_major}": str(cuda.nvcc_version_major),
         "%{nvcc_version_minor}": str(cuda.nvcc_version_minor),
+        "%{nvlink_label}": cuda.nvlink_label,
+        "%{link_stub_label}": cuda.link_stub_label,
+        "%{bin2c_label}": cuda.bin2c_label,
+        "%{fatbinary_label}": cuda.fatbinary_label,
     }
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:

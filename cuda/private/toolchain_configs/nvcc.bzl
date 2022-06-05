@@ -2,7 +2,7 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
-load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
+load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain.bzl", "use_cpp_toolchain")
 load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
 load(
@@ -415,13 +415,13 @@ def _impl(ctx):
         features = features,
         artifact_name_patterns = artifact_name_patterns,
         toolchain_identifier = ctx.attr.toolchain_identifier,
-        cuda_path = ctx.attr.cuda_path,
+        cuda_toolkit = ctx.attr.cuda_toolkit,
     )]
 
 cuda_toolchain_config = rule(
     implementation = _impl,
     attrs = {
-        "cuda_path": attr.string(default = "/usr/local/cuda"),
+        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo]),
         "toolchain_identifier": attr.string(values = ["nvcc"], mandatory = True),
         "nvcc_version_major": attr.int(),
         "nvcc_version_minor": attr.int(),

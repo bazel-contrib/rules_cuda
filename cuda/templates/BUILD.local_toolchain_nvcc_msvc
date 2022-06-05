@@ -3,16 +3,27 @@
 load(
     "@rules_cuda//cuda:defs.bzl",
     "cuda_toolchain",
+    "cuda_toolkit",
     cuda_toolchain_config = "cuda_toolchain_config_nvcc_msvc",
+)
+
+cuda_toolkit(
+    name = "cuda-toolkit",
+    bin2c = "%{bin2c_label}",
+    fatbinary = "%{bin2c_label}",
+    link_stub = "%{link_stub_label}",
+    nvlink = "%{nvlink_label}",
+    path = "%{cuda_path}",
+    version = "%{cuda_version}",
 )
 
 cuda_toolchain_config(
     name = "nvcc-local-config",
-    cuda_path = "%{cuda_path}",
+    cuda_toolkit = ":cuda-toolkit",
     msvc_env_tmp = "%{env_tmp}",
-    toolchain_identifier = "nvcc",
     nvcc_version_major = %{nvcc_version_major},
     nvcc_version_minor = %{nvcc_version_minor},
+    toolchain_identifier = "nvcc",
 )
 
 cuda_toolchain(

@@ -87,12 +87,25 @@ CudaInfo = provider(
     },
 )
 
+CudaToolkitInfo = provider(
+    "",
+    fields = {
+        "path": "string of path to cuda toolkit root",
+        "version_major": "int of the cuda toolkit major version, e.g, 11 for 11.6",
+        "version_minor": "int of the cuda toolkit minor version, e.g, 6 for 11.6",
+        "nvlink": "File to the nvlink executable",
+        "link_stub": "File to the link.stub file",
+        "bin2c": "File to the bin2c executable",
+        "fatbinary": "File to the fatbinary executable",
+    }
+)
+
 CudaToolchainConfigInfo = provider(
     """""",
     fields = {
         "action_configs": "A list of action_configs.",
         "artifact_name_patterns": "A list of artifact_name_patterns.",
-        "cuda_path": "cuda toolkit root path",
+        "cuda_toolkit": "CudaToolkitInfo",
         "features": "A list of features.",
         "toolchain_identifier": "nvcc or clang",
     },
