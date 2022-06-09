@@ -126,9 +126,43 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
     repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
 
+def detect_clang(repository_ctx):
+    ## Detect clang executable
+    # Path to clang is
+    # - taken from CUDA_CLANG_PATH environment variable or
+    # - taken from BAZEL_LLVM environment variable as <BAZEL_LLVM>/bin/clang or
+    # - determined through 'which clang' or
+    # - treated as being not detected and not configured
+    bin_ext = ".exe" if _is_windows(repository_ctx) else ""
+    clang_path = repository_ctx.os.environ.get("CUDA_CLANG_PATH", None)
+    if clang_path == None:
+        bazel_llvm = repository_ctx.os.environ.get("BAZEL_LLVM", None)
+        if bazel_llvm != None and repository_ctx.path(bazel_llvm + "/bin/clang" + bin_ext).exists:
+            clang_path = bazel_llvm + "/bin/clang" + bin_ext
+    if clang_path == None:
+        clang_path = str(repository_ctx.which("clang"))
+    return clang_path
+
+def config_clang(repository_ctx, cuda, clang_path):
+    # Generate @local_cuda//toolchain/clang/BUILD
+    tpl_label = Label("//cuda:templates/BUILD.local_toolchain_clang")
+    substitutions = {
+        "%{clang_path}": _to_forward_slash(clang_path),
+        "%{cuda_path}": _to_forward_slash(cuda.path),
+        "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
+        "%{nvlink_label}": cuda.nvlink_label,
+        "%{link_stub_label}": cuda.link_stub_label,
+        "%{bin2c_label}": cuda.bin2c_label,
+        "%{fatbinary_label}": cuda.fatbinary_label,
+    }
+    repository_ctx.template("toolchain/clang/BUILD", tpl_label, substitutions = substitutions, executable = False)
+
 def _local_cuda_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
     config_cuda_toolkit_and_nvcc(repository_ctx, cuda)
+    clang_path = detect_clang(repository_ctx)
+    if clang_path != None:
+        config_clang(repository_ctx, cuda, clang_path)
 
 _local_cuda = repository_rule(
     implementation = _local_cuda_impl,

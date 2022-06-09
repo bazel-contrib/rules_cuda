@@ -21,7 +21,6 @@ cuda_archs_flag(
     build_setting_default = "",
 )
 
-#TODO:
 # Command line flag to select compiler for cuda_library() code.
 string_flag(
     name = "compiler",
@@ -30,6 +29,16 @@ string_flag(
         "nvcc",
         "clang",
     ],
+)
+
+config_setting(
+    name = "compiler_is_nvcc",
+    flag_values = {":compiler": "nvcc"},
+)
+
+config_setting(
+    name = "compiler_is_clang",
+    flag_values = {":compiler": "clang"},
 )
 
 #TODO:
