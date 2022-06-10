@@ -1,7 +1,6 @@
 workspace(name = "rules_cuda")
 
-load("//cuda:deps.bzl", "rules_cuda_deps")
-load("//cuda/private:cuda_toolkit.bzl", "register_detected_cuda_toolchains")
+load("//cuda:deps.bzl", "register_detected_cuda_toolchains", "rules_cuda_deps")
 
 rules_cuda_deps()
 
