@@ -41,7 +41,6 @@ config_setting(
     flag_values = {":compiler": "clang"},
 )
 
-#TODO:
 # Command line flag for copts to add to cuda_library() compile command.
 string_list_flag(
     name = "copts",
