@@ -1,7 +1,5 @@
 # CUDA Rules for [Bazel](https://bazel.build)
 
-**WARNING**: WIP, expect breakage!
-
 This repository contains pure [Starlark](https://github.com/bazelbuild/starlark) implementation of CUDA rules. These
 rules provide some macros and rules that make it easier to build CUDA with Bazel.
 
@@ -29,8 +27,12 @@ register_detected_cuda_toolchains()
 ```
 
 **NOTE**: the use of `register_detected_cuda_toolchains` depends on the environment variable `CUDA_PATH`. You must also
-ensure the host compile is available. On windows, this means you will also need to set the environment variable
+ensure the host compiler is available. On windows, this means that you will also need to set the environment variable
 `BAZEL_VC` properly.
+
+[`detect_cuda_toolkit`](https://github.com/cloudhan/rules_cuda/blob/f534446357/cuda/private/repositories.bzl#L44-L57)
+and [`detect_clang`](https://github.com/cloudhan/rules_cuda/blob/f534446357/cuda/private/repositories.bzl#L129-L143)
+determains how the toolchains are detected.
 
 ### Rules
 
@@ -56,6 +58,24 @@ and then you can use it as following:
 ```
 bazel build --cuda_archs=compute_61:compute_61,sm_61
 ```
+
+#### Available flags
+
+- `@rules_cuda//cuda:archs`
+
+  Select the cuda archs to support. See [cuda_archs specification DSL grammar](https://github.com/cloudhan/rules_cuda/blob/f534446357/cuda/private/providers.bzl#L43-L65).
+
+- `@rules_cuda//cuda:compiler`
+
+  Select the cuda compiler, available options are `nvcc` or `clang`
+
+- `@rules_cuda//cuda:copts`
+
+  Add the copts to all cuda compile actions.
+
+- `@rules_cuda//cuda:runtime`
+
+  Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@local_cuda//:cuda_runtime_static` link the static cuda runtime.
 
 ## Examples
 
