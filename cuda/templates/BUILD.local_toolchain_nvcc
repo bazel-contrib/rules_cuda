@@ -41,7 +41,10 @@ toolchain(
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
     ],
-    target_settings = ["@rules_cuda//cuda:compiler_is_nvcc"],
+    target_settings = [
+        "@rules_cuda//cuda:is_enabled",
+        "@rules_cuda//cuda:compiler_is_nvcc",
+    ],
     toolchain = ":nvcc-local",
     toolchain_type = "@rules_cuda//cuda:toolchain_type",
     visibility = ["//visibility:public"],

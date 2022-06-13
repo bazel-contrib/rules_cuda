@@ -56,27 +56,28 @@ def detect_cuda_toolkit(repository_ctx):
     if cuda_path == None and _is_linux(repository_ctx):
         cuda_path = "/usr/local/cuda"
 
-    # if cuda_path == None:
-    #     fail("Cannot determine CUDA Toolkit root, abort!")
+    if cuda_path != None and not repository_ctx.path(cuda_path).exists:
+        cuda_path = None
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
     nvlink = "@rules_cuda//cuda/dummy:nvlink"
     link_stub = "@rules_cuda//cuda/dummy:link.stub"
     bin2c = "@rules_cuda//cuda/dummy:bin2c"
     fatbinary = "@rules_cuda//cuda/dummy:fatbinary"
-    if repository_ctx.path(cuda_path + "/bin/nvlink" + bin_ext).exists:
-        nvlink = "@local_cuda//:cuda/bin/nvlink" + bin_ext
-    if repository_ctx.path(cuda_path + "/bin/crt/link.stub").exists:
-        link_stub = "@local_cuda//:cuda/bin/crt/link.stub"
-    if repository_ctx.path(cuda_path + "/bin/bin2c" + bin_ext).exists:
-        bin2c = "@local_cuda//:cuda/bin/bin2c" + bin_ext
-    if repository_ctx.path(cuda_path + "/bin/fatbinary" + bin_ext).exists:
-        fatbinary = "@local_cuda//:cuda/bin/fatbinary" + bin_ext
+    if cuda_path != None:
+        if repository_ctx.path(cuda_path + "/bin/nvlink" + bin_ext).exists:
+            nvlink = "@local_cuda//:cuda/bin/nvlink" + bin_ext
+        if repository_ctx.path(cuda_path + "/bin/crt/link.stub").exists:
+            link_stub = "@local_cuda//:cuda/bin/crt/link.stub"
+        if repository_ctx.path(cuda_path + "/bin/bin2c" + bin_ext).exists:
+            bin2c = "@local_cuda//:cuda/bin/bin2c" + bin_ext
+        if repository_ctx.path(cuda_path + "/bin/fatbinary" + bin_ext).exists:
+            fatbinary = "@local_cuda//:cuda/bin/fatbinary" + bin_ext
 
     nvcc_version_major = -1
     nvcc_version_minor = -1
 
-    if repository_ctx.path(cuda_path).exists:
+    if cuda_path != None:
         nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, cuda_path)
 
     return struct(
@@ -97,7 +98,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     # Generate @local_cuda//BUILD and @local_cuda//defs.bzl and
     defs_bzl_content = defs_bzl_shared
     defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"
-    if repository_ctx.path(cuda.path).exists:
+    if cuda.path != None:
         repository_ctx.symlink(cuda.path, "cuda")
         repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
         defs_bzl_content += defs_if_local_cuda % "if_true"
@@ -112,7 +113,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
     substitutions = {
-        "%{cuda_path}": _to_forward_slash(cuda.path),
+        "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_version_major}": str(cuda.nvcc_version_major),
         "%{nvcc_version_minor}": str(cuda.nvcc_version_minor),
@@ -141,14 +142,18 @@ def detect_clang(repository_ctx):
             clang_path = bazel_llvm + "/bin/clang" + bin_ext
     if clang_path == None:
         clang_path = str(repository_ctx.which("clang"))
+
+    if clang_path != None and not repository_ctx.path(clang_path).exists:
+        clang_path = None
+
     return clang_path
 
 def config_clang(repository_ctx, cuda, clang_path):
     # Generate @local_cuda//toolchain/clang/BUILD
     tpl_label = Label("//cuda:templates/BUILD.local_toolchain_clang")
     substitutions = {
-        "%{clang_path}": _to_forward_slash(clang_path),
-        "%{cuda_path}": _to_forward_slash(cuda.path),
+        "%{clang_path}": _to_forward_slash(clang_path) if clang_path else "cuda-clang-not-found",
+        "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvlink_label}": cuda.nvlink_label,
         "%{link_stub_label}": cuda.link_stub_label,
@@ -160,13 +165,13 @@ def config_clang(repository_ctx, cuda, clang_path):
 def _local_cuda_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
     config_cuda_toolkit_and_nvcc(repository_ctx, cuda)
+
     clang_path = detect_clang(repository_ctx)
-    if clang_path != None:
-        config_clang(repository_ctx, cuda, clang_path)
+    config_clang(repository_ctx, cuda, clang_path)
 
 _local_cuda = repository_rule(
     implementation = _local_cuda_impl,
-    environ = ["CUDA_PATH", "PATH"],
+    environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "BAZEL_LLVM"],
     # remotable = True,
 )
 
