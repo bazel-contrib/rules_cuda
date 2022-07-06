@@ -298,3 +298,158 @@ cc_library(
         ":nvml_lib",
     ]),
 )
+
+# curand
+cc_import(
+    name = "curand_so",
+    shared_library = "cuda/lib64/libcurand.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "curand_lib",
+    interface_library = "cuda/lib/x64/curand.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "curand",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":curand_so",
+    ]) + if_windows([
+        ":curand_lib",
+    ]),
+)
+
+# nvcc
+cc_library(
+    name = "nvcc",
+    srcs = [ ],
+    hdrs = glob([
+        "cuda/include/fatbinary_section.h",
+        "cuda/include/nvPTXCompiler.h",
+        "cuda/include/crt/*",
+    ]),
+    includes = [
+        "cuda/include",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# cufft
+cc_import(
+    name = "cufft_so",
+    shared_library = "cuda/lib64/libcufft.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cufft_lib",
+    interface_library = "cuda/lib/x64/cufft.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_import(
+    name = "cufftw_so",
+    shared_library = "cuda/lib64/libcufftw.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cufftw_lib",
+    interface_library = "cuda/lib/x64/cufftw.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cufft",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":cufft_so",
+        ":cufftw_so"
+    ]) + if_windows([
+        ":cufft_lib",
+        ":cufftw_lib",
+    ]),
+)
+
+# cusolver
+cc_import(
+    name = "cusolver_so",
+    shared_library = "cuda/lib64/libcusolver.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cusolver_lib",
+    interface_library = "cuda/lib/x64/cusolver.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cusolver",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":cusolver_so",
+    ]) + if_windows([
+        ":cusolver_lib",
+    ]),
+)
+
+# cusparse
+cc_import(
+    name = "cusparse_so",
+    shared_library = "cuda/lib64/libcusparse.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cusparse_lib",
+    interface_library = "cuda/lib/x64/cusparse.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cusparse",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":cusparse_so",
+    ]) + if_windows([
+        ":cusparse_lib",
+    ]),
+)
+
+# nvtx
+cc_import(
+    name = "nvtx_so",
+    shared_library = "cuda/lib64/libnvToolsExt.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "nvtx_lib",
+    interface_library = "cuda/lib/x64/libnvToolsExt.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvtx",
+    deps = [
+        ":cuda_headers",
+    ] + if_linux([
+        ":nvtx_so",
+    ]) + if_windows([
+        ":nvtx_lib",
+    ]),
+)
