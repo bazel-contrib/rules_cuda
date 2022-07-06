@@ -35,11 +35,9 @@ toolchain(
     name = "nvcc-local-toolchain",
     exec_compatible_with = [
         "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
     ],
     target_compatible_with = [
         "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
     ],
     target_settings = [
         "@rules_cuda//cuda:is_enabled",
