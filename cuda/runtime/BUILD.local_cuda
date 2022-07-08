@@ -324,10 +324,23 @@ cc_library(
     ]),
 )
 
-# nvcc
+# nvptxcompiler
+cc_import(
+    name = "nvptxcompiler_so",
+    static_library = "cuda/lib64/libnvptxcompiler_static.a",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "nvptxcompiler_lib",
+    interface_library = "cuda/lib/x64/nvptxcompiler_static.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
 cc_library(
-    name = "nvcc",
-    srcs = [ ],
+    name = "nvptxcompiler",
+    srcs = [],
     hdrs = glob([
         "cuda/include/fatbinary_section.h",
         "cuda/include/nvPTXCompiler.h",
@@ -337,6 +350,12 @@ cc_library(
         "cuda/include",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+    if_linux([
+        ":nvptxcompiler_so"
+    ]) + if_windows([
+        ":nvptxcompiler_lib"
+    ])
 )
 
 # cufft
