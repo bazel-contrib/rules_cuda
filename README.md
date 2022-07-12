@@ -3,6 +3,14 @@
 This repository contains pure [Starlark](https://github.com/bazelbuild/starlark) implementation of CUDA rules. These
 rules provide some macros and rules that make it easier to build CUDA with Bazel.
 
+## Examples
+
+Checkout the examples to see if it fits your needs.
+
+See [examples](./examples) for basic usage.
+
+See [this examples repo](https://github.com/cloudhan/rules_cuda_examples) for extended real world projects.
+
 ## Reference documentation
 
 ### Workspace setup
@@ -61,6 +69,10 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
 #### Available flags
 
+- `@rules_cuda//cuda:enable`
+
+  Enable or disable all rules_cuda related rules. When disabled, the detected cuda toolchains will also be disabled to avoid potential human error.
+
 - `@rules_cuda//cuda:archs`
 
   Select the cuda archs to support. See [cuda_archs specification DSL grammar](https://github.com/cloudhan/rules_cuda/blob/f534446357/cuda/private/providers.bzl#L43-L65).
@@ -76,12 +88,6 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 - `@rules_cuda//cuda:runtime`
 
   Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@local_cuda//:cuda_runtime_static` link the static cuda runtime.
-
-## Examples
-
-See [examples](./examples) for basic usage.
-
-See [this examples repo](https://github.com/cloudhan/rules_cuda_examples) for extended real world usage.
 
 ## Known issue
 
