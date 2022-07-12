@@ -73,8 +73,11 @@ def _cuda_library_impl(ctx):
         disallow_dynamic_library = True,
     )
 
-    lib = linking_outputs.library_to_link.static_library
-    pic_lib = linking_outputs.library_to_link.pic_static_library
+    lib = None
+    pic_lib = None
+    if linking_outputs.library_to_link != None:
+        lib = linking_outputs.library_to_link.static_library
+        pic_lib = linking_outputs.library_to_link.pic_static_library
     libs = [] if lib == None else [lib]
     pic_libs = [] if pic_lib == None else [pic_lib]
 
