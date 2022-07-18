@@ -30,7 +30,7 @@ jobs:
 
     - uses: Jimver/cuda-toolkit@v0.2.8
       with:
-        cuda: 11.2.2
+        cuda: 11.6.2
         sub-packages: '["cudart"]'
         method: network
 
