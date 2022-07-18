@@ -1,0 +1,66 @@
+name: Test Example Build
+
+on: push
+
+jobs:
+  test:
+    name: "Test Examples Build (CUDA ${{ matrix.cuda-version }} on ${{ matrix.os }})"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        os:
+          - ubuntu-18.04
+          - windows-2019
+        cuda-version:
+          - 10.1.243
+          - 11.2.2
+          - 11.6.2
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: bazelbuild/setup-bazelisk@v2
+    - name: Mount bazel cache
+      if: ${{ !startsWith(matrix.os, 'windows') }}
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/bazel
+        key: bazel-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}-${{ hashFiles('.bazelversion') }}
+
+    - name: Install CUDA (Linux)
+      uses: Jimver/cuda-toolkit@v0.2.8
+      if: ${{ !startsWith(matrix.os, 'windows') }}
+      with:
+        cuda: ${{ matrix.cuda-version }}
+        sub-packages: '["nvcc", "cudart-dev"]'
+        method: network
+    - name: Show bin, include, lib (Linux)
+      if: ${{ !startsWith(matrix.os, 'windows') }}
+      run: |
+        tree ${CUDA_PATH}/bin
+        tree ${CUDA_PATH}/include
+        tree ${CUDA_PATH}/lib64
+
+    - name: Install CUDA (Windows)
+      uses: Jimver/cuda-toolkit@v0.2.8
+      if: ${{ startsWith(matrix.os, 'windows') }}
+      with:
+        cuda: ${{ matrix.cuda-version }}
+        sub-packages: '["nvcc", "cudart"]'
+        method: network
+    - name: Show bin, include, lib64 (Windows)
+      if: ${{ startsWith(matrix.os, 'windows') }}
+      run: |
+        tree /F $env:CUDA_PATH/bin
+        tree /F $env:CUDA_PATH/include
+        tree /F $env:CUDA_PATH/lib/x64
+    - name: Set Visual Studio Environment (Windows)
+      if: ${{ startsWith(matrix.os, 'windows') }}
+      run: .github/workflows/Set-VSEnv.ps1 2019
+
+    - run: bazelisk build //examples/basic:main
+    - run: bazelisk build //examples/rdc:main
+    - run: bazelisk build //examples/if_cuda:main
+    - run: bazelisk build //examples/if_cuda:main --enable_cuda=False
+
+    - run: bazelisk shutdown
