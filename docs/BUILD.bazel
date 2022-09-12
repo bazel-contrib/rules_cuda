@@ -13,3 +13,10 @@ stardoc(
     input = "toolchain_config_docs.bzl",
     deps = ["@rules_cuda//:bzl_srcs"],
 )
+
+stardoc(
+    name = "providers_docs",
+    out = "providers_docs.md",
+    input = "providers_docs.bzl",
+    deps = ["@rules_cuda//:bzl_srcs"],
+)
