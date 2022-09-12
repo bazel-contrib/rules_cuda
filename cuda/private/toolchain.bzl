@@ -56,7 +56,12 @@ def find_cuda_toolchain(ctx):
 def find_cuda_toolkit(ctx):
     return ctx.toolchains[CUDA_TOOLCHAIN_TYPE].cuda_toolkit[CudaToolkitInfo]
 
+# buildifier: disable=unnamed-macro
 def register_detected_cuda_toolchains():
+    """Helper to register the automatically detected CUDA toolchain(s).
+
+User can setup their own toolchain if needed and ignore the detected ones by not calling this macro.
+"""
     native.register_toolchains(
         "@local_cuda//toolchain:nvcc-local-toolchain",
         "@local_cuda//toolchain/clang:clang-local-toolchain",
