@@ -24,15 +24,15 @@ def _cuda_toolchain_impl(ctx):
     ]
 
 cuda_toolchain = rule(
+    doc = """This rule consumes a `CudaToolchainConfigInfo` and provides a `platform_common.ToolchainInfo`, a.k.a, the CUDA Toolchain.""",
     implementation = _cuda_toolchain_impl,
     attrs = {
         "toolchain_config": attr.label(
             mandatory = True,
             providers = [CudaToolchainConfigInfo],
+            doc = "A target that provides a `CudaToolchainConfigInfo`.",
         ),
-        "compiler_executable": attr.string(
-            mandatory = True,
-        ),
+        "compiler_executable": attr.string(mandatory = True, doc = "The path of the main executable of this toolchain."),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
 )
