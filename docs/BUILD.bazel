@@ -1,0 +1,22 @@
+load("@io_bazel_stardoc//stardoc:stardoc.bzl", "stardoc")
+
+stardoc(
+    name = "user_docs",
+    out = "user_docs.md",
+    input = "user_docs.bzl",
+    deps = ["@rules_cuda//:bzl_srcs"],
+)
+
+stardoc(
+    name = "toolchain_config_docs",
+    out = "toolchain_config_docs.md",
+    input = "toolchain_config_docs.bzl",
+    deps = ["@rules_cuda//:bzl_srcs"],
+)
+
+stardoc(
+    name = "providers_docs",
+    out = "providers_docs.md",
+    input = "providers_docs.bzl",
+    deps = ["@rules_cuda//:bzl_srcs"],
+)

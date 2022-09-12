@@ -1,3 +1,5 @@
+"""Defines all providers that are used in this repo."""
+
 cuda_archs = [
     "30",
     "32",
@@ -19,7 +21,11 @@ cuda_archs = [
 ]
 
 Stage2ArchInfo = provider(
-    "",
+    """Provides the information of how the stage 2 complation is carried out.
+
+One and only one of `virtual`, `gpu` and `lto` must be set to True. For example, if `arch` is set to `80` and `virtual` is `True`, then a
+ptx embedding process is carried out for `compute_80`. Multiple `Stage2ArchInfo` can be used for specifying how a stage 1 result is
+transformed into its final form.""",
     fields = {
         "arch": "str, arch number",
         "virtual": "bool, use virtual arch, default False",
@@ -29,7 +35,8 @@ Stage2ArchInfo = provider(
 )
 
 ArchSpecInfo = provider(
-    "",
+    """Provides the information of how [GPU compilation](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-compilation)
+is carried out of a single virtual architecture.""",
     fields = {
         "stage1_arch": "A virtual architecture, str, arch number only",
         "stage2_archs": "A list of virtual or gpu architecture, list of Stage2ArchInfo",
@@ -39,49 +46,20 @@ ArchSpecInfo = provider(
 CudaArchsInfo = provider(
     """Provides a list of CUDA archs to compile for.
 
-    To retain the flexiblity of NVCC, the extended notation is adopted, see
-    https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#extended-notation
-
-    cuda_archs spec grammar as follows:
-
-        ARCH_SPECS   ::= ARCH_SPEC [ ';' ARCH_SPECS ]
-        ARCH_SPEC    ::= [ VIRTUAL_ARCH ':' ] GPU_ARCHS
-        GPU_ARCHS    ::= GPU_ARCH [ ',' GPU_ARCHS ]
-        GPU_ARCH     ::= ( 'sm_' | 'lto_' ) ARCH_NUMBER
-                       | VIRTUAL_ARCH
-        VIRTUAL_ARCH ::= ( 'compute_' | 'lto_' ) ARCH_NUMBER
-        ARCH_NUMBER  ::= (a string in predefined cuda_archs list)
-
-    E.g.:
-        - compute_80:sm_80,sm_86
-          Use compute_80 PTX, generate cubin with sm_80 and sm_86, no PTX embedded
-        - compute_80:compute_80,sm_80,sm_86
-          Use compute_80 PTX, generate cubin with sm_80 and sm_86, PTX embedded
-        - compute_80:compute_80
-          Embed compute_80 PTX, fully relay on ptxas
-        - sm_80,sm_86
-          Same as "compute_80:sm_80,sm_86", the arch with minimum integer value will be automatically populated.
-        - sm_80;sm_86
-          Two specs used.
-        - compute_80
-          Same as "compute_80:compute_80"
-
-    Best Practices:
-        - Library supports a full range of archs from xx to yy, you should embed the yy PTX
-        - Library supports a sparse range of archs from xx to yy, you should embed the xx PTX
-
-    Read the whole chapter 5 of CUDA Compiler Driver NVCC Reference Guide, at
-    https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-compilation
-    """,
+Read the whole [Chapter 5 of CUDA Compiler Driver NVCC Reference Guide](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-compilation)
+if more detail is needed.""",
     fields = {
         "arch_specs": "A list of ArchSpecInfo",
     },
 )
 
 CudaInfo = provider(
-    """Provider that wraps cuda build information.""",
+    """Provides cuda build artifacts that can be consumed by device linking or linking process.
+
+This provider is analog to [CcInfo](https://bazel.build/rules/lib/CcInfo) but only contains necessary information for
+linking in a flat structure.""",
     fields = {
-        "defines": "A depset of strings",
+        "defines": "A depset of strings. It is used for the compilation during device linking.",
         "objects": "A depset of objects.",  # but not rdc and pic
         "rdc_objects": "A depset of relocatable device code objects.",  # but not pic
         "pic_objects": "A depset of position indepentent code objects.",  # but not rdc
@@ -90,7 +68,7 @@ CudaInfo = provider(
 )
 
 CudaToolkitInfo = provider(
-    "",
+    """Provides the information of CUDA Toolkit.""",
     fields = {
         "path": "string of path to cuda toolkit root",
         "version_major": "int of the cuda toolkit major version, e.g, 11 for 11.6",
@@ -99,11 +77,11 @@ CudaToolkitInfo = provider(
         "link_stub": "File to the link.stub file",
         "bin2c": "File to the bin2c executable",
         "fatbinary": "File to the fatbinary executable",
-    }
+    },
 )
 
 CudaToolchainConfigInfo = provider(
-    """""",
+    """Provides the information of what the toolchain is and how the toolchain is configured.""",
     fields = {
         "action_configs": "A list of action_configs.",
         "artifact_name_patterns": "A list of artifact_name_patterns.",

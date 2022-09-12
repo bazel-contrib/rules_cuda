@@ -24,15 +24,15 @@ def _cuda_toolchain_impl(ctx):
     ]
 
 cuda_toolchain = rule(
+    doc = """This rule consumes a `CudaToolchainConfigInfo` and provides a `platform_common.ToolchainInfo`, a.k.a, the CUDA Toolchain.""",
     implementation = _cuda_toolchain_impl,
     attrs = {
         "toolchain_config": attr.label(
             mandatory = True,
             providers = [CudaToolchainConfigInfo],
+            doc = "A target that provides a `CudaToolchainConfigInfo`.",
         ),
-        "compiler_executable": attr.string(
-            mandatory = True,
-        ),
+        "compiler_executable": attr.string(mandatory = True, doc = "The path of the main executable of this toolchain."),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
 )
@@ -56,7 +56,12 @@ def find_cuda_toolchain(ctx):
 def find_cuda_toolkit(ctx):
     return ctx.toolchains[CUDA_TOOLCHAIN_TYPE].cuda_toolkit[CudaToolkitInfo]
 
+# buildifier: disable=unnamed-macro
 def register_detected_cuda_toolchains():
+    """Helper to register the automatically detected CUDA toolchain(s).
+
+User can setup their own toolchain if needed and ignore the detected ones by not calling this macro.
+"""
     native.register_toolchains(
         "@local_cuda//toolchain:nvcc-local-toolchain",
         "@local_cuda//toolchain/clang:clang-local-toolchain",

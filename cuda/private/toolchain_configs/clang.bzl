@@ -503,9 +503,10 @@ def _impl(ctx):
     )]
 
 cuda_toolchain_config = rule(
+    doc = """This rule provides the predefined cuda toolchain configuration for Clang.""",
     implementation = _impl,
     attrs = {
-        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo]),
+        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], doc = "A target that provides a `CudaToolkitInfo`."),
         "toolchain_identifier": attr.string(values = ["clang"], mandatory = True),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
     },

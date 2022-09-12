@@ -75,6 +75,8 @@ def _cuda_objects_impl(ctx):
     ]
 
 cuda_objects = rule(
+    doc = """This rule produces incomplete object files that can only be consumed by `cuda_library`. It is created for relocatable device
+code and device link time optimization source files.""",
     implementation = _cuda_objects_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS),
