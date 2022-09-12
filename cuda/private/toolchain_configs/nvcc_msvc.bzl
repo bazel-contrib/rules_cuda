@@ -512,13 +512,14 @@ def _impl(ctx):
     )]
 
 cuda_toolchain_config = rule(
+    doc = """This rule provides the predefined cuda toolchain configuration for NVCC with MSVC as host compiler.""",
     implementation = _impl,
     attrs = {
-        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo]),
+        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], doc = "A target that provides a `CudaToolkitInfo`."),
         "toolchain_identifier": attr.string(values = ["nvcc"], mandatory = True),
-        "nvcc_version_major": attr.int(),
-        "nvcc_version_minor": attr.int(),
-        "msvc_env_tmp": attr.string(),
+        "nvcc_version_major": attr.int(doc="The CUDA Toolkit major version, e.g, 11 for 11.6"),
+        "nvcc_version_minor": attr.int(doc="The CUDA Toolkit minor version, e.g, 6 for 11.6"),
+        "msvc_env_tmp": attr.string(doc="The TEMP directory."),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
     },
     provides = [CudaToolchainConfigInfo],
