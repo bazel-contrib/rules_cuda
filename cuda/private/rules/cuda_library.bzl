@@ -97,6 +97,8 @@ def _cuda_library_impl(ctx):
     ]
 
 cuda_library = rule(
+    doc = """This rule compiles and creates static library for CUDA kernel code. The resulting targets can then be consumed by
+[C/C++ Rules](https://bazel.build/reference/be/c-cpp#rules).""",
     implementation = _cuda_library_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS),
