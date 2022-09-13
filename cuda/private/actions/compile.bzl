@@ -10,7 +10,23 @@ def compile(
         common,
         pic = False,
         rdc = False):
-    ""
+    """Perform CUDA compilation, return compiled object files.
+
+    Notes:
+        If `rdc` is set to `True`, then an additional step of device link must be performed.
+
+    Args:
+        ctx: A [context object](https://bazel.build/rules/lib/ctx).
+        cuda_toolchain: A `platform_common.ToolchainInfo` of a cuda toolchain, Can be obtained with `find_cuda_toolchain(ctx)`.
+        cc_toolchain: A `CcToolchainInfo`. Can be obtained with `find_cpp_toolchain(ctx)`.
+        srcs: A list of `File`s to be compiled.
+        common: A cuda common object. Can be obtained with `cuda_helper.create_common(ctx)`
+        pic: Whether the `srcs` are compiled for position independent code.
+        rdc: Whether the `srcs` are compiled for relocatable device code.
+
+    Returns:
+        An compiled object `File`.
+    """
     actions = ctx.actions
     host_compiler = cc_toolchain.compiler_executable
     cuda_compiler = cuda_toolchain.compiler_executable

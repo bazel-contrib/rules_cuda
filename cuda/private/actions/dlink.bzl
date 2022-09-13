@@ -14,6 +14,24 @@ def device_link(
         pic = False,
         rdc = False,
         dlto = False):
+    """Perform device link, return a dlink-ed object file.
+
+    Notes:
+        Compilation is carried out during device linking, which involves the embeeding of the fatbin into the resulting object `File`.
+
+    Args:
+        ctx: A [context object](https://bazel.build/rules/lib/ctx).
+        cuda_toolchain: A `platform_common.ToolchainInfo` of a cuda toolchain, Can be obtained with `find_cuda_toolchain(ctx)`.
+        cc_toolchain: A `CcToolchainInfo`. Can be obtained with `find_cpp_toolchain(ctx)`.
+        objects: A `depset` of `File`s to be device linked.
+        common: A cuda common object. Can be obtained with `cuda_helper.create_common(ctx)`
+        pic: Whether the `objects` are compiled for position independent code.
+        rdc: Whether the `objects` are device linked for relocatable device code.
+        dlto: Whether the device link time optimization is enabled.
+
+    Returns:
+        An deviced linked object `File`.
+    """
     cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.device_link])
     if cuda_helper.is_enabled(cuda_feature_config, "supports_compiler_device_link"):
         return _compiler_device_link(ctx, cuda_toolchain, cc_toolchain, cuda_feature_config, objects, common, pic = pic, rdc = rdc, dlto = dlto)
