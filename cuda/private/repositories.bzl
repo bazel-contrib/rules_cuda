@@ -42,11 +42,19 @@ def _get_nvcc_version(repository_ctx, cuda_path):
     return [-1, -1]
 
 def detect_cuda_toolkit(repository_ctx):
-    ## Detect CUDA Toolkit
-    # Path to CUDA Toolkit is
-    # - taken from CUDA_PATH environment variable or
-    # - determined through 'which ptxas' or
-    # - defaults to '/usr/local/cuda'
+    """Detect CUDA Toolkit.
+
+    The path to CUDA Toolkit is determined as:
+      - taken from CUDA_PATH environment variable or
+      - determined through 'which ptxas' or
+      - defaults to '/usr/local/cuda'
+
+    Args:
+        repository_ctx: repository_ctx
+
+    Returns:
+        A struct contains the information of CUDA Toolkit.
+    """
     cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
     if cuda_path == None:
         ptxas_path = repository_ctx.which("ptxas")
@@ -95,7 +103,13 @@ def detect_cuda_toolkit(repository_ctx):
     )
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
-    # Generate @local_cuda//BUILD and @local_cuda//defs.bzl and
+    """Generate @local_cuda//BUILD and @local_cuda//defs.bzl and @local_cuda//toolchain/BUILD
+
+    Args:
+        repository_ctx: repository_ctx
+        cuda: The struct returned from detect_cuda_toolkit
+    """
+    # Generate @local_cuda//BUILD and @local_cuda//defs.bzl
     defs_bzl_content = defs_bzl_shared
     defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"
     if cuda.path != None:
@@ -128,12 +142,20 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
 
 def detect_clang(repository_ctx):
-    ## Detect clang executable
-    # Path to clang is
-    # - taken from CUDA_CLANG_PATH environment variable or
-    # - taken from BAZEL_LLVM environment variable as <BAZEL_LLVM>/bin/clang or
-    # - determined through 'which clang' or
-    # - treated as being not detected and not configured
+    """Detect local clang installation.
+
+    The path to clang is determined by:
+      - taken from `CUDA_CLANG_PATH` environment variable or
+      - taken from `BAZEL_LLVM` environment variable as `<BAZEL_LLVM>/bin/clang` or
+      - determined through 'which clang' or
+      - treated as being not detected and not configured
+
+    Args:
+        repository_ctx: repository_ctx
+
+    Returns:
+        clang_path (str | None): Optionally return a string of path to clang executable if detected.
+    """
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
     clang_path = repository_ctx.os.environ.get("CUDA_CLANG_PATH", None)
     if clang_path == None:
@@ -149,7 +171,13 @@ def detect_clang(repository_ctx):
     return clang_path
 
 def config_clang(repository_ctx, cuda, clang_path):
-    # Generate @local_cuda//toolchain/clang/BUILD
+    """Generate @local_cuda//toolchain/clang/BUILD
+
+    Args:
+        repository_ctx: repository_ctx
+        cuda: The struct returned from `detect_cuda_toolkit`
+        clang_path: Path to clang executable returned from `detect_clang`
+    """
     tpl_label = Label("//cuda:templates/BUILD.local_toolchain_clang")
     substitutions = {
         "%{clang_path}": _to_forward_slash(clang_path) if clang_path else "cuda-clang-not-found",
