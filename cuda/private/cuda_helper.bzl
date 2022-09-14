@@ -193,7 +193,7 @@ def _create_common(ctx):
     for fs in attr.hdrs:
         public_headers.extend(fs.files.to_list())
     for fs in attr.srcs:
-        hdr = [f for f in fs.files.to_list() if cuda_helper.check_src_extension(f, ALLOW_CUDA_HDRS)]
+        hdr = [f for f in fs.files.to_list() if _check_src_extension(f, ALLOW_CUDA_HDRS)]
         private_headers.extend(hdr)
     headers = public_headers + private_headers
     transitive_headers = []
@@ -405,7 +405,6 @@ def _configure_features(ctx, cuda_toolchain, requested_features = None, unsuppor
 
 cuda_helper = struct(
     get_arch_specs = _get_arch_specs,
-    check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,
     check_must_enforce_rdc = _check_must_enforce_rdc,
     get_basename_without_ext = _get_basename_without_ext,
@@ -417,8 +416,6 @@ cuda_helper = struct(
     create_compile_variables = _create_compile_variables,
     create_device_link_variables = _create_device_link_variables,
     configure_features = _configure_features,  # wrapped for collecting info from ctx and cuda_toolchain
-    get_default_features_and_action_configs = config_helper.get_default_features_and_action_configs,
-    get_enabled_feature = config_helper.get_enabled_feature,
     get_command_line = config_helper.get_command_line,
     get_tool_for_action = config_helper.get_tool_for_action,
     action_is_enabled = config_helper.is_enabled,
