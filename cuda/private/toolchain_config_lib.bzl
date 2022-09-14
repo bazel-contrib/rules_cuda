@@ -309,6 +309,11 @@ def _check_action_config(ac):
                                                   "action lists in an action_config's flag set.")
 
 def _collect_selectables_info(selectables):
+    """Constructor of `_SelectablesInfo`.
+
+    Args:
+        selectables: List of `action_config`s and/or `feature`s.
+    """
     info = _SelectablesInfo(
         implies = {},
         implied_by = {},
@@ -362,8 +367,8 @@ def _is_configured(selectables_info, name):
     """Whether an action or a feature exists
 
     Args:
-        selectables_info: the _SelectablesInfo returned from _collect_selectables_info
-        name: name of action_config or feature
+        selectables_info: The `_SelectablesInfo` returned from `_collect_selectables_info`
+        name: Name of the selectable, that is, an `action_config` or a `feature`.
     """
     return name in selectables_info.selectables
 
@@ -375,6 +380,12 @@ def _get_name_from_selectable(selectable):
     fail("Unreachable")
 
 def _is_enabled(info, name):
+    """Returns whether a selectable is enable or not.
+
+    Args:
+        info: A `_FeatureConfigurationInfo`, returned by `configure_features`, to be queried.
+        name: Name of the selectable, that is, an `action_config` or a `feature`.
+    """
     return info.enabled.get(name, False)
 
 def _enable_all_implied(info):
@@ -558,19 +569,20 @@ _FeatureConfigurationInfo = provider(
 def unique(seq):
     return {elem: None for elem in seq}.keys()
 
+# buildifier: disable=function-docstring-args
 def _configure_features(
         selectables = None,
         selectables_info = None,
         requested_features = None,
         unsupported_features = None,
         _debug = False):
-    """_configure_features
+    """Constructor of `_FeatureConfigurationInfo`.
 
     Args:
-        selectables: list of action_configs and/or features
-        selectables_info: info return by _collect_selectables_info
-        requested_features: list of action_config/feature name to be enabled
-        unsupported_features: list of action_config/feature name to be disabled
+        selectables: List of `action_config`s and/or `feature`s.
+        selectables_info: The `_SelectablesInfo` returned from `_collect_selectables_info`
+        requested_features: List of names of `action_config`s and/or `feature`s to be enabled.
+        unsupported_features: List of names of `action_config`s and/or `feature`s to be disabled.
     """
     if (selectables == None and selectables_info == None) or (selectables != None and selectables_info != None):
         fail("one and only one of selectables and selectables_info must be specified")
@@ -595,12 +607,35 @@ def _configure_features(
     return info
 
 def _get_default_features_and_action_configs(info):
+    """Get all default enabled features and action configs.
+
+    Notes:
+        For testing purpose. Default enabled maybe disabled after configuration.
+
+    Args:
+        info: A `_FeatureConfigurationInfo`, returned by `configure_features`, to be queried.
+    """
     return info.selectables_info.default_enabled_action_configs[:] + info.selectables_info.default_enabled_features[:]
 
 def _get_enabled_feature(info):
+    """Get all enabled features.
+
+    Notes:
+        For testing purpose.
+
+    Args:
+        info: A `_FeatureConfigurationInfo`, returned by `configure_features`, to be queried.
+    """
     return sorted([k for k, v in info.enabled.items() if v == True])
 
 def _get_command_line(info, action, value):
+    """Returns flattened command line flags for given action, using given variables for expansion.
+
+    Args:
+        info: A `_FeatureConfigurationInfo`, returned by `configure_features`, to be queried.
+        action: Name of the action.
+        value: Build variables to be used for template expansion.
+    """
     ret = []
     for name in info.selectables_info.selectables:
         if not _is_enabled(info, name):
@@ -610,6 +645,12 @@ def _get_command_line(info, action, value):
     return ret
 
 def _get_tool_for_action(info, action_name):
+    """Returns tool path for given action.
+
+    Args:
+        info: A `_FeatureConfigurationInfo`, returned by `configure_features`, to be queried.
+        action_name: Name of the action.
+    """
     ac = info.selectables_info.selectables.get(action_name, None)
     if ac == None:
         fail("Cannot find", action_name)
@@ -619,6 +660,14 @@ def _get_tool_for_action(info, action_name):
     fail("Matching tool for action", action_name, "not found for given feature configuration")
 
 def _get_environment_variables(info, action, value):
+    """Returns environment variables to be set for the given action.
+
+    Args:
+        info: A `_FeatureConfigurationInfo`, returned by `configure_features`, to be queried.
+        action: Name of the action.
+        value: Build variables to be used for template expansion.
+    """
+
     environ = {}
     for name in info.enabled:
         s = info.selectables_info.selectables[name]
@@ -628,6 +677,13 @@ def _get_environment_variables(info, action, value):
     return environ
 
 def _get_artifact_name(artifact_name_patterns, category_name, basename):
+    """Returns artifact_name in form of `prefix + basename + extension`.
+
+    Args:
+        artifact_name_patterns: A list of `artifact_name_pattern`.
+        category_name: A string match the `category_name` field in `artifact_name_pattern`.
+        basename: A string.
+    """
     pattern = artifact_name_patterns.get(category_name, None)
     if pattern == None:
         fail(category_name, "is not configured")
