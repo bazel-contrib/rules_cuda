@@ -23,7 +23,7 @@ toolchain_type(name = "toolchain_type")
 # Set with --@rules_cuda//cuda:enable
 bool_flag(
     name = "enable",
-    build_setting_default = False,
+    build_setting_default = True,
 )
 
 # This config setting can be used for conditionally depend on cuda.
