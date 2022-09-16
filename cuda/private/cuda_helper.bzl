@@ -59,9 +59,14 @@ def _get_arch_spec(spec_str):
     return arch_spec
 
 def _get_arch_specs(specs_str):
-    '''Convert string into a list of ArchSpecInfo.
+    """Convert string into a list of ArchSpecInfo.
 
-    aka, parse "compute_70:sm_70;compute_80:sm_80,sm_86"'''
+    Args:
+        specs_str: a string to be parsed, e.g., "compute_70:sm_70;compute_80:sm_80,sm_86".
+
+    Returns:
+        A list of `ArchSpecInfo`s
+    """
     archs = []
     for sepc_str in specs_str.split(";"):
         spec = _get_arch_spec(sepc_str)
@@ -76,6 +81,7 @@ def _check_src_extension(file, allowed_src_files):
     return False
 
 def _check_srcs_extensions(ctx, allowed_src_files, rule_name):
+    """Ensure ctx.attr.srcs is valid."""
     for src in ctx.attr.srcs:
         files = src[DefaultInfo].files.to_list()
         if len(files) == 1 and files[0].is_source:
@@ -152,6 +158,26 @@ def _create_common_info(
         host_link_flags = [],
         ptxas_flags = [],
         transitive_linking_contexts = []):
+    """Constructor of the common object.
+
+    Args:
+        cuda_archs_info: `CudaArchsInfo`.
+        includes: include paths. Can be used with `#include <...>` and `#include "..."`.
+        quote_includes: include paths. Can be used with `#include "..."`.
+        system_includes: include paths. Can be used with `#include <...>`.
+        headers: headers directly relate with this target.
+        transitive_headers: headers transitively gather from `deps`.
+        defines: public `#define`s. Pass to compiler driver directly. Will be seen by downstream targets.
+        local_defines: private `#define`s. Pass to compiler driver directly. Will not be seen by downstream targets.
+        compile_flags: flags pass to compiler driver directly.
+        link_flags: flags pass to device linker.
+        host_defines: public `#define`s. Pass to host compiler. Will be seen by downstream targets.
+        host_local_defines: private `#define`s. Pass to host compiler. Will not be seen by downstream targets.
+        host_compile_flags: flags pass to host compiler.
+        host_link_flags: flags pass to host linker.
+        ptxas_flags: flags pass to `ptxas`.
+        transitive_linking_contexts: `CcInfo.linking_context` extracted from `deps`
+    """
     return struct(
         cuda_archs_info = cuda_archs_info,
         includes = includes,
@@ -172,6 +198,10 @@ def _create_common_info(
     )
 
 def _create_common(ctx):
+    """Helper to gather and process various information from `ctx` object to ease the parameter passing for internal macros.
+
+    See `cuda_helper.create_common_info` what information a common object encapsulates.
+    """
     attr = ctx.attr
 
     # gather include info
@@ -193,7 +223,7 @@ def _create_common(ctx):
     for fs in attr.hdrs:
         public_headers.extend(fs.files.to_list())
     for fs in attr.srcs:
-        hdr = [f for f in fs.files.to_list() if cuda_helper.check_src_extension(f, ALLOW_CUDA_HDRS)]
+        hdr = [f for f in fs.files.to_list() if _check_src_extension(f, ALLOW_CUDA_HDRS)]
         private_headers.extend(hdr)
     headers = public_headers + private_headers
     transitive_headers = []
@@ -252,6 +282,7 @@ def _create_common(ctx):
     )
 
 def _create_cuda_info(defines = None, objects = None, rdc_objects = None, pic_objects = None, rdc_pic_objects = None):
+    """Constructor for `CudaInfo`. See the providers documentation for detail."""
     ret = CudaInfo(
         defines = defines if defines != None else depset([]),
         objects = objects if objects != None else depset([]),
@@ -262,6 +293,7 @@ def _create_cuda_info(defines = None, objects = None, rdc_objects = None, pic_ob
     return ret
 
 def _get_artifact_category_from_action(action_name, use_pic = None, use_rdc = None):
+    """Query the canonical artifact category name."""
     if action_name == ACTION_NAMES.cuda_compile:
         if use_pic:
             if use_rdc:
@@ -283,9 +315,17 @@ def _get_artifact_category_from_action(action_name, use_pic = None, use_rdc = No
         fail("NotImplemented")
 
 def _get_artifact_name(cuda_toolchain, category_name, output_basename):
+    """Create the artifact name that follow the toolchain configuration.
+
+    Args:
+        cuda_toolchain: CUDA toolchain returned by `find_cuda_toolchain`.
+        category_name: The canonical artifact category name return by `cuda_helper.get_artifact_category_from_action`
+        output_basename: The basename.
+    """
     return config_helper.get_artifact_name(cuda_toolchain.artifact_name_patterns, category_name, output_basename)
 
 def _check_must_enforce_rdc(*, arch_specs = None, cuda_archs_info = None):
+    """Force enable rdc if dlto is enabled."""
     if arch_specs == None:
         arch_specs = cuda_archs_info.arch_specs
     for arch_spec in arch_specs:
@@ -294,6 +334,7 @@ def _check_must_enforce_rdc(*, arch_specs = None, cuda_archs_info = None):
                 return True
     return False
 
+# buildifier: disable=unused-variable
 def _create_compile_variables(
         cuda_toolchain,
         feature_configuration,
@@ -311,6 +352,26 @@ def _create_compile_variables(
         ptxas_flags = [],
         use_pic = False,
         use_rdc = False):
+    """Returns variables used for `compile` actions.
+
+    Args:
+        cuda_toolchain: cuda_toolchain for which we are creating build variables.
+        feature_configuration: Feature configuration to be queried.
+        cuda_archs_info: `CudaArchsInfo`
+        source_file: source file for the compilation.
+        output_file: output file of the compilation.
+        host_compiler: host compiler path.
+        compile_flags: flags pass to compiler driver directly.
+        host_compile_flags: flags pass to host compiler.
+        include_paths: include paths. Can be used with `#include <...>` and `#include "..."`.
+        quote_include_paths: include paths. Can be used with `#include "..."`.
+        system_include_paths: include paths. Can be used with `#include <...>`.
+        defines: `#define`s. Pass to compiler driver directly.
+        host_defines: `#define`s. Pass to host compiler.
+        ptxas_flags: flags pass to `ptxas`.
+        use_pic: whether to compile for position independent code.
+        use_rdc: whether to compile for relocatable device code.
+    """
     arch_specs = cuda_archs_info.arch_specs
     if not use_rdc:
         use_rdc = _check_must_enforce_rdc(arch_specs = arch_specs)
@@ -333,6 +394,7 @@ def _create_compile_variables(
         use_rdc = use_rdc,
     )
 
+# buildifier: disable=unused-variable
 def _create_device_link_variables(
         cuda_toolchain,
         feature_configuration,
@@ -342,6 +404,18 @@ def _create_device_link_variables(
         host_compile_flags = [],
         user_link_flags = [],
         use_pic = False):
+    """Returns variables used for `device_link` actions.
+
+    Args:
+        cuda_toolchain: cuda_toolchain for which we are creating build variables.
+        feature_configuration: Feature configuration to be queried.
+        cuda_archs_info: `CudaArchsInfo`
+        output_file: output file of the device linking.
+        host_compiler: host compiler path.
+        host_compile_flags: flags pass to host compiler.
+        user_link_flags: flags for device linking.
+        use_pic: whether to compile for position independent code.
+    """
     arch_specs = cuda_archs_info.arch_specs
 
     # For using -gencode with lto, see
@@ -393,7 +467,16 @@ def _get_all_requested_features(ctx, cuda_toolchain, requested_features):
 
     return all_features
 
+# buildifier: disable=function-docstring-args
 def _configure_features(ctx, cuda_toolchain, requested_features = None, unsupported_features = None, _debug = False):
+    """Creates a feature_configuration instance.
+
+    Args:
+        ctx: The rule context.
+        cuda_toolchain: cuda_toolchain for which we configure features.
+        requested_features: List of features to be enabled.
+        unsupported_features: List of features that are unsupported by the current rule.
+    """
     all_requested_features = _get_all_requested_features(ctx, cuda_toolchain, requested_features)
     all_unsupported_features = _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features)
     return config_helper.configure_features(
@@ -405,7 +488,6 @@ def _configure_features(ctx, cuda_toolchain, requested_features = None, unsuppor
 
 cuda_helper = struct(
     get_arch_specs = _get_arch_specs,
-    check_src_extension = _check_src_extension,
     check_srcs_extensions = _check_srcs_extensions,
     check_must_enforce_rdc = _check_must_enforce_rdc,
     get_basename_without_ext = _get_basename_without_ext,
@@ -417,8 +499,6 @@ cuda_helper = struct(
     create_compile_variables = _create_compile_variables,
     create_device_link_variables = _create_device_link_variables,
     configure_features = _configure_features,  # wrapped for collecting info from ctx and cuda_toolchain
-    get_default_features_and_action_configs = config_helper.get_default_features_and_action_configs,
-    get_enabled_feature = config_helper.get_enabled_feature,
     get_command_line = config_helper.get_command_line,
     get_tool_for_action = config_helper.get_tool_for_action,
     action_is_enabled = config_helper.is_enabled,

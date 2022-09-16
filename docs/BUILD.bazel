@@ -20,3 +20,10 @@ stardoc(
     input = "providers_docs.bzl",
     deps = ["@rules_cuda//:bzl_srcs"],
 )
+
+stardoc(
+    name = "developer_docs",
+    out = "developer_docs.md",
+    input = "developer_docs.bzl",
+    deps = ["@rules_cuda//:bzl_srcs"],
+)
