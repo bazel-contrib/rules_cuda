@@ -158,7 +158,7 @@ def _impl(ctx):
 
     arch_native_feature = feature(
         name = "arch_native",
-        enabled = nvcc_version_ge(ctx, 11, 6),
+        enabled = False,
         flag_sets = [
             flag_set(
                 actions = [
