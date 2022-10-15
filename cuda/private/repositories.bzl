@@ -210,4 +210,22 @@ def rules_cuda_dependencies():
         ],
     )
 
+    maybe(
+        name = "thrust",
+        repo_rule = http_archive,
+        build_file = "@rules_cuda//third_party:thrust.BUILD",
+        sha256 = "d021e37f5aac30fd1b9737865399feb57db8e601ae2fc0af3cd41784435e9523",
+        strip_prefix = "thrust-1.17.2",
+        urls = ["https://github.com/NVIDIA/thrust/archive/refs/tags/1.17.2.tar.gz"],
+    )
+
+    maybe(
+        name = "cub",
+        repo_rule = http_archive,
+        build_file = "@rules_cuda//third_party:cub.BUILD",
+        sha256 = "1013a595794548c359f22c07e1f8c620b97e3a577f7e8496d9407f74566a3e2a",
+        strip_prefix = "cub-1.17.2",
+        urls = ["https://github.com/NVIDIA/cub/archive/refs/tags/1.17.2.tar.gz"],
+    )
+
     _local_cuda(name = "local_cuda")
