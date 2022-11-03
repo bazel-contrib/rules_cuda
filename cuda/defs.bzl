@@ -1,3 +1,7 @@
+"""
+Core rules for building CUDA projects.
+"""
+
 load("//cuda/private:providers.bzl", _CudaArchsInfo = "CudaArchsInfo", _cuda_archs = "cuda_archs")
 load("//cuda/private:rules/cuda_objects.bzl", _cuda_objects = "cuda_objects")
 load("//cuda/private:rules/cuda_library.bzl", _cuda_library = "cuda_library")
