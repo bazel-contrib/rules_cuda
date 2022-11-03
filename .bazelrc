@@ -13,3 +13,5 @@ build:clang --//cuda:compiler=clang
 
 # https://github.com/cloudhan/rules_cuda/issues/1
 build --ui_event_filters=-INFO
+
+common:bzlmod --enable_bzlmod

@@ -1,0 +1,13 @@
+module(
+    name = "rules_cuda_examples",
+    compatibility_level = 1,
+    version = "0.0.0",
+)
+
+bazel_dep(name = "rules_cuda", version = "0.1.1")
+bazel_dep(name = "rules_cc", version = "0.0.2")
+
+cuda_toolchain = use_extension("@rules_cuda//cuda:extensions.bzl", "local_toolchain")
+use_repo(cuda_toolchain, "local_cuda")
+
+local_path_override(module_name = "rules_cuda", path = "..")
