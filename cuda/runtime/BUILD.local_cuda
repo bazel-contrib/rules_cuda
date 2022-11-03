@@ -1,4 +1,5 @@
-load(":defs.bzl", "if_linux", "if_local_cuda", "if_windows")
+load("@rules_cuda//cuda:defs.bzl", "if_linux", "if_windows")
+load(":defs.bzl", "if_local_cuda")
 
 package(
     default_visibility = ["//visibility:public"],
