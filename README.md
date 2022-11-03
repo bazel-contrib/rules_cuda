@@ -1,36 +1,23 @@
-# CUDA Rules for [Bazel](https://bazel.build)
+# CUDA rules for [Bazel](https://bazel.build)
 
-This repository contains pure [Starlark](https://github.com/bazelbuild/starlark) implementation of CUDA rules. These
-rules provide some macros and rules that make it easier to build CUDA with Bazel.
+This repository contains [Starlark](https://github.com/bazelbuild/starlark) implementation of CUDA rules in Bazel.
 
-## Examples
+These rules provide some macros and rules that make it easier to build CUDA with Bazel.
 
-Checkout the examples to see if it fits your needs.
+## Getting Started
 
-See [examples](./examples) for basic usage.
+Add the following to your `WORKSPACE` file and replace the placeholders with actual values.
 
-See [this examples repo](https://github.com/cloudhan/rules_cuda_examples) for extended real world projects.
-
-## Reference documentation
-
-### Workspace setup
-
-Paste the following snippet into your `WORKSPACE` file and replace the placeholders to actual values.
-
-```py
+```starlark
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
 http_archive(
     name = "rules_cuda",
     sha256 = "{sha256_to_replace}",
     strip_prefix = "rules_cuda-{git_commit_hash}",
-    urls = ["https://github.com/cloudhan/rules_cuda/archive/{git_commit_hash}.tar.gz"],
+    urls = ["https://github.com/bazel-contrib/rules_cuda/archive/{git_commit_hash}.tar.gz"],
 )
-
-load("@rules_cuda//cuda:deps.bzl", "register_detected_cuda_toolchains", "rules_cuda_deps")
-
-rules_cuda_deps()
-
+load("@rules_cuda//cuda:repositories.bzl", "register_detected_cuda_toolchains", "rules_cuda_dependencies")
+rules_cuda_dependencies()
 register_detected_cuda_toolchains()
 ```
 
@@ -92,6 +79,14 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 - `@rules_cuda//cuda:runtime`
 
   Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@local_cuda//:cuda_runtime_static` link the static cuda runtime.
+
+## Examples
+
+Checkout the examples to see if it fits your needs.
+
+See [examples](./examples) for basic usage.
+
+See [cloudhan/rules_cuda_examples](https://github.com/cloudhan/rules_cuda_examples) for extended real world projects.
 
 ## Known issue
 

@@ -204,7 +204,7 @@ _local_cuda = repository_rule(
     # remotable = True,
 )
 
-def rules_cuda_deps():
+def rules_cuda_dependencies():
     """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains."""
     maybe(
         name = "bazel_skylib",
