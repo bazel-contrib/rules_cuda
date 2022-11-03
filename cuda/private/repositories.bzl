@@ -184,6 +184,8 @@ def _local_cuda_impl(repository_ctx):
 
 _local_cuda = repository_rule(
     implementation = _local_cuda_impl,
+    configure = True,
+    local = True,
     environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "BAZEL_LLVM"],
     # remotable = True,
 )
