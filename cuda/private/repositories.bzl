@@ -32,8 +32,8 @@ def _get_nvcc_version(repository_ctx, cuda_path):
     result = repository_ctx.execute([cuda_path + "/bin/nvcc", "--version"])
     if result.return_code != 0:
         return [-1, -1]
-    for l in [l for l in result.stdout.split("\n") if ", release " in l]:
-        segments = l.split(", release ")
+    for line in [line for line in result.stdout.split("\n") if ", release " in line]:
+        segments = line.split(", release ")
         if len(segments) != 2:
             continue
         version = [int(v) for v in segments[-1].split(", ")[0].split(".")]
@@ -109,6 +109,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         repository_ctx: repository_ctx
         cuda: The struct returned from detect_cuda_toolkit
     """
+
     # Generate @local_cuda//BUILD and @local_cuda//defs.bzl
     defs_bzl_content = defs_bzl_shared
     defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"

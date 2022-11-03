@@ -7,8 +7,8 @@ bzl_library(
     srcs = glob(["**/*.bzl"]),
     visibility = ["//visibility:public"],
     deps = [
-        "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:partial",
+        "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:unittest",
         "@bazel_skylib//rules:common_settings",
         "@bazel_tools//tools/build_defs/repo:http.bzl",

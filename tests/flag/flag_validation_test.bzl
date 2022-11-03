@@ -1,6 +1,4 @@
-load("@bazel_skylib//lib:partial.bzl", "partial")
-load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
-load("//cuda/private:cuda_helper.bzl", "cuda_helper")
+load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 
 def _num_actions_test_impl(ctx):
     env = analysistest.begin(ctx)

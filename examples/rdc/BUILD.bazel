@@ -1,9 +1,9 @@
-load("//cuda:defs.bzl", "cuda_objects", "cuda_library")
+load("//cuda:defs.bzl", "cuda_library", "cuda_objects")
 
 cuda_objects(
     name = "a",
     srcs = ["a.cu"],
-    deps = [":b"]
+    deps = [":b"],
 )
 
 cuda_objects(
@@ -14,11 +14,11 @@ cuda_objects(
 
 cuda_library(
     name = "librdc",
+    rdc = 1,
     deps = [
         ":a",
         ":b",
     ],
-    rdc = 1,
 )
 
 cc_binary(

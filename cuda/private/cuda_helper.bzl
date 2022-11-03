@@ -450,7 +450,7 @@ def _get_all_requested_features(ctx, cuda_toolchain, requested_features):
     all_features = []
     compilation_mode = ctx.var.get("COMPILATION_MODE", None)
     if compilation_mode == None:
-        print("unknown COMPILATION_MODE, use opt")
+        print("unknown COMPILATION_MODE, use opt")  # buildifier: disable=print
         compilation_mode = "opt"
     all_features.append(compilation_mode)
 

@@ -1,8 +1,6 @@
-load("@bazel_skylib//lib:partial.bzl", "partial")
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
-load("//cuda/private:toolchain_config_lib.bzl", "action_config", "env_entry", "env_set", "feature", "feature_set", "flag_group", "flag_set", "tool", "variable_with_value", "with_feature_set")
-load("//cuda/private:toolchain_config_lib.bzl", "access", "config_helper", "create_var_from_value", "eval_feature", "eval_flag_group", "exist", "expand_flag", "parse_flag")
+load("//cuda/private:toolchain_config_lib.bzl", "access", "action_config", "config_helper", "create_var_from_value", "env_entry", "env_set", "eval_feature", "eval_flag_group", "exist", "expand_flag", "feature", "feature_set", "flag_group", "flag_set", "parse_flag", "tool", "variable_with_value", "with_feature_set")
 
 def _expect_failure_msg(ctx):
     env = analysistest.begin(ctx)
