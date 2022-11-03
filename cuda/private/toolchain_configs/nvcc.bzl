@@ -4,7 +4,6 @@ load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain.bzl", "use_cpp_toolchain")
-load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
 load(
     "//cuda/private:toolchain_config_lib.bzl",
     "action_config",
@@ -428,8 +427,8 @@ cuda_toolchain_config = rule(
     attrs = {
         "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], doc = "A target that provides a `CudaToolkitInfo`."),
         "toolchain_identifier": attr.string(values = ["nvcc"], mandatory = True),
-        "nvcc_version_major": attr.int(doc="The CUDA Toolkit major version, e.g, 11 for 11.6"),
-        "nvcc_version_minor": attr.int(doc="The CUDA Toolkit minor version, e.g, 6 for 11.6"),
+        "nvcc_version_major": attr.int(doc = "The CUDA Toolkit major version, e.g, 11 for 11.6"),
+        "nvcc_version_minor": attr.int(doc = "The CUDA Toolkit minor version, e.g, 6 for 11.6"),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
     },
     provides = [CudaToolchainConfigInfo],

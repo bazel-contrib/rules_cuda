@@ -14,7 +14,6 @@ load(
     "num_actions_test",
 )
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
-load("@local_cuda//:defs.bzl", "if_linux", "if_windows")
 
 num_actions_test(
     name = "cuda_library_num_actions_test",

@@ -46,23 +46,27 @@ determains how the toolchains are detected.
 
 - `cuda_library`: Can be used to compile and create static library for CUDA kernel code. The resulting targets can be
   consumed by [C/C++ Rules](https://bazel.build/reference/be/c-cpp#rules).
-- `cuda_objects`: If you don't understand what *device link* means, you must never use it. This rule produce incomplete
+- `cuda_objects`: If you don't understand what _device link_ means, you must never use it. This rule produce incomplete
   object files that can only be consumed by `cuda_library`. It is created for relocatable device code and device link
   time optimization source files.
 
 ### Flags
 
 Some flags are defined in [cuda/BUILD.bazel](cuda/BUILD.bazel). To use them, for example:
+
 ```
 bazel build --@rules_cuda//cuda:archs=compute_61:compute_61,sm_61
 ```
 
 In `.bazelrc` file, you can define shortcut alias for the flag, for example:
+
 ```
 # Convenient flag shortcuts.
 build --flag_alias=cuda_archs=@rules_cuda//cuda:archs
 ```
+
 and then you can use it as following:
+
 ```
 bazel build --cuda_archs=compute_61:compute_61,sm_61
 ```
@@ -92,6 +96,7 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 ## Known issue
 
 Sometimes the following error occurs:
+
 ```
 cc1plus: fatal error: /tmp/tmpxft_00000002_00000019-2.cpp: No such file or directory
 ```
@@ -99,6 +104,7 @@ cc1plus: fatal error: /tmp/tmpxft_00000002_00000019-2.cpp: No such file or direc
 The problem is caused by nvcc use PID to determine temporary file name, and with `--spawn_strategy linux-sandbox` which is the default strategy on Linux, the PIDs nvcc sees are all very small numbers, say 2~4 due to sanboxing. `linux-sandbox` is not hermetic because [it mount root into the sandbox](https://docs.bazel.build/versions/main/command-line-reference.html#flag--experimental_use_hermetic_linux_sandbox), thus, `/tmp` is shared between sandboxes, which is causing name conflict under high parallelism. Similar problem has been reported at [nvidia forums](https://forums.developer.nvidia.com/t/avoid-generating-temp-files-in-tmp-while-nvcc-compiling/197657/10).
 
 To avoid it:
-  - Use `--spawn_strategy local` should eliminate the case because it will let nvcc sees the true PIDs.
-  - Use `--experimental_use_hermetic_linux_sandbox` should eliminate the case because it will avoid the sharing of `/tmp`.
-  - Add `-objtemp` option to the command should reduce the case from happening.
+
+- Use `--spawn_strategy local` should eliminate the case because it will let nvcc sees the true PIDs.
+- Use `--experimental_use_hermetic_linux_sandbox` should eliminate the case because it will avoid the sharing of `/tmp`.
+- Add `-objtemp` option to the command should reduce the case from happening.

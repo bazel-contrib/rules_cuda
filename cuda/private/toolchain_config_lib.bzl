@@ -444,7 +444,7 @@ def _is_satisfied(info, name):
                 implies_met,
                 requires_met,
             ),
-        )
+        )  # buildifier: disable=print
     return satisfied
 
 def _check_activatable(info, to_check):
@@ -603,7 +603,7 @@ def _configure_features(
     _disable_unsupported_activatables(info)
     _check_provides_conflict(info)
     if info._debug:
-        print("Enabled features after configuration:", _get_enabled_feature(info))
+        print("Enabled features after configuration:", _get_enabled_feature(info))  # buildifier: disable=print
     return info
 
 def _get_default_features_and_action_configs(info):
