@@ -1,0 +1,13 @@
+workspace(name = "rules_cuda_examples")
+
+local_repository(
+    name = "rules_cuda",
+    path = "../",
+)
+
+load("@rules_cuda//cuda:repositories.bzl", "register_detected_cuda_toolchains", "rules_cuda_dependencies")
+
+rules_cuda_dependencies()
+
+register_detected_cuda_toolchains()
+

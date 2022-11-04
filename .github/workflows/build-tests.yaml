@@ -1,6 +1,6 @@
 name: Test Example Build
 
-on: 
+on:
   push:
   pull_request:
 
@@ -60,9 +60,9 @@ jobs:
         if: ${{ startsWith(matrix.os, 'windows') }}
         run: .github/workflows/Set-VSEnv.ps1 2019
 
-      - run: bazelisk build //examples/basic:main
-      - run: bazelisk build //examples/rdc:main
-      - run: bazelisk build //examples/if_cuda:main
-      - run: bazelisk build //examples/if_cuda:main --enable_cuda=False
+      - run: bazelisk build @rules_cuda_examples//basic:main
+      - run: bazelisk build @rules_cuda_examples//rdc:main
+      - run: bazelisk build @rules_cuda_examples//if_cuda:main
+      - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False
 
       - run: bazelisk shutdown

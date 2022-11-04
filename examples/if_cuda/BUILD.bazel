@@ -1,4 +1,4 @@
-load("//cuda:defs.bzl", "cuda_library")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 load(":if_cuda.bzl", "if_cuda")
 
 cuda_library(
