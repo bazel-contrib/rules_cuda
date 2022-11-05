@@ -17,7 +17,7 @@ load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 
 num_actions_test(
     name = "cuda_library_num_actions_test",
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
     # 2 compiling, 2 lib, non-pic and pic respectively
     # num_actions = 4,
 )
@@ -30,7 +30,7 @@ cuda_library_flag_test(
         "-o",
         "-ccbin",
     ],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 # https://docs.bazel.build/versions/main/user-manual.html#flag--compilation_mode
@@ -39,7 +39,7 @@ cuda_library_c_dbg_flag_test(
     action_mnemonic = "CudaCompile",
     contain_flags = ["-g"],
     target_compatible_with = ["@platforms//os:linux"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_c_fastbuild_flag_test(
@@ -48,7 +48,7 @@ cuda_library_c_fastbuild_flag_test(
     contain_flags = ["-g1"],
     not_contain_flags = ["-DNDEBUG"],
     target_compatible_with = ["@platforms//os:linux"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_c_opt_flag_test(
@@ -61,7 +61,7 @@ cuda_library_c_opt_flag_test(
     ],
     not_contain_flags = ["-g"],
     target_compatible_with = ["@platforms//os:linux"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 # Windows dynamic msvcrt and static msvcrt test
@@ -80,7 +80,7 @@ cuda_library_c_dbg_flag_test(
         "/MTd",
     ],
     target_compatible_with = ["@platforms//os:windows"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_c_fastbuild_flag_test(
@@ -98,7 +98,7 @@ cuda_library_c_fastbuild_flag_test(
         "/MTd",
     ],
     target_compatible_with = ["@platforms//os:windows"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_c_opt_flag_test(
@@ -116,7 +116,7 @@ cuda_library_c_opt_flag_test(
         "/MTd",
     ],
     target_compatible_with = ["@platforms//os:windows"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_c_dbg_static_msvcrt_flag_test(
@@ -134,7 +134,7 @@ cuda_library_c_dbg_static_msvcrt_flag_test(
         "/MT",
     ],
     target_compatible_with = ["@platforms//os:windows"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_c_fastbuild_static_msvcrt_flag_test(
@@ -152,7 +152,7 @@ cuda_library_c_fastbuild_static_msvcrt_flag_test(
         "/MTd",
     ],
     target_compatible_with = ["@platforms//os:windows"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_c_opt_static_msvcrt_flag_test(
@@ -170,7 +170,7 @@ cuda_library_c_opt_static_msvcrt_flag_test(
         "/MTd",
     ],
     target_compatible_with = ["@platforms//os:windows"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 ###########################################
@@ -187,13 +187,13 @@ cuda_library_flag_test(
     not_contain_flags = [
         "-gencode",
     ],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library(
     name = "examples_basic_kernel_with_flags",
-    srcs = ["//examples/basic:kernel.cu"],
-    hdrs = ["//examples/basic:kernel.h"],
+    srcs = ["@rules_cuda_examples//basic:kernel.cu"],
+    hdrs = ["@rules_cuda_examples//basic:kernel.h"],
     copts = ["-G"],
     host_copts = ["-O1"],
     rdc = 1,
@@ -234,7 +234,7 @@ cuda_library_flag_test(
     ],
     output_name = "kernel.o",
     target_compatible_with = ["@platforms//os:linux"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_flag_test(
@@ -245,7 +245,7 @@ cuda_library_flag_test(
     ],
     output_name = "kernel.o",
     target_compatible_with = ["@platforms//os:linux"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_flag_test(
@@ -256,7 +256,7 @@ cuda_library_flag_test(
     ],
     output_name = "kernel.pic.o",
     target_compatible_with = ["@platforms//os:linux"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_flag_test(
@@ -267,7 +267,7 @@ cuda_library_flag_test(
     ],
     output_name = "kernel.pic.o",
     target_compatible_with = ["@platforms//os:linux"],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 ######################
@@ -279,7 +279,7 @@ cuda_library_sm61_flag_test(
     contain_flags = [
         "-gencode arch=compute_61,code=sm_61",
     ],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
     # target_under_test = "//cuda:archs",
 )
 
@@ -289,7 +289,7 @@ cuda_library_compute60_flag_test(
     contain_flags = [
         "-gencode arch=compute_60,code=compute_60",
     ],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_compute60_sm61_flag_test(
@@ -299,7 +299,7 @@ cuda_library_compute60_sm61_flag_test(
         "-gencode arch=compute_60,code=compute_60",
         "-gencode arch=compute_60,code=sm_61",
     ],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_compute61_sm61_flag_test(
@@ -309,5 +309,5 @@ cuda_library_compute61_sm61_flag_test(
         "-gencode arch=compute_61,code=compute_61",
         "-gencode arch=compute_61,code=sm_61",
     ],
-    target_under_test = "//examples/basic:kernel",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
