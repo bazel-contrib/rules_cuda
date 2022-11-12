@@ -389,6 +389,7 @@ def _impl(ctx):
 
     nvcc_relaxed_constexpr_feature = feature(
         name = "nvcc_relaxed_constexpr",
+        enabled = True,
         flag_sets = [
             flag_set(
                 actions = [
@@ -402,6 +403,7 @@ def _impl(ctx):
 
     nvcc_extended_lambda_feature = feature(
         name = "nvcc_extended_lambda",
+        enabled = True,
         flag_sets = [
             flag_set(
                 actions = [

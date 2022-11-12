@@ -471,6 +471,34 @@ def _impl(ctx):
         ],
     )
 
+    nvcc_relaxed_constexpr_feature = feature(
+        name = "nvcc_relaxed_constexpr",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [flag_group(flags = ["--expt-relaxed-constexpr"])],
+            ),
+        ],
+    )
+
+    nvcc_extended_lambda_feature = feature(
+        name = "nvcc_extended_lambda",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [flag_group(flags = ["--extended-lambda"])],
+            ),
+        ],
+    )
+
     action_configs = [
         cuda_compile_action,
         cuda_device_link_action,
@@ -501,6 +529,8 @@ def _impl(ctx):
         compiler_input_flags_feature,
         compiler_output_flags_feature,
         nvcc_allow_unsupported_compiler_feature,
+        nvcc_extended_lambda_feature,
+        nvcc_relaxed_constexpr_feature,
     ]
 
     return [CudaToolchainConfigInfo(
