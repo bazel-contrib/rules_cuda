@@ -494,7 +494,7 @@ def _impl(ctx):
                     ACTION_NAMES.cuda_compile,
                     ACTION_NAMES.device_link,
                 ],
-                flag_groups = [flag_group(flags = ["--extended-lambda"])],
+                flag_groups = [flag_group(flags = ["--extended-lambda" if nvcc_version_ge(ctx, 10, 2) else "--expt-extended-lambda"])],
             ),
         ],
     )
