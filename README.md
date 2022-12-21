@@ -63,6 +63,7 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 - `@rules_cuda//cuda:enable`
 
   Enable or disable all rules_cuda related rules. When disabled, the detected cuda toolchains will also be disabled to avoid potential human error.
+  By default, rules_cuda rules are enabled. See `examples/if_cuda` for how to support both cuda-enabled and cuda-free builds.
 
 - `@rules_cuda//cuda:archs`
 
