@@ -1,5 +1,4 @@
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
-load(":if_cuda.bzl", "if_cuda")
 
 cuda_library(
     name = "kernel",
@@ -10,9 +9,12 @@ cuda_library(
 cc_binary(
     name = "main",
     srcs = ["main.cpp"],
-    defines = if_cuda(
-        ["CUDA_ENABLED"],
-        if_false = ["CUDA_NOT_ENABLED"],
-    ),
-    deps = if_cuda([":kernel"]),
+    defines = [] + select({
+        "@rules_cuda//cuda:is_enabled": ["CUDA_ENABLED"],
+        "//conditions:default": ["CUDA_DISABLED"]
+    }),
+    deps = [] + select({
+        "@rules_cuda//cuda:is_enabled": [":kernel"],
+        "//conditions:default": []
+    })
 )

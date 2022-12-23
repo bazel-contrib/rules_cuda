@@ -12,7 +12,7 @@ int main() {
 #if defined(CUDA_ENABLED)
   launch();
   return 0;
-#elif defined(CUDA_NOT_ENABLED)
+#elif defined(CUDA_DISABLED)
   do_something_else();
   return -1;
 #else
