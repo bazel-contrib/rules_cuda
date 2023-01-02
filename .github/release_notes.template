@@ -1,0 +1,14 @@
+## `WORKSPACE` code
+```starlark
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "rules_cuda",
+    sha256 = "{archive_sha256}",
+    strip_prefix = "rules_cuda-{version}",
+    urls = ["https://github.com/bazel-contrib/rules_cuda/releases/download/{version}/rules_cuda-{version}.tar.gz"],
+)
+
+load("@rules_cuda//cuda:repositories.bzl", "register_detected_cuda_toolchains", "rules_cuda_dependencies")
+rules_cuda_dependencies()
+register_detected_cuda_toolchains()
+```
