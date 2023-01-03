@@ -81,6 +81,8 @@ def _cuda_library_impl(ctx):
     libs = [] if lib == None else [lib]
     pic_libs = [] if pic_lib == None else [pic_lib]
 
+    cc_info = cc_common.merge_cc_infos(direct_cc_infos = [CcInfo(compilation_context = compilation_ctx, linking_context = linking_ctx)], cc_infos = [common.transitive_cc_info])
+
     return [
         DefaultInfo(files = depset(libs + pic_libs)),
         OutputGroupInfo(
@@ -90,8 +92,8 @@ def _cuda_library_impl(ctx):
             pic_objects = pic_objects,
         ),
         CcInfo(
-            compilation_context = compilation_ctx,
-            linking_context = linking_ctx,
+            compilation_context = cc_info.compilation_context,
+            linking_context = cc_info.linking_context,
         ),
         cuda_helper.create_cuda_info(defines = depset(common.defines)),
     ]
