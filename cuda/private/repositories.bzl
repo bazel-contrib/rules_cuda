@@ -182,7 +182,7 @@ def _local_cuda_impl(repository_ctx):
     clang_path = detect_clang(repository_ctx)
     config_clang(repository_ctx, cuda, clang_path)
 
-_local_cuda = repository_rule(
+local_cuda = repository_rule(
     implementation = _local_cuda_impl,
     configure = True,
     local = True,
@@ -212,4 +212,4 @@ def rules_cuda_dependencies():
         ],
     )
 
-    _local_cuda(name = "local_cuda")
+    local_cuda(name = "local_cuda")

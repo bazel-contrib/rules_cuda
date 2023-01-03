@@ -67,4 +67,9 @@ jobs:
       - run: bazelisk build @rules_cuda_examples//if_cuda:main
       - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False
 
+      - run: bazelisk build @rules_cuda_examples//basic:main --config=bzlmod
+      - run: bazelisk build @rules_cuda_examples//rdc:main --config=bzlmod
+      - run: bazelisk build @rules_cuda_examples//if_cuda:main --config=bzlmod
+      - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False --config=bzlmod
+
       - run: bazelisk shutdown
