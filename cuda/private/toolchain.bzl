@@ -17,6 +17,7 @@ def _cuda_toolchain_impl(ctx):
         platform_common.ToolchainInfo(
             name = ctx.label.name,
             compiler_executable = ctx.attr.compiler_executable,
+            all_files = ctx.attr.compiler_files.files if ctx.attr.compiler_files else depset(),
             selectables_info = selectables_info,
             artifact_name_patterns = artifact_name_patterns,
             cuda_toolkit = cuda_toolchain_config.cuda_toolkit,
@@ -33,6 +34,7 @@ cuda_toolchain = rule(
             doc = "A target that provides a `CudaToolchainConfigInfo`.",
         ),
         "compiler_executable": attr.string(mandatory = True, doc = "The path of the main executable of this toolchain."),
+        "compiler_files": attr.label(allow_files = True, cfg = "exec", doc = "The set of files that are needed when compiling using this toolchain."),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
 )
