@@ -84,7 +84,7 @@ def _compiler_device_link(
         executable = cuda_compiler,
         arguments = [args],
         outputs = [obj_file],
-        inputs = depset(transitive = [objects, cc_toolchain.all_files]),
+        inputs = depset(transitive = [objects, cc_toolchain.all_files, cuda_toolchain.all_files]),
         env = env,
         mnemonic = "CudaDeviceLink",
         progress_message = "Device linking %{output}",

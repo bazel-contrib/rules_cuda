@@ -73,7 +73,7 @@ def compile(
             executable = cuda_compiler,
             arguments = [args],
             outputs = [obj_file],
-            inputs = depset([src], transitive = [common.headers, cc_toolchain.all_files]),
+            inputs = depset([src], transitive = [common.headers, cc_toolchain.all_files, cuda_toolchain.all_files]),
             env = env,
             mnemonic = "CudaCompile",
             progress_message = "Compiling %s" % src.path,
