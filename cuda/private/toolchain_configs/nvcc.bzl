@@ -68,7 +68,10 @@ def _impl(ctx):
         enabled = True,
         flag_sets = [
             flag_set(
-                actions = [ACTION_NAMES.cuda_compile],
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
                 flag_groups = [flag_group(flags = ["-ccbin", "%{host_compiler}"])],
             ),
         ],
