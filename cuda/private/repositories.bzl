@@ -29,6 +29,7 @@ def detect_cuda_toolkit(repository_ctx):
     """Detect CUDA Toolkit.
 
     The path to CUDA Toolkit is determined as:
+      - the value of `toolkit_path` passed to local_cuda as an attribute
       - taken from CUDA_PATH environment variable or
       - determined through 'which ptxas' or
       - defaults to '/usr/local/cuda'
@@ -39,7 +40,9 @@ def detect_cuda_toolkit(repository_ctx):
     Returns:
         A struct contains the information of CUDA Toolkit.
     """
-    cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
+    cuda_path = repository_ctx.attr.toolkit_path
+    if cuda_path == "":
+        cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
     if cuda_path == None:
         ptxas_path = repository_ctx.which("ptxas")
         if ptxas_path:
@@ -58,13 +61,13 @@ def detect_cuda_toolkit(repository_ctx):
     fatbinary = "@rules_cuda//cuda/dummy:fatbinary"
     if cuda_path != None:
         if repository_ctx.path(cuda_path + "/bin/nvlink" + bin_ext).exists:
-            nvlink = "@local_cuda//:cuda/bin/nvlink" + bin_ext
+            nvlink = "@{}//:cuda/bin/nvlink{}".format(repository_ctx.name, bin_ext)
         if repository_ctx.path(cuda_path + "/bin/crt/link.stub").exists:
-            link_stub = "@local_cuda//:cuda/bin/crt/link.stub"
+            link_stub = "@{}//:cuda/bin/crt/link.stub".format(repository_ctx.name)
         if repository_ctx.path(cuda_path + "/bin/bin2c" + bin_ext).exists:
-            bin2c = "@local_cuda//:cuda/bin/bin2c" + bin_ext
+            bin2c = "@{}//:cuda/bin/bin2c{}".format(repository_ctx.name, bin_ext)
         if repository_ctx.path(cuda_path + "/bin/fatbinary" + bin_ext).exists:
-            fatbinary = "@local_cuda//:cuda/bin/fatbinary" + bin_ext
+            fatbinary = "@{}//:cuda/bin/fatbinary{}".format(repository_ctx.name, bin_ext)
 
     nvcc_version_major = -1
     nvcc_version_minor = -1
@@ -184,6 +187,7 @@ def _local_cuda_impl(repository_ctx):
 
 local_cuda = repository_rule(
     implementation = _local_cuda_impl,
+    attrs = {"toolkit_path": attr.string(mandatory = False)},
     configure = True,
     local = True,
     environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "BAZEL_LLVM"],
