@@ -32,7 +32,7 @@ jobs:
           key: bazel-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}-${{ hashFiles('.bazelversion') }}
 
       - name: Install CUDA (Linux)
-        uses: Jimver/cuda-toolkit@v0.2.9
+        uses: Jimver/cuda-toolkit@v0.2.10
         if: ${{ !startsWith(matrix.os, 'windows') }}
         with:
           cuda: ${{ matrix.cuda-version }}
@@ -46,7 +46,7 @@ jobs:
           tree ${CUDA_PATH}/lib64
 
       - name: Install CUDA (Windows)
-        uses: Jimver/cuda-toolkit@v0.2.9
+        uses: Jimver/cuda-toolkit@v0.2.10
         if: ${{ startsWith(matrix.os, 'windows') }}
         with:
           cuda: ${{ matrix.cuda-version }}
