@@ -11,9 +11,7 @@ filegroup(
         ":_cuda_header_files",
     ] + glob([
         "cuda/version.txt",
-        "cuda/bin/nvcc",
-        "cuda/bin/nvlink",
-        "cuda/bin/bin2c",
+        "cuda/bin/**",
         "cuda/lib64/**",
         "cuda/nvvm/**",
     ]),
