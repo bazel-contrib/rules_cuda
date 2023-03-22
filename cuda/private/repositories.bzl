@@ -102,7 +102,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         if repository_ctx.path(cuda.path).get_child('lib', 'x86_64-linux-gnu').exists:
             repository_ctx.symlink(cuda.path + '/lib/x86_64-linux-gnu', "cuda/lib64")
         else:
-            repository_ctx.symlink(cuda.path + '/lib64', "cuda/bin")
+            repository_ctx.symlink(cuda.path + '/lib64', "cuda/lib64")
         repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
         defs_bzl_content += defs_if_local_cuda % "if_true"
     else:
