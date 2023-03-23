@@ -8,58 +8,63 @@ on:
 
 jobs:
   test:
-    name: "Test Examples Build (CUDA ${{ matrix.cuda-version }} on ${{ matrix.os }})"
-    runs-on: ${{ matrix.os }}
+    name: "Test Examples Build (CUDA ${{ matrix.cases.cuda-version }} on ${{ matrix.cases.os }})"
+    runs-on: ${{ matrix.cases.os }}
     timeout-minutes: 60
     strategy:
       matrix:
-        os:
-          - ubuntu-18.04
-          - windows-2019
-        cuda-version:
-          - 10.1.243
-          - 11.2.2
-          - 11.6.2
+        cases:
+          - { os: "ubuntu-18.04", cuda-version: "10.1.243", source: "nvidia" }
+          - { os: "ubuntu-18.04", cuda-version: "11.2.2", source: "nvidia" }
+          - { os: "ubuntu-20.04", cuda-version: "11.6.2", source: "nvidia" }
+          # - { os: "ubuntu-22.04", cuda-version: "11.5.1-1ubuntu1", source: "ubuntu" }
+          - { os: "windows-2019", cuda-version: "10.1.243", source: "nvidia" }
+          - { os: "windows-2019", cuda-version: "11.6.2", source: "nvidia" }
     steps:
       - uses: actions/checkout@v3
 
       - uses: bazelbuild/setup-bazelisk@v2
       - name: Mount bazel cache
-        if: ${{ !startsWith(matrix.os, 'windows') }}
+        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
         uses: actions/cache@v3
         with:
           path: ~/.cache/bazel
-          key: bazel-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}-${{ hashFiles('.bazelversion') }}
+          key: bazel-${{ matrix.cases.os }}-cuda-${{ matrix.cases.cuda-version }}-${{ hashFiles('.bazelversion') }}
 
-      - name: Install CUDA (Linux)
+      - name: Install CUDA (NVIDIA, Linux)
         uses: Jimver/cuda-toolkit@v0.2.10
-        if: ${{ !startsWith(matrix.os, 'windows') }}
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'nvidia' }}
         with:
-          cuda: ${{ matrix.cuda-version }}
+          cuda: ${{ matrix.cases.cuda-version }}
           sub-packages: '["nvcc", "cudart-dev"]'
           method: network
-      - name: Show bin, include, lib (Linux)
-        if: ${{ !startsWith(matrix.os, 'windows') }}
+      - name: Show bin, include, lib (NVIDIA, Linux)
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'nvidia' }}
         run: |
           tree ${CUDA_PATH}/bin
           tree ${CUDA_PATH}/include
           tree ${CUDA_PATH}/lib64
+      - name: Install CUDA (Ubuntu)
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'ubuntu' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nvidia-cuda-dev=${{ matrix.cases.cuda-version }}
 
       - name: Install CUDA (Windows)
         uses: Jimver/cuda-toolkit@v0.2.10
-        if: ${{ startsWith(matrix.os, 'windows') }}
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
         with:
-          cuda: ${{ matrix.cuda-version }}
+          cuda: ${{ matrix.cases.cuda-version }}
           sub-packages: '["nvcc", "cudart"]'
           method: network
       - name: Show bin, include, lib64 (Windows)
-        if: ${{ startsWith(matrix.os, 'windows') }}
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
         run: |
           tree /F $env:CUDA_PATH/bin
           tree /F $env:CUDA_PATH/include
           tree /F $env:CUDA_PATH/lib/x64
       - name: Set Visual Studio Environment (Windows)
-        if: ${{ startsWith(matrix.os, 'windows') }}
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
         run: .github/workflows/Set-VSEnv.ps1 2019
 
       - run: bazelisk build @rules_cuda_examples//basic:main
