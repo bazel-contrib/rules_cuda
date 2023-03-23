@@ -17,7 +17,7 @@ jobs:
           - { os: "ubuntu-18.04", cuda-version: "10.1.243", source: "nvidia" }
           - { os: "ubuntu-18.04", cuda-version: "11.2.2", source: "nvidia" }
           - { os: "ubuntu-20.04", cuda-version: "11.6.2", source: "nvidia" }
-          # - { os: "ubuntu-22.04", cuda-version: "11.5.1-1ubuntu1", source: "ubuntu" }
+          - { os: "ubuntu-22.04", cuda-version: "11.5.1-1ubuntu1", source: "ubuntu" }
           - { os: "windows-2019", cuda-version: "10.1.243", source: "nvidia" }
           - { os: "windows-2019", cuda-version: "11.6.2", source: "nvidia" }
     steps:
