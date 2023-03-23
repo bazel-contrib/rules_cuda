@@ -1,29 +1,40 @@
 load("@io_bazel_stardoc//stardoc:stardoc.bzl", "stardoc")
 
+# NOTE: when the `out` is changed, the `nav` part of `mkdocs.yaml` must be also be changed correspondingly.
 stardoc(
     name = "user_docs",
-    out = "user_docs.md",
+    out = "user/user_docs.md",
     input = "user_docs.bzl",
     deps = ["@rules_cuda//:bzl_srcs"],
 )
 
 stardoc(
     name = "toolchain_config_docs",
-    out = "toolchain_config_docs.md",
+    out = "user/toolchain_config_docs.md",
     input = "toolchain_config_docs.bzl",
     deps = ["@rules_cuda//:bzl_srcs"],
 )
 
 stardoc(
     name = "providers_docs",
-    out = "providers_docs.md",
+    out = "developer/providers_docs.md",
     input = "providers_docs.bzl",
     deps = ["@rules_cuda//:bzl_srcs"],
 )
 
 stardoc(
     name = "developer_docs",
-    out = "developer_docs.md",
+    out = "developer/developer_docs.md",
     input = "developer_docs.bzl",
     deps = ["@rules_cuda//:bzl_srcs"],
+)
+
+filegroup(
+    name = "all_docs",
+    srcs = [
+        ":developer_docs",
+        ":providers_docs",
+        ":toolchain_config_docs",
+        ":user_docs",
+    ],
 )
