@@ -25,6 +25,10 @@ jobs:
         if: ${{ matrix.docs.ref != 'main' }}
 
       - uses: bazelbuild/setup-bazelisk@v2
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/bazel
+          key: bazel-gen-docs-${{ matrix.docs.ref }}
 
       - uses: actions/setup-python@v4
         with:
