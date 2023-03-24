@@ -1,4 +1,4 @@
-"""Generate @local_cuda//"""
+"""Generate `@local_cuda//`"""
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
@@ -29,9 +29,10 @@ def detect_cuda_toolkit(repository_ctx):
     """Detect CUDA Toolkit.
 
     The path to CUDA Toolkit is determined as:
-      - taken from CUDA_PATH environment variable or
-      - determined through 'which ptxas' or
-      - defaults to '/usr/local/cuda'
+
+      - taken from `CUDA_PATH` environment variable or
+      - determined through `which ptxas` or
+      - defaults to `/usr/local/cuda`
 
     Args:
         repository_ctx: repository_ctx
@@ -93,7 +94,7 @@ def detect_cuda_toolkit(repository_ctx):
     )
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
-    """Generate @local_cuda//BUILD and @local_cuda//defs.bzl and @local_cuda//toolchain/BUILD
+    """Generate `@local_cuda//BUILD` and `@local_cuda//defs.bzl` and `@local_cuda//toolchain/BUILD`
 
     Args:
         repository_ctx: repository_ctx
@@ -141,9 +142,10 @@ def detect_clang(repository_ctx):
     """Detect local clang installation.
 
     The path to clang is determined by:
+
       - taken from `CUDA_CLANG_PATH` environment variable or
-      - taken from `BAZEL_LLVM` environment variable as `<BAZEL_LLVM>/bin/clang` or
-      - determined through 'which clang' or
+      - taken from `BAZEL_LLVM` environment variable as `$BAZEL_LLVM/bin/clang` or
+      - determined through `which clang` or
       - treated as being not detected and not configured
 
     Args:
@@ -167,7 +169,7 @@ def detect_clang(repository_ctx):
     return clang_path
 
 def config_clang(repository_ctx, cuda, clang_path):
-    """Generate @local_cuda//toolchain/clang/BUILD
+    """Generate `@local_cuda//toolchain/clang/BUILD`
 
     Args:
         repository_ctx: repository_ctx
