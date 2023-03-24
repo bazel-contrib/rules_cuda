@@ -17,7 +17,7 @@ jobs:
           - { os: "ubuntu-18.04", cuda-version: "10.1.243", source: "nvidia" }
           - { os: "ubuntu-18.04", cuda-version: "11.2.2", source: "nvidia" }
           - { os: "ubuntu-20.04", cuda-version: "11.6.2", source: "nvidia" }
-          # - { os: "ubuntu-22.04", cuda-version: "11.5.1-1ubuntu1", source: "ubuntu" }
+          - { os: "ubuntu-22.04", cuda-version: "11.5.1-1ubuntu1", source: "ubuntu" }
           - { os: "windows-2019", cuda-version: "10.1.243", source: "nvidia" }
           - { os: "windows-2019", cuda-version: "11.6.2", source: "nvidia" }
     steps:
@@ -48,7 +48,11 @@ jobs:
         if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'ubuntu' }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y nvidia-cuda-dev=${{ matrix.cases.cuda-version }}
+          sudo apt-get install -y nvidia-cuda-dev=${{ matrix.cases.cuda-version }} nvidia-cuda-toolkit=${{ matrix.cases.cuda-version }} gcc-9 g++-9
+          export CC=gcc-9
+          export CXX=g++-9
+          echo "CC=gcc-9" >> $GITHUB_ENV
+          echo "CXX=g++-9" >> $GITHUB_ENV
 
       - name: Install CUDA (Windows)
         uses: Jimver/cuda-toolkit@v0.2.10

@@ -44,6 +44,12 @@ def detect_cuda_toolkit(repository_ctx):
         ptxas_path = repository_ctx.which("ptxas")
         if ptxas_path:
             # ${CUDA_PATH}/bin/ptxas
+
+            # Some distributions instead put CUDA binaries in a seperate path
+            # Manually check and redirect there when necessary
+            alternative = repository_ctx.path('/usr/lib/nvidia-cuda-toolkit/bin/nvcc')
+            if str(ptxas_path) == "/usr/bin/ptxas" and alternative.exists:
+                ptxas_path = alternative
             cuda_path = str(ptxas_path.dirname.dirname)
     if cuda_path == None and _is_linux(repository_ctx):
         cuda_path = "/usr/local/cuda"
@@ -98,7 +104,12 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     defs_bzl_content = ""
     defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"
     if cuda.path != None:
-        repository_ctx.symlink(cuda.path, "cuda")
+        # When using a special cuda toolkit path install, need to manually fix up the lib64 links
+        if cuda.path == "/usr/lib/nvidia-cuda-toolkit":
+            repository_ctx.symlink(cuda.path + "/bin", "cuda/bin")
+            repository_ctx.symlink("/usr/lib/x86_64-linux-gnu", "cuda/lib64")
+        else:
+            repository_ctx.symlink(cuda.path, "cuda")
         repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
         defs_bzl_content += defs_if_local_cuda % "if_true"
     else:
