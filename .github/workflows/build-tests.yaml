@@ -51,6 +51,8 @@ jobs:
           sudo apt-get install -y nvidia-cuda-dev=${{ matrix.cases.cuda-version }} nvidia-cuda-toolkit=${{ matrix.cases.cuda-version }} gcc-9 g++-9
           export CC=gcc-9
           export CXX=g++-9
+          echo "CC=gcc-9" >> $GITHUB_ENV
+          echo "CXX=g++-9" >> $GITHUB_ENV
 
       - name: Install CUDA (Windows)
         uses: Jimver/cuda-toolkit@v0.2.10
