@@ -11,6 +11,8 @@ function compose-docs {
     bazel build :all_docs
     rsync -a --prune-empty-dirs --include '*/' mkdocs/stylesheets docs/
     rsync -a --prune-empty-dirs --include '*/' --include '*.md' --exclude '*' bazel-bin/ docs/
+    find docs/ -name '*.md' -exec sed -i 's#<pre>#<div class="stardoc-pre"><pre>#g' {} \;
+    find docs/ -name '*.md' -exec sed -i 's#</pre>#</pre></div>#g' {} \;
 }
 
 function compose-versioned-site {
