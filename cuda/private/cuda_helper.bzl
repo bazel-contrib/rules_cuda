@@ -120,22 +120,36 @@ def _resolve_includes(ctx, path):
 
 def _check_opts(opt):
     opt = opt.strip()
+    disallow_list_exact = [
+        "--cuda",
+        "-cuda",
+        "--preprocess",
+        "-E",
+        "--compile",
+        "-c",
+        "--cubin",
+        "-cubin",
+        "--ptx",
+        "-ptx",
+        "--fatbin",
+        "-fatbin",
+        "--device-link",
+        "-dlink",
+        "--lib",
+        "-lib",
+        "--generate-dependencies",
+        "-M",
+        "--generate-nonsystem-dependencies",
+        "-MM",
+        "--run",
+        "-run",
+    ]
     if (opt.startswith("--generate-code") or opt.startswith("-gencode") or
         opt.startswith("--gpu-architecture") or opt.startswith("-arch") or
         opt.startswith("--gpu-code") or opt.startswith("-code") or
         opt.startswith("--relocatable-device-code") or opt.startswith("-rdc") or
-        opt.startswith("--cuda") or opt.startswith("-cuda") or
-        opt.startswith("--preprocess") or opt.startswith("-E") or
-        opt.startswith("--compile") or opt.startswith("-c") or
-        opt.startswith("--cubin") or opt.startswith("-cubin") or
-        opt.startswith("--ptx") or opt.startswith("-ptx") or
-        opt.startswith("--fatbin") or opt.startswith("-fatbin") or
-        opt.startswith("--device-link") or opt.startswith("-dlink") or
-        opt.startswith("--lib") or opt.startswith("-lib") or
-        opt.startswith("--generate-dependencies") or opt.startswith("-M") or
-        opt.startswith("--generate-nonsystem-dependencies") or opt.startswith("-MM") or
-        opt.startswith("--run") or opt.startswith("-run")):
-        fail(opt, "is not allowed to be specified directly via copts")
+        opt in disallow_list_exact):
+        fail(opt, "is not allowed to be specified directly via copts of rules_cuda related rules")
     return True
 
 def _get_cuda_archs_info(ctx):
