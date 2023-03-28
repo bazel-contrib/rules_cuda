@@ -14,24 +14,16 @@ def _cuda_objects_impl(ctx):
 
     common = cuda_helper.create_common(ctx)
 
-    # outputs
-    objects = []
-    rdc_objects = []
-    pic_objects = []
-    rdc_pic_objects = []
-
+    # flatten first, so that non-unique basenames can be properly deduplicated
+    src_files = []
     for src in ctx.attr.srcs:
-        files = src[DefaultInfo].files.to_list()
+        src_files.extend(src[DefaultInfo].files.to_list())
 
-        objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = False))
-        pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = False))
-        rdc_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = True))
-        rdc_pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = True))
-
-    objects = depset(objects)
-    pic_objects = depset(pic_objects)
-    rdc_objects = depset(rdc_objects)
-    rdc_pic_objects = depset(rdc_pic_objects)
+    # outputs
+    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False))
+    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True))
+    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False))
+    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True))
 
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
