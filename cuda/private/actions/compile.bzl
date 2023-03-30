@@ -13,7 +13,10 @@ def compile(
     """Perform CUDA compilation, return compiled object files.
 
     Notes:
-        If `rdc` is set to `True`, then an additional step of device link must be performed.
+
+    - If `rdc` is set to `True`, then an additional step of device link must be performed.
+    - The rules should call this action only once in case srcs have non-unique basenames,
+      say `foo/kernel.cu` and `bar/kernel.cu`.
 
     Args:
         ctx: A [context object](https://bazel.build/rules/lib/ctx).
@@ -26,9 +29,6 @@ def compile(
 
     Returns:
         An compiled object `File`.
-
-    Notes:
-        The rules should call this action only once in case srcs have non-unique basenames.
     """
     actions = ctx.actions
     host_compiler = cc_toolchain.compiler_executable
