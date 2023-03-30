@@ -21,7 +21,7 @@ function compose-versioned-site {
     python versioning.py generated/ --force
 
     printf "\nRun following command to update version list then serve locally:\n\n"
-    printf "\tpython -m http.server -d generate/\n\n"
+    printf "\tpython -m http.server -d generated/\n\n"
 }
 
 
