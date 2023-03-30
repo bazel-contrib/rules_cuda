@@ -52,10 +52,10 @@ def compile(
     for src, basename, basename_index in src_and_indexed_basenames:
         filename = None
         filename = cuda_helper.get_artifact_name(cuda_toolchain, artifact_category_name, basename)
-        # Objects results in _objs/<tgt_name>/<filename>, src files with same basename, say
-        # srcs = ["kernel.cu", "foo/kernel.cu", "bar/kernel.cu"], then we get
-        # _objs/<tgt_name>/0/kernel.<obj_ext>, _objs/<tgt_name>/1/kernel.<obj_ext>, _objs/<tgt_name>/2/kernel.<obj_ext>
-        # For unique filename, the index is not presented
+        # Objects are placed in _objs/<tgt_name>/<filename>.
+        # For files with the same basename, say srcs = ["kernel.cu", "foo/kernel.cu", "bar/kernel.cu"], we get
+        # _objs/<tgt_name>/0/kernel.<ext>, _objs/<tgt_name>/1/kernel.<ext>, _objs/<tgt_name>/2/kernel.<ext>.
+        # Otherwise, the index is not presented.
         if basename_counter[basename] > 1:
             filename = "{}/{}".format(basename_index, filename)
         obj_file = actions.declare_file("_objs/{}/{}".format(ctx.attr.name, filename))
