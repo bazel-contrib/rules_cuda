@@ -3,9 +3,8 @@ load(
     "@bazel_skylib//rules:common_settings.bzl",
     "bool_flag",
     "string_flag",
-    "string_list_flag",
 )
-load("//cuda/private:rules/flags.bzl", "cuda_archs_flag")
+load("//cuda/private:rules/flags.bzl", "cuda_archs_flag", "cuda_copts_flag")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -67,9 +66,9 @@ config_setting(
 )
 
 # Command line flag for copts to add to cuda_library() compile command.
-string_list_flag(
+cuda_copts_flag(
     name = "copts",
-    build_setting_default = [],
+    build_setting_default = "",
 )
 
 # Command line flag to specify the CUDA runtime. Use this target as CUDA
