@@ -120,7 +120,7 @@ cuda_library = rule(
         "ptxasopts": attr.string_list(doc = "Add these flags to the ptxas command."),
         "_builtin_deps": attr.label_list(default = ["//cuda:runtime"]),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
-        "_default_host_copts": attr.label(default = "//cuda:copts"),
+        "_default_cuda_copts": attr.label(default = "//cuda:copts"),
         "_default_cuda_archs": attr.label(default = "//cuda:archs"),
     },
     fragments = ["cpp"],
