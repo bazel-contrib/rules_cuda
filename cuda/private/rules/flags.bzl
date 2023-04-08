@@ -47,11 +47,11 @@ Best Practices:
     provides = [CudaArchsInfo],
 )
 
-def _cuda_copts_flag_impl(ctx):
+def _repeatable_string_flag_impl(ctx):
     return BuildSettingInfo(value = ctx.build_setting_value)
 
-cuda_copts_flag = rule(
-    implementation = _cuda_copts_flag_impl,
+repeatable_string_flag = rule(
+    implementation = _repeatable_string_flag_impl,
     build_setting = config.string(flag = True, allow_multiple = True),
     provides = [BuildSettingInfo],
 )

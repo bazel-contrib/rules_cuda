@@ -4,7 +4,7 @@ load(
     "bool_flag",
     "string_flag",
 )
-load("//cuda/private:rules/flags.bzl", "cuda_archs_flag", "cuda_copts_flag")
+load("//cuda/private:rules/flags.bzl", "cuda_archs_flag", "repeatable_string_flag")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -66,7 +66,7 @@ config_setting(
 )
 
 # Command line flag for copts to add to cuda_library() compile command.
-cuda_copts_flag(
+repeatable_string_flag(
     name = "copts",
     build_setting_default = "",
 )
