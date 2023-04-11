@@ -1,0 +1,30 @@
+site_name: "rules_cuda: Starlark implementation of bazel rules for CUDA"
+repo_url: https://github.com/bazel-contrib/rules_cuda
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: green
+  locale: en
+  features:
+    - navigation.tabs
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  version:
+    # we are not actually using mike
+    # just for `versions.json` to be functional
+    provider: mike
+
+nav:
+  - Home: index.md
+  - User:
+      - Using the rules: user/user_docs.md
+      - Configure the toolchain: user/toolchain_config_docs.md
+  - Developer:
+      - Providers: developer/providers_docs.md
+      - Rule Authoring: developer/developer_docs.md
