@@ -9,6 +9,6 @@ local_path_override(module_name = "rules_cuda", path = "..")
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
 
-cuda.local_toolchain(name = "local_cuda", toolkit_path = "/usr/local/cuda")
+cuda.local_toolchain(name = "local_cuda", toolkit_path = "")
 
 use_repo(cuda, "local_cuda")
