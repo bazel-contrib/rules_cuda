@@ -253,7 +253,7 @@ def _create_common(ctx):
     # gather compile info
     defines = []
     local_defines = [i for i in attr.local_defines]
-    compile_flags = attr._default_host_copts[BuildSettingInfo].value + [o for o in attr.copts if _check_opts(o)]
+    compile_flags = attr._default_cuda_copts[BuildSettingInfo].value + [o for o in attr.copts if _check_opts(o)]
     link_flags = []
     if hasattr(attr, "linkopts"):
         link_flags.extend([o for o in attr.linkopts if _check_opts(o)])

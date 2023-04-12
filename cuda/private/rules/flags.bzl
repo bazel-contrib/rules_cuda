@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:providers.bzl", "CudaArchsInfo")
 
@@ -44,4 +45,16 @@ Best Practices:
     implementation = _cuda_archs_flag_impl,
     build_setting = config.string(flag = True),
     provides = [CudaArchsInfo],
+)
+
+def _repeatable_string_flag_impl(ctx):
+    flags = ctx.build_setting_value
+    if(flags == [""]):
+      flags = []
+    return BuildSettingInfo(value = flags)
+
+repeatable_string_flag = rule(
+    implementation = _repeatable_string_flag_impl,
+    build_setting = config.string(flag = True, allow_multiple = True),
+    provides = [BuildSettingInfo],
 )
