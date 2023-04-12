@@ -23,17 +23,14 @@ def _cuda_library_impl(ctx):
     if not use_rdc:
         use_rdc = cuda_helper.check_must_enforce_rdc(cuda_archs_info = common.cuda_archs_info)
 
+    # flatten first, so that non-unique basenames can be properly deduplicated
+    src_files = []
+    for src in ctx.attr.srcs:
+        src_files.extend(src[DefaultInfo].files.to_list())
+
     # outputs
-    objects = []
-    pic_objects = []
-
-    for src in attr.srcs:
-        files = src[DefaultInfo].files.to_list()
-        objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = use_rdc))
-        pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = use_rdc))
-
-    objects = depset(objects)
-    pic_objects = depset(pic_objects)
+    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = use_rdc))
+    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = use_rdc))
 
     # if rdc is enabled for this cuda_library, then we need futher do a pass of device link
     if use_rdc:
