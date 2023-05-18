@@ -7,6 +7,7 @@ ALLOW_CUDA_HDRS = [
 ]
 
 ALLOW_CUDA_SRCS = [
+    ".cc",
+    ".cpp",
     ".cu",
-    ".cu.cc",
 ]
