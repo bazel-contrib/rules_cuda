@@ -516,7 +516,7 @@ _NPP_LIBS = {
 [
     cc_import(
         name = name + "_lib",
-        interface_library = "cuda/lib/x64/nppc.lib",
+        interface_library = "cuda/lib/x64/{}.lib".format(name),
         system_provided = 1,
         target_compatible_with = ["@platforms//os:windows"],
     )
