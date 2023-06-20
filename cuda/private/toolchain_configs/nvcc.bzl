@@ -329,7 +329,7 @@ def _impl(ctx):
         flag_sets = [
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                flag_groups = [flag_group(flags = ["-Xcompiler", "-g1"])],
+                flag_groups = [flag_group(flags = ["--generate-line-info", "-Xcompiler", "-g1"])],
             ),
         ],
         provides = ["compilation_mode"],
