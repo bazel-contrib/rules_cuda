@@ -47,7 +47,10 @@ cuda_library_c_dbg_flag_test(
 cuda_library_c_fastbuild_flag_test(
     name = "cuda_library_c_fastbuild_flag_test",
     action_mnemonic = "CudaCompile",
-    contain_flags = ["-g1"],
+    contain_flags = [
+        "--generate-line-info",
+        "-g1",
+    ],
     not_contain_flags = ["-DNDEBUG"],
     target_compatible_with = ["@platforms//os:linux"],
     target_under_test = "@rules_cuda_examples//basic:kernel",
