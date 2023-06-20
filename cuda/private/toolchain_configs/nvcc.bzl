@@ -298,7 +298,7 @@ def _impl(ctx):
         flag_sets = [
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                flag_groups = [flag_group(flags = ["-g"])],
+                flag_groups = [flag_group(flags = ["--device-debug", "-g"])],
             ),
         ],
         provides = ["compilation_mode"],
