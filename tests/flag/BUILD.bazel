@@ -11,6 +11,8 @@ load(
     "cuda_library_compute61_sm61_flag_test",
     "cuda_library_flag_test",
     "cuda_library_sm61_flag_test",
+    "cuda_library_sm90a_flag_test",
+    "cuda_library_sm90a_sm90_flag_test",
     "num_actions_test",
 )
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
@@ -308,6 +310,25 @@ cuda_library_compute61_sm61_flag_test(
     contain_flags = [
         "-gencode arch=compute_61,code=compute_61",
         "-gencode arch=compute_61,code=sm_61",
+    ],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+cuda_library_sm90a_flag_test(
+    name = "cuda_library_sm90a_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_90a,code=sm_90a",
+    ],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+cuda_library_sm90a_sm90_flag_test(
+    name = "cuda_library_sm90a_sm90_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_90,code=sm_90",
+        "-gencode arch=compute_90,code=sm_90a",
     ],
     target_under_test = "@rules_cuda_examples//basic:kernel",
 )
