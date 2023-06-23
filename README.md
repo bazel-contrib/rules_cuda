@@ -81,6 +81,12 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
   Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@local_cuda//:cuda_runtime_static` link the static cuda runtime.
 
+- `--features=cuda_device_debug`
+
+  Sets nvcc flags to enable debug information in device code.
+  Currently ignored for clang, where `--compilation_mode=debug` applies to both
+  host and device code.
+
 ## Examples
 
 Checkout the examples to see if it fits your needs.

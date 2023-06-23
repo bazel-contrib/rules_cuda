@@ -310,6 +310,8 @@ def _impl(ctx):
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
                 flag_groups = [flag_group(flags = [
+                    "--dopt",  # the default depends on the value of --device-debug (-G), so set it explicitly.
+                    "on",
                     "-Xcompiler",
                     "-g0",
                     "-O2",
@@ -419,6 +421,16 @@ def _impl(ctx):
         ],
     )
 
+    cuda_device_debug_feature = feature(
+        name = "cuda_device_debug",
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["--device-debug"])],
+            ),
+        ],
+    )
+
     action_configs = [
         cuda_compile_action,
         cuda_device_link_action,
@@ -445,6 +457,7 @@ def _impl(ctx):
         nvcc_allow_unsupported_compiler_feature,
         nvcc_relaxed_constexpr_feature,
         nvcc_extended_lambda_feature,
+        cuda_device_debug_feature,
     ]
 
     return [CudaToolchainConfigInfo(
