@@ -15,7 +15,7 @@ jobs:
       matrix:
         os:
           - ubuntu-20.04
-          - windows-latest
+          - windows-2019
         bazel-version:
           - 5.0.0
           - 5.2.0
