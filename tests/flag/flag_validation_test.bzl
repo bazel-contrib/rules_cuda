@@ -92,8 +92,12 @@ config_settings_sm61 = {"@//cuda:archs": "sm_61"}
 config_settings_compute60 = {"@//cuda:archs": "compute_60"}
 config_settings_compute60_sm61 = {"@//cuda:archs": "compute_60,sm_61"}
 config_settings_compute61_sm61 = {"@//cuda:archs": "compute_61,sm_61"}
+config_settings_sm90a = {"@//cuda:archs": "sm_90a"}
+config_settings_sm90a_sm90 = {"@//cuda:archs": "sm_90a,sm_90"}
 
 cuda_library_sm61_flag_test = _create_cuda_library_flag_test(config_settings_sm61)
+cuda_library_sm90a_flag_test = _create_cuda_library_flag_test(config_settings_sm90a)
+cuda_library_sm90a_sm90_flag_test = _create_cuda_library_flag_test(config_settings_sm90a_sm90)
 cuda_library_compute60_flag_test = _create_cuda_library_flag_test(config_settings_compute60)
 cuda_library_compute60_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute60_sm61)
 cuda_library_compute61_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute61_sm61)
