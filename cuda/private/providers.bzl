@@ -19,6 +19,7 @@ cuda_archs = [
     "87",
     "89",
     "90",
+    "90a",
 ]
 
 Stage2ArchInfo = provider(
