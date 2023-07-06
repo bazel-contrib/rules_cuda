@@ -50,7 +50,7 @@ def detect_cuda_toolkit(repository_ctx):
 
             # Some distributions instead put CUDA binaries in a seperate path
             # Manually check and redirect there when necessary
-            alternative = repository_ctx.path('/usr/lib/nvidia-cuda-toolkit/bin/nvcc')
+            alternative = repository_ctx.path("/usr/lib/nvidia-cuda-toolkit/bin/nvcc")
             if str(ptxas_path) == "/usr/bin/ptxas" and alternative.exists:
                 ptxas_path = alternative
             cuda_path = str(ptxas_path.dirname.dirname)
@@ -96,14 +96,14 @@ def detect_cuda_toolkit(repository_ctx):
     )
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
-    """Generate `@local_cuda//BUILD` and `@local_cuda//defs.bzl` and `@local_cuda//toolchain/BUILD`
+    """Generate `@local_cuda//BUILD.bazel` and `@local_cuda//defs.bzl` and `@local_cuda//toolchain/BUILD.bazel`
 
     Args:
         repository_ctx: repository_ctx
         cuda: The struct returned from detect_cuda_toolkit
     """
 
-    # Generate @local_cuda//BUILD and @local_cuda//defs.bzl
+    # Generate @local_cuda//BUILD.bazel and @local_cuda//defs.bzl
     defs_bzl_content = ""
     defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"
     if cuda.path != None:
@@ -113,17 +113,17 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
             repository_ctx.symlink("/usr/lib/x86_64-linux-gnu", "cuda/lib64")
         else:
             repository_ctx.symlink(cuda.path, "cuda")
-        repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
+        repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda.bazel"), "BUILD.bazel")
         defs_bzl_content += defs_if_local_cuda % "if_true"
     else:
-        repository_ctx.file("BUILD")  # Empty file
+        repository_ctx.file("BUILD.bazel")  # Empty file
         defs_bzl_content += defs_if_local_cuda % "if_false"
     repository_ctx.file("defs.bzl", defs_bzl_content)
 
-    # Generate @local_cuda//toolchain/BUILD
+    # Generate @local_cuda//toolchain/BUILD.bazel
     tpl_label = Label(
         "//cuda:templates/BUILD.local_toolchain_" +
-        ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
+        ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc") + ".bazel",
     )
     substitutions = {
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
@@ -138,7 +138,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:
         substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
-    repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
+    repository_ctx.template("toolchain/BUILD.bazel", tpl_label, substitutions = substitutions, executable = False)
 
 def detect_clang(repository_ctx):
     """Detect local clang installation.
@@ -171,14 +171,14 @@ def detect_clang(repository_ctx):
     return clang_path
 
 def config_clang(repository_ctx, cuda, clang_path):
-    """Generate `@local_cuda//toolchain/clang/BUILD`
+    """Generate `@local_cuda//toolchain/clang/BUILD.bazel`
 
     Args:
         repository_ctx: repository_ctx
         cuda: The struct returned from `detect_cuda_toolkit`
         clang_path: Path to clang executable returned from `detect_clang`
     """
-    tpl_label = Label("//cuda:templates/BUILD.local_toolchain_clang")
+    tpl_label = Label("//cuda:templates/BUILD.local_toolchain_clang.bazel")
     substitutions = {
         "%{clang_path}": _to_forward_slash(clang_path) if clang_path else "cuda-clang-not-found",
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
@@ -188,7 +188,7 @@ def config_clang(repository_ctx, cuda, clang_path):
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
     }
-    repository_ctx.template("toolchain/clang/BUILD", tpl_label, substitutions = substitutions, executable = False)
+    repository_ctx.template("toolchain/clang/BUILD.bazel", tpl_label, substitutions = substitutions, executable = False)
 
 def _local_cuda_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
