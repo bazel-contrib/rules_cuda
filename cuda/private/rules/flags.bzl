@@ -49,8 +49,8 @@ Best Practices:
 
 def _repeatable_string_flag_impl(ctx):
     flags = ctx.build_setting_value
-    if(flags == [""]):
-      flags = []
+    if (flags == [""]):
+        flags = []
     return BuildSettingInfo(value = flags)
 
 repeatable_string_flag = rule(

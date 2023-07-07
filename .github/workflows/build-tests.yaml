@@ -85,4 +85,3 @@ jobs:
       - run: cd examples && bazelisk build //if_cuda:main --enable_cuda=False --config=bzlmod
 
       - run: bazelisk shutdown
-
