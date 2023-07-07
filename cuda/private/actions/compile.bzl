@@ -44,7 +44,7 @@ def compile(
         basename = cuda_helper.get_basename_without_ext(src.basename, ALLOW_CUDA_SRCS, fail_if_not_match = False)
         if not basename:
             continue
-        basename_index = basename_counter.setdefault(basename, default=0)
+        basename_index = basename_counter.setdefault(basename, default = 0)
         basename_counter[basename] += 1
         src_and_indexed_basenames.append((src, basename, basename_index))
 
@@ -52,6 +52,7 @@ def compile(
     for src, basename, basename_index in src_and_indexed_basenames:
         filename = None
         filename = cuda_helper.get_artifact_name(cuda_toolchain, artifact_category_name, basename)
+
         # Objects are placed in _objs/<tgt_name>/<filename>.
         # For files with the same basename, say srcs = ["kernel.cu", "foo/kernel.cu", "bar/kernel.cu"], we get
         # _objs/<tgt_name>/0/kernel.<ext>, _objs/<tgt_name>/1/kernel.<ext>, _objs/<tgt_name>/2/kernel.<ext>.

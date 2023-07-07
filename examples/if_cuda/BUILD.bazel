@@ -11,10 +11,10 @@ cc_binary(
     srcs = ["main.cpp"],
     defines = [] + select({
         "@rules_cuda//cuda:is_enabled": ["CUDA_ENABLED"],
-        "//conditions:default": ["CUDA_DISABLED"]
+        "//conditions:default": ["CUDA_DISABLED"],
     }),
     deps = [] + select({
         "@rules_cuda//cuda:is_enabled": [":kernel"],
-        "//conditions:default": []
-    })
+        "//conditions:default": [],
+    }),
 )
