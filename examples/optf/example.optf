@@ -1,0 +1,4 @@
+-DMODE_B
+-DFEATURE_1
+--fmad=true
+--prec-div=true

@@ -1,0 +1,37 @@
+load("@rules_cuda//cuda:defs.bzl", "cuda_library", "cuda_objects")
+load("//optf:helpers.bzl", "cuda_library_with_per_object_optf", "glob")
+
+kernels = glob("kernels/*.cu")
+
+headers = glob("kernels/*.h")
+
+# hardcoded optf file name (same file for the whole library)
+
+cuda_library(
+    name = "with_global_optf",
+    srcs = kernels,
+    hdrs = headers,
+    includes = ["kernels"],
+    optf = "example.optf",
+)
+
+cc_binary(
+    name = "executable_with_global_optf",
+    srcs = ["main.cpp"],
+    deps = ["with_global_optf"],
+)
+
+# autmatically generated optf file target (separate file per kernel)
+
+cuda_library_with_per_object_optf(
+    name = "with_per_file_optf",
+    srcs = kernels,
+    hdrs = headers,
+    includes = ["kernels"],
+)
+
+cc_binary(
+    name = "executable_with_per_file_optf",
+    srcs = ["main.cpp"],
+    deps = [":with_per_file_optf"],
+)
