@@ -74,13 +74,13 @@ jobs:
         if: ${{ startsWith(matrix.cases.os, 'windows') }}
         run: .github/workflows/Set-VSEnv.ps1 2019
 
-      - run: bazelisk build @rules_cuda_examples//basic:main
-      - run: bazelisk build @rules_cuda_examples//rdc:main
+      - run: bazelisk build @rules_cuda_examples//basic:all
+      - run: bazelisk build @rules_cuda_examples//rdc:all
       - run: bazelisk build @rules_cuda_examples//if_cuda:main
       - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False
 
-      - run: cd examples && bazelisk build //basic:main --config=bzlmod
-      - run: cd examples && bazelisk build //rdc:main --config=bzlmod
+      - run: cd examples && bazelisk build //basic:all --config=bzlmod
+      - run: cd examples && bazelisk build //rdc:all --config=bzlmod
       - run: cd examples && bazelisk build //if_cuda:main --config=bzlmod
       - run: cd examples && bazelisk build //if_cuda:main --enable_cuda=False --config=bzlmod
 

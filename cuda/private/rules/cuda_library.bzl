@@ -31,13 +31,17 @@ def _cuda_library_impl(ctx):
     # outputs
     objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = use_rdc))
     pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = use_rdc))
+    rdc_objects = depset([])
+    rdc_pic_objects = depset([])
 
     # if rdc is enabled for this cuda_library, then we need futher do a pass of device link
     if use_rdc:
         transitive_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep])
         transitive_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
         objects = depset(transitive = [objects, transitive_objects])
+        rdc_objects = objects
         pic_objects = depset(transitive = [pic_objects, transitive_pic_objects])
+        rdc_pic_objects = pic_objects
         dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, common, pic = False, rdc = use_rdc)])
         dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, common, pic = True, rdc = use_rdc)])
         objects = depset(transitive = [objects, dlink_object])
@@ -87,12 +91,20 @@ def _cuda_library_impl(ctx):
             pic_lib = pic_libs,
             objects = objects,
             pic_objects = pic_objects,
+            rdc_objects = rdc_objects,
+            rdc_pic_objects = rdc_pic_objects,
         ),
         CcInfo(
             compilation_context = cc_info.compilation_context,
             linking_context = cc_info.linking_context,
         ),
-        cuda_helper.create_cuda_info(defines = depset(common.defines)),
+        cuda_helper.create_cuda_info(
+            defines = depset(common.defines),
+            objects = objects,
+            pic_objects = pic_objects,
+            rdc_objects = rdc_objects,
+            rdc_pic_objects = rdc_pic_objects,
+        ),
     ]
 
 cuda_library = rule(
@@ -104,7 +116,13 @@ cuda_library = rule(
         "hdrs": attr.label_list(allow_files = ALLOW_CUDA_HDRS),
         "deps": attr.label_list(providers = [[CcInfo], [CudaInfo]]),
         "alwayslink": attr.bool(default = False),
-        "rdc": attr.bool(default = False, doc = "whether to perform relocateable device code linking, otherwise, normal device link."),
+        "rdc": attr.bool(
+            default = False,
+            doc = ("Whether to produce and consume relocateable device code. " +
+                   "Transitive deps that contain device code must all either be cuda_objects or cuda_library(rdc = True). " +
+                   "If False, all device code must be in the same translation unit. May have performance implications. " +
+                   "See https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#using-separate-compilation-in-cuda."),
+        ),
         "includes": attr.string_list(doc = "List of include dirs to be added to the compile line."),
         "host_copts": attr.string_list(doc = "Add these options to the CUDA host compilation command."),
         "host_defines": attr.string_list(doc = "List of defines to add to the compile line."),
