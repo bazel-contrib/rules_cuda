@@ -81,6 +81,7 @@ code and device link time optimization source files.""",
         "host_local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
         # non-host attrs will be passed transitively to cuda_* targets only.
         "copts": attr.string_list(doc = "Add these options to the CUDA device compilation command."),
+        "optf": attr.label(allow_single_file = True, doc = "Add this file as '--options-file <filename>' to the CUDA device compilation command."),
         "defines": attr.string_list(doc = "List of defines to add to the compile line."),
         "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
         "ptxasopts": attr.string_list(doc = "Add these flags to the ptxas command."),

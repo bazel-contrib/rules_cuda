@@ -111,6 +111,7 @@ cuda_library = rule(
         "host_local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
         "host_linkopts": attr.string_list(doc = "Add these flags to the host library link command."),
         "copts": attr.string_list(doc = "Add these options to the CUDA device compilation command."),
+        "optf": attr.label(allow_single_file = True, doc = "Add this file as '--options-file <filename>' to the CUDA device compilation command."),
         "defines": attr.string_list(doc = "List of defines to add to the compile line."),
         "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
         "linkopts": attr.string_list(doc = "Add these flags to the CUDA device link command."),
