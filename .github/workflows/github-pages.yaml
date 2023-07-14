@@ -1,0 +1,79 @@
+name: Generate docs
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        docs:
+          # { ref: <branch/tag name>, name: <docs drop down entry> }
+          - { ref: main, name: latest }
+    steps:
+      - uses: actions/checkout@v3
+        if: ${{ matrix.docs.ref == 'main' }}
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ matrix.docs.ref }}
+        if: ${{ matrix.docs.ref != 'main' }}
+
+      - uses: bazelbuild/setup-bazelisk@v2
+      - name: Mount bazel cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/bazel
+          key: bazel-gen-docs-${{ matrix.docs.ref }}
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pip
+
+      - name: Generate docs
+        run: bash ./build-docs.sh
+        env:
+          CI: 1
+        working-directory: ${{ github.workspace }}/docs
+
+      - run: bazelisk shutdown
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: "${{ matrix.docs.name }}"
+          path: ${{ github.workspace }}/docs/site/
+          if-no-files-found: error
+        if: ${{ github.event_name != 'pull_request' }}
+
+  publish:
+    needs: pages
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          path: ${{ github.workspace }}/docs/generated
+      - name: Inspect docs site directory structure
+        run: find ${{ github.workspace }}/docs/generated -maxdepth 2
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - run: |
+          pip install packaging==23.*
+          python versioning.py generated/
+        working-directory: ${{ github.workspace }}/docs
+
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/generated
+          force_orphan: true

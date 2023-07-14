@@ -1,6 +1,7 @@
 """private helpers"""
 
 load("@bazel_skylib//lib:paths.bzl", "paths")
+load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
@@ -8,22 +9,37 @@ load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo"
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper", "unique")
 
+def _create_arch_number(arch_num_str):
+    """Create a structured architecture number.
+
+    It is encoded as a tuple (int, suffix_str) to ease the comparison."""
+    if types.is_int(arch_num_str):
+        return (int(arch_num_str), "")
+    else:
+        for i, c in enumerate(arch_num_str.elems()):
+            if not c.isdigit():
+                break
+        return (int(arch_num_str[:i]), arch_num_str[i:])
+
+def _format_arch_number(arch_num):
+    return str(arch_num[0]) + arch_num[1]
+
 def _get_arch_number(arch_str):
     arch_str = arch_str.strip()
-    arch_num = None
+    arch_num_str = None
     if arch_str.startswith("compute_"):
-        arch_num = arch_str[len("compute_"):]
+        arch_num_str = arch_str[len("compute_"):]
     elif arch_str.startswith("lto_"):
-        arch_num = arch_str[len("lto_"):]
+        arch_num_str = arch_str[len("lto_"):]
     elif arch_str.startswith("sm_"):
-        arch_num = arch_str[len("sm_"):]
-    if arch_num not in cuda_archs:
+        arch_num_str = arch_str[len("sm_"):]
+    if arch_num_str not in cuda_archs:
         fail("{} is not a supported cuda arch".format(arch_str))
-    return int(arch_num)
+    return _create_arch_number(arch_num_str)
 
 def _get_stage2_arch_info(code_str):
     return Stage2ArchInfo(
-        arch = str(_get_arch_number(code_str)),
+        arch = _format_arch_number(_get_arch_number(code_str)),
         virtual = code_str.startswith("compute_"),
         gpu = code_str.startswith("sm_"),
         lto = code_str.startswith("lto_"),
@@ -48,12 +64,12 @@ def _get_arch_spec(spec_str):
         codes = codes.split(",")
         if not virt.startswith("compute_"):
             fail("expect a virtual architecture, got", virt)
-        stage1_arch = str(_get_arch_number(virt))
+        stage1_arch = _format_arch_number(_get_arch_number(virt))
         stage2_archs = [_get_stage2_arch_info(code) for code in codes]
     else:
         (codes,) = virtual_codes
         codes = codes.split(",")
-        stage1_arch = str(min([_get_arch_number(c) for c in codes]))
+        stage1_arch = _format_arch_number(min([_get_arch_number(c) for c in codes]))
         stage2_archs = [_get_stage2_arch_info(code) for code in codes]
     arch_spec = ArchSpecInfo(stage1_arch = stage1_arch, stage2_archs = stage2_archs)
     return arch_spec
@@ -120,22 +136,36 @@ def _resolve_includes(ctx, path):
 
 def _check_opts(opt):
     opt = opt.strip()
+    disallow_list_exact = [
+        "--cuda",
+        "-cuda",
+        "--preprocess",
+        "-E",
+        "--compile",
+        "-c",
+        "--cubin",
+        "-cubin",
+        "--ptx",
+        "-ptx",
+        "--fatbin",
+        "-fatbin",
+        "--device-link",
+        "-dlink",
+        "--lib",
+        "-lib",
+        "--generate-dependencies",
+        "-M",
+        "--generate-nonsystem-dependencies",
+        "-MM",
+        "--run",
+        "-run",
+    ]
     if (opt.startswith("--generate-code") or opt.startswith("-gencode") or
         opt.startswith("--gpu-architecture") or opt.startswith("-arch") or
         opt.startswith("--gpu-code") or opt.startswith("-code") or
         opt.startswith("--relocatable-device-code") or opt.startswith("-rdc") or
-        opt.startswith("--cuda") or opt.startswith("-cuda") or
-        opt.startswith("--preprocess") or opt.startswith("-E") or
-        opt.startswith("--compile") or opt.startswith("-c") or
-        opt.startswith("--cubin") or opt.startswith("-cubin") or
-        opt.startswith("--ptx") or opt.startswith("-ptx") or
-        opt.startswith("--fatbin") or opt.startswith("-fatbin") or
-        opt.startswith("--device-link") or opt.startswith("-dlink") or
-        opt.startswith("--lib") or opt.startswith("-lib") or
-        opt.startswith("--generate-dependencies") or opt.startswith("-M") or
-        opt.startswith("--generate-nonsystem-dependencies") or opt.startswith("-MM") or
-        opt.startswith("--run") or opt.startswith("-run")):
-        fail(opt, "is not allowed to be specified directly via copts")
+        opt in disallow_list_exact):
+        fail(opt, "is not allowed to be specified directly via copts of rules_cuda related rules")
     return True
 
 def _get_cuda_archs_info(ctx):
@@ -239,7 +269,7 @@ def _create_common(ctx):
     # gather compile info
     defines = []
     local_defines = [i for i in attr.local_defines]
-    compile_flags = attr._default_host_copts[BuildSettingInfo].value + [o for o in attr.copts if _check_opts(o)]
+    compile_flags = attr._default_cuda_copts[BuildSettingInfo].value + [o for o in attr.copts if _check_opts(o)]
     link_flags = []
     if hasattr(attr, "linkopts"):
         link_flags.extend([o for o in attr.linkopts if _check_opts(o)])

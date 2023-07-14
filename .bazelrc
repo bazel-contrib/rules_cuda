@@ -11,7 +11,7 @@ build --enable_cuda=True
 build:clang --repo_env=CC=clang
 build:clang --//cuda:compiler=clang
 
-# https://github.com/cloudhan/rules_cuda/issues/1
+# https://github.com/bazel-contrib/rules_cuda/issues/1
 build --ui_event_filters=-INFO
 
 common:bzlmod --enable_bzlmod

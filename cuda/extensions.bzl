@@ -4,7 +4,7 @@ load("//cuda/private:repositories.bzl", "local_cuda")
 
 cuda_toolkit = tag_class(attrs = {
     "name": attr.string(doc = "Name for the toolchain repository", default = "local_cuda"),
-    "toolkit_path": attr.string(doc = "Path to the CUDA SDK"),
+    "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
 })
 
 def _init(module_ctx):

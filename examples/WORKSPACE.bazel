@@ -13,11 +13,13 @@ local_repository(
 # you should fetch it *before* calling this.
 
 load("@rules_cuda//cuda:repositories.bzl", "register_detected_cuda_toolchains", "rules_cuda_dependencies", "register_cuda_toolchains")
+
 rules_cuda_dependencies()
+
 register_cuda_toolchains()
+
 register_detected_cuda_toolchains()
 
 load("@remote_cuda_toolchain//:repositories.bzl", "cuda_remote_repos")
 
 cuda_remote_repos()
-

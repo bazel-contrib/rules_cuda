@@ -1,4 +1,4 @@
-"""Generate @local_cuda//"""
+"""Generate `@local_cuda//`"""
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
@@ -30,7 +30,7 @@ def detect_cuda_toolkit(repository_ctx):
 
     The path to CUDA Toolkit is determined as:
       - the value of `toolkit_path` passed to local_cuda as an attribute
-      - taken from CUDA_PATH environment variable or
+      - taken from `CUDA_PATH` environment variable or
       - determined through 'which ptxas' or
       - defaults to '/usr/local/cuda'
 
@@ -47,6 +47,12 @@ def detect_cuda_toolkit(repository_ctx):
         ptxas_path = repository_ctx.which("ptxas")
         if ptxas_path:
             # ${CUDA_PATH}/bin/ptxas
+
+            # Some distributions instead put CUDA binaries in a seperate path
+            # Manually check and redirect there when necessary
+            alternative = repository_ctx.path("/usr/lib/nvidia-cuda-toolkit/bin/nvcc")
+            if str(ptxas_path) == "/usr/bin/ptxas" and alternative.exists:
+                ptxas_path = alternative
             cuda_path = str(ptxas_path.dirname.dirname)
     if cuda_path == None and _is_linux(repository_ctx):
         cuda_path = "/usr/local/cuda"
@@ -90,7 +96,7 @@ def detect_cuda_toolkit(repository_ctx):
     )
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
-    """Generate @local_cuda//BUILD and @local_cuda//defs.bzl and @local_cuda//toolchain/BUILD
+    """Generate `@local_cuda//BUILD` and `@local_cuda//defs.bzl` and `@local_cuda//toolchain/BUILD`
 
     Args:
         repository_ctx: repository_ctx
@@ -101,7 +107,12 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     defs_bzl_content = ""
     defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"
     if cuda.path != None:
-        repository_ctx.symlink(cuda.path, "cuda")
+        # When using a special cuda toolkit path install, need to manually fix up the lib64 links
+        if cuda.path == "/usr/lib/nvidia-cuda-toolkit":
+            repository_ctx.symlink(cuda.path + "/bin", "cuda/bin")
+            repository_ctx.symlink("/usr/lib/x86_64-linux-gnu", "cuda/lib64")
+        else:
+            repository_ctx.symlink(cuda.path, "cuda")
         repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
         defs_bzl_content += defs_if_local_cuda % "if_true"
     else:
@@ -133,9 +144,10 @@ def detect_clang(repository_ctx):
     """Detect local clang installation.
 
     The path to clang is determined by:
+
       - taken from `CUDA_CLANG_PATH` environment variable or
-      - taken from `BAZEL_LLVM` environment variable as `<BAZEL_LLVM>/bin/clang` or
-      - determined through 'which clang' or
+      - taken from `BAZEL_LLVM` environment variable as `$BAZEL_LLVM/bin/clang` or
+      - determined through `which clang` or
       - treated as being not detected and not configured
 
     Args:
@@ -159,7 +171,7 @@ def detect_clang(repository_ctx):
     return clang_path
 
 def config_clang(repository_ctx, cuda, clang_path):
-    """Generate @local_cuda//toolchain/clang/BUILD
+    """Generate `@local_cuda//toolchain/clang/BUILD`
 
     Args:
         repository_ctx: repository_ctx
@@ -193,8 +205,12 @@ local_cuda = repository_rule(
     environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "BAZEL_LLVM"],
 )
 
-def rules_cuda_dependencies():
-    """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains."""
+def rules_cuda_dependencies(toolkit_path = None):
+    """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
+
+    Args:
+        toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
+    """
     maybe(
         name = "bazel_skylib",
         repo_rule = http_archive,
@@ -242,4 +258,4 @@ def rules_cuda_dependencies():
         urls = ["https://github.com/NVIDIA/cub/archive/refs/tags/1.17.2.tar.gz"],
     )
 
-    local_cuda(name = "local_cuda")
+    local_cuda(name = "local_cuda", toolkit_path = toolkit_path)

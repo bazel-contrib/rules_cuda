@@ -25,8 +25,8 @@ register_detected_cuda_toolchains()
 ensure the host compiler is available. On windows, this means that you will also need to set the environment variable
 `BAZEL_VC` properly.
 
-[`detect_cuda_toolkit`](https://github.com/cloudhan/rules_cuda/blob/f534446357/cuda/private/repositories.bzl#L44-L57)
-and [`detect_clang`](https://github.com/cloudhan/rules_cuda/blob/f534446357/cuda/private/repositories.bzl#L129-L143)
+[`detect_cuda_toolkit`](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/repositories.bzl#L28-L58)
+and [`detect_clang`](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/repositories.bzl#L143-L166)
 determains how the toolchains are detected.
 
 ### Rules
@@ -67,7 +67,7 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
 - `@rules_cuda//cuda:archs`
 
-  Select the cuda archs to support. See [cuda_archs specification DSL grammar](https://github.com/cloudhan/rules_cuda/blob/f534446357/cuda/private/providers.bzl#L43-L65).
+  Select the cuda archs to support. See [cuda_archs specification DSL grammar](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/rules/flags.bzl#L14-L44).
 
 - `@rules_cuda//cuda:compiler`
 
@@ -81,13 +81,19 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
   Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@local_cuda//:cuda_runtime_static` link the static cuda runtime.
 
+- `--features=cuda_device_debug`
+
+  Sets nvcc flags to enable debug information in device code.
+  Currently ignored for clang, where `--compilation_mode=debug` applies to both
+  host and device code.
+
 ## Examples
 
 Checkout the examples to see if it fits your needs.
 
 See [examples](./examples) for basic usage.
 
-See [cloudhan/rules_cuda_examples](https://github.com/cloudhan/rules_cuda_examples) for extended real world projects.
+See [rules_cuda_examples](https://github.com/cloudhan/rules_cuda_examples) for extended real world projects.
 
 ## Known issue
 

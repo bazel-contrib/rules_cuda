@@ -2,19 +2,19 @@
 
 load(
     "@rules_cuda//cuda:defs.bzl",
-    "cuda_toolkit",
     "cuda_toolchain",
+    "cuda_toolkit",
     cuda_toolchain_config = "cuda_toolchain_config_clang",
 )
 
 cuda_toolkit(
     name = "cuda-toolkit",
-    path = "%{cuda_path}",
-    version = "%{cuda_version}",
-    nvlink = "%{nvlink_label}",
-    link_stub = "%{link_stub_label}",
     bin2c = "%{bin2c_label}",
     fatbinary = "%{fatbinary_label}",
+    link_stub = "%{link_stub_label}",
+    nvlink = "%{nvlink_label}",
+    path = "%{cuda_path}",
+    version = "%{cuda_version}",
 )
 
 cuda_toolchain_config(

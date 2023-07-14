@@ -14,24 +14,16 @@ def _cuda_objects_impl(ctx):
 
     common = cuda_helper.create_common(ctx)
 
-    # outputs
-    objects = []
-    rdc_objects = []
-    pic_objects = []
-    rdc_pic_objects = []
-
+    # flatten first, so that non-unique basenames can be properly deduplicated
+    src_files = []
     for src in ctx.attr.srcs:
-        files = src[DefaultInfo].files.to_list()
+        src_files.extend(src[DefaultInfo].files.to_list())
 
-        objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = False))
-        pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = False))
-        rdc_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = False, rdc = True))
-        rdc_pic_objects.extend(compile(ctx, cuda_toolchain, cc_toolchain, files, common, pic = True, rdc = True))
-
-    objects = depset(objects)
-    pic_objects = depset(pic_objects)
-    rdc_objects = depset(rdc_objects)
-    rdc_pic_objects = depset(rdc_pic_objects)
+    # outputs
+    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False))
+    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True))
+    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False))
+    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True))
 
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
@@ -93,7 +85,7 @@ code and device link time optimization source files.""",
         "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
         "ptxasopts": attr.string_list(doc = "Add these flags to the ptxas command."),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
-        "_default_host_copts": attr.label(default = "//cuda:copts"),
+        "_default_cuda_copts": attr.label(default = "//cuda:copts"),
         "_default_cuda_archs": attr.label(default = "//cuda:archs"),
     },
     fragments = ["cpp"],
