@@ -87,7 +87,7 @@ cuda_library_c_dbg_flag_test(
     name = "cuda_library_c_dbg_dynamic_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/Od",
+        "-O0",
         "/Z7",
         "/MDd",
     ],
@@ -105,7 +105,7 @@ cuda_library_c_fastbuild_flag_test(
     name = "cuda_library_c_fastbuild_dynamic_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/Od",
+        "-O0",
         "/Z7",
         "/MD",
     ],
@@ -123,7 +123,7 @@ cuda_library_c_opt_flag_test(
     name = "cuda_library_c_opt_dynamic_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/O2",
+        "-O2",
         "/Oy-",
         "/MD",
         "-DNDEBUG",
@@ -141,7 +141,7 @@ cuda_library_c_dbg_static_msvcrt_flag_test(
     name = "cuda_library_c_dbg_static_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/Od",
+        "-O0",
         "/Z7",
         "/MTd",
     ],
@@ -159,7 +159,7 @@ cuda_library_c_fastbuild_static_msvcrt_flag_test(
     name = "cuda_library_c_fastbuild_static_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/Od",
+        "-O0",
         "/Z7",
         "/MT",
     ],
@@ -177,7 +177,7 @@ cuda_library_c_opt_static_msvcrt_flag_test(
     name = "cuda_library_c_opt_dynamic_static_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/O2",
+        "-O2",
         "/Oy-",
         "/MT",
         "-DNDEBUG",

@@ -343,7 +343,7 @@ def _impl(ctx):
         flag_sets = [
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                flag_groups = [flag_group(flags = ["-Xcompiler", "/Od", "-Xcompiler", "/Z7"])],
+                flag_groups = [flag_group(flags = ["-O0", "-Xcompiler", "/Z7"])],
             ),
         ],
         implies = ["generate_pdb_file"],
@@ -356,11 +356,10 @@ def _impl(ctx):
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
                 flag_groups = [flag_group(flags = [
+                    "-O2",
                     "--dopt",  # the default depends on the value of --device-debug (-G), so set it explicitly.
                     "on",
                     "-DNDEBUG",
-                    "-Xcompiler",
-                    "/O2",
                 ])],
             ),
         ],
@@ -373,7 +372,7 @@ def _impl(ctx):
         flag_sets = [
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                flag_groups = [flag_group(flags = ["-Xcompiler", "/Od", "-Xcompiler", "/Z7"])],
+                flag_groups = [flag_group(flags = ["-O0", "-Xcompiler", "/Z7"])],
             ),
         ],
         implies = ["generate_pdb_file"],
