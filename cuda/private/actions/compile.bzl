@@ -88,10 +88,9 @@ def compile(
         env = cuda_helper.get_environment_variables(cuda_feature_config, ACTION_NAMES.cuda_compile, var)
 
         args = actions.args()
-        args.add_all(cmd)
-
+        cuda_helper.args_add_all(cuda_toolchain.toolchain_identifier, args, cmd)
         if use_param_file:
-            cuda_helper.use_param_file(ctx, cuda_toolchain, args)
+            cuda_helper.use_param_file(cuda_toolchain.toolchain_identifier, args)
 
         actions.run(
             executable = cuda_compiler,

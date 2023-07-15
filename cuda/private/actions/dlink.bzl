@@ -100,10 +100,10 @@ def _compiler_device_link(
     cmd = cuda_helper.get_command_line(cuda_feature_config, ACTION_NAMES.device_link, var)
     env = cuda_helper.get_environment_variables(cuda_feature_config, ACTION_NAMES.device_link, var)
     args = actions.args()
-    args.add_all(cmd)
-    args.add_all(objects)
+    cuda_helper.args_add_all(cuda_toolchain.toolchain_identifier, args, cmd)
+    cuda_helper.args_add_all(cuda_toolchain.toolchain_identifier, args, objects)
     if use_param_file:
-        cuda_helper.use_param_file(ctx, cuda_toolchain, args)
+        cuda_helper.use_param_file(cuda_toolchain.toolchain_identifier, args)
 
     actions.run(
         executable = cuda_compiler,
@@ -141,9 +141,10 @@ def _wrapper_device_link(
     cubins = []
     images = []
     obj_args = actions.args()
-    obj_args.add_all(objects)
+    cuda_helper.args_add_all("nvcc", obj_args, objects)
+    cuda_helper.use_param_file("nvcc", obj_args)
     if use_param_file:
-        obj_args.use_param_file("--options-file=%s")
+        cuda_helper.use_param_file("nvcc", "--options-file=%s")
 
     if len(common.cuda_archs_info.arch_specs) == 0:
         fail('cuda toolchain "' + cuda_toolchain.name + '" is configured to enable feature supports_wrapper_device_link,' +

@@ -513,17 +513,35 @@ def _configure_features(ctx, cuda_toolchain, requested_features = None, unsuppor
         _debug = _debug,
     )
 
-def _use_param_file(ctx, cuda_toolchain, args):
+def _args_add_all(toolchain_identifier, args, values):
+    """Wraps the `Args.add_all`, so that we can correctly produce nvcc consumable param file.
+
+    Args:
+        toolchain_identifier: cuda_toolchain.toolchain_identifier.
+        args: The `Args` object to be manipulated.
+        values: The command
+    """
+    if type(values) == "list" and toolchain_identifier == "nvcc":
+        # For nvcc options file, it is whitespace delimited. If we have an option like `/path to file`,
+        # it we be read as three options `/path`, `to` and `file`
+        escaped_values = [repr(v) if type(v) == "string" and " " in v else v for v in values]
+        args.add_all(escaped_values)
+    else:
+        args.add_all(values)
+
+
+def _use_param_file(toolchain_identifier, args):
     """Configure the args object to use params file.
 
     Args:
-        ctx: The rule context.
-        cuda_toolchain: The cuda_toolchain used in actions.
+        toolchain_identifier: cuda_toolchain.toolchain_identifier.
         args: The `Args` object to be manipulated.
     """
-    if cuda_toolchain.toolchain_identifier == "nvcc":
+    if toolchain_identifier == "nvcc":
+        # Encode options verbatim without escaping, see `cuda_helper.args_add_all`
+        args.set_param_file_format("multiline")
         args.use_param_file("--options-file=%s")
-    elif cuda_toolchain.toolchain_identifier == "clang":
+    elif toolchain_identifier == "clang":
         args.use_param_file("@%s")
     else:
         fail("unknown toolchain type for compiler_param_file feature")
@@ -546,5 +564,6 @@ cuda_helper = struct(
     action_is_enabled = config_helper.is_enabled,
     is_enabled = config_helper.is_enabled,
     get_environment_variables = config_helper.get_environment_variables,
+    args_add_all = _args_add_all,
     use_param_file = _use_param_file,
 )
