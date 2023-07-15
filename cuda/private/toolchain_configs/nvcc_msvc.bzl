@@ -44,6 +44,8 @@ def _impl(ctx):
 
     cc_toolchain = find_cpp_toolchain(ctx)
 
+    compiler_param_file = feature(name = "compiler_param_file")
+
     nvcc_compile_env_feature = feature(
         name = "nvcc_compile_env",
         env_sets = [
@@ -520,6 +522,7 @@ def _impl(ctx):
     ]
 
     features = [
+        compiler_param_file,
         nvcc_compile_env_feature,
         host_compiler_feature,
         supports_compiler_device_link_feature,

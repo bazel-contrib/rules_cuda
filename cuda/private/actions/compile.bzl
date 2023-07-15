@@ -50,6 +50,8 @@ def compile(
         basename_counter[basename] += 1
         src_and_indexed_basenames.append((src, basename, basename_index))
 
+    use_param_file = cuda_helper.is_enabled(cuda_feature_config, "compiler_param_file")
+
     ret = []
     for src, basename, basename_index in src_and_indexed_basenames:
         filename = None
@@ -87,6 +89,9 @@ def compile(
 
         args = actions.args()
         args.add_all(cmd)
+
+        if use_param_file:
+            cuda_helper.use_param_file(ctx, cuda_toolchain, args)
 
         actions.run(
             executable = cuda_compiler,

@@ -53,6 +53,8 @@ def _impl(ctx):
 
     cc_toolchain = find_cpp_toolchain(ctx)
 
+    compiler_param_file = feature(name = "compiler_param_file")
+
     clang_compile_env_feature = feature(
         name = "clang_compile_env",
         enabled = True,
@@ -459,6 +461,7 @@ def _impl(ctx):
     ]
 
     features = [
+        compiler_param_file,
         cuda_path_feature,
         supports_compiler_device_link_feature,
         supports_wrapper_device_link_feature,

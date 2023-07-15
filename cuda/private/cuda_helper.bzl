@@ -513,6 +513,21 @@ def _configure_features(ctx, cuda_toolchain, requested_features = None, unsuppor
         _debug = _debug,
     )
 
+def _use_param_file(ctx, cuda_toolchain, args):
+    """Configure the args object to use params file.
+
+    Args:
+        ctx: The rule context.
+        cuda_toolchain: The cuda_toolchain used in actions.
+        args: The `Args` object to be manipulated.
+    """
+    if cuda_toolchain.toolchain_identifier == "nvcc":
+        args.use_param_file("--options-file=%s")
+    elif cuda_toolchain.toolchain_identifier == "clang":
+        args.use_param_file("@%s")
+    else:
+        fail("unknown toolchain type for compiler_param_file feature")
+
 cuda_helper = struct(
     get_arch_specs = _get_arch_specs,
     check_srcs_extensions = _check_srcs_extensions,
@@ -531,4 +546,5 @@ cuda_helper = struct(
     action_is_enabled = config_helper.is_enabled,
     is_enabled = config_helper.is_enabled,
     get_environment_variables = config_helper.get_environment_variables,
+    use_param_file = _use_param_file,
 )

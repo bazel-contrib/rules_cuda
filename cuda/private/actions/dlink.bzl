@@ -33,10 +33,32 @@ def device_link(
         An deviced linked object `File`.
     """
     cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.device_link])
+    use_param_file = cuda_helper.is_enabled(cuda_feature_config, "compiler_param_file")
     if cuda_helper.is_enabled(cuda_feature_config, "supports_compiler_device_link"):
-        return _compiler_device_link(ctx, cuda_toolchain, cc_toolchain, cuda_feature_config, objects, common, pic = pic, rdc = rdc, dlto = dlto)
+        return _compiler_device_link(
+            ctx,
+            cuda_toolchain,
+            cc_toolchain,
+            cuda_feature_config,
+            objects,
+            common,
+            use_param_file,
+            pic = pic,
+            rdc = rdc,
+            dlto = dlto,
+        )
     elif cuda_helper.is_enabled(cuda_feature_config, "supports_wrapper_device_link"):
-        return _wrapper_device_link(ctx, cuda_toolchain, cc_toolchain, objects, common, pic = pic, rdc = rdc, dlto = dlto)
+        return _wrapper_device_link(
+            ctx,
+            cuda_toolchain,
+            cc_toolchain,
+            objects,
+            common,
+            use_param_file,
+            pic = pic,
+            rdc = rdc,
+            dlto = dlto,
+        )
     else:
         fail("toolchain must be configured to enable feature supports_compiler_device_link or supports_wrapper_device_link.")
 
@@ -47,6 +69,7 @@ def _compiler_device_link(
         cuda_feature_config,
         objects,
         common,
+        use_param_file,
         pic = False,
         rdc = False,
         dlto = False):
@@ -79,6 +102,8 @@ def _compiler_device_link(
     args = actions.args()
     args.add_all(cmd)
     args.add_all(objects)
+    if use_param_file:
+        cuda_helper.use_param_file(ctx, cuda_toolchain, args)
 
     actions.run(
         executable = cuda_compiler,
@@ -97,6 +122,7 @@ def _wrapper_device_link(
         cc_toolchain,
         objects,
         common,
+        use_param_file,
         pic = False,
         rdc = False,
         dlto = False):
@@ -116,6 +142,9 @@ def _wrapper_device_link(
     images = []
     obj_args = actions.args()
     obj_args.add_all(objects)
+    if use_param_file:
+        obj_args.use_param_file("--options-file=%s")
+
     if len(common.cuda_archs_info.arch_specs) == 0:
         fail('cuda toolchain "' + cuda_toolchain.name + '" is configured to enable feature supports_wrapper_device_link,' +
              " at least one cuda arch must be specified.")
