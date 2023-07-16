@@ -201,7 +201,8 @@ def _wrapper_device_link(
         system_includes = common.system_includes,
         quote_includes = common.quote_includes,
         # suppress cuda mode as c++ mode
-        host_compile_flags = common.host_compile_flags + ["-x", "c++"],
+        compile_flags = ["-x", "c++"],
+        host_compile_flags = common.host_compile_flags,
     )
     ret = compile(ctx, cuda_toolchain, cc_toolchain, srcs = [fatbin_c], common = compile_common, pic = pic, rdc = rdc)
     return ret[0]
