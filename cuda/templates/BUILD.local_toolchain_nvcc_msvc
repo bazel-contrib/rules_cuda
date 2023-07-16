@@ -10,7 +10,7 @@ load(
 cuda_toolkit(
     name = "cuda-toolkit",
     bin2c = "%{bin2c_label}",
-    fatbinary = "%{bin2c_label}",
+    fatbinary = "%{fatbinary_label}",
     link_stub = "%{link_stub_label}",
     nvlink = "%{nvlink_label}",
     path = "%{cuda_path}",
