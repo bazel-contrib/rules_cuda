@@ -116,7 +116,8 @@ def _impl(ctx):
         ],
     )
 
-    supports_compiler_device_link_feature = feature(name = "supports_compiler_device_link")
+    # supports_compiler_device_link_feature = feature(name = "supports_compiler_device_link")
+    supports_compiler_device_link_feature = feature(name = "supports_wrapper_device_link")
 
     cuda_device_link_action = action_config(
         action_name = ACTION_NAMES.device_link,
@@ -153,7 +154,7 @@ def _impl(ctx):
             # "linker_input_flags",
             "compiler_output_flags",
             "nvcc_compile_env",
-            "supports_compiler_device_link",
+            "supports_wrapper_device_link",
         ],
     )
 

@@ -61,10 +61,10 @@ def detect_cuda_toolkit(repository_ctx):
         cuda_path = None
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
-    nvlink = "@rules_cuda//cuda/dummy:nvlink"
-    link_stub = "@rules_cuda//cuda/dummy:link.stub"
-    bin2c = "@rules_cuda//cuda/dummy:bin2c"
-    fatbinary = "@rules_cuda//cuda/dummy:fatbinary"
+    nvlink = Label("@rules_cuda//cuda/dummy:nvlink")
+    link_stub = Label("@rules_cuda//cuda/dummy:link.stub")
+    bin2c = Label("@rules_cuda//cuda/dummy:bin2c")
+    fatbinary = Label("@rules_cuda//cuda/dummy:fatbinary")
     if cuda_path != None:
         if repository_ctx.path(cuda_path + "/bin/nvlink" + bin_ext).exists:
             nvlink = str(Label("@local_cuda//:cuda/bin/nvlink{}".format(bin_ext)))
@@ -89,10 +89,10 @@ def detect_cuda_toolkit(repository_ctx):
         # this is extracted from `nvcc --version`
         nvcc_version_major = nvcc_version_major,
         nvcc_version_minor = nvcc_version_minor,
-        nvlink_label = nvlink,
-        link_stub_label = link_stub,
-        bin2c_label = bin2c,
-        fatbinary_label = fatbinary,
+        nvlink_label = str(nvlink),
+        link_stub_label = str(link_stub),
+        bin2c_label = str(bin2c),
+        fatbinary_label = str(fatbinary),
     )
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):

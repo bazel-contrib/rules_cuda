@@ -100,10 +100,10 @@ def _compiler_device_link(
     cmd = cuda_helper.get_command_line(cuda_feature_config, ACTION_NAMES.device_link, var)
     env = cuda_helper.get_environment_variables(cuda_feature_config, ACTION_NAMES.device_link, var)
     args = actions.args()
-    cuda_helper.args_add_all(cuda_toolchain.toolchain_identifier, args, cmd)
-    cuda_helper.args_add_all(cuda_toolchain.toolchain_identifier, args, objects)
+    cuda_helper.args_add_all(use_param_file, cuda_toolchain.toolchain_identifier, args, cmd)
+    cuda_helper.args_add_all(use_param_file, cuda_toolchain.toolchain_identifier, args, objects)
     if use_param_file:
-        cuda_helper.use_param_file(cuda_toolchain.toolchain_identifier, args)
+        cuda_helper.args_use_param_file(cuda_toolchain.toolchain_identifier, args)
 
     actions.run(
         executable = cuda_compiler,
@@ -141,10 +141,9 @@ def _wrapper_device_link(
     cubins = []
     images = []
     obj_args = actions.args()
-    cuda_helper.args_add_all("nvcc", obj_args, objects)
-    cuda_helper.use_param_file("nvcc", obj_args)
+    cuda_helper.args_add_all(use_param_file, "nvcc", obj_args, objects)
     if use_param_file:
-        cuda_helper.use_param_file("nvcc", "--options-file=%s")
+        cuda_helper.args_use_param_file("nvcc", obj_args)
 
     if len(common.cuda_archs_info.arch_specs) == 0:
         fail('cuda toolchain "' + cuda_toolchain.name + '" is configured to enable feature supports_wrapper_device_link,' +
@@ -161,14 +160,20 @@ def _wrapper_device_link(
 
             register_h = ctx.actions.declare_file("_dlink{suffix}/{0}/{0}_register_{1}.h".format(ctx.attr.name, arch, suffix = pic_suffix))
             cubin = ctx.actions.declare_file("_dlink{suffix}/{0}/{0}_{1}.cubin".format(ctx.attr.name, arch, suffix = pic_suffix))
+            args = ctx.actions.args()
+            cuda_helper.args_add_all(use_param_file, "nvcc", args, [
+                "--arch=" + arch,
+                "--register-link-binaries=" + register_h.path,
+                "--output-file=" + cubin.path,
+            ])
+            if use_param_file:
+                cuda_helper.args_use_param_file("nvcc", args)
             ctx.actions.run(
                 outputs = [register_h, cubin],
                 inputs = objects,
                 executable = cuda_toolkit.nvlink,
                 arguments = [
-                    "--arch=" + arch,
-                    "--register-link-binaries=" + register_h.path,
-                    "--output-file=" + cubin.path,
+                    args,
                     obj_args,
                 ],
                 mnemonic = "nvlink",
