@@ -19,11 +19,16 @@ def _cuda_objects_impl(ctx):
     for src in ctx.attr.srcs:
         src_files.extend(src[DefaultInfo].files.to_list())
 
+    transitive_objects = depset(transitive = [dep[CudaInfo].objects for dep in attr.deps if CudaInfo in dep])
+    transitive_rdc_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep])
+    transitive_pic_objects = depset(transitive = [dep[CudaInfo].pic_objects for dep in attr.deps if CudaInfo in dep])
+    transitive_rdc_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
+
     # outputs
-    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False))
-    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True))
-    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False))
-    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True))
+    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False), transitive = [transitive_objects])
+    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True), transitive = [transitive_rdc_objects])
+    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False), transitive = [transitive_pic_objects])
+    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True), transitive = [transitive_rdc_pic_objects])
 
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
