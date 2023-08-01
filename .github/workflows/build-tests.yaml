@@ -35,7 +35,7 @@ jobs:
           key: bazel-${{ matrix.cases.os }}-cuda-${{ matrix.cases.cuda-version }}-${{ hashFiles('.bazelversion') }}
 
       - name: Install CUDA (NVIDIA, Linux)
-        uses: Jimver/cuda-toolkit@v0.2.10
+        uses: Jimver/cuda-toolkit@v0.2.11
         if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'nvidia' }}
         with:
           cuda: ${{ matrix.cases.cuda-version }}
@@ -58,7 +58,7 @@ jobs:
           echo "CXX=g++-9" >> $GITHUB_ENV
 
       - name: Install CUDA (Windows)
-        uses: Jimver/cuda-toolkit@v0.2.10
+        uses: Jimver/cuda-toolkit@v0.2.11
         if: ${{ startsWith(matrix.cases.os, 'windows') }}
         with:
           cuda: ${{ matrix.cases.cuda-version }}
