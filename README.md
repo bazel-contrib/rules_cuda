@@ -77,6 +77,10 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
   Add the copts to all cuda compile actions.
 
+- `@rules_cuda//cuda:host_copts`
+
+  Add the copts to the host compiler.
+
 - `@rules_cuda//cuda:runtime`
 
   Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@local_cuda//:cuda_runtime_static` link the static cuda runtime.

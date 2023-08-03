@@ -275,7 +275,7 @@ def _create_common(ctx):
         link_flags.extend([o for o in attr.linkopts if _check_opts(o)])
     host_defines = []
     host_local_defines = [i for i in attr.host_local_defines]
-    host_compile_flags = [i for i in attr.host_copts]
+    host_compile_flags = attr._default_host_copts[BuildSettingInfo].value + [i for i in attr.host_copts]
     host_link_flags = []
     if hasattr(attr, "host_linkopts"):
         host_link_flags.extend([i for i in attr.host_linkopts])
