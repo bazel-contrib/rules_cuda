@@ -71,6 +71,11 @@ repeatable_string_flag(
     build_setting_default = "",
 )
 
+repeatable_string_flag(
+    name = "host_copts",
+    build_setting_default = "",
+)
+
 # Command line flag to specify the CUDA runtime. Use this target as CUDA
 # runtime dependency.
 #
