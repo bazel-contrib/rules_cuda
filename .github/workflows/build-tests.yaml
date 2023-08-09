@@ -65,6 +65,7 @@ jobs:
 
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
+          echo "build:clang --spawn_strategy=local" >> $HOME/.bazelrc
       - name: Install CURAND For LLVM
         uses: Jimver/cuda-toolkit@v0.2.11
         if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
