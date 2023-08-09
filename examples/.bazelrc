@@ -1,3 +1,5 @@
+common --announce_rc
+
 # Convenient flag shortcuts.
 build --flag_alias=enable_cuda=@rules_cuda//cuda:enable
 build --flag_alias=cuda_archs=@rules_cuda//cuda:archs
