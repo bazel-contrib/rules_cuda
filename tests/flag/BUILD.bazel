@@ -36,10 +36,17 @@ cuda_library_flag_test(
 )
 
 # https://docs.bazel.build/versions/main/user-manual.html#flag--compilation_mode
+#
+# NOTE: -O specify optimization level for **host** code only, see
+# https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#optimize-level-o
 cuda_library_c_dbg_flag_test(
     name = "cuda_library_c_dbg_flag_test",
     action_mnemonic = "CudaCompile",
-    contain_flags = ["-g"],
+    contain_flags = [
+        # gcc default to -O0 so bazel does not explicitly set the flag. Whereas nvcc defaults to -O3.
+        "-O0",
+        "-g",
+    ],
     target_compatible_with = ["@platforms//os:linux"],
     target_under_test = "@rules_cuda_examples//basic:kernel",
 )
@@ -48,8 +55,14 @@ cuda_library_c_fastbuild_flag_test(
     name = "cuda_library_c_fastbuild_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
+        # gcc default to -O0 so bazel does not explicitly set the flag. Whereas nvcc defaults to -O3.
+        "-O0",
         "--generate-line-info",
         "-g1",
+        # There is no -gmlt option (not merged) as claimed in bazel user manual
+        # https://codereview.appspot.com/4440072
+        # https://gcc.gnu.org/legacy-ml/gcc-patches/2011-04/msg02075.html
+        # "-Xcompiler -gmlt",
     ],
     not_contain_flags = ["-DNDEBUG"],
     target_compatible_with = ["@platforms//os:linux"],
@@ -74,7 +87,7 @@ cuda_library_c_dbg_flag_test(
     name = "cuda_library_c_dbg_dynamic_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/Od",
+        "-O0",
         "/Z7",
         "/MDd",
     ],
@@ -92,7 +105,7 @@ cuda_library_c_fastbuild_flag_test(
     name = "cuda_library_c_fastbuild_dynamic_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/Od",
+        "-O0",
         "/Z7",
         "/MD",
     ],
@@ -110,7 +123,7 @@ cuda_library_c_opt_flag_test(
     name = "cuda_library_c_opt_dynamic_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/O2",
+        "-O2",
         "/Oy-",
         "/MD",
         "-DNDEBUG",
@@ -128,7 +141,7 @@ cuda_library_c_dbg_static_msvcrt_flag_test(
     name = "cuda_library_c_dbg_static_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/Od",
+        "-O0",
         "/Z7",
         "/MTd",
     ],
@@ -146,7 +159,7 @@ cuda_library_c_fastbuild_static_msvcrt_flag_test(
     name = "cuda_library_c_fastbuild_static_msvcrt_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/Od",
+        "-O0",
         "/Z7",
         "/MT",
     ],
@@ -164,7 +177,7 @@ cuda_library_c_opt_static_msvcrt_flag_test(
     name = "cuda_library_c_opt_dynamic_static_flag_test",
     action_mnemonic = "CudaCompile",
     contain_flags = [
-        "/O2",
+        "-O2",
         "/Oy-",
         "/MT",
         "-DNDEBUG",
