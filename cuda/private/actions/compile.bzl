@@ -9,7 +9,8 @@ def compile(
         srcs,
         common,
         pic = False,
-        rdc = False):
+        rdc = False,
+        _prefix = "_objs"):
     """Perform CUDA compilation, return compiled object files.
 
     Notes:
@@ -26,6 +27,7 @@ def compile(
         common: A cuda common object. Can be obtained with `cuda_helper.create_common(ctx)`
         pic: Whether the `srcs` are compiled for position independent code.
         rdc: Whether the `srcs` are compiled for relocatable device code.
+        _prefix: DON'T USE IT! Prefix of the output dir. Exposed for device link to redirect the output.
 
     Returns:
         An compiled object `File`.
@@ -53,13 +55,13 @@ def compile(
         filename = None
         filename = cuda_helper.get_artifact_name(cuda_toolchain, artifact_category_name, basename)
 
-        # Objects are placed in _objs/<tgt_name>/<filename>.
+        # Objects are placed in <_prefix>/<tgt_name>/<filename>.
         # For files with the same basename, say srcs = ["kernel.cu", "foo/kernel.cu", "bar/kernel.cu"], we get
-        # _objs/<tgt_name>/0/kernel.<ext>, _objs/<tgt_name>/1/kernel.<ext>, _objs/<tgt_name>/2/kernel.<ext>.
+        # <_prefix>/<tgt_name>/0/kernel.<ext>, <_prefix>/<tgt_name>/1/kernel.<ext>, <_prefix>/<tgt_name>/2/kernel.<ext>.
         # Otherwise, the index is not presented.
         if basename_counter[basename] > 1:
             filename = "{}/{}".format(basename_index, filename)
-        obj_file = actions.declare_file("_objs/{}/{}".format(ctx.attr.name, filename))
+        obj_file = actions.declare_file("{}/{}/{}".format(_prefix, ctx.attr.name, filename))
         ret.append(obj_file)
 
         var = cuda_helper.create_compile_variables(
