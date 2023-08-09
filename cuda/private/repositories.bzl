@@ -67,13 +67,13 @@ def detect_cuda_toolkit(repository_ctx):
     fatbinary = "@rules_cuda//cuda/dummy:fatbinary"
     if cuda_path != None:
         if repository_ctx.path(cuda_path + "/bin/nvlink" + bin_ext).exists:
-            nvlink = ":cuda/bin/nvlink{}".format(bin_ext)
+            nvlink = str(Label("@local_cuda//:cuda/bin/nvlink{}".format(bin_ext)))
         if repository_ctx.path(cuda_path + "/bin/crt/link.stub").exists:
-            link_stub = ":cuda/bin/crt/link.stub"
+            link_stub = str(Label("@local_cuda//:cuda/bin/crt/link.stub"))
         if repository_ctx.path(cuda_path + "/bin/bin2c" + bin_ext).exists:
-            bin2c = ":cuda/bin/bin2c{}".format(bin_ext)
+            bin2c = str(Label("@local_cuda//:cuda/bin/bin2c{}".format(bin_ext)))
         if repository_ctx.path(cuda_path + "/bin/fatbinary" + bin_ext).exists:
-            fatbinary = ":cuda/bin/fatbinary{}".format(bin_ext)
+            fatbinary = str(Label("@local_cuda//:cuda/bin/fatbinary{}".format(bin_ext)))
 
     nvcc_version_major = -1
     nvcc_version_minor = -1
