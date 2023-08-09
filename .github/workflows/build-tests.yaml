@@ -21,7 +21,7 @@ jobs:
               cuda-version: "11.6.2",
               source: "nvidia",
               toolchain: "llvm",
-              toolchain-version: "16"
+              toolchain-version: "16",
             }
           - {
               os: "ubuntu-22.04",
@@ -71,7 +71,7 @@ jobs:
         if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
         with:
           cuda: ${{ matrix.cases.cuda-version }}
-          sub-packages: '["nvcc", "cudart-dev"]'  # avoid full cuda install
+          sub-packages: '["nvcc", "cudart-dev"]' # avoid full cuda install
           non-cuda-sub-packages: '["libcurand-dev"]'
           method: network
       - name: Install CUDA (Ubuntu)
