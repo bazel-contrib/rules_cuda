@@ -1,3 +1,5 @@
+common --announce_rc
+
 # Convenient flag shortcuts.
 build --flag_alias=enable_cuda=@rules_cuda//cuda:enable
 build --flag_alias=cuda_archs=@rules_cuda//cuda:archs
@@ -9,7 +11,7 @@ build --enable_cuda=True
 
 # Use --config=clang to build with clang instead of gcc and nvcc.
 build:clang --repo_env=CC=clang
-build:clang --//cuda:compiler=clang
+build:clang --@rules_cuda//cuda:compiler=clang
 
 # https://github.com/bazel-contrib/rules_cuda/issues/1
 build --ui_event_filters=-INFO

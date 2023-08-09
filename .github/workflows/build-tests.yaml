@@ -17,6 +17,13 @@ jobs:
           - { os: "ubuntu-20.04", cuda-version: "11.2.2", source: "nvidia" }
           - { os: "ubuntu-20.04", cuda-version: "11.6.2", source: "nvidia" }
           - {
+              os: "ubuntu-20.04",
+              cuda-version: "11.6.2",
+              source: "nvidia",
+              toolchain: "llvm",
+              toolchain-version: "16",
+            }
+          - {
               os: "ubuntu-22.04",
               cuda-version: "11.5.1-1ubuntu1",
               source: "ubuntu",
@@ -47,6 +54,26 @@ jobs:
           tree ${CUDA_PATH}/bin
           tree ${CUDA_PATH}/include
           tree ${CUDA_PATH}/lib64
+      - name: Install LLVM ${{ matrix.cases.toolchain-version }}
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh ${{ matrix.cases.toolchain-version }}
+          sudo ln -sf /usr/bin/clang-${{ matrix.cases.toolchain-version }} /usr/bin/clang
+          clang --version
+
+          echo "build --config=clang" > $HOME/.bazelrc
+          echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
+          echo "build:clang --spawn_strategy=local" >> $HOME/.bazelrc
+      - name: Install CURAND For LLVM
+        uses: Jimver/cuda-toolkit@v0.2.11
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
+        with:
+          cuda: ${{ matrix.cases.cuda-version }}
+          sub-packages: '["nvcc", "cudart-dev"]' # avoid full cuda install
+          non-cuda-sub-packages: '["libcurand-dev"]'
+          method: network
       - name: Install CUDA (Ubuntu)
         if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'ubuntu' }}
         run: |
