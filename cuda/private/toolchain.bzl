@@ -38,9 +38,42 @@ cuda_toolchain = rule(
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
 )
-
 CPP_TOOLCHAIN_TYPE = "@bazel_tools//tools/cpp:toolchain_type"
 CUDA_TOOLCHAIN_TYPE = "//cuda:toolchain_type"
+
+def _remote_cuda_impl(repository_ctx):
+    redist = repository_ctx.read(Label(repository_ctx.attr.json_path))
+    repos = json.decode(redist)
+    repos_to_define = dict()
+    base_url = repository_ctx.attr.base_url
+
+    for key in repos:
+        if key == "release_date":
+            continue
+        for arch in repos[key]:
+            if arch == "name" or arch == "license" or arch == "version":
+                continue
+            repos_to_define[key + "-%s" % arch] = {
+                "repo_rule": "http_archive",
+                "name": key + "-%s" % arch,
+                "sha256": repos[key][arch]["sha256"],
+                "url": base_url + repos[key][arch]["relative_path"],
+            }
+
+    repo_defs = "\n".join(["    maybe(name = \"{}\", build_file = \"@rules_cuda//cuda:templates/BUILD.remote_nvcc\", sha256 = \"{}\", repo_rule = {}, urls = [\"{}\"], strip_prefix=\"{}\")\n".format(repos_to_define[repo_name]["name"], repos_to_define[repo_name]["sha256"], repos_to_define[repo_name]["repo_rule"], repos_to_define[repo_name]["url"], repos_to_define[repo_name]["url"].split("/")[-1][:-7]) for repo_name in repos_to_define])
+
+    repository_ctx.template("repositories.bzl", Label("//cuda:templates/BUILD.repo_template"), substitutions = {"%{repos}": repo_defs}, executable = False)
+
+    repository_ctx.symlink(Label("//cuda:runtime/BUILD.remote_cuda"), "BUILD.bazel")
+    repository_ctx.symlink(Label("//cuda:templates/BUILD.remote_toolchain_nvcc"), "toolchain/BUILD.bazel")
+
+_remote_cuda = repository_rule(
+    implementation = _remote_cuda_impl,
+    attrs = {
+        "base_url": attr.string(default = "https://developer.download.nvidia.com/compute/cuda/redist/"),
+        "json_path": attr.string(mandatory = True),
+    },
+)
 
 # buildifier: disable=unused-variable
 def use_cpp_toolchain(mandatory = True):
@@ -76,6 +109,24 @@ def find_cuda_toolkit(ctx):
         A CudaToolkitInfo.
     """
     return ctx.toolchains[CUDA_TOOLCHAIN_TYPE].cuda_toolkit[CudaToolkitInfo]
+
+CUDA_VERSIONS_JSON = {
+    "11.4.4": "//cuda:redistrib/redistrib_11.4.4.json",
+    "11.5.2": "//cuda:redistrib/redistrib_11.5.2.json",
+    "11.6.2": "//cuda:redistrib/redistrib_11.6.2.json",
+    "11.7.1": "//cuda:redistrib/redistrib_11.7.1.json",
+    "11.8.0": "//cuda:redistrib/redistrib_11.8.0.json",
+    "12.0.0": "//cuda:redistrib/redistrib_12.0.0.json",
+    "12.0.1": "//cuda:redistrib/redistrib_12.0.1.json",
+    "12.1.0": "//cuda:redistrib/redistrib_12.1.0.json",
+}
+
+def register_cuda_toolchains(name = "remote_cuda_toolchain", version = "12.0.0", cuda_versions = CUDA_VERSIONS_JSON):
+    _remote_cuda(name = name, json_path = cuda_versions[version])
+
+    native.register_toolchains(
+        "@%s//toolchain:nvcc-local-toolchain" % name,
+    )
 
 # buildifier: disable=unnamed-macro
 def register_detected_cuda_toolchains():

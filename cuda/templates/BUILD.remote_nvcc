@@ -1,0 +1,49 @@
+exports_files(
+    [
+        "bin/nvcc",
+        "bin/nvcc.profile",
+        "bin/nvlink",
+        "bin/crt/link.stub",
+        "bin/bin2c",
+        "bin/fatbinary",
+        "bin/cudafe++",
+        "bin/ptxas",
+        "nvvm/bin/cicc",
+        "lib/libcudart.so",
+        "lib/libcublasLt.so",
+        "lib/libcublas.so",
+        "lib/libcudadevrt.a",
+        "lib/stubs/libcuda.so",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "includes",
+    srcs = glob(
+        ["include/**", "nvvm/include/**"],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "nvvm",
+    srcs = glob(
+       ["nvvm/**"],
+       exclude = ["nvvm/libnvvm-samples"],
+       allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "hdrs",
+    hdrs = glob(
+        ["include/**", "nvvm/include/**"],
+        allow_empty = True,
+    ),
+    includes = ["include"],
+    deps = ["@libcudacxx"],
+    visibility = ["//visibility:public"],
+)

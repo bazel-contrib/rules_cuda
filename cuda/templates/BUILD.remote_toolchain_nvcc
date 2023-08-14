@@ -1,0 +1,63 @@
+# This becomes the BUILD file for @local_cuda//toolchain/ under Linux.
+
+load(
+    "@rules_cuda//cuda:defs.bzl",
+    "cuda_toolchain",
+    "cuda_toolkit",
+    cuda_toolchain_config = "cuda_toolchain_config_nvcc",
+)
+
+cuda_toolkit(
+    name = "cuda-toolkit",
+    bin2c = "@cuda_nvcc-linux-x86_64//:bin/bin2c",
+    fatbinary = "@cuda_nvcc-linux-x86_64//:bin/bin2c",
+    link_stub = "@cuda_nvcc-linux-x86_64//:bin/crt/link.stub",
+    nvlink = "@cuda_nvcc-linux-x86_64//:bin/nvlink",
+    path = "/doesNotExist",
+    version = "11.7",
+)
+
+cuda_toolchain_config(
+    name = "nvcc-local-config",
+    cuda_toolkit = ":cuda-toolkit",
+    nvcc_version_major = 11,
+    nvcc_version_minor = 7,
+    toolchain_identifier = "nvcc",
+)
+
+filegroup(
+    name = "nvcc-compiler-files",
+    srcs = [
+        "@cuda_cudart-linux-x86_64//:includes",
+        "@cuda_nvcc-linux-x86_64//:bin/bin2c",
+        "@cuda_nvcc-linux-x86_64//:bin/crt/link.stub",
+        "@cuda_nvcc-linux-x86_64//:bin/nvcc",
+        "@cuda_nvcc-linux-x86_64//:bin/nvcc.profile",
+        "@cuda_nvcc-linux-x86_64//:bin/nvlink",
+        "@cuda_nvcc-linux-x86_64//:bin/ptxas",
+        "@cuda_nvcc-linux-x86_64//:bin/fatbinary",
+        "@cuda_nvcc-linux-x86_64//:bin/cudafe++",
+        "@cuda_nvcc-linux-x86_64//:includes",
+        "@cuda_nvcc-linux-x86_64//:nvvm",
+    ],
+)
+
+cuda_toolchain(
+    name = "nvcc-local",
+    compiler_executable = "external/cuda_nvcc-linux-x86_64/bin/nvcc",
+    compiler_files = ":nvcc-compiler-files",
+    toolchain_config = ":nvcc-local-config",
+)
+
+toolchain(
+    name = "nvcc-local-toolchain",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    toolchain = ":nvcc-local",
+    toolchain_type = "@rules_cuda//cuda:toolchain_type",
+    visibility = ["//visibility:public"],
+)
