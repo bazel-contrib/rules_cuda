@@ -149,14 +149,14 @@ cc_import_versioned_sos(
 cc_import(
     name = "cublas_lib",
     interface_library = "cuda/lib/x64/cublas.lib",
-    shared_library = "cuda/bin/cublas64_" + cuda_package_version("libcublas") + ".dll" ,
+    shared_library = "cuda/bin/cublas64_" + cuda_package_version("libcublas") + ".dll",
     target_compatible_with = ["@platforms//os:windows"],
 )
 
 cc_import(
     name = "cublasLt_lib",
     interface_library = "cuda/lib/x64/cublasLt.lib",
-    shared_library = "cuda/bin/cublasLt64_" + cuda_package_version("libcublas") + ".dll" ,
+    shared_library = "cuda/bin/cublasLt64_" + cuda_package_version("libcublas") + ".dll",
     target_compatible_with = ["@platforms//os:windows"],
 )
 

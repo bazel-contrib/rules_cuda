@@ -79,7 +79,7 @@ def detect_cuda_toolkit(repository_ctx):
     if cuda_path == "" and repository_ctx.attr.cuda_version != "":
         cuda_path = None
         system_cuda_path = None
-        if system_cuda_path == None :
+        if system_cuda_path == None:
             system_cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
         if system_cuda_path == None:
             ptxas_path = repository_ctx.which("ptxas")
