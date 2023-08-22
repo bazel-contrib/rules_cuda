@@ -105,7 +105,7 @@ def detect_cuda_toolkit(repository_ctx):
             if cuda_path == None:
                 print("cuda set version not support")
     else:
-        print("------------------------s")
+        print("special cuda path : ")
         print(cuda_path)
 
     if cuda_path == None:
@@ -287,7 +287,8 @@ local_cuda = repository_rule(
 def rules_cuda_dependencies(cuda_version = None, toolkit_path = None):
     """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
 
-        Args:
+    Args:
+        cuda_version: Optionally specify CUDA toolkit version from system. If not exit, it will be detected automatically.
         toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
     """
     maybe(
