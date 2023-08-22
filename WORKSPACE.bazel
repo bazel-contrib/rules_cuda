@@ -7,7 +7,7 @@ local_repository(
 
 load("//cuda:repositories.bzl", "register_detected_cuda_toolchains", "rules_cuda_dependencies")
 
-rules_cuda_dependencies()
+rules_cuda_dependencies("11.8")
 
 register_detected_cuda_toolchains()
 
