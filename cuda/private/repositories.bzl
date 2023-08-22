@@ -25,7 +25,6 @@ def _get_nvcc_version(repository_ctx, cuda_path):
             return version[:2]
     return [-1, -1]
 
-
 CUDA_SUB_PACKAGE = [
     "libcurand",
     "libcublas",
@@ -37,29 +36,28 @@ CUDA_SUB_PACKAGE = [
     "cuda_nvprof",
 ]
 
-
 def cuda_subpackage_version(repository_ctx, cuda_path):
     cuda_sub_version = "def cuda_package_version(package = None):"
-    if _is_windows(repository_ctx) :
+    if _is_windows(repository_ctx):
         cuda_version = repository_ctx.path(cuda_path).basename[1:]
         cuda_major_version = cuda_version.split(".")[0]
         cuda_minjor_version = cuda_version.split(".")[1]
         if cuda_major_version <= "10":
             for sub_package in CUDA_SUB_PACKAGE:
-                cuda_sub_version += "\n    if package == " +  "\"" + sub_package + "\":" + "\n          return str(" + cuda_major_version 
-                if sub_package == "cuda_cudart" :
+                cuda_sub_version += "\n    if package == " + "\"" + sub_package + "\":" + "\n          return str(" + cuda_major_version
+                if sub_package == "cuda_cudart":
                     cuda_sub_version += cuda_minjor_version
                 cuda_sub_version += ")"
 
         else:
             cuda_sub_ver = repository_ctx.read(cuda_path + "/version.json")
             for sub_package in CUDA_SUB_PACKAGE:
-                cuda_sub_version += "\n    if package == " +  "\"" + sub_package + "\":" + "\n          return str(" + str(json.decode(cuda_sub_ver)[sub_package]["version"].split(".")[0])
+                cuda_sub_version += "\n    if package == " + "\"" + sub_package + "\":" + "\n          return str(" + str(json.decode(cuda_sub_ver)[sub_package]["version"].split(".")[0])
                 if sub_package == "cuda_cudart" and str(json.decode(cuda_sub_ver)[sub_package]["version"].split(".")[0]) == "11":
                     cuda_sub_version += "0"
                 cuda_sub_version += ")"
     else:
-        cuda_sub_version +=  "    return \"11\""
+        cuda_sub_version += "    return \"11\""
     return cuda_sub_version
 
 def detect_cuda_toolkit(repository_ctx):
@@ -116,9 +114,6 @@ def detect_cuda_toolkit(repository_ctx):
                     cuda_path = None
             if cuda_path == None:
                 print("cuda set version not support")
-    else:
-        print("special cuda path : ")
-        print(cuda_path)
 
     if cuda_path == None or cuda_path == "":
         cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
@@ -159,7 +154,7 @@ def detect_cuda_toolkit(repository_ctx):
 
     if cuda_path != None:
         nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, cuda_path)
-    else :
+    else:
         fail()
 
     cuda_sub_version = cuda_subpackage_version(repository_ctx, cuda_path)
@@ -202,7 +197,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     else:
         repository_ctx.file("BUILD")  # Empty file
         defs_bzl_content += defs_if_local_cuda % "if_false"
-    cuda_sub_version= cuda.sub_version
+    cuda_sub_version = cuda.sub_version
     defs_bzl_content += cuda_sub_version
     repository_ctx.file("defs.bzl", defs_bzl_content)
 
@@ -295,7 +290,6 @@ local_cuda = repository_rule(
     # remotable = True,
 )
 
-
 def rules_cuda_dependencies(cuda_version = None, toolkit_path = None):
     """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
 
@@ -324,4 +318,3 @@ def rules_cuda_dependencies(cuda_version = None, toolkit_path = None):
     )
 
     local_cuda(name = "local_cuda", cuda_version = cuda_version, toolkit_path = toolkit_path)
-
