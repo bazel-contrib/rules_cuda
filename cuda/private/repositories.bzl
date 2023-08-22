@@ -103,7 +103,7 @@ def detect_cuda_toolkit(repository_ctx):
             if cuda_path == None and system_cuda_path != None:
                 # system cuda path /usr/local/cuda -> system cuda dir : /usr/local
                 system_cuda_dir = str(repository_ctx.path(system_cuda_path).dirname)
-                
+                  
                 #then get /usr/local/cuda-version
                 cuda_path = system_cuda_dir + "/cuda-" + repository_ctx.attr.cuda_version
                 if not repository_ctx.path(cuda_path).exists:

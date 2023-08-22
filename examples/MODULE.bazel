@@ -11,10 +11,8 @@ local_path_override(
 )
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-
 cuda.local_toolchain(
     name = "local_cuda",
     toolkit_path = "",
 )
-
 use_repo(cuda, "local_cuda")
