@@ -108,7 +108,7 @@ def detect_cuda_toolkit(repository_ctx):
         print("special cuda path : ")
         print(cuda_path)
 
-    if cuda_path == None:
+    if cuda_path == None or cuda_path == "":
         cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
     if cuda_path == None:
         ptxas_path = repository_ctx.which("ptxas")
