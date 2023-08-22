@@ -47,7 +47,7 @@ def cuda_subpackage_version(repository_ctx, cuda_path):
                 cuda_version += "0"
             cuda_version += ")"
     else:
-        cuda_version +=  "    return 11"
+        cuda_version +=  "    return \"11\""
     return cuda_version
 
 def detect_cuda_toolkit(repository_ctx):
