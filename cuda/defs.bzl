@@ -3,7 +3,7 @@ Core rules for building CUDA projects.
 """
 
 load("//cuda/private:providers.bzl", _CudaArchsInfo = "CudaArchsInfo", _cuda_archs = "cuda_archs")
-load("//cuda/private:os_helpers.bzl", _cc_import_versioned_sos = "cc_import_versioned_sos", _win_share_library_provided_runtime = "win_share_library_provided_runtime" , _if_linux = "if_linux", _if_windows = "if_windows")
+load("//cuda/private:os_helpers.bzl", _cc_import_versioned_sos = "cc_import_versioned_sos", _if_linux = "if_linux", _if_windows = "if_windows",  _win_share_library_provided_runtime = "win_share_library_provided_runtime")
 load("//cuda/private:rules/cuda_objects.bzl", _cuda_objects = "cuda_objects")
 load("//cuda/private:rules/cuda_library.bzl", _cuda_library = "cuda_library")
 load("//cuda/private:rules/cuda_toolkit.bzl", _cuda_toolkit = "cuda_toolkit")

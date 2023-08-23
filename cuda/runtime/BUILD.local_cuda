@@ -50,7 +50,6 @@ cc_library(
     target_compatible_with = ["@platforms//os:linux"],
 )
 
-
 win_share_library_provided_runtime(
     name = "cudart",
     system_provided = dll_runtime_system_provided(),

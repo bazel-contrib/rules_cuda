@@ -36,7 +36,7 @@ def cc_import_versioned_sos(name, shared_library):
         deps = [":%s" % paths.basename(p) for p in so_paths],
     )
 
-def win_share_library_provided_runtime(name, system_provided = False):
+def win_share_library_provided_runtime(name, system_provided = True):
     """Creates a cc_library that depends on all versioned .so files with the given prefix.
 
     If <shared_library> is path/to/foo.so, and it is a symlink to foo.so.<version>,
@@ -49,7 +49,7 @@ def win_share_library_provided_runtime(name, system_provided = False):
     """
     so_paths = native.glob(["cuda/bin/{}64_*.dll".format(name)])
     interface_library = "cuda/lib/x64/{}.lib".format(name)
-    if len(so_paths) == 1 and system_provided:
+    if len(so_paths) == 1 and not system_provided:
         native.cc_import(
             name = name + "_lib",
             interface_library = interface_library,

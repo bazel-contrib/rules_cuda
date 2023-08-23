@@ -251,7 +251,7 @@ local_cuda = repository_rule(
     attrs = {
         "cuda_version": attr.string(mandatory = False),
         "toolkit_path": attr.string(mandatory = False),
-        "dll_runtime_system_provided" : attr.bool(mandatory = False),
+        "dll_runtime_system_provided": attr.bool(mandatory = False),
     },
     configure = True,
     local = True,
@@ -259,7 +259,7 @@ local_cuda = repository_rule(
     # remotable = True,
 )
 
-def rules_cuda_dependencies(toolkit_path = None, cuda_version = None, dll_runtime_system_provided = False):
+def rules_cuda_dependencies(toolkit_path = None, cuda_version = None, dll_runtime_system_provided = True):
     """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
 
     Args:
