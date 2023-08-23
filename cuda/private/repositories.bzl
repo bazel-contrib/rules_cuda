@@ -37,7 +37,7 @@ CUDA_SUB_PACKAGE = [
 ]
 
 FUNCTION_HEAD = "def cuda_package_version(package = None):"
-RETURN_VERSION ="\n    if package == \"{sub_package}\":\n        return str({version})"
+RETURN_VERSION = "\n    if package == \"{sub_package}\":\n        return str({version})"
 
 def cuda_subpackage_version(repository_ctx, cuda_path):
     cuda_sub_version = FUNCTION_HEAD
