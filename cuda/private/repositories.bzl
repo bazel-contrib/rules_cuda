@@ -41,7 +41,47 @@ def detect_cuda_toolkit(repository_ctx):
         A struct contains the information of CUDA Toolkit.
     """
     cuda_path = repository_ctx.attr.toolkit_path
-    if cuda_path == "":
+    if cuda_path == "" and repository_ctx.attr.cuda_version != "":
+        cuda_path = None
+        system_cuda_path = None
+        if system_cuda_path == None:
+            system_cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
+        if system_cuda_path == None:
+            ptxas_path = repository_ctx.which("ptxas")
+            if ptxas_path:
+                # ${CUDA_PATH}/bin/ptxas
+                system_cuda_path = str(ptxas_path.dirname.dirname)
+
+        if _is_windows(repository_ctx) and repository_ctx.attr.cuda_version != None:
+            if cuda_path == None and system_cuda_path != None:
+                system_cuda_dir = str(repository_ctx.path(system_cuda_path).dirname)
+                cuda_path = system_cuda_dir + "/v" + repository_ctx.attr.cuda_version
+                if not repository_ctx.path(cuda_path).exists:
+                    cuda_path = None
+            if cuda_path == None:
+                cuda_default_prefix = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v"
+                cuda_path = cuda_default_prefix + repository_ctx.attr.cuda_version
+                if not repository_ctx.path(cuda_path).exists:
+                    cuda_path = None
+            if cuda_path == None:
+                print("cuda set version not support")
+        if _is_linux(repository_ctx) and repository_ctx.attr.cuda_version != None:
+            if cuda_path == None and system_cuda_path != None:
+                # system cuda path /usr/local/cuda -> system cuda dir : /usr/local
+                system_cuda_dir = str(repository_ctx.path(system_cuda_path).dirname)
+                cuda_path = system_cuda_dir + "/cuda-" + repository_ctx.attr.cuda_version
+                if not repository_ctx.path(cuda_path).exists:
+                    cuda_path = None
+            if cuda_path == None:
+                cuda_default_prefix = "/usr/local/cuda-"
+                cuda_path = cuda_default_prefix + repository_ctx.attr.cuda_version
+                if not repository_ctx.path(cuda_path).exists:
+                    print("cuda set version not support")
+                    cuda_path = None
+            if cuda_path == None:
+                print("cuda set version not support")
+
+    if cuda_path == None or cuda_path == "":
         cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
     if cuda_path == None:
         ptxas_path = repository_ctx.which("ptxas")
@@ -80,10 +120,14 @@ def detect_cuda_toolkit(repository_ctx):
 
     if cuda_path != None:
         nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, cuda_path)
+    else:
+        fail("cuda path not found in this system")
 
+    dll_runtime_system_provided = repository_ctx.attr.dll_runtime_system_provided
     return struct(
         path = cuda_path,
         # this should have been extracted from cuda.h, reuse nvcc for now
+        dll_runtime_system_provided = dll_runtime_system_provided,
         version_major = nvcc_version_major,
         version_minor = nvcc_version_minor,
         # this is extracted from `nvcc --version`
@@ -118,6 +162,11 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     else:
         repository_ctx.file("BUILD")  # Empty file
         defs_bzl_content += defs_if_local_cuda % "if_false"
+    defs_if_dll_runtime_system_provided = "def  dll_runtime_system_provided():\n    return %s\n"
+    if cuda.dll_runtime_system_provided:
+        defs_bzl_content += defs_if_dll_runtime_system_provided % "True"
+    else:
+        defs_bzl_content += defs_if_dll_runtime_system_provided % "False"
     repository_ctx.file("defs.bzl", defs_bzl_content)
 
     # Generate @local_cuda//toolchain/BUILD
@@ -199,17 +248,22 @@ def _local_cuda_impl(repository_ctx):
 
 local_cuda = repository_rule(
     implementation = _local_cuda_impl,
-    attrs = {"toolkit_path": attr.string(mandatory = False)},
+    attrs = {
+        "cuda_version": attr.string(mandatory = False),
+        "toolkit_path": attr.string(mandatory = False),
+        "dll_runtime_system_provided": attr.bool(mandatory = False),
+    },
     configure = True,
     local = True,
     environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "BAZEL_LLVM"],
     # remotable = True,
 )
 
-def rules_cuda_dependencies(toolkit_path = None):
+def rules_cuda_dependencies(toolkit_path = None, cuda_version = None, dll_runtime_system_provided = True):
     """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
 
     Args:
+        cuda_version: Optionally specify CUDA toolkit version from system. If not exit, it will be detected automatically.
         toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
     """
     maybe(
@@ -232,4 +286,4 @@ def rules_cuda_dependencies(toolkit_path = None):
         ],
     )
 
-    local_cuda(name = "local_cuda", toolkit_path = toolkit_path)
+    local_cuda(name = "local_cuda", toolkit_path = toolkit_path, cuda_version = cuda_version, dll_runtime_system_provided = dll_runtime_system_provided)
