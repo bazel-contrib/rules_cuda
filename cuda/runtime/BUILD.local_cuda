@@ -1,5 +1,5 @@
-load("@rules_cuda//cuda:defs.bzl", "cc_import_versioned_sos", "if_linux", "if_windows")
-load(":defs.bzl", "cuda_package_version")
+load("@rules_cuda//cuda:defs.bzl", "cc_import_versioned_sos", "if_linux", "if_windows", "win_share_library_provided_runtime")
+load(":defs.bzl", "dll_runtime_system_provided")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -50,11 +50,10 @@ cc_library(
     target_compatible_with = ["@platforms//os:linux"],
 )
 
-cc_import(
-    name = "cudart_lib",
-    interface_library = "cuda/lib/x64/cudart.lib",
-    shared_library = "cuda/bin/cudart64_" + cuda_package_version("cuda_cudart") + ".dll",
-    target_compatible_with = ["@platforms//os:windows"],
+
+win_share_library_provided_runtime(
+    name = "cudart",
+    system_provided = dll_runtime_system_provided(),
 )
 
 cc_import(
@@ -146,18 +145,14 @@ cc_import_versioned_sos(
     shared_library = "cuda/lib64/libcublasLt.so",
 )
 
-cc_import(
-    name = "cublas_lib",
-    interface_library = "cuda/lib/x64/cublas.lib",
-    shared_library = "cuda/bin/cublas64_" + cuda_package_version("libcublas") + ".dll",
-    target_compatible_with = ["@platforms//os:windows"],
+win_share_library_provided_runtime(
+    name = "cublas",
+    system_provided = dll_runtime_system_provided(),
 )
 
-cc_import(
-    name = "cublasLt_lib",
-    interface_library = "cuda/lib/x64/cublasLt.lib",
-    shared_library = "cuda/bin/cublasLt64_" + cuda_package_version("libcublas") + ".dll",
-    target_compatible_with = ["@platforms//os:windows"],
+win_share_library_provided_runtime(
+    name = "cublasLt",
+    system_provided = dll_runtime_system_provided(),
 )
 
 cc_library(
@@ -303,11 +298,9 @@ cc_import_versioned_sos(
     shared_library = "cuda/lib64/libcurand.so",
 )
 
-cc_import(
-    name = "curand_lib",
-    interface_library = "cuda/lib/x64/curand.lib",
-    shared_library = "cuda/bin/curand64_" + cuda_package_version("libcurand") + ".dll",
-    target_compatible_with = ["@platforms//os:windows"],
+win_share_library_provided_runtime(
+    name = "curand",
+    system_provided = dll_runtime_system_provided(),
 )
 
 cc_library(
@@ -398,11 +391,9 @@ cc_import_versioned_sos(
     shared_library = "cuda/lib64/libcusolver.so",
 )
 
-cc_import(
-    name = "cusolver_lib",
-    interface_library = "cuda/lib/x64/cusolver.lib",
-    shared_library = "cuda/bin/cusolver64_" + cuda_package_version("libcusolver") + ".dll",
-    target_compatible_with = ["@platforms//os:windows"],
+win_share_library_provided_runtime(
+    name = "cusolver",
+    system_provided = dll_runtime_system_provided(),
 )
 
 cc_library(
@@ -422,11 +413,9 @@ cc_import_versioned_sos(
     shared_library = "cuda/lib64/libcusparse.so",
 )
 
-cc_import(
-    name = "cusparse_lib",
-    interface_library = "cuda/lib/x64/cusparse.lib",
-    shared_library = "cuda/bin/cusparse64_" + cuda_package_version("libcusparse") + ".dll",
-    target_compatible_with = ["@platforms//os:windows"],
+win_share_library_provided_runtime(
+    name = "cusparse",
+    system_provided = dll_runtime_system_provided(),
 )
 
 cc_library(
