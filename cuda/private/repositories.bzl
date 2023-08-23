@@ -102,7 +102,8 @@ def detect_cuda_toolkit(repository_ctx):
                 if not repository_ctx.path(cuda_path).exists:
                     cuda_path = None
             if cuda_path == None:
-                cuda_path = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v" + repository_ctx.attr.cuda_version
+                cuda_default_prefix = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v"
+                cuda_path = cuda_default_prefix + repository_ctx.attr.cuda_version
                 if not repository_ctx.path(cuda_path).exists:
                     cuda_path = None
             if cuda_path == None:
@@ -115,7 +116,8 @@ def detect_cuda_toolkit(repository_ctx):
                 if not repository_ctx.path(cuda_path).exists:
                     cuda_path = None
             if cuda_path == None:
-                cuda_path = "/usr/local/cuda-" + repository_ctx.attr.cuda_version
+                cuda_default_prefix = "/usr/local/cuda-"
+                cuda_path = cuda_default_prefix + repository_ctx.attr.cuda_version
                 if not repository_ctx.path(cuda_path).exists:
                     print("cuda set version not support")
                     cuda_path = None
