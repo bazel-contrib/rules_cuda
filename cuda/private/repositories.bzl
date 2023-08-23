@@ -36,28 +36,36 @@ CUDA_SUB_PACKAGE = [
     "cuda_nvprof",
 ]
 
+FUNCTION_HEAD = "def cuda_package_version(package = None):"
+RETURN_VERSION ="\n    if package == \"{sub_package}\":\n        return str({version})"
+
 def cuda_subpackage_version(repository_ctx, cuda_path):
-    cuda_sub_version = "def cuda_package_version(package = None):"
+    cuda_sub_version = FUNCTION_HEAD
     if _is_windows(repository_ctx):
         cuda_version = repository_ctx.path(cuda_path).basename[1:]
         cuda_major_version = cuda_version.split(".")[0]
         cuda_minjor_version = cuda_version.split(".")[1]
         if cuda_major_version <= "10":
             for sub_package in CUDA_SUB_PACKAGE:
-                cuda_sub_version += "\n    if package == " + "\"" + sub_package + "\":" + "\n          return str(" + cuda_major_version
+                version = str(cuda_major_version)
                 if sub_package == "cuda_cudart":
-                    cuda_sub_version += cuda_minjor_version
-                cuda_sub_version += ")"
-
+                    version = str(cuda_major_version) + str(cuda_minjor_version)
+                cuda_sub_version += RETURN_VERSION.format(
+                    sub_package = sub_package,
+                    version = version,
+                )
         else:
             cuda_sub_ver = repository_ctx.read(cuda_path + "/version.json")
             for sub_package in CUDA_SUB_PACKAGE:
-                cuda_sub_version += "\n    if package == " + "\"" + sub_package + "\":" + "\n          return str(" + str(json.decode(cuda_sub_ver)[sub_package]["version"].split(".")[0])
+                version = str(json.decode(cuda_sub_ver)[sub_package]["version"].split(".")[0])
                 if sub_package == "cuda_cudart" and str(json.decode(cuda_sub_ver)[sub_package]["version"].split(".")[0]) == "11":
-                    cuda_sub_version += "0"
-                cuda_sub_version += ")"
+                    version += "0"
+                cuda_sub_version += RETURN_VERSION.format(
+                    sub_package = sub_package,
+                    version = version,
+                )
     else:
-        cuda_sub_version += "    return \"11\""
+        cuda_sub_version += "    return \"None\""
     return cuda_sub_version
 
 def detect_cuda_toolkit(repository_ctx):
@@ -154,7 +162,7 @@ def detect_cuda_toolkit(repository_ctx):
     if cuda_path != None:
         nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, cuda_path)
     else:
-        fail()
+        fail("cuda path not found in this system")
 
     cuda_sub_version = cuda_subpackage_version(repository_ctx, cuda_path)
 
