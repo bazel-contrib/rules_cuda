@@ -141,4 +141,5 @@ cuda_library = rule(
     },
     fragments = ["cpp"],
     toolchains = use_cpp_toolchain() + use_cuda_toolchain(),
+    provides = [CcInfo],
 )
