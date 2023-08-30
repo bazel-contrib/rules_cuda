@@ -91,4 +91,5 @@ code and device link time optimization source files.""",
     },
     fragments = ["cpp"],
     toolchains = use_cpp_toolchain() + use_cuda_toolchain(),
+    provides = [DefaultInfo, OutputGroupInfo, CcInfo, CudaInfo],
 )
