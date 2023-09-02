@@ -1,0 +1,66 @@
+
+name: "Setup Build Environment"
+
+inputs:
+  case:
+    description: "case from workflow matrix"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+      - name: Install CUDA (NVIDIA, Linux)
+        uses: Jimver/cuda-toolkit@v0.2.11
+        if: ${{ !startsWith(inputs.case.os, 'windows') && inputs.case.source == 'nvidia' }}
+        with:
+          cuda: ${{ inputs.case.cuda-version }}
+          sub-packages: '["nvcc", "cudart-dev"]'
+          method: network
+      - name: Show bin, include, lib (NVIDIA, Linux)
+        if: ${{ !startsWith(inputs.case.os, 'windows') && inputs.case.source == 'nvidia' }}
+        run: |
+          tree ${CUDA_PATH}/bin
+          tree ${CUDA_PATH}/include
+          tree ${CUDA_PATH}/lib64
+      - name: Install LLVM ${{ inputs.case.toolchain-version }}
+        if: ${{ !startsWith(inputs.case.os, 'windows') && inputs.case.toolchain == 'llvm' }}
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh ${{ inputs.case.toolchain-version }}
+          sudo ln -sf /usr/bin/clang-${{ inputs.case.toolchain-version }} /usr/bin/clang
+          clang --version
+      - name: Install CURAND For LLVM
+        uses: Jimver/cuda-toolkit@v0.2.11
+        if: ${{ !startsWith(inputs.case.os, 'windows') && inputs.case.toolchain == 'llvm' }}
+        with:
+          cuda: ${{ inputs.case.cuda-version }}
+          sub-packages: '["nvcc", "cudart-dev"]' # avoid full cuda install
+          non-cuda-sub-packages: '["libcurand-dev"]'
+          method: network
+      - name: Install CUDA (Ubuntu)
+        if: ${{ !startsWith(inputs.case.os, 'windows') && inputs.case.source == 'ubuntu' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nvidia-cuda-dev=${{ inputs.case.cuda-version }} nvidia-cuda-toolkit=${{ inputs.case.cuda-version }} gcc-9 g++-9
+          export CC=gcc-9
+          export CXX=g++-9
+          echo "CC=gcc-9" >> $GITHUB_ENV
+          echo "CXX=g++-9" >> $GITHUB_ENV
+
+      - name: Install CUDA (Windows)
+        uses: Jimver/cuda-toolkit@v0.2.11
+        if: ${{ startsWith(inputs.case.os, 'windows') }}
+        with:
+          cuda: ${{ inputs.case.cuda-version }}
+          sub-packages: '["nvcc", "cudart"]'
+          method: network
+      - name: Show bin, include, lib64 (Windows)
+        if: ${{ startsWith(inputs.case.os, 'windows') }}
+        run: |
+          tree /F $env:CUDA_PATH/bin
+          tree /F $env:CUDA_PATH/include
+          tree /F $env:CUDA_PATH/lib/x64
+      - name: Set Visual Studio Environment (Windows)
+        if: ${{ startsWith(inputs.case.os, 'windows') }}
+        run: .github/actions/Set-VSEnv.ps1 2019

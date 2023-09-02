@@ -41,65 +41,16 @@ jobs:
           path: ~/.cache/bazel
           key: bazel-${{ matrix.cases.os }}-cuda-${{ matrix.cases.cuda-version }}-${{ hashFiles('.bazelversion') }}
 
-      - name: Install CUDA (NVIDIA, Linux)
-        uses: Jimver/cuda-toolkit@v0.2.11
-        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'nvidia' }}
+      - uses: ./.github/actions/set-build-env
         with:
-          cuda: ${{ matrix.cases.cuda-version }}
-          sub-packages: '["nvcc", "cudart-dev"]'
-          method: network
-      - name: Show bin, include, lib (NVIDIA, Linux)
-        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'nvidia' }}
-        run: |
-          tree ${CUDA_PATH}/bin
-          tree ${CUDA_PATH}/include
-          tree ${CUDA_PATH}/lib64
-      - name: Install LLVM ${{ matrix.cases.toolchain-version }}
+          case: ${{ matrix.cases }}
+
+      - name: Bazel build config for LLVM
         if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
         run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh ${{ matrix.cases.toolchain-version }}
-          sudo ln -sf /usr/bin/clang-${{ matrix.cases.toolchain-version }} /usr/bin/clang
-          clang --version
-
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
           echo "build:clang --spawn_strategy=local" >> $HOME/.bazelrc
-      - name: Install CURAND For LLVM
-        uses: Jimver/cuda-toolkit@v0.2.11
-        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
-        with:
-          cuda: ${{ matrix.cases.cuda-version }}
-          sub-packages: '["nvcc", "cudart-dev"]' # avoid full cuda install
-          non-cuda-sub-packages: '["libcurand-dev"]'
-          method: network
-      - name: Install CUDA (Ubuntu)
-        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'ubuntu' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y nvidia-cuda-dev=${{ matrix.cases.cuda-version }} nvidia-cuda-toolkit=${{ matrix.cases.cuda-version }} gcc-9 g++-9
-          export CC=gcc-9
-          export CXX=g++-9
-          echo "CC=gcc-9" >> $GITHUB_ENV
-          echo "CXX=g++-9" >> $GITHUB_ENV
-
-      - name: Install CUDA (Windows)
-        uses: Jimver/cuda-toolkit@v0.2.11
-        if: ${{ startsWith(matrix.cases.os, 'windows') }}
-        with:
-          cuda: ${{ matrix.cases.cuda-version }}
-          sub-packages: '["nvcc", "cudart"]'
-          method: network
-      - name: Show bin, include, lib64 (Windows)
-        if: ${{ startsWith(matrix.cases.os, 'windows') }}
-        run: |
-          tree /F $env:CUDA_PATH/bin
-          tree /F $env:CUDA_PATH/include
-          tree /F $env:CUDA_PATH/lib/x64
-      - name: Set Visual Studio Environment (Windows)
-        if: ${{ startsWith(matrix.cases.os, 'windows') }}
-        run: .github/workflows/Set-VSEnv.ps1 2019
 
       - run: bazelisk build @rules_cuda_examples//basic:all
       - run: bazelisk build @rules_cuda_examples//rdc:all
