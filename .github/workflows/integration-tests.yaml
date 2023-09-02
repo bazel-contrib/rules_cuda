@@ -1,0 +1,84 @@
+name: Integration Build
+
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+jobs:
+  test:
+    name: "Integration Test Build (CUDA ${{ matrix.cases.cuda-version }} on ${{ matrix.cases.os }})"
+    if: github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && contains(github.event.comment.body, '/test'))
+    runs-on: ${{ matrix.cases.os }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        cases:
+          - { os: "ubuntu-20.04", cuda-version: "11.6.2", source: "nvidia" }
+          - {
+              os: "ubuntu-20.04",
+              cuda-version: "11.6.2",
+              source: "nvidia",
+              toolchain: "llvm",
+              toolchain-version: "16",
+            }
+    steps:
+      # Checkout branch depending event type
+      - name: Checkout main branch
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v3
+
+      - name: Get PR branch
+        if: github.event.issue.pull_request
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+      - name: Checkout PR branch
+        if: github.event.issue.pull_request
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
+
+      # Setup environment
+      - uses: bazelbuild/setup-bazelisk@v2
+      - name: Mount bazel cache
+        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/bazel
+          key: bazel-${{ matrix.cases.os }}-cuda-${{ matrix.cases.cuda-version }}-${{ hashFiles('.bazelversion') }}
+
+      - name: Install CUDA (NVIDIA, Linux)
+        uses: Jimver/cuda-toolkit@v0.2.11
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'nvidia' }}
+        with:
+          cuda: ${{ matrix.cases.cuda-version }}
+          sub-packages: '["nvcc", "cudart-dev"]'
+          method: network
+      - name: Show bin, include, lib (NVIDIA, Linux)
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'nvidia' }}
+        run: |
+          tree ${CUDA_PATH}/bin
+          tree ${CUDA_PATH}/include
+          tree ${CUDA_PATH}/lib64
+      - name: Install LLVM ${{ matrix.cases.toolchain-version }}
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh ${{ matrix.cases.toolchain-version }}
+          sudo ln -sf /usr/bin/clang-${{ matrix.cases.toolchain-version }} /usr/bin/clang
+          clang --version
+
+          echo "build --config=clang" > $HOME/.bazelrc
+      - name: Install CURAND For LLVM
+        uses: Jimver/cuda-toolkit@v0.2.11
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
+        with:
+          cuda: ${{ matrix.cases.cuda-version }}
+          sub-packages: '["nvcc", "cudart-dev"]' # avoid full cuda install
+          non-cuda-sub-packages: '["libcurand-dev"]'
+          method: network
+
+      - run: bazelisk build --verbose_failures --spawn_strategy=local --cuda_archs='compute_80,sm_80' @rules_cuda_examples//nccl:perf_binaries
+
+      - run: bazelisk shutdown
