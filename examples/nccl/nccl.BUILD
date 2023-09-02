@@ -1,6 +1,6 @@
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library", "cuda_objects")
-load("@rules_cuda_examples_nccl//:nccl.bzl", "if_cuda_clang", "if_cuda_nvcc", "nccl_primitive")
+load("@rules_cuda_examples//nccl:nccl.bzl", "if_cuda_clang", "if_cuda_nvcc", "nccl_primitive")
 
 expand_template(
     name = "nccl_h",
@@ -37,8 +37,9 @@ cuda_objects(
     srcs = [
         "nccl/src/collectives/device/functions.cu",
         "nccl/src/collectives/device/onerank_reduce.cu",
-    ],
-    # hdrs = hdrs,
+    ] + glob([
+        "nccl/src/collectives/device/**/*.h",
+    ]),
     copts = if_cuda_nvcc(["--extended-lambda"]),
     ptxasopts = ["-maxrregcount=96"],
     deps = [":nccl_include"],
@@ -145,12 +146,12 @@ cc_binary(
     copts = if_cuda_clang(["-xcu"]),
     linkshared = 1,
     linkstatic = 1,
+    visibility = ["//visibility:public"],
     deps = [
         ":collectives",
         ":nccl_include",
         "@rules_cuda//cuda:runtime",
     ],
-    visibility = ["//visibility:public"],
 )
 
 # To allow downstream targets to link with the nccl shared library, we need to `cc_import` it again.

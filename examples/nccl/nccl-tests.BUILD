@@ -1,5 +1,5 @@
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
-load("@rules_cuda_examples_nccl//:nccl-tests.bzl", "nccl_tests_binary")
+load("@rules_cuda_examples//nccl:nccl-tests.bzl", "nccl_tests_binary")
 
 cc_library(
     name = "nccl_tests_include",
@@ -12,7 +12,9 @@ cuda_library(
     srcs = [
         "nccl-tests/src/common.cu",
         "nccl-tests/verifiable/verifiable.cu",
-    ],
+    ] + glob([
+        "nccl-tests/**/*.h",
+    ]),
     deps = [
         ":nccl_tests_include",
         "@nccl",
