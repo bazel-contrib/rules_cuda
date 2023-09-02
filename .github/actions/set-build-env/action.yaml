@@ -18,12 +18,14 @@ runs:
           method: network
       - name: Show bin, include, lib (NVIDIA, Linux)
         if: ${{ !startsWith(inputs.case.os, 'windows') && inputs.case.source == 'nvidia' }}
+        shell: bash
         run: |
           tree ${CUDA_PATH}/bin
           tree ${CUDA_PATH}/include
           tree ${CUDA_PATH}/lib64
       - name: Install LLVM ${{ inputs.case.toolchain-version }}
         if: ${{ !startsWith(inputs.case.os, 'windows') && inputs.case.toolchain == 'llvm' }}
+        shell: bash
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
@@ -40,6 +42,7 @@ runs:
           method: network
       - name: Install CUDA (Ubuntu)
         if: ${{ !startsWith(inputs.case.os, 'windows') && inputs.case.source == 'ubuntu' }}
+        shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install -y nvidia-cuda-dev=${{ inputs.case.cuda-version }} nvidia-cuda-toolkit=${{ inputs.case.cuda-version }} gcc-9 g++-9
@@ -57,10 +60,12 @@ runs:
           method: network
       - name: Show bin, include, lib64 (Windows)
         if: ${{ startsWith(inputs.case.os, 'windows') }}
+        shell: pwsh
         run: |
           tree /F $env:CUDA_PATH/bin
           tree /F $env:CUDA_PATH/include
           tree /F $env:CUDA_PATH/lib/x64
       - name: Set Visual Studio Environment (Windows)
         if: ${{ startsWith(inputs.case.os, 'windows') }}
+        shell: pwsh
         run: .github/actions/Set-VSEnv.ps1 2019
