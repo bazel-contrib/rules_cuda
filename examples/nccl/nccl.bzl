@@ -13,7 +13,7 @@ def if_cuda_clang(if_true, if_false = []):
         "//conditions:default": if_false,
     })
 
-def nccl_primitive(name, hdrs = [],  deps = [], use_bf16 = True):
+def nccl_primitive(name, hdrs = [], deps = [], use_bf16 = True):
     ops = ["sum", "prod", "min", "max", "premulsum", "sumpostdiv"]
     datatypes = ["i8", "u8", "i32", "u32", "i64", "u64", "f16", "f32", "f64"]
     if use_bf16:
