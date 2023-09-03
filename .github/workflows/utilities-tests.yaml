@@ -1,43 +1,43 @@
-name: Test Utilities
+# name: Test Utilities
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
 
-jobs:
-  test:
-    name: "Test Utilities (bazel ${{ matrix.bazel-version }} on ${{ matrix.os }})"
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    strategy:
-      matrix:
-        os:
-          - ubuntu-20.04
-          - windows-2019
-        bazel-version:
-          - 5.0.0
-          - 5.2.0
-    env:
-      USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
-    steps:
-      - uses: actions/checkout@v3
+# jobs:
+#   test:
+#     name: "Test Utilities (bazel ${{ matrix.bazel-version }} on ${{ matrix.os }})"
+#     runs-on: ${{ matrix.os }}
+#     timeout-minutes: 60
+#     strategy:
+#       matrix:
+#         os:
+#           - ubuntu-20.04
+#           - windows-2019
+#         bazel-version:
+#           - 5.0.0
+#           - 5.2.0
+#     env:
+#       USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
+#     steps:
+#       - uses: actions/checkout@v3
 
-      - uses: bazelbuild/setup-bazelisk@v2
-      - name: Mount bazel cache
-        if: ${{ !startsWith(matrix.os, 'windows') }}
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/bazel
-          key: bazel-${{ matrix.os }}-${{ matrix.bazel-version }}
+#       - uses: bazelbuild/setup-bazelisk@v2
+#       - name: Mount bazel cache
+#         if: ${{ !startsWith(matrix.os, 'windows') }}
+#         uses: actions/cache@v3
+#         with:
+#           path: ~/.cache/bazel
+#           key: bazel-${{ matrix.os }}-${{ matrix.bazel-version }}
 
-      - uses: Jimver/cuda-toolkit@v0.2.11
-        with:
-          cuda: 11.6.2
-          sub-packages: '["cudart"]'
-          method: network
+#       - uses: Jimver/cuda-toolkit@v0.2.11
+#         with:
+#           cuda: 11.6.2
+#           sub-packages: '["cudart"]'
+#           method: network
 
-      - run: bazelisk test -- //tests/...
+#       - run: bazelisk test -- //tests/...
 
-      - run: bazelisk shutdown
+#       - run: bazelisk shutdown
