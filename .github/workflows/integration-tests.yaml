@@ -1,0 +1,147 @@
+name: Integration Build
+
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+jobs:
+  test-manual:
+    name: "Integration Test Build (CUDA ${{ matrix.cases.cuda-version }} on ${{ matrix.cases.os }})"
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.cases.os }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        cases:
+          - {
+              os: "ubuntu-20.04",
+              cuda-version: "11.6.2",
+              source: "nvidia",
+              toolchain: "nvcc",
+            }
+          - {
+              os: "ubuntu-20.04",
+              cuda-version: "11.6.2",
+              source: "nvidia",
+              toolchain: "llvm",
+              toolchain-version: "16",
+            }
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: bazelbuild/setup-bazelisk@v2
+      - name: Mount bazel cache
+        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/bazel
+          key: ${{ matrix.cases.toolchain }}-${{ matrix.cases.toolchain-version }}
+
+      - name: Setup build environment
+        uses: ./.github/actions/set-build-env
+        with:
+          os: ${{ matrix.cases.os }}
+          cuda-version: ${{ matrix.cases.cuda-version }}
+          source: ${{ matrix.cases.source }}
+          toolchain: ${{ matrix.cases.toolchain }}
+          toolchain-version: ${{ matrix.cases.toolchain-version }}
+
+      - name: Bazel build config for LLVM
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
+        run: |
+          echo "build --config=clang" > $HOME/.bazelrc
+          echo "build:clang --cxxopt=--cuda-gpu-arch=sm_80 >> $HOME/.bazelrc"
+
+      - run: cd examples && bazelisk build --verbose_failures --spawn_strategy=local --cuda_archs='compute_80,sm_80' @rules_cuda_examples//nccl:perf_binaries
+
+      - run: bazelisk shutdown
+
+  # based on https://dev.to/zirkelc/trigger-github-workflow-for-comment-on-pull-request-45l2
+  test-comment:
+    name: "Integration Test Build (CUDA ${{ matrix.cases.cuda-version }} on ${{ matrix.cases.os }})"
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/test')
+    runs-on: ${{ matrix.cases.os }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        cases:
+          - {
+              os: "ubuntu-20.04",
+              cuda-version: "11.6.2",
+              source: "nvidia",
+              toolchain: "nvcc",
+            }
+          - {
+              os: "ubuntu-20.04",
+              cuda-version: "11.6.2",
+              source: "nvidia",
+              toolchain: "llvm",
+              toolchain-version: "16",
+            }
+    steps:
+      - name: Get PR branch
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+      - name: Set commit status as pending
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          status: pending
+      - name: Checkout PR branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
+
+      - uses: bazelbuild/setup-bazelisk@v2
+      - name: Mount bazel cache
+        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/bazel
+          key: ${{ matrix.cases.toolchain }}-${{ matrix.cases.toolchain-version }}
+
+      - name: Setup build environment
+        uses: ./.github/actions/set-build-env
+        with:
+          os: ${{ matrix.cases.os }}
+          cuda-version: ${{ matrix.cases.cuda-version }}
+          source: ${{ matrix.cases.source }}
+          toolchain: ${{ matrix.cases.toolchain }}
+          toolchain-version: ${{ matrix.cases.toolchain-version }}
+
+      - name: Bazel build config for LLVM
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
+        run: |
+          echo "build --config=clang" > $HOME/.bazelrc
+          echo "build:clang --cxxopt=--cuda-gpu-arch=sm_80 >> $HOME/.bazelrc"
+
+      - run: cd examples && bazelisk build --verbose_failures --spawn_strategy=local --cuda_archs='compute_80,sm_80' @rules_cuda_examples//nccl:perf_binaries
+
+      - run: bazelisk shutdown
+
+      - name: Set latest commit status as ${{ job.status }}
+        uses: myrotvorets/set-commit-status-action@master
+        if: always()
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+
+      - name: Add comment to PR
+        uses: actions/github-script@v6
+        if: always()
+        with:
+          script: |
+            const name = '${{ github.workflow   }}';
+            const url = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
+            const success = '${{ job.status }}' === 'success';
+            const body = `${name}: ${success ? 'succeeded ✅' : 'failed ❌'}\n${url}`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            })
