@@ -7,7 +7,7 @@ on:
 
 jobs:
   test-manual:
-    name: "Integration Test Build (CUDA ${{ matrix.cases.cuda-version }} on ${{ matrix.cases.os }})"
+    name: "Integration Test Build (Manual)"
     if: github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.cases.os }}
     timeout-minutes: 60
@@ -58,9 +58,24 @@ jobs:
       - run: bazelisk shutdown
 
   # based on https://dev.to/zirkelc/trigger-github-workflow-for-comment-on-pull-request-45l2
+  pre-test-comment:
+    name: "Integration Test Build - Set commit status pending"
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/test')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR branch
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
+      - name: Set commit status as pending
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          status: pending
+
   test-comment:
     name: "Integration Test Build (CUDA ${{ matrix.cases.cuda-version }} on ${{ matrix.cases.os }})"
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/test')
+    needs: [pre-test-comment]
     runs-on: ${{ matrix.cases.os }}
     timeout-minutes: 60
     strategy:
@@ -83,12 +98,6 @@ jobs:
       - name: Get PR branch
         uses: xt0rted/pull-request-comment-branch@v1
         id: comment-branch
-      - name: Set commit status as pending
-        uses: myrotvorets/set-commit-status-action@master
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
-          status: pending
       - name: Checkout PR branch
         uses: actions/checkout@v3
         with:
@@ -120,6 +129,15 @@ jobs:
       - run: cd examples && bazelisk build --verbose_failures --spawn_strategy=local --cuda_archs='compute_80,sm_80' @rules_cuda_examples//nccl:perf_binaries
 
       - run: bazelisk shutdown
+
+  post-test-comment:
+    name: "Integration Test Build - Set commit status as test result"
+    needs: [test-comment]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get PR branch
+        uses: xt0rted/pull-request-comment-branch@v1
+        id: comment-branch
 
       - name: Set latest commit status as ${{ job.status }}
         uses: myrotvorets/set-commit-status-action@master
