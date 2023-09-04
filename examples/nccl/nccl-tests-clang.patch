@@ -1,0 +1,172 @@
+diff --git a/src/all_gather.cu b/src/all_gather.cu
+index 0831207..941ec1b 100644
+--- a/src/all_gather.cu
++++ b/src/all_gather.cu
+@@ -85,9 +85,7 @@ testResult_t AllGatherRunTest(struct threadArgs* args, int root, ncclDataType_t
+   return testSuccess;
+ }
+ 
+-struct testEngine allGatherEngine = {
++struct testEngine ncclTestEngine = {
+   AllGatherGetBuffSize,
+   AllGatherRunTest
+ };
+-
+-#pragma weak ncclTestEngine=allGatherEngine
+diff --git a/src/all_reduce.cu b/src/all_reduce.cu
+index a38eabe..acb66a8 100644
+--- a/src/all_reduce.cu
++++ b/src/all_reduce.cu
+@@ -93,9 +93,7 @@ testResult_t AllReduceRunTest(struct threadArgs* args, int root, ncclDataType_t
+   return testSuccess;
+ }
+ 
+-struct testEngine allReduceEngine = {
++struct testEngine ncclTestEngine = {
+   AllReduceGetBuffSize,
+   AllReduceRunTest
+ };
+-
+-#pragma weak ncclTestEngine=allReduceEngine
+diff --git a/src/alltoall.cu b/src/alltoall.cu
+index 41c7c4a..712e664 100644
+--- a/src/alltoall.cu
++++ b/src/alltoall.cu
+@@ -99,9 +99,7 @@ testResult_t AlltoAllRunTest(struct threadArgs* args, int root, ncclDataType_t t
+   return testSuccess;
+ }
+ 
+-struct testEngine alltoAllEngine = {
++struct testEngine ncclTestEngine = {
+   AlltoAllGetBuffSize,
+   AlltoAllRunTest
+ };
+-
+-#pragma weak ncclTestEngine=alltoAllEngine
+diff --git a/src/broadcast.cu b/src/broadcast.cu
+index 903066a..778c664 100644
+--- a/src/broadcast.cu
++++ b/src/broadcast.cu
+@@ -99,9 +99,7 @@ testResult_t BroadcastRunTest(struct threadArgs* args, int root, ncclDataType_t
+   return testSuccess;
+ }
+ 
+-struct testEngine broadcastEngine = {
++struct testEngine ncclTestEngine = {
+   BroadcastGetBuffSize,
+   BroadcastRunTest
+ };
+-
+-#pragma weak ncclTestEngine=broadcastEngine
+diff --git a/src/common.cu b/src/common.cu
+index 48a629c..d888edc 100644
+--- a/src/common.cu
++++ b/src/common.cu
+@@ -330,7 +330,7 @@ testResult_t startColl(struct threadArgs* args, ncclDataType_t type, ncclRedOp_t
+   size_t count = args->nbytes / wordSize(type);
+ 
+   // Try to change offset for each iteration so that we avoid cache effects and catch race conditions in ptrExchange
+-  size_t totalnbytes = max(args->sendBytes, args->expectedBytes);
++  size_t totalnbytes = std::max(args->sendBytes, args->expectedBytes);
+   size_t steps = totalnbytes ? args->maxbytes / totalnbytes : 1;
+   size_t shift = totalnbytes * (iter % steps);
+ 
+@@ -597,7 +597,7 @@ testResult_t TimeTest(struct threadArgs* args, ncclDataType_t type, const char*
+       setupArgs(size, type, args);
+       char rootName[100];
+       sprintf(rootName, "%6i", root);
+-      PRINT("%12li  %12li  %8s  %6s  %6s", max(args->sendBytes, args->expectedBytes), args->nbytes / wordSize(type), typeName, opName, rootName);
++      PRINT("%12li  %12li  %8s  %6s  %6s", std::max(args->sendBytes, args->expectedBytes), args->nbytes / wordSize(type), typeName, opName, rootName);
+       TESTCHECK(BenchTime(args, type, op, root, 0));
+       TESTCHECK(BenchTime(args, type, op, root, 1));
+       PRINT("\n");
+diff --git a/src/gather.cu b/src/gather.cu
+index 03ef4d9..242a298 100644
+--- a/src/gather.cu
++++ b/src/gather.cu
+@@ -108,9 +108,7 @@ testResult_t GatherRunTest(struct threadArgs* args, int root, ncclDataType_t typ
+   return testSuccess;
+ }
+ 
+-struct testEngine gatherEngine = {
++struct testEngine ncclTestEngine = {
+   GatherGetBuffSize,
+   GatherRunTest
+ };
+-
+-#pragma weak ncclTestEngine=gatherEngine
+diff --git a/src/hypercube.cu b/src/hypercube.cu
+index 5c1456f..9aadfc5 100644
+--- a/src/hypercube.cu
++++ b/src/hypercube.cu
+@@ -110,9 +110,7 @@ testResult_t HyperCubeRunTest(struct threadArgs* args, int root, ncclDataType_t
+   return testSuccess;
+ }
+ 
+-struct testEngine hyperCubeEngine = {
++struct testEngine ncclTestEngine = {
+   HyperCubeGetBuffSize,
+   HyperCubeRunTest
+ };
+-
+-#pragma weak ncclTestEngine=hyperCubeEngine
+diff --git a/src/reduce.cu b/src/reduce.cu
+index f2fa80d..80aadc5 100644
+--- a/src/reduce.cu
++++ b/src/reduce.cu
+@@ -102,9 +102,7 @@ testResult_t ReduceRunTest(struct threadArgs* args, int root, ncclDataType_t typ
+   return testSuccess;
+ }
+ 
+-struct testEngine reduceEngine = {
++struct testEngine ncclTestEngine = {
+   ReduceGetBuffSize,
+   ReduceRunTest
+ };
+-
+-#pragma weak ncclTestEngine=reduceEngine
+diff --git a/src/reduce_scatter.cu b/src/reduce_scatter.cu
+index ed372e3..212a6f0 100644
+--- a/src/reduce_scatter.cu
++++ b/src/reduce_scatter.cu
+@@ -97,9 +97,7 @@ testResult_t ReduceScatterRunTest(struct threadArgs* args, int root, ncclDataTyp
+   return testSuccess;
+ }
+ 
+-struct testEngine reduceScatterEngine = {
++struct testEngine ncclTestEngine = {
+   ReduceScatterGetBuffSize,
+   ReduceScatterRunTest
+ };
+-
+-#pragma weak ncclTestEngine=reduceScatterEngine
+diff --git a/src/scatter.cu b/src/scatter.cu
+index 49d20e1..56f5ede 100644
+--- a/src/scatter.cu
++++ b/src/scatter.cu
+@@ -104,9 +104,7 @@ testResult_t ScatterRunTest(struct threadArgs* args, int root, ncclDataType_t ty
+   return testSuccess;
+ }
+ 
+-struct testEngine scatterEngine = {
++struct testEngine ncclTestEngine = {
+   ScatterGetBuffSize,
+   ScatterRunTest
+ };
+-
+-#pragma weak ncclTestEngine=scatterEngine
+diff --git a/src/sendrecv.cu b/src/sendrecv.cu
+index c9eb5bb..316a449 100644
+--- a/src/sendrecv.cu
++++ b/src/sendrecv.cu
+@@ -106,9 +106,7 @@ testResult_t SendRecvRunTest(struct threadArgs* args, int root, ncclDataType_t t
+   return testSuccess;
+ }
+ 
+-struct testEngine sendRecvEngine = {
++struct testEngine ncclTestEngine = {
+   SendRecvGetBuffSize,
+   SendRecvRunTest
+ };
+-
+-#pragma weak ncclTestEngine=sendRecvEngine
