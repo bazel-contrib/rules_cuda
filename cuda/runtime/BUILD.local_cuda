@@ -7,9 +7,10 @@ package(
 filegroup(
     name = "compiler_deps",
     srcs = [
-        "cuda/version.txt",
         ":_cuda_header_files",
     ] + glob([
+        "cuda/version.txt",
+        "cuda/version.json",
         "cuda/bin/**",
         "cuda/lib64/**",
         "cuda/nvvm/**",
