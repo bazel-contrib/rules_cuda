@@ -55,7 +55,6 @@ jobs:
         run: |
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
-          echo "build:clang --spawn_strategy=local" >> $HOME/.bazelrc
 
       - run: bazelisk build @rules_cuda_examples//basic:all
       - run: bazelisk build @rules_cuda_examples//rdc:all

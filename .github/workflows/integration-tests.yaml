@@ -53,7 +53,7 @@ jobs:
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --cxxopt=--cuda-gpu-arch=sm_80 >> $HOME/.bazelrc"
 
-      - run: cd examples && bazelisk build --verbose_failures --spawn_strategy=local --cuda_archs='compute_80,sm_80' @rules_cuda_examples//nccl:perf_binaries
+      - run: cd examples && bazelisk build --verbose_failures --cuda_archs='compute_80,sm_80' @rules_cuda_examples//nccl:perf_binaries
 
       - run: bazelisk shutdown
 
@@ -126,7 +126,7 @@ jobs:
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --cxxopt=--cuda-gpu-arch=sm_80 >> $HOME/.bazelrc"
 
-      - run: cd examples && bazelisk build --verbose_failures --spawn_strategy=local --cuda_archs='compute_80,sm_80' @rules_cuda_examples//nccl:perf_binaries
+      - run: cd examples && bazelisk build --verbose_failures --cuda_archs='compute_80,sm_80' @rules_cuda_examples//nccl:perf_binaries
 
       - run: bazelisk shutdown
 
