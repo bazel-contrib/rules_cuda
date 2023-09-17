@@ -314,10 +314,10 @@ def _create_cuda_info(
         rdc_objects = None,
         pic_objects = None,
         rdc_pic_objects = None,
-        transitive_objects = None,
-        transitive_rdc_objects = None,
-        transitive_pic_objects = None,
-        transitive_rdc_pic_objects = None):
+        archive_objects = None,
+        archive_rdc_objects = None,
+        archive_pic_objects = None,
+        archive_rdc_pic_objects = None):
     """Constructor for `CudaInfo`. See the providers documentation for detail."""
     ret = CudaInfo(
         defines = defines if defines != None else depset([]),
@@ -325,10 +325,10 @@ def _create_cuda_info(
         rdc_objects = rdc_objects if rdc_objects != None else depset([]),
         pic_objects = pic_objects if pic_objects != None else depset([]),
         rdc_pic_objects = rdc_pic_objects if rdc_pic_objects != None else depset([]),
-        transitive_objects = transitive_objects if transitive_objects != None else depset([]),
-        transitive_rdc_objects = transitive_rdc_objects if transitive_rdc_objects != None else depset([]),
-        transitive_pic_objects = transitive_pic_objects if transitive_pic_objects != None else depset([]),
-        transitive_rdc_pic_objects = transitive_rdc_pic_objects if transitive_rdc_pic_objects != None else depset([]),
+        archive_objects = archive_objects if archive_objects != None else depset([]),
+        archive_rdc_objects = archive_rdc_objects if archive_rdc_objects != None else depset([]),
+        archive_pic_objects = archive_pic_objects if archive_pic_objects != None else depset([]),
+        archive_rdc_pic_objects = archive_rdc_pic_objects if archive_rdc_pic_objects != None else depset([]),
     )
     return ret
 

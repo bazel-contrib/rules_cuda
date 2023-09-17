@@ -19,15 +19,15 @@ def _cuda_objects_impl(ctx):
     for src in ctx.attr.srcs:
         src_files.extend(src[DefaultInfo].files.to_list())
 
-    # merge deps' direct objects and transitive objects as our transitive objects
-    transitive_objects = depset(transitive = [dep[CudaInfo].objects for dep in attr.deps if CudaInfo in dep] +
-                                             [dep[CudaInfo].transitive_objects for dep in attr.deps if CudaInfo in dep])
-    transitive_pic_objects = depset(transitive = [dep[CudaInfo].pic_objects for dep in attr.deps if CudaInfo in dep] +
-                                                 [dep[CudaInfo].transitive_pic_objects for dep in attr.deps if CudaInfo in dep])
-    transitive_rdc_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep] +
-                                                 [dep[CudaInfo].transitive_rdc_objects for dep in attr.deps if CudaInfo in dep])
-    transitive_rdc_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep] +
-                                                     [dep[CudaInfo].transitive_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
+    # merge deps' direct objects and archive objects as our archive objects
+    archive_objects = depset(transitive = [dep[CudaInfo].objects for dep in attr.deps if CudaInfo in dep] +
+                                          [dep[CudaInfo].archive_objects for dep in attr.deps if CudaInfo in dep])
+    archive_pic_objects = depset(transitive = [dep[CudaInfo].pic_objects for dep in attr.deps if CudaInfo in dep] +
+                                              [dep[CudaInfo].archive_pic_objects for dep in attr.deps if CudaInfo in dep])
+    archive_rdc_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep] +
+                                              [dep[CudaInfo].archive_rdc_objects for dep in attr.deps if CudaInfo in dep])
+    archive_rdc_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep] +
+                                                  [dep[CudaInfo].archive_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
 
     # direct outputs
     objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False))
@@ -79,10 +79,10 @@ def _cuda_objects_impl(ctx):
             pic_objects = pic_objects,
             rdc_objects = rdc_objects,
             rdc_pic_objects = rdc_pic_objects,
-            transitive_objects = transitive_objects,
-            transitive_pic_objects = transitive_pic_objects,
-            transitive_rdc_objects = transitive_rdc_objects,
-            transitive_rdc_pic_objects = transitive_rdc_pic_objects,
+            archive_objects = archive_objects,
+            archive_pic_objects = archive_pic_objects,
+            archive_rdc_objects = archive_rdc_objects,
+            archive_rdc_pic_objects = archive_rdc_pic_objects,
         ),
     ]
 

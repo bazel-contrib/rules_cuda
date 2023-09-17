@@ -69,11 +69,11 @@ if merged a single depset.
         "pic_objects": "A depset of position indepentent code objects. Direct artifacts of the rule.",  # but not rdc
         "rdc_objects": "A depset of relocatable device code objects. Direct artifacts of the rule.",  # but not pic
         "rdc_pic_objects": "A depset of relocatable device code and position indepentent code objects. Direct artifacts of the rule.",
-        # transitive only:
-        "transitive_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
-        "transitive_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
-        "transitive_rdc_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
-        "transitive_rdc_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
+        # transitive archive only (cuda_objects):
+        "archive_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
+        "archive_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
+        "archive_rdc_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
+        "archive_rdc_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
     },
 )
 

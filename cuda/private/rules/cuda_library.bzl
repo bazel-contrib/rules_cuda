@@ -28,15 +28,15 @@ def _cuda_library_impl(ctx):
     for src in ctx.attr.srcs:
         src_files.extend(src[DefaultInfo].files.to_list())
 
-    # merge deps' direct objects and transitive objects as our transitive objects
-    transitive_objects = depset(transitive = [dep[CudaInfo].objects for dep in attr.deps if CudaInfo in dep] +
-                                             [dep[CudaInfo].transitive_objects for dep in attr.deps if CudaInfo in dep])
-    transitive_pic_objects = depset(transitive = [dep[CudaInfo].pic_objects for dep in attr.deps if CudaInfo in dep] +
-                                                 [dep[CudaInfo].transitive_pic_objects for dep in attr.deps if CudaInfo in dep])
-    transitive_rdc_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep] +
-                                                 [dep[CudaInfo].transitive_rdc_objects for dep in attr.deps if CudaInfo in dep])
-    transitive_rdc_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep] +
-                                                     [dep[CudaInfo].transitive_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
+    # merge deps' direct objects and archive objects as our archive objects
+    archive_objects = depset(transitive = [dep[CudaInfo].objects for dep in attr.deps if CudaInfo in dep] +
+                                          [dep[CudaInfo].archive_objects for dep in attr.deps if CudaInfo in dep])
+    archive_pic_objects = depset(transitive = [dep[CudaInfo].pic_objects for dep in attr.deps if CudaInfo in dep] +
+                                              [dep[CudaInfo].archive_pic_objects for dep in attr.deps if CudaInfo in dep])
+    archive_rdc_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep] +
+                                              [dep[CudaInfo].archive_rdc_objects for dep in attr.deps if CudaInfo in dep])
+    archive_rdc_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep] +
+                                                  [dep[CudaInfo].archive_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
 
     # direct outputs
     objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False)) if not use_rdc else depset([])
@@ -48,8 +48,8 @@ def _cuda_library_impl(ctx):
     if use_rdc:
         # Already implemented Only dlink with objects. TODO: Add support dlink with objects and libraries
         # prepare inputs for device_link
-        rdc_dlink_input = depset(transitive = [rdc_objects, transitive_rdc_objects])
-        rdc_pic_dlink_input = depset(transitive = [rdc_pic_objects, transitive_rdc_pic_objects])
+        rdc_dlink_input = depset(transitive = [rdc_objects, archive_rdc_objects])
+        rdc_pic_dlink_input = depset(transitive = [rdc_pic_objects, archive_rdc_pic_objects])
 
         dlink_rdc_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_dlink_input, common, pic = False, rdc = True)])
         dlink_rdc_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_pic_dlink_input, common, pic = True, rdc = True)])
@@ -60,11 +60,11 @@ def _cuda_library_impl(ctx):
 
     # objects to archive: objects directly outputed by this rule and all objects transitively from deps
     if not use_rdc:
-        archive_content = depset(transitive = [objects, transitive_objects])
-        pic_archive_content = depset(transitive = [pic_objects, transitive_pic_objects])
+        archive_content = depset(transitive = [objects, archive_objects])
+        pic_archive_content = depset(transitive = [pic_objects, archive_pic_objects])
     else:
-        archive_content = depset(transitive = [rdc_objects, transitive_rdc_objects])
-        pic_archive_content = depset(transitive = [rdc_pic_objects, transitive_rdc_pic_objects])
+        archive_content = depset(transitive = [rdc_objects, archive_rdc_objects])
+        pic_archive_content = depset(transitive = [rdc_pic_objects, archive_rdc_pic_objects])
 
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
@@ -122,7 +122,7 @@ def _cuda_library_impl(ctx):
         ),
         cuda_helper.create_cuda_info(
             defines = depset(common.defines),
-            # all objects from cuda_objects should be properly archived, thus, the transitivity is cut off here.
+            # all objects from cuda_objects should be properly archived, thus, the transitivity of archive is cut off here.
         ),
     ]
 
