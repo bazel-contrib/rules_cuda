@@ -28,20 +28,43 @@ def _cuda_library_impl(ctx):
     for src in ctx.attr.srcs:
         src_files.extend(src[DefaultInfo].files.to_list())
 
+    # merge deps' direct objects and transitive objects as our transitive objects
+    transitive_objects = depset(transitive = [dep[CudaInfo].objects for dep in attr.deps if CudaInfo in dep] +
+                                             [dep[CudaInfo].transitive_objects for dep in attr.deps if CudaInfo in dep])
+    transitive_pic_objects = depset(transitive = [dep[CudaInfo].pic_objects for dep in attr.deps if CudaInfo in dep] +
+                                                 [dep[CudaInfo].transitive_pic_objects for dep in attr.deps if CudaInfo in dep])
+    transitive_rdc_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep] +
+                                                 [dep[CudaInfo].transitive_rdc_objects for dep in attr.deps if CudaInfo in dep])
+    transitive_rdc_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep] +
+                                                     [dep[CudaInfo].transitive_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
+
     # direct outputs
-    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = use_rdc))
-    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = use_rdc))
+    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False)) if not use_rdc else depset([])
+    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False)) if not use_rdc else depset([])
+    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True)) if use_rdc else depset([])
+    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True)) if use_rdc else depset([])
 
     # if rdc is enabled for this cuda_library, then we need futher do a pass of device link
     if use_rdc:
-        transitive_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep])
-        transitive_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
-        objects = depset(transitive = [objects, transitive_objects])
-        pic_objects = depset(transitive = [pic_objects, transitive_pic_objects])
-        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, common, pic = False, rdc = use_rdc)])
-        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, common, pic = True, rdc = use_rdc)])
-        objects = depset(transitive = [objects, dlink_object])
-        pic_objects = depset(transitive = [pic_objects, dlink_pic_object])
+        # Already implemented Only dlink with objects. TODO: Add support dlink with objects and libraries
+        # prepare inputs for device_link
+        rdc_dlink_input = depset(transitive = [rdc_objects, transitive_rdc_objects])
+        rdc_pic_dlink_input = depset(transitive = [rdc_pic_objects, transitive_rdc_pic_objects])
+
+        dlink_rdc_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_dlink_input, common, pic = False, rdc = True)])
+        dlink_rdc_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_pic_dlink_input, common, pic = True, rdc = True)])
+
+        # update the **direct** outputs
+        rdc_objects = depset(transitive = [rdc_objects, dlink_rdc_object])
+        rdc_pic_objects = depset(transitive = [rdc_pic_objects, dlink_rdc_pic_object])
+
+    # objects to archive: objects directly outputed by this rule and all objects transitively from deps
+    if not use_rdc:
+        archive_content = depset(transitive = [objects, transitive_objects])
+        pic_archive_content = depset(transitive = [pic_objects, transitive_pic_objects])
+    else:
+        archive_content = depset(transitive = [rdc_objects, transitive_rdc_objects])
+        pic_archive_content = depset(transitive = [rdc_pic_objects, transitive_rdc_pic_objects])
 
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
@@ -63,7 +86,7 @@ def _cuda_library_impl(ctx):
         actions = ctx.actions,
         feature_configuration = cc_feature_config,
         cc_toolchain = cc_toolchain,
-        compilation_outputs = cc_common.create_compilation_outputs(objects = objects, pic_objects = pic_objects),
+        compilation_outputs = cc_common.create_compilation_outputs(objects = archive_content, pic_objects = pic_archive_content),
         user_link_flags = common.host_link_flags,
         alwayslink = attr.alwayslink,
         linking_contexts = common.transitive_linking_contexts,
@@ -78,7 +101,10 @@ def _cuda_library_impl(ctx):
     libs = [] if lib == None else [lib]
     pic_libs = [] if pic_lib == None else [pic_lib]
 
-    cc_info = cc_common.merge_cc_infos(direct_cc_infos = [CcInfo(compilation_context = compilation_ctx, linking_context = linking_ctx)], cc_infos = [common.transitive_cc_info])
+    cc_info = cc_common.merge_cc_infos(
+        direct_cc_infos = [CcInfo(compilation_context = compilation_ctx, linking_context = linking_ctx)],
+        cc_infos = [common.transitive_cc_info],
+    )
 
     return [
         DefaultInfo(files = depset(libs + pic_libs)),
@@ -87,6 +113,8 @@ def _cuda_library_impl(ctx):
             pic_lib = pic_libs,
             objects = objects,
             pic_objects = pic_objects,
+            rdc_objects = rdc_objects,
+            rdc_pic_objects = rdc_pic_objects,
         ),
         CcInfo(
             compilation_context = cc_info.compilation_context,
@@ -94,8 +122,7 @@ def _cuda_library_impl(ctx):
         ),
         cuda_helper.create_cuda_info(
             defines = depset(common.defines),
-            objects = objects,
-            pic_objects = pic_objects,
+            # all objects from cuda_objects should be properly archived, thus, the transitivity is cut off here.
         ),
     ]
 

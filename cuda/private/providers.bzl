@@ -59,13 +59,21 @@ CudaInfo = provider(
     """Provides cuda build artifacts that can be consumed by device linking or linking process.
 
 This provider is analog to [CcInfo](https://bazel.build/rules/lib/CcInfo) but only contains necessary information for
-linking in a flat structure.""",
+linking in a flat structure. Objects are grouped by direct and transitive, because we have no way to split them again
+if merged a single depset.
+""",
     fields = {
         "defines": "A depset of strings. It is used for the compilation during device linking.",
-        "objects": "A depset of objects.",  # but not rdc and pic
-        "rdc_objects": "A depset of relocatable device code objects.",  # but not pic
-        "pic_objects": "A depset of position indepentent code objects.",  # but not rdc
-        "rdc_pic_objects": "A depset of relocatable device code and position indepentent code objects.",
+        # direct only:
+        "objects": "A depset of objects. Direct artifacts of the rule.",  # but not rdc and pic
+        "pic_objects": "A depset of position indepentent code objects. Direct artifacts of the rule.",  # but not rdc
+        "rdc_objects": "A depset of relocatable device code objects. Direct artifacts of the rule.",  # but not pic
+        "rdc_pic_objects": "A depset of relocatable device code and position indepentent code objects. Direct artifacts of the rule.",
+        # transitive only:
+        "transitive_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
+        "transitive_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
+        "transitive_rdc_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
+        "transitive_rdc_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
     },
 )
 

@@ -308,7 +308,16 @@ def _create_common(ctx):
         transitive_linking_contexts = transitive_linking_contexts,
     )
 
-def _create_cuda_info(defines = None, objects = None, rdc_objects = None, pic_objects = None, rdc_pic_objects = None):
+def _create_cuda_info(
+        defines = None,
+        objects = None,
+        rdc_objects = None,
+        pic_objects = None,
+        rdc_pic_objects = None,
+        transitive_objects = None,
+        transitive_rdc_objects = None,
+        transitive_pic_objects = None,
+        transitive_rdc_pic_objects = None):
     """Constructor for `CudaInfo`. See the providers documentation for detail."""
     ret = CudaInfo(
         defines = defines if defines != None else depset([]),
@@ -316,6 +325,10 @@ def _create_cuda_info(defines = None, objects = None, rdc_objects = None, pic_ob
         rdc_objects = rdc_objects if rdc_objects != None else depset([]),
         pic_objects = pic_objects if pic_objects != None else depset([]),
         rdc_pic_objects = rdc_pic_objects if rdc_pic_objects != None else depset([]),
+        transitive_objects = transitive_objects if transitive_objects != None else depset([]),
+        transitive_rdc_objects = transitive_rdc_objects if transitive_rdc_objects != None else depset([]),
+        transitive_pic_objects = transitive_pic_objects if transitive_pic_objects != None else depset([]),
+        transitive_rdc_pic_objects = transitive_rdc_pic_objects if transitive_rdc_pic_objects != None else depset([]),
     )
     return ret
 
