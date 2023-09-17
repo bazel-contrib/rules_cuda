@@ -74,6 +74,11 @@ if merged a single depset.
         "archive_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
         "archive_rdc_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
         "archive_rdc_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
+
+        # transitive dlink only (cuda_library):
+        # NOTE: ideally, we can use the archived library to do the device linking, but the nvlink is not happy with library with *_dlink.o included
+        "dlink_rdc_objects": "A depset of rdc objects. cuda_library only. Gathered from the transitive dependencies for device linking.",
+        "dlink_rdc_pic_objects": "A depset of rdc pic objects. cuda_library only. Gathered from the transitive dependencies for device linking.",
     },
 )
 

@@ -38,27 +38,40 @@ def _cuda_library_impl(ctx):
     archive_rdc_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep] +
                                                   [dep[CudaInfo].archive_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
 
+    # Gather transitive dlink objects that may come from other `cuda_library`s
+    dlink_rdc_objects = depset(transitive = [dep[CudaInfo].dlink_rdc_objects for dep in attr.deps if CudaInfo in dep])
+    dlink_rdc_pic_objects = depset(transitive = [dep[CudaInfo].dlink_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
+
     # direct outputs
     objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False)) if not use_rdc else depset([])
     pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False)) if not use_rdc else depset([])
     rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True)) if use_rdc else depset([])
     rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True)) if use_rdc else depset([])
 
-    # if rdc is enabled for this cuda_library, then we need futher do a pass of device link
+    # if rdc is enabled for this `cuda_library`, then we need futher do a pass of device link
+    rdc_dlink_inputs = None
+    rdc_pic_dlink_inputs = None
     if use_rdc:
         # Already implemented Only dlink with objects. TODO: Add support dlink with objects and libraries
-        # prepare inputs for device_link
-        rdc_dlink_input = depset(transitive = [rdc_objects, archive_rdc_objects])
-        rdc_pic_dlink_input = depset(transitive = [rdc_pic_objects, archive_rdc_pic_objects])
+        # prepare inputs for device_link, take use_rdc=True and non-pic as an example:
+        # rdc_objects: produce with this rule
+        # archive_rdc_objects: propagate from other `cuda_objects`
+        # dlink_rdc_objects: propagate from other `cuda_library`s
+        rdc_dlink_inputs = depset(transitive = [rdc_objects, archive_rdc_objects, dlink_rdc_objects])
+        rdc_pic_dlink_inputs = depset(transitive = [rdc_pic_objects, archive_rdc_pic_objects, dlink_rdc_pic_objects])
 
-        dlink_rdc_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_dlink_input, common, pic = False, rdc = True)])
-        dlink_rdc_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_pic_dlink_input, common, pic = True, rdc = True)])
+        rdc_dlink_output = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_dlink_inputs, common, pic = False, rdc = True)])
+        rdc_pic_dlink_output = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_pic_dlink_inputs, common, pic = True, rdc = True)])
 
         # update the **direct** outputs
-        rdc_objects = depset(transitive = [rdc_objects, dlink_rdc_object])
-        rdc_pic_objects = depset(transitive = [rdc_pic_objects, dlink_rdc_pic_object])
+        rdc_objects = depset(transitive = [rdc_objects, rdc_dlink_output])
+        rdc_pic_objects = depset(transitive = [rdc_pic_objects, rdc_pic_dlink_output])
 
-    # objects to archive: objects directly outputed by this rule and all objects transitively from deps
+    # objects to archive: objects directly outputed by this rule and all objects transitively from deps,
+    # take use_rdc=True and non-pic as an example:
+    # rdc_objects: produce with this rule, thus it must be archived in the library produced by this rule
+    # archive_rdc_objects: propagate from other `cuda_objects`, so this rule is in charge of archiving them
+    # dlink_rdc_objects is NOT included!
     if not use_rdc:
         archive_content = depset(transitive = [objects, archive_objects])
         pic_archive_content = depset(transitive = [pic_objects, archive_pic_objects])
@@ -123,6 +136,8 @@ def _cuda_library_impl(ctx):
         cuda_helper.create_cuda_info(
             defines = depset(common.defines),
             # all objects from cuda_objects should be properly archived, thus, the transitivity of archive is cut off here.
+            dlink_rdc_objects = rdc_dlink_inputs,
+            dlink_rdc_pic_objects = rdc_pic_dlink_inputs,
         ),
     ]
 

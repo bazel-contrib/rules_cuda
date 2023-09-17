@@ -317,7 +317,9 @@ def _create_cuda_info(
         archive_objects = None,
         archive_rdc_objects = None,
         archive_pic_objects = None,
-        archive_rdc_pic_objects = None):
+        archive_rdc_pic_objects = None,
+        dlink_rdc_objects = None,
+        dlink_rdc_pic_objects = None):
     """Constructor for `CudaInfo`. See the providers documentation for detail."""
     ret = CudaInfo(
         defines = defines if defines != None else depset([]),
@@ -329,6 +331,8 @@ def _create_cuda_info(
         archive_rdc_objects = archive_rdc_objects if archive_rdc_objects != None else depset([]),
         archive_pic_objects = archive_pic_objects if archive_pic_objects != None else depset([]),
         archive_rdc_pic_objects = archive_rdc_pic_objects if archive_rdc_pic_objects != None else depset([]),
+        dlink_rdc_objects = dlink_rdc_objects if dlink_rdc_objects != None else depset([]),
+        dlink_rdc_pic_objects = dlink_rdc_pic_objects if dlink_rdc_pic_objects != None else depset([]),
     )
     return ret
 
