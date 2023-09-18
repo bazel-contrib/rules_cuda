@@ -1,4 +1,3 @@
-load("@rules_cc//cc:defs.bzl", "cc_test")
 load("//cuda/private:rules/cuda_library.bzl", "cuda_library")
 
 def cuda_test(
@@ -17,7 +16,7 @@ def cuda_test(
         deps = deps,
     )
 
-    cc_test(
+    native.cc_test(
         name = name,
         copts = copts,
         visibility = visibility,
