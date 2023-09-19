@@ -9,6 +9,7 @@ def cuda_test(**attrs):
         srcs = getattr(attrs, "srcs", []),
         copts = getattr(attrs, "copts", []),
         deps = getattr(attrs, "deps", []),
+        tags = getattr(attrs, "tags", []),
         testonly = True,
     )
 
