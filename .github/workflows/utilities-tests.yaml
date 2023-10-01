@@ -22,7 +22,7 @@ jobs:
     env:
       USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: bazelbuild/setup-bazelisk@v2
       - name: Mount bazel cache
