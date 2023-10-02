@@ -48,11 +48,14 @@ def _cuda_library_impl(ctx):
     rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True)) if use_rdc else depset([])
     rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True)) if use_rdc else depset([])
 
-    # if rdc is enabled for this `cuda_library`, then we need futher do a pass of device link
+    # if rdc is enabled for this `cuda_library`, then we need to do a pass of device link further.
     rdc_dlink_inputs = None
     rdc_pic_dlink_inputs = None
     if use_rdc:
-        # Already implemented Only dlink with objects. TODO: Add support dlink with objects and libraries
+        # TODO: Switch to explicit dlink with attr `dlink=True`, then add support dlink with libraries. At the moment,
+        # all libraries produced by this rule with `rdc=True` will have an <name>_dlink.<infix>.o archived, and nvlink
+        # refuses to consume such libraries and ignores them silently.
+
         # prepare inputs for device_link, take use_rdc=True and non-pic as an example:
         # rdc_objects: produce with this rule
         # archive_rdc_objects: propagate from other `cuda_objects`
