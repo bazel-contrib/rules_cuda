@@ -1,8 +1,8 @@
 load("//cuda/private:rules/cuda_library.bzl", _cuda_library = "cuda_library")
 
-def cuda_test(**attrs):
+def cuda_test(name, **attrs):
     """Wrapper to ensure the test is compiled with the CUDA compiler."""
-    cuda_library_name = "_" + getattr(attrs, "name", "")
+    cuda_library_name = "_" + name
 
     _cuda_library(
         name = cuda_library_name,
