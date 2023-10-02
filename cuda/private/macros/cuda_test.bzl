@@ -6,14 +6,12 @@ def cuda_test(**attrs):
 
     _cuda_library(
         name = cuda_library_name,
-        srcs = getattr(attrs, "srcs", []),
-        copts = getattr(attrs, "copts", []),
-        deps = getattr(attrs, "deps", []),
-        tags = getattr(attrs, "tags", []),
         testonly = True,
+        **attrs
     )
 
     native.cc_test(
+        name = name,
         deps = [cuda_library_name],
-        **attrs
+        **{k: v for k, v in attrs.items() if k != "deps"}
     )
