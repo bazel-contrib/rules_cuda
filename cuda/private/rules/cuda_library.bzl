@@ -28,24 +28,59 @@ def _cuda_library_impl(ctx):
     for src in ctx.attr.srcs:
         src_files.extend(src[DefaultInfo].files.to_list())
 
-    # outputs
-    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = use_rdc))
-    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = use_rdc))
-    rdc_objects = depset([])
-    rdc_pic_objects = depset([])
+    # merge deps' direct objects and archive objects as our archive objects
+    archive_objects = depset(transitive = [dep[CudaInfo].objects for dep in attr.deps if CudaInfo in dep] +
+                                          [dep[CudaInfo].archive_objects for dep in attr.deps if CudaInfo in dep])
+    archive_pic_objects = depset(transitive = [dep[CudaInfo].pic_objects for dep in attr.deps if CudaInfo in dep] +
+                                              [dep[CudaInfo].archive_pic_objects for dep in attr.deps if CudaInfo in dep])
+    archive_rdc_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep] +
+                                              [dep[CudaInfo].archive_rdc_objects for dep in attr.deps if CudaInfo in dep])
+    archive_rdc_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep] +
+                                                  [dep[CudaInfo].archive_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
 
-    # if rdc is enabled for this cuda_library, then we need futher do a pass of device link
+    # Gather transitive dlink objects that may come from other `cuda_library`s
+    dlink_rdc_objects = depset(transitive = [dep[CudaInfo].dlink_rdc_objects for dep in attr.deps if CudaInfo in dep])
+    dlink_rdc_pic_objects = depset(transitive = [dep[CudaInfo].dlink_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
+
+    # direct outputs
+    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False)) if not use_rdc else depset([])
+    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False)) if not use_rdc else depset([])
+    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True)) if use_rdc else depset([])
+    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True)) if use_rdc else depset([])
+
+    # if rdc is enabled for this `cuda_library`, then we need to do a pass of device link further.
+    rdc_dlink_inputs = None
+    rdc_pic_dlink_inputs = None
     if use_rdc:
-        transitive_objects = depset(transitive = [dep[CudaInfo].rdc_objects for dep in attr.deps if CudaInfo in dep])
-        transitive_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
-        objects = depset(transitive = [objects, transitive_objects])
-        rdc_objects = objects
-        pic_objects = depset(transitive = [pic_objects, transitive_pic_objects])
-        rdc_pic_objects = pic_objects
-        dlink_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, objects, common, pic = False, rdc = use_rdc)])
-        dlink_pic_object = depset([device_link(ctx, cuda_toolchain, cc_toolchain, pic_objects, common, pic = True, rdc = use_rdc)])
-        objects = depset(transitive = [objects, dlink_object])
-        pic_objects = depset(transitive = [pic_objects, dlink_pic_object])
+        # TODO: Switch to explicit dlink with attr `dlink=True`, then add support dlink with libraries. At the moment,
+        # all libraries produced by this rule with `rdc=True` will have an <name>_dlink.<infix>.o archived, and nvlink
+        # refuses to consume such libraries and ignores them silently.
+
+        # prepare inputs for device_link, take use_rdc=True and non-pic as an example:
+        # rdc_objects: produce with this rule
+        # archive_rdc_objects: propagate from other `cuda_objects`
+        # dlink_rdc_objects: propagate from other `cuda_library`s
+        rdc_dlink_inputs = depset(transitive = [rdc_objects, archive_rdc_objects, dlink_rdc_objects])
+        rdc_pic_dlink_inputs = depset(transitive = [rdc_pic_objects, archive_rdc_pic_objects, dlink_rdc_pic_objects])
+
+        rdc_dlink_output = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_dlink_inputs, common, pic = False, rdc = True)])
+        rdc_pic_dlink_output = depset([device_link(ctx, cuda_toolchain, cc_toolchain, rdc_pic_dlink_inputs, common, pic = True, rdc = True)])
+
+        # update the **direct** outputs
+        rdc_objects = depset(transitive = [rdc_objects, rdc_dlink_output])
+        rdc_pic_objects = depset(transitive = [rdc_pic_objects, rdc_pic_dlink_output])
+
+    # objects to archive: objects directly outputed by this rule and all objects transitively from deps,
+    # take use_rdc=True and non-pic as an example:
+    # rdc_objects: produce with this rule, thus it must be archived in the library produced by this rule
+    # archive_rdc_objects: propagate from other `cuda_objects`, so this rule is in charge of archiving them
+    # dlink_rdc_objects is NOT included!
+    if not use_rdc:
+        archive_content = depset(transitive = [objects, archive_objects])
+        pic_archive_content = depset(transitive = [pic_objects, archive_pic_objects])
+    else:
+        archive_content = depset(transitive = [rdc_objects, archive_rdc_objects])
+        pic_archive_content = depset(transitive = [rdc_pic_objects, archive_rdc_pic_objects])
 
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
@@ -67,7 +102,7 @@ def _cuda_library_impl(ctx):
         actions = ctx.actions,
         feature_configuration = cc_feature_config,
         cc_toolchain = cc_toolchain,
-        compilation_outputs = cc_common.create_compilation_outputs(objects = objects, pic_objects = pic_objects),
+        compilation_outputs = cc_common.create_compilation_outputs(objects = archive_content, pic_objects = pic_archive_content),
         user_link_flags = common.host_link_flags,
         alwayslink = attr.alwayslink,
         linking_contexts = common.transitive_linking_contexts,
@@ -82,7 +117,10 @@ def _cuda_library_impl(ctx):
     libs = [] if lib == None else [lib]
     pic_libs = [] if pic_lib == None else [pic_lib]
 
-    cc_info = cc_common.merge_cc_infos(direct_cc_infos = [CcInfo(compilation_context = compilation_ctx, linking_context = linking_ctx)], cc_infos = [common.transitive_cc_info])
+    cc_info = cc_common.merge_cc_infos(
+        direct_cc_infos = [CcInfo(compilation_context = compilation_ctx, linking_context = linking_ctx)],
+        cc_infos = [common.transitive_cc_info],
+    )
 
     return [
         DefaultInfo(files = depset(libs + pic_libs)),
@@ -100,10 +138,9 @@ def _cuda_library_impl(ctx):
         ),
         cuda_helper.create_cuda_info(
             defines = depset(common.defines),
-            objects = objects,
-            pic_objects = pic_objects,
-            rdc_objects = rdc_objects,
-            rdc_pic_objects = rdc_pic_objects,
+            # all objects from cuda_objects should be properly archived, thus, the transitivity of archive is cut off here.
+            dlink_rdc_objects = rdc_dlink_inputs,
+            dlink_rdc_pic_objects = rdc_pic_dlink_inputs,
         ),
     ]
 
@@ -118,10 +155,8 @@ cuda_library = rule(
         "alwayslink": attr.bool(default = False),
         "rdc": attr.bool(
             default = False,
-            doc = ("Whether to produce and consume relocateable device code. " +
-                   "Transitive deps that contain device code must all either be cuda_objects or cuda_library(rdc = True). " +
-                   "If False, all device code must be in the same translation unit. May have performance implications. " +
-                   "See https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#using-separate-compilation-in-cuda."),
+            doc = ("Whether to perform device linking for relocateable device code. " +
+                   "Transitive deps that contain device code must all either be cuda_objects or cuda_library(rdc = True)."),
         ),
         "includes": attr.string_list(doc = "List of include dirs to be added to the compile line."),
         "host_copts": attr.string_list(doc = "Add these options to the CUDA host compilation command."),
