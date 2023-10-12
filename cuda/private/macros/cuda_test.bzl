@@ -2,7 +2,7 @@ load("//cuda/private:rules/cuda_library.bzl", _cuda_library = "cuda_library")
 
 def cuda_test(name, **attrs):
     """Wrapper to ensure the test is compiled with the CUDA compiler."""
-    cuda_library_only_attrs = ["deps"]
+    cuda_library_only_attrs = ["deps", "srcs", "hdrs"]
 
     # https://bazel.build/reference/be/common-definitions?hl=en#common-attributes-tests
     cc_test_only_attrs = ["args", "env", "env_inherit", "size", "timeout", "flaky", "shard_count", "local"]
