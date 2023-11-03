@@ -8,16 +8,24 @@ filegroup(
     name = "compiler_deps",
     srcs = [
         ":_cuda_header_files",
-    ] + glob([
-        "cuda/bin/**",
-        "cuda/lib64/**",
-        "cuda/nvvm/**",
-    ]),
+    ] + glob(
+        [
+            "cuda/version.json",
+            "cuda/version.txt",
+            "cuda/bin/**",
+            "cuda/lib64/**",
+            "cuda/nvvm/**",
+        ],
+        allow_empty = True,
+    ),
 )
 
 filegroup(
     name = "_cuda_header_files",
-    srcs = glob(["cuda/include/**"]),
+    srcs = glob(
+        ["cuda/include/**"],
+        allow_empty = True,
+    ),
     visibility = ["//visibility:private"],
 )
 
@@ -172,7 +180,10 @@ cc_library(
 
 cc_library(
     name = "cub",
-    hdrs = glob(["cuda/include/cub/**"]),
+    hdrs = glob(
+        ["cuda/include/cub/**"],
+        allow_empty = True,
+    ),
     includes = [
         "cuda/include",
     ],
@@ -180,7 +191,10 @@ cc_library(
 
 cc_library(
     name = "thrust",
-    hdrs = glob(["cuda/include/thrust/**"]),
+    hdrs = glob(
+        ["cuda/include/thrust/**"],
+        allow_empty = True,
+    ),
     includes = [
         "cuda/include",
     ],
@@ -202,7 +216,10 @@ cc_import(
 
 cc_library(
     name = "cupti_headers",
-    hdrs = glob(["cuda/extras/CUPTI/include/*.h"]),
+    hdrs = glob(
+        ["cuda/extras/CUPTI/include/*.h"],
+        allow_empty = True,
+    ),
     includes = ["cuda/extras/CUPTI/include"],
 )
 
@@ -335,11 +352,14 @@ cc_import(
 cc_library(
     name = "nvptxcompiler",
     srcs = [],
-    hdrs = glob([
-        "cuda/include/fatbinary_section.h",
-        "cuda/include/nvPTXCompiler.h",
-        "cuda/include/crt/*",
-    ]),
+    hdrs = glob(
+        [
+            "cuda/include/fatbinary_section.h",
+            "cuda/include/nvPTXCompiler.h",
+            "cuda/include/crt/*",
+        ],
+        allow_empty = True,
+    ),
     includes = [
         "cuda/include",
     ],
