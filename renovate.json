@@ -2,5 +2,11 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:base"],
   "ignorePaths": ["MODULE.bazel"],
+  "packageRules": [
+    {
+      "matchManagers": ["bazel", "bazel-module"],
+      "excludePackageNames": ["nccl", "nccl-tests"]
+    }
+  ],
   "schedule": ["on the first day of the month"]
 }

@@ -27,9 +27,9 @@ http_archive(
     name = "nccl",
     add_prefix = "nccl",
     build_file = "@rules_cuda_examples//nccl:nccl.BUILD",
-    sha256 = "0de8aed51bf95c96c14bc801ba840eb5b5df527e7105b1f42a58ad5d4d617678",
-    strip_prefix = "nccl-4365458757e4107ecbf629b2fd6e0e19a5d237c2",
-    urls = ["https://github.com/nvidia/nccl/archive/4365458757e4107ecbf629b2fd6e0e19a5d237c2.tar.gz"],
+    sha256 = "83b299cfc2dfe63887dadf3590b3ac2b8b2fd68ec5515b6878774eda39a697d2",
+    strip_prefix = "nccl-9814c75eea18fc7374cde884592233b6b7dc055b",
+    urls = ["https://github.com/nvidia/nccl/archive/9814c75eea18fc7374cde884592233b6b7dc055b.tar.gz"],
 )
 
 http_archive(
@@ -41,7 +41,7 @@ http_archive(
         "-p1",
     ],
     patches = ["@rules_cuda_examples//nccl:nccl-tests-clang.patch"],
-    sha256 = "fe0bdc0fdfba75a9326b32381ce486b99aa5e6189181fbf92baa4f6153961c3f",
-    strip_prefix = "nccl-tests-6c46206a478203b6453035fe0d40dc6418acd089",
-    urls = ["https://github.com/nvidia/nccl-tests/archive/6c46206a478203b6453035fe0d40dc6418acd089.tar.gz"],
+    sha256 = "946adb84f63aec66aea7aab9739d41df81c24f783e85fba6328ba243cfc057e0",
+    strip_prefix = "nccl-tests-1a5f551ffd6e3271982b03a9d5653a3f6ba545fa",
+    urls = ["https://github.com/nvidia/nccl-tests/archive/1a5f551ffd6e3271982b03a9d5653a3f6ba545fa.tar.gz"],
 )
