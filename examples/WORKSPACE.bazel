@@ -27,9 +27,9 @@ http_archive(
     name = "nccl",
     add_prefix = "nccl",
     build_file = "@rules_cuda_examples//nccl:nccl.BUILD",
-    sha256 = "83b299cfc2dfe63887dadf3590b3ac2b8b2fd68ec5515b6878774eda39a697d2",
-    strip_prefix = "nccl-9814c75eea18fc7374cde884592233b6b7dc055b",
-    urls = ["https://github.com/nvidia/nccl/archive/9814c75eea18fc7374cde884592233b6b7dc055b.tar.gz"],
+    sha256 = "04c2d06e6a5e3e75dda3b97d8818d85d058ba6f4f8d850a0c4f3892ca2a39869",
+    strip_prefix = "nccl-0e35f5d3902f4e30c4c97b9700a6a64b25ba7f7f",
+    urls = ["https://github.com/nvidia/nccl/archive/0e35f5d3902f4e30c4c97b9700a6a64b25ba7f7f.tar.gz"],
 )
 
 http_archive(
