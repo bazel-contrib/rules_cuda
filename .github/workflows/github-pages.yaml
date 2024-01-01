@@ -32,7 +32,7 @@ jobs:
           path: ~/.cache/bazel
           key: bazel-gen-docs-${{ matrix.docs.ref }}
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
           cache: pip
@@ -65,7 +65,7 @@ jobs:
       - name: Inspect docs site directory structure
         run: find ${{ github.workspace }}/docs/generated -maxdepth 2
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - run: |
