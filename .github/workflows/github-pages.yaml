@@ -16,6 +16,7 @@ jobs:
         docs:
           # { ref: <branch/tag name>, name: <docs drop down entry> }
           - { ref: main, name: latest }
+          - { ref: v0.2.1, name: 0.2.1 }
     steps:
       - uses: actions/checkout@v4
         if: ${{ matrix.docs.ref == 'main' }}
@@ -31,7 +32,7 @@ jobs:
           path: ~/.cache/bazel
           key: bazel-gen-docs-${{ matrix.docs.ref }}
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
           cache: pip
@@ -44,7 +45,7 @@ jobs:
 
       - run: bazelisk shutdown
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: "${{ matrix.docs.name }}"
           path: ${{ github.workspace }}/docs/site/
@@ -58,13 +59,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: ${{ github.workspace }}/docs/generated
       - name: Inspect docs site directory structure
         run: find ${{ github.workspace }}/docs/generated -maxdepth 2
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
       - run: |
