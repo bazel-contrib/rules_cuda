@@ -1,0 +1,16 @@
+load("@rules_cuda//cuda:defs.bzl", "cuda_toolchain_config_dummy")
+
+config_setting(
+    name = "cuda_is_disabled",
+    flag_values = {"@rules_cuda//cuda:enable": "False"},
+)
+
+cuda_toolchain_config_dummy(name = "dummy-local")
+
+toolchain(
+    name = "none-local-toolchain",
+    target_settings = [":cuda_is_disabled"],
+    toolchain = ":dummy-local",
+    toolchain_type = "@rules_cuda//cuda:toolchain_type",
+    visibility = ["//visibility:public"],
+)

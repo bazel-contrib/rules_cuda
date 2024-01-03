@@ -86,4 +86,5 @@ User can setup their own toolchain if needed and ignore the detected ones by not
     native.register_toolchains(
         "@local_cuda//toolchain:nvcc-local-toolchain",
         "@local_cuda//toolchain/clang:clang-local-toolchain",
+        "@local_cuda//toolchain/none:none-local-toolchain",
     )

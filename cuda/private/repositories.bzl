@@ -190,12 +190,18 @@ def config_clang(repository_ctx, cuda, clang_path):
     }
     repository_ctx.template("toolchain/clang/BUILD", tpl_label, substitutions = substitutions, executable = False)
 
+def config_none(repository_ctx):
+    tpl_label = Label("//cuda:templates/BUILD.local_toolchain_none")
+    repository_ctx.template("toolchain/none/BUILD", tpl_label, executable = False)
+
 def _local_cuda_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
     config_cuda_toolkit_and_nvcc(repository_ctx, cuda)
 
     clang_path = detect_clang(repository_ctx)
     config_clang(repository_ctx, cuda, clang_path)
+
+    config_none(repository_ctx)
 
 local_cuda = repository_rule(
     implementation = _local_cuda_impl,
