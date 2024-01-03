@@ -32,12 +32,6 @@ cuda_toolchain(
 
 toolchain(
     name = "clang-local-toolchain",
-    exec_compatible_with = [
-        "@platforms//cpu:x86_64",
-    ],
-    target_compatible_with = [
-        "@platforms//cpu:x86_64",
-    ],
     target_settings = [
         "@rules_cuda//cuda:is_enabled",
         "@rules_cuda//cuda:compiler_is_clang",
