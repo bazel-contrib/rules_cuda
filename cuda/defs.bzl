@@ -16,7 +16,7 @@ load(
     _use_cuda_toolchain = "use_cuda_toolchain",
 )
 load("//cuda/private:toolchain_configs/clang.bzl", _cuda_toolchain_config_clang = "cuda_toolchain_config")
-load("//cuda/private:toolchain_configs/dummy.bzl", _cuda_toolchain_config_dummy = "dummy_toolchain_config")
+load("//cuda/private:toolchain_configs/disabled.bzl", _cuda_toolchain_config_disabled = "disabled_toolchain_config")
 load("//cuda/private:toolchain_configs/nvcc.bzl", _cuda_toolchain_config_nvcc = "cuda_toolchain_config")
 load("//cuda/private:toolchain_configs/nvcc_msvc.bzl", _cuda_toolchain_config_nvcc_msvc = "cuda_toolchain_config")
 
@@ -25,7 +25,7 @@ cuda_toolchain = _cuda_toolchain
 find_cuda_toolchain = _find_cuda_toolchain
 use_cuda_toolchain = _use_cuda_toolchain
 cuda_toolchain_config_clang = _cuda_toolchain_config_clang
-cuda_toolchain_config_dummy = _cuda_toolchain_config_dummy
+cuda_toolchain_config_disabled = _cuda_toolchain_config_disabled
 cuda_toolchain_config_nvcc_msvc = _cuda_toolchain_config_nvcc_msvc
 cuda_toolchain_config_nvcc = _cuda_toolchain_config_nvcc
 
