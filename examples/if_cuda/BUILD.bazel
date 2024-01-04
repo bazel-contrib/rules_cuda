@@ -1,13 +1,10 @@
-load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library", "requires_cuda")
 
 cuda_library(
     name = "kernel",
     srcs = ["kernel.cu"],
     hdrs = ["kernel.h"],
-    target_compatible_with = select({
-        "@rules_cuda//cuda:is_enabled": [],
-        "//conditions:default": ["@platforms//:incompatible"],
-    }),
+    target_compatible_with = requires_cuda(),
 )
 
 cc_binary(

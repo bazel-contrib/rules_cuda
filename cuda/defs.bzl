@@ -19,6 +19,7 @@ load("//cuda/private:toolchain_configs/clang.bzl", _cuda_toolchain_config_clang 
 load("//cuda/private:toolchain_configs/disabled.bzl", _cuda_toolchain_config_disabled = "disabled_toolchain_config")
 load("//cuda/private:toolchain_configs/nvcc.bzl", _cuda_toolchain_config_nvcc = "cuda_toolchain_config")
 load("//cuda/private:toolchain_configs/nvcc_msvc.bzl", _cuda_toolchain_config_nvcc_msvc = "cuda_toolchain_config")
+load("//cuda/private:defs.bzl", _requires_cuda = "requires_cuda")
 
 cuda_toolkit = _cuda_toolkit
 cuda_toolchain = _cuda_toolchain
@@ -44,3 +45,5 @@ if_linux = _if_linux
 if_windows = _if_windows
 
 cc_import_versioned_sos = _cc_import_versioned_sos
+
+requires_cuda = _requires_cuda

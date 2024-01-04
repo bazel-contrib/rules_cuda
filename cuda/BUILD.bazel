@@ -4,6 +4,7 @@ load(
     "bool_flag",
     "string_flag",
 )
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//cuda/private:rules/flags.bzl", "cuda_archs_flag", "repeatable_string_flag")
 
 package(default_visibility = ["//visibility:public"])
@@ -31,6 +32,19 @@ bool_flag(
 config_setting(
     name = "is_enabled",
     flag_values = {":enable": "True"},
+)
+
+config_setting(
+    name = "is_cuda_found",
+    flag_values = {"@local_cuda//:cuda_found": "True"},
+)
+
+selects.config_setting_group(
+    name = "is_enabled_and_cuda_found",
+    match_all = [
+        ":is_enabled",
+        ":is_cuda_found",
+    ],
 )
 
 # Command line flag to specify the list of CUDA architectures to compile for.

@@ -116,7 +116,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
         defs_bzl_content += defs_if_local_cuda % "if_true"
     else:
-        repository_ctx.file("BUILD")  # Empty file
+        repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda_disabled"), "BUILD")
         defs_bzl_content += defs_if_local_cuda % "if_false"
     repository_ctx.file("defs.bzl", defs_bzl_content)
 
