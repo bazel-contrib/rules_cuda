@@ -191,8 +191,7 @@ def config_clang(repository_ctx, cuda, clang_path):
     repository_ctx.template("toolchain/clang/BUILD", tpl_label, substitutions = substitutions, executable = False)
 
 def config_disabled(repository_ctx):
-    tpl_label = Label("//cuda:templates/BUILD.local_toolchain_disabled")
-    repository_ctx.template("toolchain/disabled/BUILD", tpl_label, executable = False)
+    repository_ctx.symlink(Label("//cuda:templates/BUILD.local_toolchain_disabled"), "toolchain/disabled/BUILD")
 
 def _local_cuda_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
