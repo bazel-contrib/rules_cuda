@@ -357,10 +357,11 @@ def _impl(ctx):
                 actions = [ACTION_NAMES.cuda_compile],
                 flag_groups = [flag_group(flags = [
                     "-O2",
-                    "--dopt",  # the default depends on the value of --device-debug (-G), so set it explicitly.
-                    "on",
                     "-DNDEBUG",
-                ])],
+                ] + (
+                    # the default depends on the value of --device-debug (-G), so set it explicitly.
+                    ["--dopt", "on"] if nvcc_version_ge(ctx, 11, 7) else []
+                ))],
             ),
         ],
         implies = ["frame_pointer"],

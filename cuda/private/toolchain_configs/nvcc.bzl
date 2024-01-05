@@ -310,8 +310,6 @@ def _impl(ctx):
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
                 flag_groups = [flag_group(flags = [
-                    "--dopt",  # the default depends on the value of --device-debug (-G), so set it explicitly.
-                    "on",
                     "-Xcompiler",
                     "-g0",
                     "-O2",
@@ -320,7 +318,10 @@ def _impl(ctx):
                     "-ffunction-sections",
                     "-Xcompiler",
                     "-fdata-sections",
-                ])],
+                ] + (
+                    # the default depends on the value of --device-debug (-G), so set it explicitly.
+                    ["--dopt", "on"] if nvcc_version_ge(ctx, 11, 7) else []
+                ))],
             ),
         ],
         provides = ["compilation_mode"],
