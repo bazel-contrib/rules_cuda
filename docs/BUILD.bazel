@@ -11,28 +11,40 @@ stardoc(
     name = "user_docs",
     out = "user/user_docs.md",
     input = "user_docs.bzl",
-    deps = ["@rules_cuda//:bzl_srcs", ":bazel_tools_bzl_srcs"],
+    deps = [
+        ":bazel_tools_bzl_srcs",
+        "@rules_cuda//:bzl_srcs",
+    ],
 )
 
 stardoc(
     name = "toolchain_config_docs",
     out = "user/toolchain_config_docs.md",
     input = "toolchain_config_docs.bzl",
-    deps = ["@rules_cuda//:bzl_srcs", ":bazel_tools_bzl_srcs"],
+    deps = [
+        ":bazel_tools_bzl_srcs",
+        "@rules_cuda//:bzl_srcs",
+    ],
 )
 
 stardoc(
     name = "providers_docs",
     out = "developer/providers_docs.md",
     input = "providers_docs.bzl",
-    deps = ["@rules_cuda//:bzl_srcs", ":bazel_tools_bzl_srcs"],
+    deps = [
+        ":bazel_tools_bzl_srcs",
+        "@rules_cuda//:bzl_srcs",
+    ],
 )
 
 stardoc(
     name = "developer_docs",
     out = "developer/developer_docs.md",
     input = "developer_docs.bzl",
-    deps = ["@rules_cuda//:bzl_srcs", ":bazel_tools_bzl_srcs"],
+    deps = [
+        ":bazel_tools_bzl_srcs",
+        "@rules_cuda//:bzl_srcs",
+    ],
 )
 
 filegroup(
