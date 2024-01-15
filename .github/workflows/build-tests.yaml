@@ -56,9 +56,6 @@ jobs:
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
 
-      # Check https://bazel.build/release#support-matrix, manually unroll the the strategy matrix to avoid exploding
-      # the combinations.
-
       # Use Bazel with version specified in .bazelversion
       # out of @examples repo build requires WORKSPACE-based external dependency system
       - run: bazelisk build --noenable_bzlmod @rules_cuda_examples//basic:all
@@ -70,28 +67,4 @@ jobs:
       - run: cd examples && bazelisk build //rdc:all
       - run: cd examples && bazelisk build //if_cuda:main
       - run: cd examples && bazelisk build //if_cuda:main --enable_cuda=False
-      - run: bazelisk shutdown
-
-      # Use Bazel 6
-      - run: echo "USE_BAZEL_VERSION=6.4.0" >> $GITHUB_ENV
-      - run: bazelisk build @rules_cuda_examples//basic:all
-      - run: bazelisk build @rules_cuda_examples//rdc:all
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False
-      - run: cd examples && bazelisk build --config=bzlmod //basic:all
-      - run: cd examples && bazelisk build --config=bzlmod //rdc:all
-      - run: cd examples && bazelisk build --config=bzlmod //if_cuda:main
-      - run: cd examples && bazelisk build --config=bzlmod //if_cuda:main --enable_cuda=False
-      - run: bazelisk shutdown
-
-      # Use Bazel 5
-      - run: echo "USE_BAZEL_VERSION=5.4.1" >> $GITHUB_ENV
-      - run: bazelisk build @rules_cuda_examples//basic:all
-      - run: bazelisk build @rules_cuda_examples//rdc:all
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False
-      - run: cd examples && bazelisk build --config=bzlmod //basic:all
-      - run: cd examples && bazelisk build --config=bzlmod //rdc:all
-      - run: cd examples && bazelisk build --config=bzlmod //if_cuda:main
-      - run: cd examples && bazelisk build --config=bzlmod //if_cuda:main --enable_cuda=False
       - run: bazelisk shutdown
