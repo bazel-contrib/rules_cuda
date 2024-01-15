@@ -20,29 +20,5 @@ use_repo(cuda, "local_cuda")
 #################################
 # Dependencies for nccl example #
 #################################
-http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
+# See WORKSPACE.bzlmod for the remaining parts
 bazel_dep(name = "bazel_skylib", version = "1.4.2")
-
-http_archive(
-    name = "nccl",
-    add_prefix = "nccl",
-    build_file = "@rules_cuda_examples//nccl:nccl.BUILD",
-    sha256 = "83b299cfc2dfe63887dadf3590b3ac2b8b2fd68ec5515b6878774eda39a697d2",
-    strip_prefix = "nccl-9814c75eea18fc7374cde884592233b6b7dc055b",
-    urls = ["https://github.com/nvidia/nccl/archive/9814c75eea18fc7374cde884592233b6b7dc055b.tar.gz"],
-)
-
-http_archive(
-    name = "nccl-tests",
-    add_prefix = "nccl-tests",
-    build_file = "@rules_cuda_examples//nccl:nccl-tests.BUILD",
-    patch_args = [
-        "--directory=nccl-tests",
-        "-p1",
-    ],
-    patches = ["@rules_cuda_examples//nccl:nccl-tests-clang.patch"],
-    sha256 = "946adb84f63aec66aea7aab9739d41df81c24f783e85fba6328ba243cfc057e0",
-    strip_prefix = "nccl-tests-1a5f551ffd6e3271982b03a9d5653a3f6ba545fa",
-    urls = ["https://github.com/nvidia/nccl-tests/archive/1a5f551ffd6e3271982b03a9d5653a3f6ba545fa.tar.gz"],
-)
