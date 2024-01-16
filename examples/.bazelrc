@@ -15,5 +15,3 @@ build:clang --@rules_cuda//cuda:compiler=clang
 
 # https://github.com/bazel-contrib/rules_cuda/issues/1
 # build --ui_event_filters=-INFO
-
-common:bzlmod --enable_bzlmod

@@ -1,19 +1,21 @@
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 load("@rules_cuda_examples//nccl:nccl-tests.bzl", "nccl_tests_binary")
 
+# NOTE: all paths in this file relative to @nccl-tests repo root.
+
 cc_library(
     name = "nccl_tests_include",
-    hdrs = glob(["nccl-tests/src/*.h"]),
-    includes = ["nccl-tests/src"],
+    hdrs = glob(["src/*.h"]),
+    includes = ["src"],
 )
 
 cuda_library(
     name = "common_cuda",
     srcs = [
-        "nccl-tests/src/common.cu",
-        "nccl-tests/verifiable/verifiable.cu",
+        "src/common.cu",
+        "verifiable/verifiable.cu",
     ] + glob([
-        "nccl-tests/**/*.h",
+        "**/*.h",
     ]),
     deps = [
         ":nccl_tests_include",
@@ -23,8 +25,8 @@ cuda_library(
 
 cc_library(
     name = "common_cc",
-    srcs = ["nccl-tests/src/timer.cc"],
-    hdrs = ["nccl-tests/src/timer.h"],
+    srcs = ["src/timer.cc"],
+    hdrs = ["src/timer.h"],
     alwayslink = 1,
 )
 

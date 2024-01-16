@@ -2,9 +2,11 @@ load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library", "cuda_objects")
 load("@rules_cuda_examples//nccl:nccl.bzl", "if_cuda_clang", "if_cuda_nvcc", "nccl_primitive")
 
+# NOTE: all paths in this file relative to @nccl repo root.
+
 expand_template(
     name = "nccl_h",
-    out = "nccl/src/include/nccl.h",
+    out = "src/include/nccl.h",
     substitutions = {
         "${nccl:Major}": "2",
         "${nccl:Minor}": "18",
@@ -13,7 +15,7 @@ expand_template(
         # NCCL_VERSION(X,Y,Z) ((X) * 10000 + (Y) * 100 + (Z))
         "${nccl:Version}": "21803",
     },
-    template = "nccl/src/nccl.h.in",
+    template = "src/nccl.h.in",
 )
 
 cc_library(
@@ -21,24 +23,24 @@ cc_library(
     hdrs = [
         ":nccl_h",
     ] + glob([
-        "nccl/src/include/**/*.h",
-        "nccl/src/include/**/*.hpp",
+        "src/include/**/*.h",
+        "src/include/**/*.hpp",
     ]),
     includes = [
         # this will add both nccl/src/include in repo and
         # bazel-out/<compilation_mode>/bin/nccl/src/include to include paths
         # so the previous expand_template generate nccl.h to the very path!
-        "nccl/src/include",
+        "src/include",
     ],
 )
 
 cuda_objects(
     name = "nccl_device_common",
     srcs = [
-        "nccl/src/collectives/device/functions.cu",
-        "nccl/src/collectives/device/onerank_reduce.cu",
+        "src/collectives/device/functions.cu",
+        "src/collectives/device/onerank_reduce.cu",
     ] + glob([
-        "nccl/src/collectives/device/**/*.h",
+        "src/collectives/device/**/*.h",
     ]),
     copts = if_cuda_nvcc(["--extended-lambda"]),
     ptxasopts = ["-maxrregcount=96"],
@@ -51,21 +53,21 @@ USE_BF16 = True
 filegroup(
     name = "collective_dev_hdrs",
     srcs = [
-        "nccl/src/collectives/device/all_gather.h",
-        "nccl/src/collectives/device/all_reduce.h",
-        "nccl/src/collectives/device/broadcast.h",
-        "nccl/src/collectives/device/common.h",
-        "nccl/src/collectives/device/common_kernel.h",
-        "nccl/src/collectives/device/gen_rules.sh",
-        "nccl/src/collectives/device/op128.h",
-        "nccl/src/collectives/device/primitives.h",
-        "nccl/src/collectives/device/prims_ll.h",
-        "nccl/src/collectives/device/prims_ll128.h",
-        "nccl/src/collectives/device/prims_simple.h",
-        "nccl/src/collectives/device/reduce.h",
-        "nccl/src/collectives/device/reduce_kernel.h",
-        "nccl/src/collectives/device/reduce_scatter.h",
-        "nccl/src/collectives/device/sendrecv.h",
+        "src/collectives/device/all_gather.h",
+        "src/collectives/device/all_reduce.h",
+        "src/collectives/device/broadcast.h",
+        "src/collectives/device/common.h",
+        "src/collectives/device/common_kernel.h",
+        "src/collectives/device/gen_rules.sh",
+        "src/collectives/device/op128.h",
+        "src/collectives/device/primitives.h",
+        "src/collectives/device/prims_ll.h",
+        "src/collectives/device/prims_ll128.h",
+        "src/collectives/device/prims_simple.h",
+        "src/collectives/device/reduce.h",
+        "src/collectives/device/reduce_kernel.h",
+        "src/collectives/device/reduce_scatter.h",
+        "src/collectives/device/sendrecv.h",
     ],
 )
 
@@ -131,16 +133,16 @@ cc_binary(
     name = "nccl",
     srcs = glob(
         [
-            "nccl/src/*.cc",
-            "nccl/src/collectives/*.cc",
-            "nccl/src/graph/*.cc",
-            "nccl/src/graph/*.h",
-            "nccl/src/misc/*.cc",
-            "nccl/src/transport/*.cc",
+            "src/*.cc",
+            "src/collectives/*.cc",
+            "src/graph/*.cc",
+            "src/graph/*.h",
+            "src/misc/*.cc",
+            "src/transport/*.cc",
         ],
         exclude = [
             # https://github.com/NVIDIA/nccl/issues/658
-            "nccl/src/enhcompat.cc",
+            "src/enhcompat.cc",
         ],
     ),
     copts = if_cuda_clang(["-xcu"]),
