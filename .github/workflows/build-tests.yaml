@@ -74,6 +74,10 @@ jobs:
 
       # Use Bazel 6
       - run: echo "USE_BAZEL_VERSION=6.4.0" >> $GITHUB_ENV
+        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
+      - run: echo "USE_BAZEL_VERSION=6.4.0" >> $env:GITHUB_ENV
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
+
       - run: bazelisk build @rules_cuda_examples//basic:all
       - run: bazelisk build @rules_cuda_examples//rdc:all
       - run: bazelisk build @rules_cuda_examples//if_cuda:main
@@ -86,6 +90,10 @@ jobs:
 
       # Use Bazel 5
       - run: echo "USE_BAZEL_VERSION=5.4.1" >> $GITHUB_ENV
+        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
+      - run: echo "USE_BAZEL_VERSION=5.4.1" >> $env:GITHUB_ENV
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
+
       - run: bazelisk build @rules_cuda_examples//basic:all
       - run: bazelisk build @rules_cuda_examples//rdc:all
       - run: bazelisk build @rules_cuda_examples//if_cuda:main
