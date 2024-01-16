@@ -78,10 +78,10 @@ jobs:
       - run: bazelisk build @rules_cuda_examples//rdc:all
       - run: bazelisk build @rules_cuda_examples//if_cuda:main
       - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False
-      - run: cd examples && bazelisk build --config=bzlmod //basic:all
-      - run: cd examples && bazelisk build --config=bzlmod //rdc:all
-      - run: cd examples && bazelisk build --config=bzlmod //if_cuda:main
-      - run: cd examples && bazelisk build --config=bzlmod //if_cuda:main --enable_cuda=False
+      - run: cd examples && bazelisk build --enable_bzlmod //basic:all
+      - run: cd examples && bazelisk build --enable_bzlmod //rdc:all
+      - run: cd examples && bazelisk build --enable_bzlmod //if_cuda:main
+      - run: cd examples && bazelisk build --enable_bzlmod //if_cuda:main --enable_cuda=False
       - run: bazelisk shutdown
 
       # Use Bazel 5
