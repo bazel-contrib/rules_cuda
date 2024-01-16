@@ -1,6 +1,8 @@
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library", "cuda_objects")
 
+# NOTE: all paths in this file relative to @nccl repo root.
+
 def if_cuda_nvcc(if_true, if_false = []):
     return select({
         "@rules_cuda//cuda:compiler_is_nvcc": if_true,
@@ -25,8 +27,8 @@ def nccl_primitive(name, hdrs = [], deps = [], use_bf16 = True):
             name_op_dt = "{}_{}_{}".format(name, op, dt)
             copy_file(
                 name = name_op_dt + "_rename",
-                src = "nccl/src/collectives/device/{}.cu".format(name),
-                out = "nccl/src/collectives/device/{}.cu".format(name_op_dt),
+                src = "src/collectives/device/{}.cu".format(name),
+                out = "src/collectives/device/{}.cu".format(name_op_dt),
             )
 
             cuda_objects(
@@ -36,7 +38,7 @@ def nccl_primitive(name, hdrs = [], deps = [], use_bf16 = True):
                 deps = deps,
                 ptxasopts = ["-maxrregcount=96"],
                 defines = ["NCCL_OP={}".format(opn), "NCCL_TYPE={}".format(dtn)],
-                includes = ["nccl/src/collectives/device"],
+                includes = ["src/collectives/device"],
             )
             intermediate_targets.append(":" + name_op_dt)
 

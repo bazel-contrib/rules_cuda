@@ -25,7 +25,6 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "nccl",
-    add_prefix = "nccl",
     build_file = "@rules_cuda_examples//nccl:nccl.BUILD",
     sha256 = "83b299cfc2dfe63887dadf3590b3ac2b8b2fd68ec5515b6878774eda39a697d2",
     strip_prefix = "nccl-9814c75eea18fc7374cde884592233b6b7dc055b",
@@ -34,10 +33,8 @@ http_archive(
 
 http_archive(
     name = "nccl-tests",
-    add_prefix = "nccl-tests",
     build_file = "@rules_cuda_examples//nccl:nccl-tests.BUILD",
     patch_args = [
-        "--directory=nccl-tests",
         "-p1",
     ],
     patches = ["@rules_cuda_examples//nccl:nccl-tests-clang.patch"],
