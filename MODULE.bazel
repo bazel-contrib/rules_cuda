@@ -7,8 +7,8 @@ module(
 bazel_dep(name = "bazel_skylib", version = "1.4.2")
 bazel_dep(name = "platforms", version = "0.0.6")
 
-toolchain = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-use_repo(toolchain, "local_cuda")
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+use_repo(cuda, "local_cuda")
 
 register_toolchains(
     "@local_cuda//toolchain:nvcc-local-toolchain",

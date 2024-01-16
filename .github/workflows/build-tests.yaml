@@ -56,14 +56,15 @@ jobs:
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
 
-      - run: bazelisk build @rules_cuda_examples//basic:all
-      - run: bazelisk build @rules_cuda_examples//rdc:all
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False
-
-      - run: cd examples && bazelisk build //basic:all --config=bzlmod
-      - run: cd examples && bazelisk build //rdc:all --config=bzlmod
-      - run: cd examples && bazelisk build //if_cuda:main --config=bzlmod
-      - run: cd examples && bazelisk build //if_cuda:main --enable_cuda=False --config=bzlmod
-
+      # Use Bazel with version specified in .bazelversion
+      # out of @examples repo build requires WORKSPACE-based external dependency system
+      - run: bazelisk build --noenable_bzlmod @rules_cuda_examples//basic:all
+      - run: bazelisk build --noenable_bzlmod @rules_cuda_examples//rdc:all
+      - run: bazelisk build --noenable_bzlmod @rules_cuda_examples//if_cuda:main
+      - run: bazelisk build --noenable_bzlmod @rules_cuda_examples//if_cuda:main --enable_cuda=False
+      # in @examples repo build, bzlmod is enabled by default since Bazel 7
+      - run: cd examples && bazelisk build //basic:all
+      - run: cd examples && bazelisk build //rdc:all
+      - run: cd examples && bazelisk build //if_cuda:main
+      - run: cd examples && bazelisk build //if_cuda:main --enable_cuda=False
       - run: bazelisk shutdown
