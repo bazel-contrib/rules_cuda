@@ -33,6 +33,11 @@ config_setting(
     flag_values = {":enable": "True"},
 )
 
+config_setting(
+    name = "is_valid_toolchain_found",
+    flag_values = {"@local_cuda//:valid_toolchain_found": "True"},
+)
+
 # Command line flag to specify the list of CUDA architectures to compile for.
 #
 # Provides CudaArchsInfo of the list of archs to build.
@@ -85,4 +90,18 @@ repeatable_string_flag(
 label_flag(
     name = "runtime",
     build_setting_default = "@local_cuda//:cuda_runtime",
+)
+
+constraint_setting(name = "rules_are_enabled_setting")
+
+constraint_value(
+    name = "rules_are_enabled",
+    constraint_setting = ":rules_are_enabled_setting",
+)
+
+constraint_setting(name = "valid_toolchain_is_configured_setting")
+
+constraint_value(
+    name = "valid_toolchain_is_configured",
+    constraint_setting = ":valid_toolchain_is_configured_setting",
 )

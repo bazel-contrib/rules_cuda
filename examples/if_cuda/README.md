@@ -55,15 +55,20 @@ cuda disabled
 
 ### rules_cuda targets
 
-Any attempt to build a `rules_cuda`-defined rule (e.g. `cuda_library` or `cuda_objects`) will _FAIL_ if `rules_cuda` is disabled, as the CUDA toolchain will not be registered for that invocation.
+It is a good practice to set target compatibility as e.g. done here for `//if_cuda:kernel` target:
 
 ```
-bazel build //if_cuda:kernel --@rules_cuda//cuda:enable=false
-ERROR: /home/ryan/devel/rules_cuda/examples/if_cuda/BUILD.bazel:3:13: While resolving toolchains for target //if_cuda:kernel: No matching toolchains found for types @rules_cuda//cuda:toolchain_type.
-To debug, rerun with --toolchain_resolution_debug='@rules_cuda//cuda:toolchain_type'
-If platforms or toolchains are a new concept for you, we'd encourage reading https://bazel.build/concepts/platforms-intro.
-ERROR: Analysis of target '//if_cuda:kernel' failed; build aborted:
-FAILED: Build did NOT complete successfully (0 packages loaded, 133 targets configured)
+    target_compatible_with = requires_cuda(),
+```
+
+With target compatibility set up, any attempt to build a `rules_cuda`-defined rule (e.g. `cuda_library` or `cuda_objects`) will _FAIL_ if `rules_cuda` is disabled:
+
+```
+bazel build //if_cuda:kernel --@rules_cuda//cuda:enable=False
+ERROR: Target //if_cuda:kernel is incompatible and cannot be built, but was explicitly requested.
+Dependency chain:
+    //if_cuda:kernel (6b3a99)   <-- target platform (@local_config_platform//:host) didn't satisfy constraints [@rules_cuda//cuda:rules_are_enabled, @rules_cuda//cuda:valid_toolchain_is_configured]
+FAILED: Build did NOT complete successfully (0 packages loaded, 0 targets configured)
 ```
 
 ## Developing for CUDA- and CUDA-free targets
@@ -78,7 +83,7 @@ the type of compilation underway. You are free to set any set of preprocessor va
 rules_cuda or not can be achieved simply by using Bazel's `select` feature:
 
 ```
-select({
+    select({
         "@rules_cuda//cuda:is_enabled": [], # add whatever settings are required if using CUDA
         "//conditions:default": [] # add whatever settings are required if not using CUDA
     })

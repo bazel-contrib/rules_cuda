@@ -1,0 +1,16 @@
+load("@rules_cuda//cuda:defs.bzl", "cuda_toolchain_config_disabled")
+
+config_setting(
+    name = "cuda_is_disabled",
+    flag_values = {"@rules_cuda//cuda:enable": "False"},
+)
+
+cuda_toolchain_config_disabled(name = "disabled-local")
+
+toolchain(
+    name = "disabled-local-toolchain",
+    target_settings = [":cuda_is_disabled"],
+    toolchain = ":disabled-local",
+    toolchain_type = "@rules_cuda//cuda:toolchain_type",
+    visibility = ["//visibility:public"],
+)

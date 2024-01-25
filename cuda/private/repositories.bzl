@@ -116,7 +116,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
         defs_bzl_content += defs_if_local_cuda % "if_true"
     else:
-        repository_ctx.file("BUILD")  # Empty file
+        repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda_disabled"), "BUILD")
         defs_bzl_content += defs_if_local_cuda % "if_false"
     repository_ctx.file("defs.bzl", defs_bzl_content)
 
@@ -190,12 +190,17 @@ def config_clang(repository_ctx, cuda, clang_path):
     }
     repository_ctx.template("toolchain/clang/BUILD", tpl_label, substitutions = substitutions, executable = False)
 
+def config_disabled(repository_ctx):
+    repository_ctx.symlink(Label("//cuda:templates/BUILD.local_toolchain_disabled"), "toolchain/disabled/BUILD")
+
 def _local_cuda_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
     config_cuda_toolkit_and_nvcc(repository_ctx, cuda)
 
     clang_path = detect_clang(repository_ctx)
     config_clang(repository_ctx, cuda, clang_path)
+
+    config_disabled(repository_ctx)
 
 local_cuda = repository_rule(
     implementation = _local_cuda_impl,
