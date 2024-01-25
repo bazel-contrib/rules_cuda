@@ -34,8 +34,8 @@ config_setting(
 )
 
 config_setting(
-    name = "is_cuda_found",
-    flag_values = {"@local_cuda//:cuda_found": "True"},
+    name = "is_valid_toolchain_found",
+    flag_values = {"@local_cuda//:valid_toolchain_found": "True"},
 )
 
 # Command line flag to specify the list of CUDA architectures to compile for.
@@ -92,16 +92,16 @@ label_flag(
     build_setting_default = "@local_cuda//:cuda_runtime",
 )
 
-constraint_setting(name = "cuda_must_be_enabled_setting")
+constraint_setting(name = "rules_are_enabled_setting")
 
 constraint_value(
-    name = "cuda_must_be_enabled",
-    constraint_setting = ":cuda_must_be_enabled_setting",
+    name = "rules_are_enabled",
+    constraint_setting = ":rules_are_enabled_setting",
 )
 
-constraint_setting(name = "cuda_must_be_found_setting")
+constraint_setting(name = "valid_toolchain_is_configured_setting")
 
 constraint_value(
-    name = "cuda_must_be_found",
-    constraint_setting = ":cuda_must_be_found_setting",
+    name = "valid_toolchain_is_configured",
+    constraint_setting = ":valid_toolchain_is_configured_setting",
 )

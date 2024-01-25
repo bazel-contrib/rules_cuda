@@ -64,10 +64,10 @@ It is a good practice to set target compatibility as e.g. done here for `//if_cu
 With target compatibility set up, any attempt to build a `rules_cuda`-defined rule (e.g. `cuda_library` or `cuda_objects`) will _FAIL_ if `rules_cuda` is disabled:
 
 ```
-bazel build //if_cuda:kernel   --@rules_cuda//cuda:enable=false
+bazel build //if_cuda:kernel --@rules_cuda//cuda:enable=False
 ERROR: Target //if_cuda:kernel is incompatible and cannot be built, but was explicitly requested.
 Dependency chain:
-    //if_cuda:kernel (6b3a99)   <-- target platform (@local_config_platform//:host) didn't satisfy constraints [@rules_cuda//cuda:cuda_must_be_enabled, @rules_cuda//cuda:cuda_must_be_found]
+    //if_cuda:kernel (6b3a99)   <-- target platform (@local_config_platform//:host) didn't satisfy constraints [@rules_cuda//cuda:rules_are_enabled, @rules_cuda//cuda:valid_toolchain_is_configured]
 FAILED: Build did NOT complete successfully (0 packages loaded, 0 targets configured)
 ```
 

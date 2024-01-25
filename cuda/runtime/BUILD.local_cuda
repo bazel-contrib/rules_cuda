@@ -6,7 +6,7 @@ package(
 )
 
 bool_setting(
-    name = "cuda_found",
+    name = "valid_toolchain_found",
     build_setting_default = True,
 )
 
