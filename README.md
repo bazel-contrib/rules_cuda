@@ -111,6 +111,7 @@ The problem is caused by nvcc use PID to determine temporary file name, and with
 
 To avoid it:
 
+- Update to Bazel 7 where `--incompatible_sandbox_hermetic_tmp` is enabled by default.
 - Use `--spawn_strategy local` should eliminate the case because it will let nvcc sees the true PIDs.
 - Use `--experimental_use_hermetic_linux_sandbox` should eliminate the case because it will avoid the sharing of `/tmp`.
 - Add `-objtemp` option to the command should reduce the case from happening.
