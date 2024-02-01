@@ -36,7 +36,7 @@ jobs:
       - uses: bazelbuild/setup-bazelisk@v2
       - name: Mount bazel cache
         if: ${{ !startsWith(matrix.cases.os, 'windows') }}
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/bazel
           key: bazel-${{ matrix.cases.os }}-cuda-${{ matrix.cases.cuda-version }}-${{ hashFiles('.bazelversion') }}
