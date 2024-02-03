@@ -38,7 +38,7 @@ CUDA Error Code  : 100
 To build the binary without CUDA support, disable rules_cuda:
 
 ```bash
-bazel build //if_cuda:main --@rules_cuda//cuda:enable`
+bazel build //if_cuda:main --@rules_cuda//cuda:enable=False
 ```
 
 And run the binary:
