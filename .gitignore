@@ -1,1 +1,7 @@
 bazel-*
+
+# MODULE.bazel.lock is a new feature in bazel and is not stable yet.
+# Per https://github.com/bazelbuild/bazel/issues/20369, we ignore this file until 
+# MODULE.bazel.lock mechanism is stable and guarantee consistency across different 
+# development environments
+MODULE.bazel.lock
