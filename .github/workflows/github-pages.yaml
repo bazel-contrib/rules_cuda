@@ -25,7 +25,7 @@ jobs:
           ref: ${{ matrix.docs.ref }}
         if: ${{ matrix.docs.ref != 'main' }}
 
-      - uses: bazelbuild/setup-bazelisk@v2
+      - uses: bazelbuild/setup-bazelisk@v3
       - name: Mount bazel cache
         uses: actions/cache@v4
         with:
