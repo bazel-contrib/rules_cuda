@@ -61,15 +61,15 @@ jobs:
 
       # Use Bazel with version specified in .bazelversion
       # out of @examples repo build requires WORKSPACE-based external dependency system
-      - run: bazelisk build --noenable_bzlmod @rules_cuda_examples//basic:all
-      - run: bazelisk build --noenable_bzlmod @rules_cuda_examples//rdc:all
-      - run: bazelisk build --noenable_bzlmod @rules_cuda_examples//if_cuda:main
-      - run: bazelisk build --noenable_bzlmod @rules_cuda_examples//if_cuda:main --enable_cuda=False
+      - run: bazelisk build --jobs=1 --noenable_bzlmod @rules_cuda_examples//basic:all
+      - run: bazelisk build --jobs=1 --noenable_bzlmod @rules_cuda_examples//rdc:all
+      - run: bazelisk build --jobs=1 --noenable_bzlmod @rules_cuda_examples//if_cuda:main
+      - run: bazelisk build --jobs=1 --noenable_bzlmod @rules_cuda_examples//if_cuda:main --enable_cuda=False
       # in @examples repo build, bzlmod is enabled by default since Bazel 7
-      - run: cd examples && bazelisk build //basic:all
-      - run: cd examples && bazelisk build //rdc:all
-      - run: cd examples && bazelisk build //if_cuda:main
-      - run: cd examples && bazelisk build //if_cuda:main --enable_cuda=False
+      - run: cd examples && bazelisk build --jobs=1 //basic:all
+      - run: cd examples && bazelisk build --jobs=1 //rdc:all
+      - run: cd examples && bazelisk build --jobs=1 //if_cuda:main
+      - run: cd examples && bazelisk build --jobs=1 //if_cuda:main --enable_cuda=False
       - run: bazelisk shutdown
 
       # Use Bazel 6
@@ -78,14 +78,14 @@ jobs:
       - run: echo "USE_BAZEL_VERSION=6.4.0" >> $env:GITHUB_ENV
         if: ${{ startsWith(matrix.cases.os, 'windows') }}
 
-      - run: bazelisk build @rules_cuda_examples//basic:all
-      - run: bazelisk build @rules_cuda_examples//rdc:all
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False
-      - run: cd examples && bazelisk build --enable_bzlmod //basic:all
-      - run: cd examples && bazelisk build --enable_bzlmod //rdc:all
-      - run: cd examples && bazelisk build --enable_bzlmod //if_cuda:main
-      - run: cd examples && bazelisk build --enable_bzlmod //if_cuda:main --enable_cuda=False
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//basic:all
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//rdc:all
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//if_cuda:main
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//if_cuda:main --enable_cuda=False
+      - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //basic:all
+      - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //rdc:all
+      - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //if_cuda:main
+      - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //if_cuda:main --enable_cuda=False
       - run: bazelisk shutdown
 
       # Use Bazel 5
@@ -94,13 +94,13 @@ jobs:
       - run: echo "USE_BAZEL_VERSION=5.4.1" >> $env:GITHUB_ENV
         if: ${{ startsWith(matrix.cases.os, 'windows') }}
 
-      - run: bazelisk build @rules_cuda_examples//basic:all
-      - run: bazelisk build @rules_cuda_examples//rdc:all
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main
-      - run: bazelisk build @rules_cuda_examples//if_cuda:main --enable_cuda=False
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//basic:all
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//rdc:all
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//if_cuda:main
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//if_cuda:main --enable_cuda=False
       # bzlmod is not covered, our separate @rules_cuda_examples repo setup doesn't play well with it
-      # - run: cd examples && bazelisk build --experimental_enable_bzlmod //basic:all
-      # - run: cd examples && bazelisk build --experimental_enable_bzlmod //rdc:all
-      # - run: cd examples && bazelisk build --experimental_enable_bzlmod //if_cuda:main
-      # - run: cd examples && bazelisk build --experimental_enable_bzlmod //if_cuda:main --enable_cuda=False
+      # - run: cd examples && bazelisk build --jobs=1 --experimental_enable_bzlmod //basic:all
+      # - run: cd examples && bazelisk build --jobs=1 --experimental_enable_bzlmod //rdc:all
+      # - run: cd examples && bazelisk build --jobs=1 --experimental_enable_bzlmod //if_cuda:main
+      # - run: cd examples && bazelisk build --jobs=1 --experimental_enable_bzlmod //if_cuda:main --enable_cuda=False
       - run: bazelisk shutdown
