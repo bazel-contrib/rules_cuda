@@ -48,7 +48,7 @@ def detect_cuda_toolkit(repository_ctx):
         if ptxas_path:
             # ${CUDA_PATH}/bin/ptxas
 
-            # Some distributions instead put CUDA binaries in a seperate path
+            # Some distributions instead put CUDA binaries in a separate path
             # Manually check and redirect there when necessary
             alternative = repository_ctx.path("/usr/lib/nvidia-cuda-toolkit/bin/nvcc")
             if str(ptxas_path) == "/usr/bin/ptxas" and alternative.exists:

@@ -243,7 +243,7 @@ def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations, _parse_flag_cach
                 ret[-2].extend(ret[-1])
                 ret.pop()  # The return space is deallocated.
             stack.pop()  # The stack frame is useless anymore,
-            continue  #### and there is no need to procees the current stack frame any further
+            continue  #### and there is no need to process the current stack frame any further
 
         stack[-1][-1] = True  # mark entered = True
 
@@ -275,7 +275,7 @@ def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations, _parse_flag_cach
                 _eval_flags_or_flag_groups(stack, ret, fg, var, recursion_depth, _parse_flag_cache)
 
     if len(stack) != 0:
-        fail("flag_group evaluation imcomplete")
+        fail("flag_group evaluation incomplete")
     return ret
 
 def eval_flag_group(fg, value, max_eval_iterations = 65536, _parse_flag_cache = None):
@@ -402,7 +402,7 @@ def _enable_all_implied(info):
             to_enable.extend([new_name for new_name in reversed(info.selectables_info.implies[name])])
 
     if len(to_enable) != 0:
-        fail("_enable_all_implied imcomplete")
+        fail("_enable_all_implied incomplete")
 
 def _is_implied_by_enabled_activatable(info, name):
     for implied_by in info.selectables_info.implied_by.get(name, []):
@@ -476,7 +476,7 @@ def _check_activatable(info, to_check):
         to_check.extend(reversed(info.selectables_info.implied_by.get(name, [])))
 
     if len(to_check) != 0:
-        fail("_check_activatable imcomplete")
+        fail("_check_activatable incomplete")
 
 def _disable_unsupported_activatables(info):
     enabled = [k for k, v in reversed(info.enabled.items()) if v == True]

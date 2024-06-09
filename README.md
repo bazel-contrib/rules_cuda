@@ -22,7 +22,7 @@ register_detected_cuda_toolchains()
 ```
 
 **NOTE**: the use of `register_detected_cuda_toolchains` depends on the environment variable `CUDA_PATH`. You must also
-ensure the host compiler is available. On windows, this means that you will also need to set the environment variable
+ensure the host compiler is available. On Windows, this means that you will also need to set the environment variable
 `BAZEL_VC` properly.
 
 [`detect_cuda_toolkit`](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/repositories.bzl#L28-L58)
@@ -33,8 +33,7 @@ determains how the toolchains are detected.
 
 - `cuda_library`: Can be used to compile and create static library for CUDA kernel code. The resulting targets can be
   consumed by [C/C++ Rules](https://bazel.build/reference/be/c-cpp#rules).
-- `cuda_objects`: If you don't understand what _device link_ means, you must never use it. This rule produce incomplete
-  object files that can only be consumed by `cuda_library`. It is created for relocatable device code and device link
+- `cuda_objects`: If you don't understand what _device link_ means, you must never use it. This rule produces incomplete object files that can only be consumed by `cuda_library`. It is created for relocatable device code and device link
   time optimization source files.
 
 ### Flags
@@ -45,7 +44,7 @@ Some flags are defined in [cuda/BUILD.bazel](cuda/BUILD.bazel). To use them, for
 bazel build --@rules_cuda//cuda:archs=compute_61:compute_61,sm_61
 ```
 
-In `.bazelrc` file, you can define shortcut alias for the flag, for example:
+In `.bazelrc` file, you can define a shortcut alias for the flag, for example:
 
 ```
 # Convenient flag shortcuts.

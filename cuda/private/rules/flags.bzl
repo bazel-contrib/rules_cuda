@@ -9,7 +9,7 @@ def _cuda_archs_flag_impl(ctx):
 cuda_archs_flag = rule(
     doc = """A build setting for specifying cuda archs to compile for.
 
-To retain the flexiblity of NVCC, the [extended notation](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#extended-notation) is adopted.
+To retain the flexibility of NVCC, the [extended notation](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#extended-notation) is adopted.
 
 When passing cuda_archs from commandline, its spec grammar is as follows:
 

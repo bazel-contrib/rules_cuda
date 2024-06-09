@@ -23,7 +23,7 @@ cuda_archs = [
 ]
 
 Stage2ArchInfo = provider(
-    """Provides the information of how the stage 2 complation is carried out.
+    """Provides the information of how the stage 2 compilation is carried out.
 
 One and only one of `virtual`, `gpu` and `lto` must be set to True. For example, if `arch` is set to `80` and `virtual` is `True`, then a
 ptx embedding process is carried out for `compute_80`. Multiple `Stage2ArchInfo` can be used for specifying how a stage 1 result is
@@ -66,9 +66,9 @@ if merged a single depset.
         "defines": "A depset of strings. It is used for the compilation during device linking.",
         # direct only:
         "objects": "A depset of objects. Direct artifacts of the rule.",  # but not rdc and pic
-        "pic_objects": "A depset of position indepentent code objects. Direct artifacts of the rule.",  # but not rdc
+        "pic_objects": "A depset of position independent code objects. Direct artifacts of the rule.",  # but not rdc
         "rdc_objects": "A depset of relocatable device code objects. Direct artifacts of the rule.",  # but not pic
-        "rdc_pic_objects": "A depset of relocatable device code and position indepentent code objects. Direct artifacts of the rule.",
+        "rdc_pic_objects": "A depset of relocatable device code and position independent code objects. Direct artifacts of the rule.",
         # transitive archive only (cuda_objects):
         "archive_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
         "archive_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
