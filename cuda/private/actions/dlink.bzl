@@ -109,7 +109,7 @@ def _wrapper_device_link(
     actions = ctx.actions
     pic_suffix = "_pic" if pic else ""
 
-    # Device-link to cubins for each gpu architecture. The stage1 compiled PTX is embeded in the object files.
+    # Device-link to cubins for each gpu architecture. The stage1 compiled PTX is embedded in the object files.
     # We don't need to do any thing about it, presumably.
     register_h = None
     cubins = []

@@ -70,7 +70,7 @@ def _cuda_library_impl(ctx):
         rdc_objects = depset(transitive = [rdc_objects, rdc_dlink_output])
         rdc_pic_objects = depset(transitive = [rdc_pic_objects, rdc_pic_dlink_output])
 
-    # objects to archive: objects directly outputed by this rule and all objects transitively from deps,
+    # objects to archive: objects directly outputted by this rule and all objects transitively from deps,
     # take use_rdc=True and non-pic as an example:
     # rdc_objects: produce with this rule, thus it must be archived in the library produced by this rule
     # archive_rdc_objects: propagate from other `cuda_objects`, so this rule is in charge of archiving them
@@ -155,7 +155,7 @@ cuda_library = rule(
         "alwayslink": attr.bool(default = False),
         "rdc": attr.bool(
             default = False,
-            doc = ("Whether to perform device linking for relocateable device code. " +
+            doc = ("Whether to perform device linking for relocatable device code. " +
                    "Transitive deps that contain device code must all either be cuda_objects or cuda_library(rdc = True)."),
         ),
         "includes": attr.string_list(doc = "List of include dirs to be added to the compile line."),
