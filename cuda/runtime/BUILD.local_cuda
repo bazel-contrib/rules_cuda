@@ -210,7 +210,7 @@ cc_library(
 # CUPTI
 cc_import_versioned_sos(
     name = "cupti_so",
-    shared_library = "cuda/lib64/libcupti.so",
+    shared_library = "cuda/**/lib64/libcupti.so",
 )
 
 cc_import(
