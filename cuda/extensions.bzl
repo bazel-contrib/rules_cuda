@@ -9,16 +9,22 @@ cuda_toolkit = tag_class(attrs = {
 
 def _init(module_ctx):
     registrations = {}
+    # first pass only handles root module
     for mod in module_ctx.modules:
+        if not mod.is_root:
+            continue
         for toolchain in mod.tags.local_toolchain:
-            if not mod.is_root:
-                fail("Only the root module may override the path for the local cuda toolchain")
             if toolchain.name in registrations.keys():
-                if toolchain.toolkit_path == registrations[toolchain.name]:
-                    # No problem to register a matching toolchain twice
-                    continue
-                fail("Multiple conflicting toolchains declared for name {} ({} and {}".format(toolchain.name, toolchain.toolkit_path, registrations[toolchain.name]))
+                fail("Multiple toolchains defined with the name \"{}\" during initialization of module \"{}\"".format(toolchain.name, mod.name))
             else:
+                registrations[toolchain.name] = toolchain.toolkit_path
+    # second pass only handles non-root module
+    for mod in module_ctx.modules:
+        if mod.is_root:
+            continue
+        for toolchain in mod.tags.local_toolchain:
+            # root module supersede non-root modules
+            if toolchain.name not in registrations.keys():
                 registrations[toolchain.name] = toolchain.toolkit_path
     for name, toolkit_path in registrations.items():
         local_cuda(name = name, toolkit_path = toolkit_path)
