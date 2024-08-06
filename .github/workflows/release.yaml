@@ -35,8 +35,8 @@ jobs:
           method: network
       - name: bazel test //...
         env:
-          # Bazelisk will download bazel to here
-          XDG_CACHE_HOME: ~/.cache/bazel-repo
+          # Bazelisk will download bazel to here, ensure it is cached within tests.
+          XDG_CACHE_HOME: /home/runner/.cache/bazel-repo
         run: bazelisk --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
       - name: Create rules archive
         run: |
