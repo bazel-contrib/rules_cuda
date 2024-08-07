@@ -59,7 +59,14 @@ def _create_cuda_library_flag_test(*config_settings):
     merged_config_settings = {}
     for cs in config_settings:
         for k, v in cs.items():
-            merged_config_settings[k] = v
+            # https://github.com/bazelbuild/bazel/issues/19286#issuecomment-1684325913
+            # Wrapping all keys into str(Label(...)) should be a workaround with Bazel 6 and later.
+            # NOTE: //command_line_option will resolve to @@//command_line_option which is not correct.
+            # Only apply to cuda related labels
+            if "cuda" in k:
+                merged_config_settings[str(Label(k))] = v
+            else:
+                merged_config_settings[k] = v
     return analysistest.make(
         cuda_library_flag_test_impl,
         config_settings = merged_config_settings,
