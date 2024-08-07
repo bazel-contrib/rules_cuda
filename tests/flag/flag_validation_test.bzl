@@ -62,8 +62,9 @@ def _create_cuda_library_flag_test(*config_settings):
             # https://github.com/bazelbuild/bazel/issues/19286#issuecomment-1684325913
             # Wrapping all keys into str(Label(...)) should be a workaround with Bazel 6 and later.
             # NOTE: //command_line_option will resolve to @@//command_line_option which is not correct.
-            # Only apply to cuda related labels
-            if "cuda" in k:
+            # Only apply to cuda related labels when bzlmod is enabled
+            is_bzlmod_enabled = str(Label("//:invalid")).startswith("@@")
+            if is_bzlmod_enabled and "cuda" in k:
                 merged_config_settings[str(Label(k))] = v
             else:
                 merged_config_settings[k] = v
