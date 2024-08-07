@@ -56,7 +56,7 @@ jobs:
           | sed 's/{archive_sha256}/${{ env.ARCHIVE_SHA256 }}/g' \
           > ${{ github.workspace }}/.github/release_notes.txt
       - name: Create the release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         id: rules_cuda_release
         with:
           prerelease: true
