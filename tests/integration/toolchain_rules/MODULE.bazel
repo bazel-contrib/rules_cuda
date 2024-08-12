@@ -1,0 +1,16 @@
+module(name = "bzlmod_use_repo")
+
+bazel_dep(name = "rules_cuda", version = "0.0.0")
+local_path_override(
+    module_name = "rules_cuda",
+    path = "../../..",
+)
+
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+use_repo(cuda, "local_cuda")
+
+bazel_dep(name = "rules_cuda_examples", version = "0.0.0")
+local_path_override(
+    module_name = "rules_cuda_examples",
+    path = "../../../examples",
+)

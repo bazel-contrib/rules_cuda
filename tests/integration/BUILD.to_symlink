@@ -1,0 +1,36 @@
+load("@rules_cuda//cuda:defs.bzl", "cuda_library", "requires_cuda")
+
+cc_library(
+    name = "use_library",
+    tags = ["manual"],
+    deps = ["@local_cuda//:cuda_runtime"],
+)
+
+cuda_library(
+    name = "use_rule",
+    srcs = ["@rules_cuda_examples//basic:kernel.cu"],
+    hdrs = ["@rules_cuda_examples//basic:kernel.h"],
+    tags = ["manual"],
+)
+
+cuda_library(
+    name = "optional_kernel",
+    srcs = ["@rules_cuda_examples//if_cuda:kernel.cu"],
+    hdrs = ["@rules_cuda_examples//if_cuda:kernel.h"],
+    tags = ["manual"],
+    target_compatible_with = requires_cuda(),
+)
+
+cc_binary(
+    name = "optinally_use_rule",
+    srcs = ["@rules_cuda_examples//if_cuda:main.cpp"],
+    defines = [] + select({
+        "@rules_cuda//cuda:is_enabled": ["CUDA_ENABLED"],
+        "//conditions:default": ["CUDA_DISABLED"],
+    }),
+    tags = ["manual"],
+    deps = [] + select({
+        "@rules_cuda//cuda:is_enabled": [":optional_kernel"],
+        "//conditions:default": [],
+    }),
+)
