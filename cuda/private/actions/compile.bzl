@@ -76,6 +76,7 @@ def compile(
             include_paths = common.includes,
             quote_include_paths = common.quote_includes,
             system_include_paths = common.system_includes,
+            external_include_paths = common.external_includes,
             defines = common.local_defines + common.defines,
             host_defines = common.host_local_defines + common.host_defines,
             ptxas_flags = common.ptxas_flags,
