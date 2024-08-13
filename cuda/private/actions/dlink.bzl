@@ -199,6 +199,7 @@ def _wrapper_device_link(
         includes = common.includes,
         system_includes = common.system_includes,
         quote_includes = common.quote_includes,
+        external_includes = common.external_includes,
         # suppress cuda mode as c++ mode
         compile_flags = ["-x", "c++"],
         host_compile_flags = common.host_compile_flags,
