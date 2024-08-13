@@ -40,6 +40,7 @@ def _cuda_objects_impl(ctx):
         includes = depset(common.includes),
         system_includes = depset(common.system_includes),
         quote_includes = depset(common.quote_includes),
+        external_includes = depset(common.external_includes),
         defines = depset(common.host_defines),
         local_defines = depset(common.host_local_defines),
     )
