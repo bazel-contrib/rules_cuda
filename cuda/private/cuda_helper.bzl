@@ -177,6 +177,7 @@ def _create_common_info(
         includes = [],
         quote_includes = [],
         system_includes = [],
+        external_includes = [],
         headers = [],
         transitive_headers = [],
         defines = [],
@@ -197,6 +198,7 @@ def _create_common_info(
         includes: include paths. Can be used with `#include <...>` and `#include "..."`.
         quote_includes: include paths. Can be used with `#include "..."`.
         system_includes: include paths. Can be used with `#include <...>`.
+        external_includes: include paths for external sources. Warnings in these files can be silenced.
         headers: headers directly relate with this target.
         transitive_headers: headers transitively gather from `deps`.
         defines: public `#define`s. Pass to compiler driver directly. Will be seen by downstream targets.
@@ -215,6 +217,7 @@ def _create_common_info(
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,
+        external_includes = external_includes,
         headers = depset(headers, transitive = transitive_headers),
         defines = defines,
         local_defines = local_defines,
@@ -249,11 +252,13 @@ def _create_common(ctx):
     includes = merged_cc_info.compilation_context.includes.to_list()
     system_includes = []
     quote_includes = []
+    external_includes = []
     quote_includes.extend(_resolve_workspace_root_includes(ctx))
     for inc in attr.includes:
         system_includes.extend(_resolve_includes(ctx, inc))
     system_includes.extend(merged_cc_info.compilation_context.system_includes.to_list())
     quote_includes.extend(merged_cc_info.compilation_context.quote_includes.to_list())
+    external_includes.extend(merged_cc_info.compilation_context.external_includes.to_list())
 
     # gather header info
     public_headers = []
@@ -298,6 +303,7 @@ def _create_common(ctx):
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,
+        external_includes = external_includes,
         headers = headers,
         transitive_headers = transitive_headers,
         defines = defines,
