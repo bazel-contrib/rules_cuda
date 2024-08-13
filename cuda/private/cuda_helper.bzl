@@ -402,6 +402,7 @@ def _create_compile_variables(
         include_paths = [],
         quote_include_paths = [],
         system_include_paths = [],
+        external_include_paths = [],
         defines = [],
         host_defines = [],
         ptxas_flags = [],
@@ -421,6 +422,7 @@ def _create_compile_variables(
         include_paths: include paths. Can be used with `#include <...>` and `#include "..."`.
         quote_include_paths: include paths. Can be used with `#include "..."`.
         system_include_paths: include paths. Can be used with `#include <...>`.
+        external_include_paths: include paths.
         defines: `#define`s. Pass to compiler driver directly.
         host_defines: `#define`s. Pass to host compiler.
         ptxas_flags: flags pass to `ptxas`.
@@ -442,6 +444,7 @@ def _create_compile_variables(
         include_paths = include_paths,
         quote_include_paths = quote_include_paths,
         system_include_paths = system_include_paths,
+        external_include_paths = external_include_paths,
         defines = defines,
         host_defines = host_defines,
         ptxas_flags = ptxas_flags,
