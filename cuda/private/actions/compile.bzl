@@ -34,7 +34,7 @@ def compile(
         An compiled object `File`.
     """
     actions = ctx.actions
-    host_compiler = cc_toolchain.get_tool_for_action(action_name = CC_ACTION_NAMES.cpp_compile)
+    host_compiler = cc_common.get_tool_for_action(action_name = CC_ACTION_NAMES.cpp_compile)
     cuda_compiler = cuda_toolchain.compiler_executable
 
     cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.cuda_compile])

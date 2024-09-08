@@ -56,7 +56,7 @@ def _compiler_device_link(
         fail("device link is only meaningful on building relocatable device code")
 
     actions = ctx.actions
-    host_compiler = cc_toolchain.get_tool_for_action(action_name = CC_ACTION_NAMES.cpp_compile)
+    host_compiler = cc_common.get_tool_for_action(action_name = CC_ACTION_NAMES.cpp_compile)
     cuda_compiler = cuda_toolchain.compiler_executable
 
     artifact_category_name = cuda_helper.get_artifact_category_from_action(ACTION_NAMES.device_link, pic, rdc)

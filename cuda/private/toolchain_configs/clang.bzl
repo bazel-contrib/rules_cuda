@@ -53,7 +53,7 @@ def _impl(ctx):
     ]
 
     cc_toolchain = find_cpp_toolchain(ctx)
-    host_compiler = cc_toolchain.get_tool_for_action(action_name = CC_ACTION_NAMES.cpp_compile)
+    host_compiler = cc_common.get_tool_for_action(action_name = CC_ACTION_NAMES.cpp_compile)
 
     clang_compile_env_feature = feature(
         name = "clang_compile_env",
