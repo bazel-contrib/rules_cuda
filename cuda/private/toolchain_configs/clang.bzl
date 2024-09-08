@@ -1,4 +1,5 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
+load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
@@ -52,6 +53,7 @@ def _impl(ctx):
     ]
 
     cc_toolchain = find_cpp_toolchain(ctx)
+    host_compiler = cc_toolchain.get_tool_for_action(action_name = CC_ACTION_NAMES.cpp_compile)
 
     clang_compile_env_feature = feature(
         name = "clang_compile_env",
@@ -64,7 +66,7 @@ def _impl(ctx):
                 ],
                 env_entries = [
                     env_entry("INCLUDE", ";".join(cc_toolchain.built_in_include_directories)),
-                    env_entry("PATH", paths.dirname(cc_toolchain.compiler_executable) + ";C:/Windows/system32"),
+                    env_entry("PATH", paths.dirname(host_compiler) + ";C:/Windows/system32"),
                 ],
             ),
         ],

@@ -1,3 +1,4 @@
+load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_SRCS")
@@ -33,7 +34,7 @@ def compile(
         An compiled object `File`.
     """
     actions = ctx.actions
-    host_compiler = cc_toolchain.compiler_executable
+    host_compiler = cc_toolchain.get_tool_for_action(action_name = CC_ACTION_NAMES.cpp_compile)
     cuda_compiler = cuda_toolchain.compiler_executable
 
     cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.cuda_compile])

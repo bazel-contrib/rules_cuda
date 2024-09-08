@@ -1,10 +1,10 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
+load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain.bzl", "use_cpp_toolchain")
-load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
 load(
     "//cuda/private:toolchain_config_lib.bzl",
     "action_config",
@@ -16,6 +16,7 @@ load(
     "flag_group",
     "flag_set",
 )
+load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
 
 def _impl(ctx):
     artifact_name_patterns = [
@@ -43,6 +44,7 @@ def _impl(ctx):
     ]
 
     cc_toolchain = find_cpp_toolchain(ctx)
+    host_compiler = cc_toolchain.get_tool_for_action(action_name = CC_ACTION_NAMES.cpp_compile)
 
     nvcc_compile_env_feature = feature(
         name = "nvcc_compile_env",
@@ -54,7 +56,7 @@ def _impl(ctx):
                 ],
                 env_entries = [
                     env_entry("INCLUDE", ";".join(cc_toolchain.built_in_include_directories)),
-                    env_entry("PATH", paths.dirname(cc_toolchain.compiler_executable) + ";C:/Windows/system32"),
+                    env_entry("PATH", paths.dirname(host_compiler) + ";C:/Windows/system32"),
                     env_entry("TEMP", ctx.attr.msvc_env_tmp),
                     env_entry("TMP", ctx.attr.msvc_env_tmp),
                 ],
