@@ -526,4 +526,5 @@ cuda_toolchain_config = rule(
     },
     provides = [CudaToolchainConfigInfo],
     toolchains = use_cpp_toolchain(mandatory = True),
+    fragments = ["cpp"],
 )
