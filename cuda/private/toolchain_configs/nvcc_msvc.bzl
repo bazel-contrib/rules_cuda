@@ -44,7 +44,12 @@ def _impl(ctx):
     ]
 
     cc_toolchain = find_cpp_toolchain(ctx)
-    cc_feature_configuration = cc_common.configure_features(ctx = ctx, cc_toolchain = cc_toolchain)
+    cc_feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
     host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
 
     nvcc_compile_env_feature = feature(
