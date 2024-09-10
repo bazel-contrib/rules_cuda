@@ -3,7 +3,6 @@ load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
-load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
 load("//cuda/private:toolchain.bzl", "use_cpp_toolchain")
 load(
     "//cuda/private:toolchain_config_lib.bzl",
@@ -15,6 +14,7 @@ load(
     "flag_group",
     "flag_set",
 )
+load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
 
 def _impl(ctx):
     artifact_name_patterns = [
