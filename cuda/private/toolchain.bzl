@@ -42,6 +42,15 @@ cuda_toolchain = rule(
 CPP_TOOLCHAIN_TYPE = "@bazel_tools//tools/cpp:toolchain_type"
 CUDA_TOOLCHAIN_TYPE = "//cuda:toolchain_type"
 
+# buildifier: disable=unused-variable
+def use_cpp_toolchain(mandatory = True):
+    """Helper to depend on the C++ toolchain.
+
+    Notes:
+        Copied from [toolchain_utils.bzl](https://github.com/bazelbuild/bazel/blob/ac48e65f70/tools/cpp/toolchain_utils.bzl#L53-L72)
+    """
+    return [CPP_TOOLCHAIN_TYPE]
+
 def use_cuda_toolchain():
     """Helper to depend on the CUDA toolchain."""
     return [CUDA_TOOLCHAIN_TYPE]
