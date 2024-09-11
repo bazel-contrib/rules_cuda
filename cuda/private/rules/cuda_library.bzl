@@ -1,10 +1,10 @@
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:actions/compile.bzl", "compile")
 load("//cuda/private:actions/dlink.bzl", "device_link")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:providers.bzl", "CudaInfo")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS", "ALLOW_CUDA_SRCS")
-load("//cuda/private:toolchain.bzl", "find_cuda_toolchain", "use_cuda_toolchain")
+load("//cuda/private:toolchain.bzl", "find_cuda_toolchain", "use_cpp_toolchain", "use_cuda_toolchain")
 
 def _cuda_library_impl(ctx):
     """cuda_library is a rule that perform device link.
@@ -175,6 +175,6 @@ cuda_library = rule(
         "_default_cuda_archs": attr.label(default = "//cuda:archs"),
     },
     fragments = ["cpp"],
-    toolchains = use_cpp_toolchain(mandatory = True) + use_cuda_toolchain(),
+    toolchains = use_cpp_toolchain() + use_cuda_toolchain(),
     provides = [DefaultInfo, OutputGroupInfo, CcInfo, CudaInfo],
 )
