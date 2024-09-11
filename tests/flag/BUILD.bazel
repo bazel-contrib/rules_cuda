@@ -1,3 +1,4 @@
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 load(
     ":flag_validation_test.bzl",
     "cuda_library_c_dbg_flag_test",
@@ -15,7 +16,6 @@ load(
     "cuda_library_sm90a_sm90_flag_test",
     "num_actions_test",
 )
-load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 
 num_actions_test(
     name = "cuda_library_num_actions_test",
