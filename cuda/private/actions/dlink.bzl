@@ -1,5 +1,6 @@
 ""
 
+load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:actions/compile.bzl", "compile")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
@@ -55,7 +56,13 @@ def _compiler_device_link(
         fail("device link is only meaningful on building relocatable device code")
 
     actions = ctx.actions
-    host_compiler = cc_toolchain.compiler_executable
+    cc_feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
+    host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
     cuda_compiler = cuda_toolchain.compiler_executable
 
     artifact_category_name = cuda_helper.get_artifact_category_from_action(ACTION_NAMES.device_link, pic, rdc)

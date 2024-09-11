@@ -1,4 +1,5 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
+load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
@@ -42,13 +43,20 @@ def _impl(ctx):
     ]
 
     cc_toolchain = find_cpp_toolchain(ctx)
+    cc_feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
+    host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
 
     nvcc_compile_env_feature = feature(
         name = "nvcc_compile_env",
         env_sets = [
             env_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                env_entries = [env_entry("PATH", paths.dirname(cc_toolchain.compiler_executable))],
+                env_entries = [env_entry("PATH", paths.dirname(host_compiler))],
             ),
         ],
     )
@@ -58,7 +66,7 @@ def _impl(ctx):
         env_sets = [
             env_set(
                 actions = [ACTION_NAMES.device_link],
-                env_entries = [env_entry("PATH", paths.dirname(cc_toolchain.compiler_executable))],
+                env_entries = [env_entry("PATH", paths.dirname(host_compiler))],
             ),
         ],
     )
@@ -519,4 +527,5 @@ cuda_toolchain_config = rule(
     },
     provides = [CudaToolchainConfigInfo],
     toolchains = use_cpp_toolchain(),
+    fragments = ["cpp"],
 )
