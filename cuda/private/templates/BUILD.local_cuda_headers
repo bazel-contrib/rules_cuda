@@ -1,0 +1,14 @@
+filegroup(
+    name = "header_files",
+    srcs = glob(
+        ["%{component_name}/include/**"],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "headers",
+    hdrs = [":header_files"],
+    includes = ["%{component_name}/include"],
+)
