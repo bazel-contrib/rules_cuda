@@ -1,0 +1,95 @@
+cc_import_versioned_sos(
+    name = "cudart_so",
+    shared_library = "%{component_name}/%{libpath}/libcudart.so",
+)
+
+cc_library(
+    name = "cudadevrt_a",
+    srcs = ["%{component_name}/%{libpath}/libcudadevrt.a"],
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cudart_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/cudart.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_import(
+    name = "cudadevrt_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/cudadevrt.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+# Note: do not use this target directly, use the configurable label_flag
+# @rules_cuda//cuda:runtime instead.
+cc_library(
+    name = "cuda_runtime",
+    linkopts = if_linux([
+        "-ldl",
+        "-lpthread",
+        "-lrt",
+    ]),
+    deps = [
+        ":headers",
+    ] + if_linux([
+        # devrt is required for jit linking when rdc is enabled
+        ":cudadevrt_a",
+        ":cudart_so",
+    ]) + if_windows([
+        # devrt is required for jit linking when rdc is enabled
+        ":cudadevrt_lib",
+        ":cudart_lib",
+    ]),
+    # FIXME:
+    # visibility = ["@rules_cuda//cuda:__pkg__"],
+)
+
+# Note: do not use this target directly, use the configurable label_flag
+# @rules_cuda//cuda:runtime instead.
+cc_library(
+    name = "cuda_runtime_static",
+    srcs = ["%{component_name}/%{libpath}/libcudart_static.a"],
+    hdrs = [":header_files"],
+    includes = ["%{component_name}/include"],
+    linkopts = if_linux([
+        "-ldl",
+        "-lpthread",
+        "-lrt",
+    ]),
+    deps = [":cudadevrt_a"],
+    # FIXME:
+    # visibility = ["@rules_cuda//cuda:__pkg__"],
+)
+
+cc_library(
+    name = "no_cuda_runtime",
+    # FIXME:
+    # visibility = ["@rules_cuda//cuda:__pkg__"],
+)
+
+cc_import(
+    name = "cuda_so",
+    shared_library = "%{component_name}/%{libpath}/stubs/libcuda.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "cuda_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/cuda.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cuda",
+    deps = [
+        ":headers",
+    ] + if_linux([
+        ":cuda_so",
+    ]) + if_windows([
+        ":cuda_lib",
+    ]),
+)

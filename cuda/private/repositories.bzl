@@ -2,6 +2,7 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+load("//cuda/private:template_helper.bzl", "template_helper")
 
 def _to_forward_slash(s):
     return s.replace("\\", "/")
@@ -103,9 +104,10 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         cuda: The struct returned from detect_cuda_toolkit
     """
 
-    # Generate @local_cuda//BUILD and @local_cuda//defs.bzl
-    defs_bzl_content = ""
-    defs_if_local_cuda = "def if_local_cuda(if_true, if_false = []):\n    return %s\n"
+    # True: locally installed cuda toolkit
+    # False: hermatic cuda toolkit (components)
+    # None: cuda toolkit is not presented
+    is_local_cuda = None
     if cuda.path != None:
         # When using a special cuda toolkit path install, need to manually fix up the lib64 links
         if cuda.path == "/usr/lib/nvidia-cuda-toolkit":
@@ -113,32 +115,22 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
             repository_ctx.symlink("/usr/lib/x86_64-linux-gnu", "cuda/lib64")
         else:
             repository_ctx.symlink(cuda.path, "cuda")
-        repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda"), "BUILD")
-        defs_bzl_content += defs_if_local_cuda % "if_true"
+        is_local_cuda = True
+
+    # Generate @local_cuda//BUILD
+    if is_local_cuda == None:
+        repository_ctx.symlink(Label("//cuda/private:templates/BUILD.local_cuda_disabled"), "BUILD")
+    elif is_local_cuda:
+        libpath = "lib64" if _is_linux(repository_ctx) else "lib"
+        template_helper.generate_build(repository_ctx, libpath)
     else:
-        repository_ctx.symlink(Label("//cuda:runtime/BUILD.local_cuda_disabled"), "BUILD")
-        defs_bzl_content += defs_if_local_cuda % "if_false"
-    repository_ctx.file("defs.bzl", defs_bzl_content)
+        fail("hermatic cuda toolchain is not implemented")
+
+    # Generate @local_cuda//defs.bzl
+    template_helper.generate_defs_bzl(repository_ctx, is_local_cuda)
 
     # Generate @local_cuda//toolchain/BUILD
-    tpl_label = Label(
-        "//cuda:templates/BUILD.local_toolchain_" +
-        ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
-    )
-    substitutions = {
-        "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
-        "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
-        "%{nvcc_version_major}": str(cuda.nvcc_version_major),
-        "%{nvcc_version_minor}": str(cuda.nvcc_version_minor),
-        "%{nvlink_label}": cuda.nvlink_label,
-        "%{link_stub_label}": cuda.link_stub_label,
-        "%{bin2c_label}": cuda.bin2c_label,
-        "%{fatbinary_label}": cuda.fatbinary_label,
-    }
-    env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
-    if env_tmp != None:
-        substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
-    repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
+    template_helper.generate_toolchain_build(repository_ctx, cuda)
 
 def detect_clang(repository_ctx):
     """Detect local clang installation.
@@ -178,20 +170,10 @@ def config_clang(repository_ctx, cuda, clang_path):
         cuda: The struct returned from `detect_cuda_toolkit`
         clang_path: Path to clang executable returned from `detect_clang`
     """
-    tpl_label = Label("//cuda:templates/BUILD.local_toolchain_clang")
-    substitutions = {
-        "%{clang_path}": _to_forward_slash(clang_path) if clang_path else "cuda-clang-not-found",
-        "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
-        "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
-        "%{nvlink_label}": cuda.nvlink_label,
-        "%{link_stub_label}": cuda.link_stub_label,
-        "%{bin2c_label}": cuda.bin2c_label,
-        "%{fatbinary_label}": cuda.fatbinary_label,
-    }
-    repository_ctx.template("toolchain/clang/BUILD", tpl_label, substitutions = substitutions, executable = False)
+    template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path)
 
 def config_disabled(repository_ctx):
-    repository_ctx.symlink(Label("//cuda:templates/BUILD.local_toolchain_disabled"), "toolchain/disabled/BUILD")
+    repository_ctx.symlink(Label("//cuda/private:templates/BUILD.local_toolchain_disabled"), "toolchain/disabled/BUILD")
 
 def _local_cuda_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
