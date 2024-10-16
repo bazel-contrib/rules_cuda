@@ -105,7 +105,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     """
 
     # True: locally installed cuda toolkit
-    # False: hermatic cuda toolkit (components)
+    # False: ini
     # None: cuda toolkit is not presented
     is_local_cuda = None
     if cuda.path != None:
@@ -194,7 +194,7 @@ local_cuda = repository_rule(
     # remotable = True,
 )
 
-def rules_cuda_dependencies(toolkit_path = None):
+def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, components = None):
     """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
 
     Args:
