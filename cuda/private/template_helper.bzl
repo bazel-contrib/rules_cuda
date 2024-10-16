@@ -9,19 +9,51 @@ def _is_linux(ctx):
 def _is_windows(ctx):
     return ctx.os.name.lower().startswith("windows")
 
-def _generate_build(repository_ctx, libpath):
+def _generate_local_cuda_build_impl(repository_ctx, libpath, components, is_local_cuda, is_deliverable):
+    """Generate `@local_cuda//BUILD`
+
+    Notes:
+        - is_local_cuda==False and is_deliverable==False is an error
+        - is_local_cuda==True  and is_deliverable==False generate `@local_cuda//BUILD` for local host CTK
+        - is_local_cuda==True  and is_deliverable==True  generate `@local_cuda//BUILD` for CTK with deliverables
+        - is_local_cuda==False and is_deliverable==True  generate `@local_cuda_<component>//BUILD` for a deliverable
+        generates `@local_cuda//BUILD`
+
+    Args:
+        repository_ctx: repository_ctx
+        libpath: substitution of %{libpath}
+        components: list of string, the components of CTK to be included
+        is_local_cuda: See Notes
+        is_deliverable: See Notes
+    """
     # stitch template fragment
     fragments = [
         Label("//cuda/private:templates/BUILD.local_cuda_shared"),
         Label("//cuda/private:templates/BUILD.local_cuda_headers"),
         Label("//cuda/private:templates/BUILD.local_cuda_build_setting"),
     ]
-    fragments.extend([Label("//cuda/private:templates/BUILD.{}".format(c)) for c in REGISTRY if len(REGISTRY[c]) > 0])
+    if is_local_cuda and not is_deliverable:  # generate `@local_cuda//BUILD` for local host CTK
+        fragments.extend([Label("//cuda/private:templates/BUILD.{}".format(c)) for c in components])
+    elif is_local_cuda and is_deliverable:  # generate `@local_cuda//BUILD` for CTK with deliverables
+        pass
+    elif not is_local_cuda and is_deliverable:  # generate `@local_cuda_<component>//BUILD` for a deliverable
+        if len(components) != 1:
+            fail("one deliverable at a time")
+        fragments.append(Label("//cuda/private:templates/BUILD.{}".format(components)))
+    else:
+        fail("unreachable")
+
 
     template_content = []
     for frag in fragments:
         template_content.append("# Generated from fragment " + str(frag))
         template_content.append(repository_ctx.read(frag))
+
+    if is_local_cuda and is_deliverable:  # generate `@local_cuda//BUILD` for CTK with deliverables
+        for c in components:
+            for t in REGISTRY[c]:
+                line = 'alias(name = "{t}", actual = "@local_cuda_{c}//:{t}")'.format(t=t, c=c)
+                template_content.append(line)
 
     template_content = "\n".join(template_content)
 
@@ -34,8 +66,16 @@ def _generate_build(repository_ctx, libpath):
     }
     repository_ctx.template("BUILD", template_path, substitutions = substitutions, executable = False)
 
-def _generate_componenet_build(repository_ctx):
-    pass
+def _generate_build(repository_ctx, libpath, components = None, is_local_cuda = True, is_deliverable = False):
+    if is_local_cuda and not is_deliverable:
+        if components == None:
+            components = [c for c in REGISTRY if len(REGISTRY[c]) > 0]
+        else:
+            for c in components:
+                if c not in REGISTRY:
+                    fail("{} is not a valid component")
+
+    _generate_local_cuda_build_impl(repository_ctx, libpath, components, is_local_cuda, is_deliverable)
 
 def _generate_defs_bzl(repository_ctx, is_local_cuda):
     tpl_label = Label("//cuda/private:templates/defs.bzl.tpl")
@@ -79,7 +119,6 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path):
 
 template_helper = struct(
     generate_build = _generate_build,
-    generate_componenet_build = _generate_componenet_build,
     generate_defs_bzl = _generate_defs_bzl,
     generate_toolchain_build = _generate_toolchain_build,
     generate_toolchain_clang_build = _generate_toolchain_clang_build,
