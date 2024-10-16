@@ -3,6 +3,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("//cuda/private:template_helper.bzl", "template_helper")
+load("//cuda/private:templates/registry.bzl", "REGISTRY")
 
 def _to_forward_slash(s):
     return s.replace("\\", "/")
@@ -13,8 +14,8 @@ def _is_linux(ctx):
 def _is_windows(ctx):
     return ctx.os.name.lower().startswith("windows")
 
-def _get_nvcc_version(repository_ctx, cuda_path):
-    result = repository_ctx.execute([cuda_path + "/bin/nvcc", "--version"])
+def _get_nvcc_version(repository_ctx, nvcc_root):
+    result = repository_ctx.execute([nvcc_root + "/bin/nvcc", "--version"])
     if result.return_code != 0:
         return [-1, -1]
     for line in [line for line in result.stdout.split("\n") if ", release " in line]:
@@ -26,21 +27,7 @@ def _get_nvcc_version(repository_ctx, cuda_path):
             return version[:2]
     return [-1, -1]
 
-def detect_cuda_toolkit(repository_ctx):
-    """Detect CUDA Toolkit.
-
-    The path to CUDA Toolkit is determined as:
-      - the value of `toolkit_path` passed to local_cuda as an attribute
-      - taken from `CUDA_PATH` environment variable or
-      - determined through 'which ptxas' or
-      - defaults to '/usr/local/cuda'
-
-    Args:
-        repository_ctx: repository_ctx
-
-    Returns:
-        A struct contains the information of CUDA Toolkit.
-    """
+def _detect_local_cuda_toolkit(repository_ctx):
     cuda_path = repository_ctx.attr.toolkit_path
     if cuda_path == "":
         cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
@@ -96,6 +83,58 @@ def detect_cuda_toolkit(repository_ctx):
         fatbinary_label = fatbinary,
     )
 
+def _detect_deliverable_cuda_toolkit(repository_ctx):
+    # for c in repository_ctx.attr.components:
+    #     c_ws_root = Label("@local_cuda_{}".format(c)).workspace_root
+    #     # FIXME: repository_ctx.path only resolves path in repo, not in workspace
+    #     if not repository_ctx.path(c_ws_root).exists:
+    #         fail("cuda component '{c}' (repo 'local_cuda_{c}') is not configured".format(c=c))
+
+    bin_ext = ".exe" if _is_windows(repository_ctx) else ""
+    nvcc_repo = repository_ctx.attr.components["nvcc"]
+    nvlink = str(Label("@{}//:nvcc/bin/nvlink{}".format(nvcc_repo, bin_ext)))
+    link_stub = str(Label("@{}//:nvcc/bin/crt/link.stub".format(nvcc_repo)))
+    bin2c = str(Label("@{}//:nvcc/bin/bin2c{}".format(nvcc_repo, bin_ext)))
+    fatbinary = str(Label("@{}//:nvcc/bin/fatbinary{}".format(nvcc_repo, bin_ext)))
+
+    nvcc_root = Label("@{}".format(nvcc_repo)).workspace_root + "/nvcc"
+    nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, nvcc_root)
+
+    return struct(
+        path = nvcc_root,
+        # this should have been extracted from cuda.h, reuse nvcc for now
+        version_major = nvcc_version_major,
+        version_minor = nvcc_version_minor,
+        # this is extracted from `nvcc --version`
+        nvcc_version_major = nvcc_version_major,
+        nvcc_version_minor = nvcc_version_minor,
+        nvlink_label = nvlink,
+        link_stub_label = link_stub,
+        bin2c_label = bin2c,
+        fatbinary_label = fatbinary,
+    )
+
+def detect_cuda_toolkit(repository_ctx):
+    """Detect CUDA Toolkit.
+
+    The path to CUDA Toolkit is determined as:
+      - use nvcc component from deliverable
+      - the value of `toolkit_path` passed to local_cuda as an attribute
+      - taken from `CUDA_PATH` environment variable or
+      - determined through 'which ptxas' or
+      - defaults to '/usr/local/cuda'
+
+    Args:
+        repository_ctx: repository_ctx
+
+    Returns:
+        A struct contains the information of CUDA Toolkit.
+    """
+    if repository_ctx.attr.components != None:
+        return _detect_deliverable_cuda_toolkit(repository_ctx)
+    else:
+        return _detect_local_cuda_toolkit(repository_ctx)
+
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     """Generate `@local_cuda//BUILD` and `@local_cuda//defs.bzl` and `@local_cuda//toolchain/BUILD`
 
@@ -104,30 +143,40 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         cuda: The struct returned from detect_cuda_toolkit
     """
 
-    # True: locally installed cuda toolkit
-    # False: hermatic cuda toolkit (components)
+    # True: locally installed cuda toolkit (@local_cuda with full install of local CTK)
+    # False: hermatic cuda toolkit (@local_cuda with alias of components)
     # None: cuda toolkit is not presented
-    is_local_cuda = None
-    if cuda.path != None:
+    is_local_ctk = None
+
+    if len(repository_ctx.attr.components) != 0:
+        is_local_ctk = False
+
+    if is_local_ctk == None and cuda.path != None:
         # When using a special cuda toolkit path install, need to manually fix up the lib64 links
         if cuda.path == "/usr/lib/nvidia-cuda-toolkit":
             repository_ctx.symlink(cuda.path + "/bin", "cuda/bin")
             repository_ctx.symlink("/usr/lib/x86_64-linux-gnu", "cuda/lib64")
         else:
             repository_ctx.symlink(cuda.path, "cuda")
-        is_local_cuda = True
+        is_local_ctk = True
 
     # Generate @local_cuda//BUILD
-    if is_local_cuda == None:
+    if is_local_ctk == None:
         repository_ctx.symlink(Label("//cuda/private:templates/BUILD.local_cuda_disabled"), "BUILD")
-    elif is_local_cuda:
+    elif is_local_ctk:
         libpath = "lib64" if _is_linux(repository_ctx) else "lib"
         template_helper.generate_build(repository_ctx, libpath)
     else:
-        fail("hermatic cuda toolchain is not implemented")
+        template_helper.generate_build(
+            repository_ctx,
+            libpath = "lib",
+            components = repository_ctx.attr.components,
+            is_local_cuda = True,
+            is_deliverable = True,
+        )
 
     # Generate @local_cuda//defs.bzl
-    template_helper.generate_defs_bzl(repository_ctx, is_local_cuda)
+    template_helper.generate_defs_bzl(repository_ctx, True)
 
     # Generate @local_cuda//toolchain/BUILD
     template_helper.generate_toolchain_build(repository_ctx, cuda)
@@ -186,14 +235,68 @@ def _local_cuda_impl(repository_ctx):
 
 local_cuda = repository_rule(
     implementation = _local_cuda_impl,
-    attrs = {"toolkit_path": attr.string(mandatory = False)},
+    attrs = {
+        "toolkit_path": attr.string(mandatory = False),
+        "components": attr.string_dict(),
+    },
     configure = True,
     local = True,
     environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "BAZEL_LLVM"],
     # remotable = True,
 )
 
-def rules_cuda_dependencies(toolkit_path = None):
+def _cuda_component_impl(repository_ctx):
+    if not repository_ctx.name.startswith("local_cuda_"):
+        fail("cuda_component(name='{}') is expected to have a repo name starts with local_cuda_".format(repository_ctx.name))
+
+    component_name = None
+    if repository_ctx.attr.component_name:
+        component_name = repository_ctx.attr.component_name
+        if component_name not in REGISTRY:
+            fail("invalid component '{}', available: {}".format(component_name, repr(REGISTRY.keys())))
+    else:
+        component_name = repository_ctx.name[len("local_cuda_"):]
+        if component_name not in REGISTRY:
+            fail("invalid derived component '{}', available: {}, ".format(component_name, repr(REGISTRY.keys())) +
+                 " if derivation result is expected, please specify `component_name` attribute manually")
+
+    if not repository_ctx.attr.url and not repository_ctx.attr.urls:
+        fail("either attribute `url` or `urls` must be filled")
+    if repository_ctx.attr.url and repository_ctx.attr.urls:
+        fail("attributes `url` and `urls` cannot be used at the same time")
+
+    repository_ctx.download_and_extract(
+        url = repository_ctx.attr.url or repository_ctx.attr.urls,
+        output = component_name,
+        integrity = repository_ctx.attr.integrity,
+        sha256 = repository_ctx.attr.sha256,
+        stripPrefix = repository_ctx.attr.strip_prefix,
+    )
+
+    template_helper.generate_build(
+        repository_ctx,
+        libpath = "lib",
+        components = {component_name: repository_ctx.name},
+        is_local_cuda = False,
+        is_deliverable = True,
+    )
+
+cuda_component = repository_rule(
+    implementation = _cuda_component_impl,
+    attrs = {
+        "component_name": attr.string(),
+        "url": attr.string(),
+        "urls": attr.string_list(),
+        "integrity": attr.string(),
+        "sha256": attr.string(),
+        "strip_prefix": attr.string(),
+    },
+)
+
+def default_components_dict(components):
+    return {c: "local_cuda_" + c for c in components}
+
+def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, components = None):
     """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
 
     Args:
@@ -219,4 +322,31 @@ def rules_cuda_dependencies(toolkit_path = None):
         ],
     )
 
-    local_cuda(name = "local_cuda", toolkit_path = toolkit_path)
+    cuda_component(
+        # name = "local_cuda_cudart",
+        name = "local_cuda_cudart_v12.4.127",
+        component_name = "cudart",
+        sha256 = "0483bff9a36e7a44465db3cd42874f6f70f019297dcf803fbefcbf58d7448c8f",
+        urls = [
+            "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.4.127-archive.tar.xz",
+        ],
+        strip_prefix = "cuda_cudart-linux-x86_64-12.4.127-archive",
+    )
+
+    cuda_component(
+        # name = "local_cuda_nvcc",
+        name = "local_cuda_nvcc_v12.4.131",
+        component_name = "nvcc",
+        sha256 = "7ffba1ada0e4b8c17e451ac7a60d386aa2642ecd08d71202a0b100c98bd74681",
+        urls = [
+            "https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.4.131-archive.tar.xz",
+        ],
+        strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
+    )
+
+    # local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = default_components_dict(["cudart", "nvcc"]))
+    local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = {
+        "cudart": "local_cuda_cudart_v12.4.127",
+        "nvcc": "local_cuda_nvcc_v12.4.131",
+    })
+    # local_cuda(name = "local_cuda", toolkit_path = toolkit_path)
