@@ -12,7 +12,17 @@ local_repository(
 # If you want to have a different version of some dependency,
 # you should fetch it *before* calling this.
 
-load("@rules_cuda//cuda:repositories.bzl", "register_detected_cuda_toolchains", "rules_cuda_dependencies")
+load("@rules_cuda//cuda:repositories.bzl", "register_detected_cuda_toolchains", "rules_cuda_dependencies", "cuda_redist_json")
+
+cuda_redist_json(
+    name = "rules_cuda_redist_json",
+    components = ["cudart", "nvcc"],
+    version = "12.4.1",
+)
+
+load("@rules_cuda_redist_json//:redist.bzl", "rules_cuda_components")
+
+rules_cuda_components()
 
 rules_cuda_dependencies()
 
