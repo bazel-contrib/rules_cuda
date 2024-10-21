@@ -3,7 +3,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("//cuda/private:template_helper.bzl", "template_helper")
-load("//cuda/private:templates/registry.bzl", "REGISTRY")
+load("//cuda/private:templates/registry.bzl", "FULL_COMPONENT_NAME", "REGISTRY")
 
 def _to_forward_slash(s):
     return s.replace("\\", "/")
@@ -275,7 +275,80 @@ cuda_component = repository_rule(
         "integrity": attr.string(mandatory = False),
         "sha256": attr.string(mandatory = False),
         "strip_prefix": attr.string(mandatory = False),
-    }
+    },
+)
+
+def _cuda_redist_json_impl(repository_ctx):
+    the_url = None  # the url that successfully fetch redist json, we then use it to fetch deliverables
+    urls = [u for u in repository_ctx.attr.urls]
+
+    ver = repository_ctx.attr.version
+    if ver:
+        urls.append("https://developer.download.nvidia.com/compute/cuda/redist/redistrib_{}.json".format(ver))
+
+    for url in urls:
+        ret = repository_ctx.download(
+            output = "redist.json",
+            integrity = repository_ctx.attr.integrity,
+            sha256 = repository_ctx.attr.sha256,
+            url = url,
+        )
+        if ret.success:
+            the_url = url
+            break
+
+    repository_ctx.symlink(Label("//cuda/private:templates/BUILD.redist_json"), "BUILD")
+
+    redist = json.decode(repository_ctx.read("redist.json"))
+    redist_bzl_content = """load("@rules_cuda//cuda:repositories.bzl", "cuda_component")
+
+def rules_cuda_components():
+"""
+    for c in repository_ctx.attr.components:
+        c_full = FULL_COMPONENT_NAME[c]
+        os = None
+        if _is_linux(repository_ctx):
+            os = "linux"
+        elif _is_windows(repository_ctx):
+            os = "windows"
+
+        # TODO: support cross compiling
+        arch = "x86_64"
+        platform = "{os}-{arch}".format(os = os, arch = arch)
+
+        payload = redist[c_full][platform]
+        payload_relative_path = payload["relative_path"]
+        payload_sha256 = payload["sha256"]
+        payload_url = the_url.rsplit("/", 1)[0] + "/" + payload_relative_path
+        payload_archive_name = payload_relative_path.rsplit("/", 1)[1].split("-archive.")[0] + "-archive"
+
+        tpl = """
+    cuda_component(
+        name = "local_cuda_{c}",
+        sha256 = "{sha256}",
+        strip_prefix = "{archive_name}",
+        urls = ["{url}"],
+    )
+"""
+
+        redist_bzl_content += tpl.format(
+            c = c,
+            sha256 = payload_sha256,
+            archive_name = payload_archive_name,
+            url = payload_url,
+        )
+
+    repository_ctx.file("redist.bzl", redist_bzl_content)
+
+cuda_redist_json = repository_rule(
+    implementation = _cuda_redist_json_impl,
+    attrs = {
+        "components": attr.string_list(mandatory = True),
+        "integrity": attr.string(mandatory = False),
+        "sha256": attr.string(mandatory = False),
+        "urls": attr.string_list(mandatory = False),
+        "version": attr.string(mandatory = False),
+    },
 )
 
 def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, components = None):
@@ -304,23 +377,23 @@ def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, component
         ],
     )
 
-    cuda_component(
-        name = "local_cuda_cudart",
-        sha256 = "0483bff9a36e7a44465db3cd42874f6f70f019297dcf803fbefcbf58d7448c8f",
-        urls = [
-            "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.4.127-archive.tar.xz",
-        ],
-        strip_prefix = "cuda_cudart-linux-x86_64-12.4.127-archive",
-    )
+    # cuda_component(
+    #     name = "local_cuda_cudart",
+    #     sha256 = "0483bff9a36e7a44465db3cd42874f6f70f019297dcf803fbefcbf58d7448c8f",
+    #     urls = [
+    #         "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.4.127-archive.tar.xz",
+    #     ],
+    #     strip_prefix = "cuda_cudart-linux-x86_64-12.4.127-archive",
+    # )
 
-    cuda_component(
-        name = "local_cuda_nvcc",
-        sha256 = "7ffba1ada0e4b8c17e451ac7a60d386aa2642ecd08d71202a0b100c98bd74681",
-        urls = [
-            "https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.4.131-archive.tar.xz",
-        ],
-        strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
-    )
+    # cuda_component(
+    #     name = "local_cuda_nvcc",
+    #     sha256 = "7ffba1ada0e4b8c17e451ac7a60d386aa2642ecd08d71202a0b100c98bd74681",
+    #     urls = [
+    #         "https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.4.131-archive.tar.xz",
+    #     ],
+    #     strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
+    # )
 
     local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = ["cudart", "nvcc"])
     # local_cuda(name = "local_cuda", toolkit_path = toolkit_path)
