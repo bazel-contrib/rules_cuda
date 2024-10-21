@@ -15,13 +15,12 @@ REGISTRY = {
     "nvjitlink": [],
     "nvjpeg": [],
     "nvml": ["nvml"],
-    "nvprof": [],
     "nvrtc": [],
     "nvtx": ["nvtx"],
 }
 
 # map short component name to full component name
-REGISTRY = {
+FULL_COMPONENT_NAME = {
     "cudart": "cuda_cudart",
     "nvcc": "cuda_nvcc",
     "cccl": "cuda_cccl",
