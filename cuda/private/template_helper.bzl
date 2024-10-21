@@ -39,7 +39,7 @@ def _generate_local_cuda_build_impl(repository_ctx, libpath, components, is_loca
     elif not is_local_cuda and is_deliverable:  # generate `@local_cuda_<component>//BUILD` for a deliverable
         if len(components) != 1:
             fail("one deliverable at a time")
-        fragments.append(Label("//cuda/private:templates/BUILD.{}".format(components)))
+        fragments.append(Label("//cuda/private:templates/BUILD.{}".format(components[0])))
     else:
         fail("unreachable")
 
@@ -61,7 +61,7 @@ def _generate_local_cuda_build_impl(repository_ctx, libpath, components, is_loca
     repository_ctx.file(template_path, content=template_content, executable=False)
 
     substitutions = {
-        "%{component_name}": "cuda",
+        "%{component_name}": "cuda" if is_local_cuda else components[0],
         "%{libpath}": libpath,
     }
     repository_ctx.template("BUILD", template_path, substitutions = substitutions, executable = False)
