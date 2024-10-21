@@ -3,7 +3,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("//cuda/private:template_helper.bzl", "template_helper")
-load("//cuda/private:templates/registry.bzl", "REGISTRY")
+load("//cuda/private:templates/registry.bzl", "FULL_COMPONENT_NAME", "REGISTRY")
 
 def _to_forward_slash(s):
     return s.replace("\\", "/")
@@ -322,27 +322,27 @@ def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, component
         ],
     )
 
-    cuda_component(
-        # name = "local_cuda_cudart",
-        name = "local_cuda_cudart_v12.4.127",
-        component_name = "cudart",
-        sha256 = "0483bff9a36e7a44465db3cd42874f6f70f019297dcf803fbefcbf58d7448c8f",
-        urls = [
-            "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.4.127-archive.tar.xz",
-        ],
-        strip_prefix = "cuda_cudart-linux-x86_64-12.4.127-archive",
-    )
+    # cuda_component(
+    #     # name = "local_cuda_cudart",
+    #     name = "local_cuda_cudart_v12.4.127",
+    #     component_name = "cudart",
+    #     sha256 = "0483bff9a36e7a44465db3cd42874f6f70f019297dcf803fbefcbf58d7448c8f",
+    #     urls = [
+    #         "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.4.127-archive.tar.xz",
+    #     ],
+    #     strip_prefix = "cuda_cudart-linux-x86_64-12.4.127-archive",
+    # )
 
-    cuda_component(
-        # name = "local_cuda_nvcc",
-        name = "local_cuda_nvcc_v12.4.131",
-        component_name = "nvcc",
-        sha256 = "7ffba1ada0e4b8c17e451ac7a60d386aa2642ecd08d71202a0b100c98bd74681",
-        urls = [
-            "https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.4.131-archive.tar.xz",
-        ],
-        strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
-    )
+    # cuda_component(
+    #     # name = "local_cuda_nvcc",
+    #     name = "local_cuda_nvcc_v12.4.131",
+    #     component_name = "nvcc",
+    #     sha256 = "7ffba1ada0e4b8c17e451ac7a60d386aa2642ecd08d71202a0b100c98bd74681",
+    #     urls = [
+    #         "https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.4.131-archive.tar.xz",
+    #     ],
+    #     strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
+    # )
 
     # local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = default_components_dict(["cudart", "nvcc"]))
     local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = {
