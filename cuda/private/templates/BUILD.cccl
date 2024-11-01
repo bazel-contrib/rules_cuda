@@ -1,0 +1,22 @@
+cc_library(
+    name = "cub",
+    hdrs = glob(
+        ["%{component_name}/include/cub/**"],
+        allow_empty = True,
+    ),
+    includes = [
+        "%{component_name}/include",
+    ],
+)
+
+cc_library(
+    name = "thrust",
+    hdrs = glob(
+        ["%{component_name}/include/thrust/**"],
+        allow_empty = True,
+    ),
+    includes = [
+        "%{component_name}/include",
+    ],
+    deps = [":cub"],
+)
