@@ -318,10 +318,9 @@ cc_library(
 )
 
 # NVRTC
-cc_import(
+cc_import_versioned_sos(
     name = "nvrtc_so",
     shared_library = "cuda/lib64/libnvrtc.so",
-    target_compatible_with = ["@platforms//os:linux"],
 )
 
 cc_import(
