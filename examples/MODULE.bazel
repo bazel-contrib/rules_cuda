@@ -11,10 +11,42 @@ local_path_override(
 )
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+
+# cuda.redist_json(
+#     name = "rules_cuda_redist_json",
+#     components = ["cudart", "nvcc"],
+#     version = "12.4.1",
+# )
+# use_repo(cuda, "rules_cuda_redist_json")
+
+# redist_json = use_extension("@rules_cuda_redist_json//:extensions.bzl", "components")
+# redist_json.components()
+# use_repo(redist_json, "local_cuda_cudart", "local_cuda_nvcc")
+
+cuda.component(
+    name = "local_cuda_cudart",
+    sha256 = "0483bff9a36e7a44465db3cd42874f6f70f019297dcf803fbefcbf58d7448c8f",
+    urls = [
+        "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.4.127-archive.tar.xz",
+    ],
+    strip_prefix = "cuda_cudart-linux-x86_64-12.4.127-archive",
+)
+
+cuda.component(
+    name = "local_cuda_nvcc",
+    sha256 = "7ffba1ada0e4b8c17e451ac7a60d386aa2642ecd08d71202a0b100c98bd74681",
+    urls = [
+        "https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.4.131-archive.tar.xz",
+    ],
+    strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
+)
+
 cuda.local_toolchain(
     name = "local_cuda",
-    toolkit_path = "",
+    # toolkit_path = "",
+    components = ["nvcc", "cudart"],
 )
+use_repo(cuda, "local_cuda_cudart", "local_cuda_nvcc")
 use_repo(cuda, "local_cuda")
 
 #################################

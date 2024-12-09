@@ -90,14 +90,17 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     #     if not repository_ctx.path(c_ws_root).exists:
     #         fail("cuda component '{c}' (repo 'local_cuda_{c}') is not configured".format(c=c))
 
-    bin_ext = ".exe" if _is_windows(repository_ctx) else ""
+    is_bzlmod_enabled = str(Label("//:invalid")).startswith("@@")
     nvcc_repo = repository_ctx.attr.components["nvcc"]
-    nvlink = str(Label("@{}//:nvcc/bin/nvlink{}".format(nvcc_repo, bin_ext)))
-    link_stub = str(Label("@{}//:nvcc/bin/crt/link.stub".format(nvcc_repo)))
-    bin2c = str(Label("@{}//:nvcc/bin/bin2c{}".format(nvcc_repo, bin_ext)))
-    fatbinary = str(Label("@{}//:nvcc/bin/fatbinary{}".format(nvcc_repo, bin_ext)))
+    nvcc_repo = ("@@{}" if is_bzlmod_enabled else "@{}").format(nvcc_repo)
 
-    nvcc_root = Label("@{}".format(nvcc_repo)).workspace_root + "/nvcc"
+    bin_ext = ".exe" if _is_windows(repository_ctx) else ""
+    nvlink = str(Label(nvcc_repo + "//:nvcc/bin/nvlink{}".format(bin_ext)))
+    link_stub = str(Label(nvcc_repo + "//:nvcc/bin/crt/link.stub"))
+    bin2c = str(Label(nvcc_repo + "//:nvcc/bin/bin2c{}".format(bin_ext)))
+    fatbinary = str(Label(nvcc_repo + "//:nvcc/bin/fatbinary{}".format(bin_ext)))
+
+    nvcc_root = Label(nvcc_repo).workspace_root + "/nvcc"
     nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, nvcc_root)
 
     return struct(
@@ -130,7 +133,7 @@ def detect_cuda_toolkit(repository_ctx):
     Returns:
         A struct contains the information of CUDA Toolkit.
     """
-    if repository_ctx.attr.components != None:
+    if repository_ctx.attr.components != []:
         return _detect_deliverable_cuda_toolkit(repository_ctx)
     else:
         return _detect_local_cuda_toolkit(repository_ctx)
@@ -246,7 +249,8 @@ local_cuda = repository_rule(
 )
 
 def _cuda_component_impl(repository_ctx):
-    if not repository_ctx.name.startswith("local_cuda_"):
+    name_fragments = repository_ctx.name.split("local_cuda_")
+    if len(name_fragments) != 2 or (name_fragments[0] != "" and not name_fragments[0].endswith("~")):
         fail("cuda_component(name='{}') is expected to have a repo name starts with local_cuda_".format(repository_ctx.name))
 
     component_name = None
@@ -295,6 +299,85 @@ cuda_component = repository_rule(
 
 def default_components_dict(components):
     return {c: "local_cuda_" + c for c in components}
+
+def _cuda_redist_json_impl(repository_ctx):
+    the_url = None  # the url that successfully fetch redist json, we then use it to fetch deliverables
+    urls = [u for u in repository_ctx.attr.urls]
+
+    ver = repository_ctx.attr.version
+    if ver:
+        urls.append("https://developer.download.nvidia.com/compute/cuda/redist/redistrib_{}.json".format(ver))
+
+    if len(urls) == 0:
+        fail("`urls` or `version` must be specified.")
+
+    for url in urls:
+        ret = repository_ctx.download(
+            output = "redist.json",
+            integrity = repository_ctx.attr.integrity,
+            sha256 = repository_ctx.attr.sha256,
+            url = url,
+        )
+        if ret.success:
+            the_url = url
+            break
+
+    if the_url == None:
+        fail("Failed to retrieve the redist json file.")
+
+    repository_ctx.symlink(Label("//cuda/private:templates/BUILD.redist_json"), "BUILD")
+
+    redist = json.decode(repository_ctx.read("redist.json"))
+    redist_bzl_content = """load("@rules_cuda//cuda:repositories.bzl", "cuda_component")
+
+def rules_cuda_components():
+"""
+    for c in repository_ctx.attr.components:
+        c_full = FULL_COMPONENT_NAME[c]
+        os = None
+        if _is_linux(repository_ctx):
+            os = "linux"
+        elif _is_windows(repository_ctx):
+            os = "windows"
+
+        # TODO: support cross compiling
+        arch = "x86_64"
+        platform = "{os}-{arch}".format(os = os, arch = arch)
+
+        payload = redist[c_full][platform]
+        payload_relative_path = payload["relative_path"]
+        payload_sha256 = payload["sha256"]
+        payload_url = the_url.rsplit("/", 1)[0] + "/" + payload_relative_path
+        payload_archive_name = payload_relative_path.rsplit("/", 1)[1].split("-archive.")[0] + "-archive"
+
+        tpl = """
+    cuda_component(
+        name = "local_cuda_{c}",
+        sha256 = "{sha256}",
+        strip_prefix = "{archive_name}",
+        urls = ["{url}"],
+    )
+"""
+
+        redist_bzl_content += tpl.format(
+            c = c,
+            sha256 = payload_sha256,
+            archive_name = payload_archive_name,
+            url = payload_url,
+        )
+
+    repository_ctx.file("redist.bzl", redist_bzl_content)
+
+cuda_redist_json = repository_rule(
+    implementation = _cuda_redist_json_impl,
+    attrs = {
+        "components": attr.string_list(mandatory = True),
+        "integrity": attr.string(mandatory = False),
+        "sha256": attr.string(mandatory = False),
+        "urls": attr.string_list(mandatory = False),
+        "version": attr.string(mandatory = False),
+    },
+)
 
 def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, components = None):
     """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
