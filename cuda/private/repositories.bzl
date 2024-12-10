@@ -91,12 +91,13 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     #         fail("cuda component '{c}' (repo 'local_cuda_{c}') is not configured".format(c=c))
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
-    nvlink = str(Label("@local_cuda_nvcc//:nvcc/bin/nvlink{}".format(bin_ext)))
-    link_stub = str(Label("@local_cuda_nvcc//:nvcc/bin/crt/link.stub"))
-    bin2c = str(Label("@local_cuda_nvcc//:nvcc/bin/bin2c{}".format(bin_ext)))
-    fatbinary = str(Label("@local_cuda_nvcc//:nvcc/bin/fatbinary{}".format(bin_ext)))
+    nvcc_repo = repository_ctx.attr.components["nvcc"]
+    nvlink = str(Label("@{}//:nvcc/bin/nvlink{}".format(nvcc_repo, bin_ext)))
+    link_stub = str(Label("@{}//:nvcc/bin/crt/link.stub".format(nvcc_repo)))
+    bin2c = str(Label("@{}//:nvcc/bin/bin2c{}".format(nvcc_repo, bin_ext)))
+    fatbinary = str(Label("@{}//:nvcc/bin/fatbinary{}".format(nvcc_repo, bin_ext)))
 
-    nvcc_root = Label("@local_cuda_nvcc").workspace_root + "/nvcc"
+    nvcc_root = Label("@{}".format(nvcc_repo)).workspace_root + "/nvcc"
     nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, nvcc_root)
 
     return struct(
@@ -236,7 +237,7 @@ local_cuda = repository_rule(
     implementation = _local_cuda_impl,
     attrs = {
         "toolkit_path": attr.string(mandatory = False),
-        "components": attr.string_list(mandatory = False),
+        "components": attr.string_dict(),
     },
     configure = True,
     local = True,
@@ -248,12 +249,24 @@ def _cuda_component_impl(repository_ctx):
     if not repository_ctx.name.startswith("local_cuda_"):
         fail("cuda_component(name='{}') is expected to have a repo name starts with local_cuda_".format(repository_ctx.name))
 
-    component_name = repository_ctx.name[len("local_cuda_"):]
-    if component_name not in REGISTRY:
-        fail("invalid component '{}', available: {}".format(component_name, repr(REGISTRY.keys())))
+    component_name = None
+    if repository_ctx.attr.component_name:
+        component_name = repository_ctx.attr.component_name
+        if component_name not in REGISTRY:
+            fail("invalid component '{}', available: {}".format(component_name, repr(REGISTRY.keys())))
+    else:
+        component_name = repository_ctx.name[len("local_cuda_"):]
+        if component_name not in REGISTRY:
+            fail("invalid derived component '{}', available: {}, ".format(component_name, repr(REGISTRY.keys())) +
+                 " if derivation result is expected, please specify `component_name` attribute manually")
+
+    if not repository_ctx.attr.url and not repository_ctx.attr.urls:
+        fail("either attribute `url` or `urls` must be filled")
+    if repository_ctx.attr.url and repository_ctx.attr.urls:
+        fail("attributes `url` and `urls` cannot be used at the same time")
 
     repository_ctx.download_and_extract(
-        url = repository_ctx.attr.urls,
+        url = repository_ctx.attr.url or repository_ctx.attr.urls,
         output = component_name,
         integrity = repository_ctx.attr.integrity,
         sha256 = repository_ctx.attr.sha256,
@@ -263,7 +276,7 @@ def _cuda_component_impl(repository_ctx):
     template_helper.generate_build(
         repository_ctx,
         libpath = "lib",
-        components = [component_name],
+        components = {component_name: repository_ctx.name},
         is_local_cuda = False,
         is_deliverable = True,
     )
@@ -271,12 +284,17 @@ def _cuda_component_impl(repository_ctx):
 cuda_component = repository_rule(
     implementation = _cuda_component_impl,
     attrs = {
-        "urls": attr.string_list(mandatory = True),
-        "integrity": attr.string(mandatory = False),
-        "sha256": attr.string(mandatory = False),
-        "strip_prefix": attr.string(mandatory = False),
-    }
+        "component_name": attr.string(),
+        "url": attr.string(),
+        "urls": attr.string_list(),
+        "integrity": attr.string(),
+        "sha256": attr.string(),
+        "strip_prefix": attr.string(),
+    },
 )
+
+def default_components_dict(components):
+    return {c: "local_cuda_" + c for c in components}
 
 def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, components = None):
     """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
@@ -305,7 +323,9 @@ def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, component
     )
 
     cuda_component(
-        name = "local_cuda_cudart",
+        # name = "local_cuda_cudart",
+        name = "local_cuda_cudart_v12.4.127",
+        component_name = "cudart",
         sha256 = "0483bff9a36e7a44465db3cd42874f6f70f019297dcf803fbefcbf58d7448c8f",
         urls = [
             "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.4.127-archive.tar.xz",
@@ -314,7 +334,9 @@ def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, component
     )
 
     cuda_component(
-        name = "local_cuda_nvcc",
+        # name = "local_cuda_nvcc",
+        name = "local_cuda_nvcc_v12.4.131",
+        component_name = "nvcc",
         sha256 = "7ffba1ada0e4b8c17e451ac7a60d386aa2642ecd08d71202a0b100c98bd74681",
         urls = [
             "https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.4.131-archive.tar.xz",
@@ -322,5 +344,9 @@ def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, component
         strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
     )
 
-    local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = ["cudart", "nvcc"])
+    # local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = default_components_dict(["cudart", "nvcc"]))
+    local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = {
+        "cudart": "local_cuda_cudart_v12.4.127",
+        "nvcc": "local_cuda_nvcc_v12.4.131",
+    })
     # local_cuda(name = "local_cuda", toolkit_path = toolkit_path)
