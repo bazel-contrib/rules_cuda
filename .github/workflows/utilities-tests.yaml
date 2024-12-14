@@ -17,15 +17,21 @@ jobs:
           - ubuntu-20.04
           - windows-2019
         bazel-version:
-          # FIXME: temporary disable due to the WORKSPACE file is disabled by default in Bazel 8
-          # - latest
-          - 7.4.1
+          # NOTE: read from .bazelversion so that we don't randomly break our
+          # ci due to latest bazel version change
+          - .bazelversion
           - 6.5.0
           - 5.4.1
     env:
       USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
     steps:
       - uses: actions/checkout@v4
+
+      # conditionally override USE_BAZEL_VERSION
+      - run: if [ "${{ matrix.bazel-version }}" = ".bazelversion" ]; then echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $GITHUB_ENV; fi
+        if: ${{ !startsWith(matrix.os, 'windows') }}
+      - run: if ("${{ matrix.bazel-version }}" -eq ".bazelversion") { echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $env:GITHUB_ENV }
+        if: ${{ startsWith(matrix.os, 'windows') }}
 
       - uses: bazelbuild/setup-bazelisk@v3
       - name: Mount bazel cache
