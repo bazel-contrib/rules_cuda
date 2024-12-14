@@ -60,6 +60,11 @@ jobs:
       # the combinations.
 
       # Use Bazel with version specified in .bazelversion
+      - run: echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $GITHUB_ENV
+        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
+      - run: echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $env:GITHUB_ENV
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
+
       # out of @examples repo build requires WORKSPACE-based external dependency system
       - run: bazelisk build --jobs=1 --noenable_bzlmod @rules_cuda_examples//basic:all
       - run: bazelisk build --jobs=1 --noenable_bzlmod @rules_cuda_examples//rdc:all
