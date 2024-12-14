@@ -17,8 +17,9 @@ jobs:
           - ubuntu-20.04
           - windows-2019
         bazel-version:
-          - latest
-
+          # FIXME: temporary disable due to the WORKSPACE file is disabled by default in Bazel 8
+          # - latest
+          - 7.4.1
           - 6.5.0
           - 5.4.1
     env:
