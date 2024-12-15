@@ -25,7 +25,7 @@ cc_import(
 cc_library(
     name = "cublas",
     deps = [
-        ":headers",
+        ":%{component_name}_headers",
     ] + if_linux([
         ":cublasLt_so",
         ":cublas_so",

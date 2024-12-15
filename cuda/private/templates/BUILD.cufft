@@ -25,7 +25,7 @@ cc_import(
 cc_library(
     name = "cufft",
     deps = [
-        ":headers",
+        ":%{component_name}_headers",
     ] + if_linux([
         ":cufft_so",
         ":cufftw_so",

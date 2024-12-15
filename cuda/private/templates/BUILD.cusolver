@@ -13,7 +13,7 @@ cc_import(
 cc_library(
     name = "cusolver",
     deps = [
-        ":headers",
+        ":%{component_name}_headers",
     ] + if_linux([
         ":cusolver_so",
     ]) + if_windows([

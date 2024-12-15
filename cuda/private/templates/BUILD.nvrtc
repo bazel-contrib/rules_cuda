@@ -13,7 +13,7 @@ cc_import(
 cc_library(
     name = "nvrtc",
     deps = [
-        ":headers",
+        ":%{component_name}_headers",
     ] + if_linux([
         ":nvrtc_so",
     ]) + if_windows([
