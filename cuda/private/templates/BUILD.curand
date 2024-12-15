@@ -13,7 +13,7 @@ cc_import(
 cc_library(
     name = "curand",
     deps = [
-        ":headers",
+        ":%{component_name}_headers",
     ] + if_linux([
         ":curand_so",
     ]) + if_windows([

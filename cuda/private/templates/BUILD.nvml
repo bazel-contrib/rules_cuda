@@ -14,7 +14,7 @@ cc_import(
 cc_library(
     name = "nvml",
     deps = [
-        ":headers",
+        ":%{component_name}_headers",
     ] + if_linux([
         ":nvidia-ml_so",
     ]) + if_windows([

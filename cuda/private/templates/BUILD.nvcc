@@ -1,7 +1,7 @@
 filegroup(
     name = "compiler_deps",
     srcs = [
-        ":header_files",
+        ":%{component_name}_header_files",
     ] + glob(
         [
             "%{component_name}/version.json",

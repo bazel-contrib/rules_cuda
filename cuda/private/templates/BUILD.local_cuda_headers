@@ -1,5 +1,5 @@
 filegroup(
-    name = "header_files",
+    name = "%{component_name}_header_files",
     srcs = glob(
         ["%{component_name}/include/**"],
         allow_empty = True,
@@ -8,7 +8,7 @@ filegroup(
 )
 
 cc_library(
-    name = "headers",
-    hdrs = [":header_files"],
+    name = "%{component_name}_headers",
+    hdrs = [":%{component_name}_header_files"],
     includes = ["%{component_name}/include"],
 )
