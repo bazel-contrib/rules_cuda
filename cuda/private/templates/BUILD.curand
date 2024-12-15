@@ -1,0 +1,22 @@
+cc_import_versioned_sos(
+    name = "curand_so",
+    shared_library = "%{component_name}/%{libpath}/libcurand.so",
+)
+
+cc_import(
+    name = "curand_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/curand.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "curand",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":curand_so",
+    ]) + if_windows([
+        ":curand_lib",
+    ]),
+)

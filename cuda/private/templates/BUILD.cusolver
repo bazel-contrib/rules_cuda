@@ -1,0 +1,22 @@
+cc_import_versioned_sos(
+    name = "cusolver_so",
+    shared_library = "%{component_name}/%{libpath}/libcusolver.so",
+)
+
+cc_import(
+    name = "cusolver_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/cusolver.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cusolver",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":cusolver_so",
+    ]) + if_windows([
+        ":cusolver_lib",
+    ]),
+)
