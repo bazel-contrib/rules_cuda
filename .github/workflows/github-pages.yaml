@@ -17,6 +17,7 @@ jobs:
           # { ref: <branch/tag name>, name: <docs drop down entry> }
           - { ref: main, name: latest }
           - { ref: v0.2.1, name: 0.2.1 }
+          - { ref: v0.2.3, name: 0.2.3 }
     steps:
       - uses: actions/checkout@v4
         if: ${{ matrix.docs.ref == 'main' }}
