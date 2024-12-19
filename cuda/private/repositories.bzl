@@ -4,6 +4,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("//cuda/private:template_helper.bzl", "template_helper")
 load("//cuda/private:templates/registry.bzl", "FULL_COMPONENT_NAME", "REGISTRY")
+load("//cuda/private:toolchain.bzl", "register_detected_cuda_toolchains")
 
 def _to_forward_slash(s):
     return s.replace("\\", "/")
@@ -328,9 +329,9 @@ def _cuda_redist_json_impl(repository_ctx):
     repository_ctx.symlink(Label("//cuda/private:templates/BUILD.redist_json"), "BUILD")
 
     redist = json.decode(repository_ctx.read("redist.json"))
-    redist_bzl_content = """load("@rules_cuda//cuda:repositories.bzl", "cuda_component")
+    redist_bzl_content = """
 
-def rules_cuda_components():
+
 """
     for c in repository_ctx.attr.components:
         c_full = FULL_COMPONENT_NAME[c]
@@ -340,8 +341,7 @@ def rules_cuda_components():
         elif _is_windows(repository_ctx):
             os = "windows"
 
-        # TODO: support cross compiling
-        arch = "x86_64"
+        arch = "x86_64"  # TODO: support cross compiling
         platform = "{os}-{arch}".format(os = os, arch = arch)
 
         payload = redist[c_full][platform]
@@ -353,6 +353,7 @@ def rules_cuda_components():
         tpl = """
     cuda_component(
         name = "local_cuda_{c}",
+        component_name = "{c}",
         sha256 = "{sha256}",
         strip_prefix = "{archive_name}",
         urls = ["{url}"],
@@ -379,12 +380,8 @@ cuda_redist_json = repository_rule(
     },
 )
 
-def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, components = None):
-    """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
-
-    Args:
-        toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
-    """
+def rules_cuda_dependencies():
+    """Populate the dependencies for rules_cuda. This will setup other bazel rules as workspace dependencies"""
     maybe(
         name = "bazel_skylib",
         repo_rule = http_archive,
@@ -427,9 +424,22 @@ def rules_cuda_dependencies(toolkit_path = None, redistrib_url = None, component
     #     strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
     # )
 
-    # local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = default_components_dict(["cudart", "nvcc"]))
-    local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = {
-        "cudart": "local_cuda_cudart_v12.4.127",
-        "nvcc": "local_cuda_nvcc_v12.4.131",
-    })
+def rules_cuda_toolchains(toolkit_path = None, redistrib_url = None, components = None, register_toolchains = False):
+    """Populate the local_cuda repo.
+
+    Args:
+        toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
+        redistrib_url:
+        components:
+        register_toolchains: Register the toolchains if enabled.
+    """
+
+    local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = default_components_dict(["cudart", "nvcc"]))
+    # local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = {
+    #     "cudart": "local_cuda_cudart_v12.4.127",
+    #     "nvcc": "local_cuda_nvcc_v12.4.131",
+    # })
     # local_cuda(name = "local_cuda", toolkit_path = toolkit_path)
+
+    if register:
+        register_detected_cuda_toolchains()
