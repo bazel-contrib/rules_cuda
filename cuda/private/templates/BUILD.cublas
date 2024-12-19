@@ -1,0 +1,36 @@
+cc_import_versioned_sos(
+    name = "cublas_so",
+    shared_library = "%{component_name}/%{libpath}/libcublas.so",
+)
+
+cc_import_versioned_sos(
+    name = "cublasLt_so",
+    shared_library = "%{component_name}/%{libpath}/libcublasLt.so",
+)
+
+cc_import(
+    name = "cublas_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/cublas.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_import(
+    name = "cublasLt_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/cublasLt.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cublas",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":cublasLt_so",
+        ":cublas_so",
+    ]) + if_windows([
+        ":cublasLt_lib",
+        ":cublas_lib",
+    ]),
+)
