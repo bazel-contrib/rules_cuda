@@ -1,0 +1,47 @@
+cc_import_versioned_sos(
+    name = "nvJitLink_so",
+    shared_library = "%{component_name}/%{libpath}/libnvJitLink.so",
+)
+
+cc_import(
+    name = "nvJitLink_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/nvJitLink.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvJitLink",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":nvJitLink_so",
+    ]) + if_windows([
+        ":nvJitLink_lib",
+    ]),
+)
+
+cc_import(
+    name = "nvJitLink_static_a",
+    static_library = "%{component_name}/%{libpath}/libnvJitLink_static.a",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_library(
+    name = "nvJitLink_static",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":nvJitLink_static_a",
+    ]),
+)
+
+alias(
+    name = "nvjitlink",
+    actual = ":nvJitLink",
+)
+
+alias(
+    name = "nvjitlink_static",
+    actual = ":nvJitLink",
+)
