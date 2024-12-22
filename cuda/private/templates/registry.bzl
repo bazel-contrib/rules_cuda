@@ -13,7 +13,7 @@ REGISTRY = {
     "npp": ["nppc", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
     "nvidia_fs": [],
     "nvjitlink": ["nvjitlink", "nvjitlink_static"],
-    "nvjpeg": [],
+    "nvjpeg": ["nvjpeg", "nvjpeg_static"],
     "nvml": ["nvml"],
     "nvprof": [],
     "nvrtc": ["nvrtc"],
