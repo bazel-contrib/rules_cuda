@@ -9,6 +9,12 @@ cc_library(
     target_compatible_with = ["@platforms//os:linux"],
 )
 
+cc_library(
+    name = "culibos_a",
+    srcs = ["%{component_name}/%{libpath}/libculibos.a"],
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
 cc_import(
     name = "cudart_lib",
     interface_library = "%{component_name}/%{libpath}/x64/cudart.lib",
@@ -37,6 +43,7 @@ cc_library(
     ] + if_linux([
         # devrt is required for jit linking when rdc is enabled
         ":cudadevrt_a",
+        ":culibos_a",
         ":cudart_so",
     ]) + if_windows([
         # devrt is required for jit linking when rdc is enabled
