@@ -1,0 +1,23 @@
+cc_import(
+    name = "nvidia-ml_so",
+    shared_library = "%{component_name}/%{libpath}/stubs/libnvidia-ml.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "nvml_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/nvml.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvml",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":nvidia-ml_so",
+    ]) + if_windows([
+        ":nvml_lib",
+    ]),
+)

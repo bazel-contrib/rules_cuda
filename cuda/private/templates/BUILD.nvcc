@@ -1,0 +1,50 @@
+filegroup(
+    name = "compiler_deps",
+    srcs = [
+        ":%{component_name}_header_files",
+    ] + glob(
+        [
+            "%{component_name}/version.json",
+            "%{component_name}/version.txt",
+            "%{component_name}/bin/**",
+            "%{component_name}/%{libpath}/**",
+            "%{component_name}/nvvm/**",
+        ],
+        allow_empty = True,
+    ),
+)
+
+cc_import(
+    name = "nvptxcompiler_so",
+    static_library = "%{component_name}/%{libpath}/libnvptxcompiler_static.a",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "nvptxcompiler_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/nvptxcompiler_static.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvptxcompiler",
+    srcs = [],
+    hdrs = glob(
+        [
+            "%{component_name}/include/fatbinary_section.h",
+            "%{component_name}/include/nvPTXCompiler.h",
+            "%{component_name}/include/crt/*",
+        ],
+        allow_empty = True,
+    ),
+    includes = [
+        "%{component_name}/include",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [] + if_linux([
+        ":nvptxcompiler_so",
+    ]) + if_windows([
+        ":nvptxcompiler_lib",
+    ]),
+)

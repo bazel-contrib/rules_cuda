@@ -1,0 +1,21 @@
+# map component name to consumable targets
+REGISTRY = {
+    "cudart": ["cuda", "cuda_runtime", "cuda_runtime_static"],
+    "nvcc": ["compiler_deps", "nvptxcompiler"],
+    "cccl": ["cub", "thrust"],
+    "cublas": ["cublas"],
+    "cufft": ["cufft"],
+    "cufile": [],
+    "cupti": ["cupti", "nvperf_host", "nvperf_target"],
+    "curand": ["curand"],
+    "cusolver": ["cusolver"],
+    "cusparse": ["cusparse"],
+    "npp": ["nppc", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
+    "nvidia_fs": [],
+    "nvjitlink": [],
+    "nvjpeg": [],
+    "nvml": ["nvml"],
+    "nvprof": [],
+    "nvrtc": ["nvrtc"],
+    "nvtx": ["nvtx"],
+}

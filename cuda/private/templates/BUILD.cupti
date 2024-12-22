@@ -1,0 +1,84 @@
+# CUPTI
+cc_import_versioned_sos(
+    name = "cupti_so",
+    shared_library = "%{component_name}/**/%{libpath}/libcupti.so",
+)
+
+cc_import(
+    name = "cupti_lib",
+    interface_library = "%{component_name}/extras/CUPTI/lib64/cupti.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cupti_headers",
+    hdrs = glob(
+        ["%{component_name}/extras/CUPTI/include/*.h"],
+        allow_empty = True,
+    ),
+    includes = ["%{component_name}/extras/CUPTI/include"],
+)
+
+cc_library(
+    name = "cupti",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":cupti_so",
+    ]) + if_windows([
+        ":cupti_headers",
+        ":cupti_lib",
+    ]),
+)
+
+# nvperf
+cc_import(
+    name = "nvperf_host_so",
+    shared_library = "%{component_name}/%{libpath}/libnvperf_host.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "nvperf_host_lib",
+    interface_library = "%{component_name}/extras/CUPTI/lib64/nvperf_host.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvperf_host",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":nvperf_host_so",
+    ]) + if_windows([
+        ":cupti_headers",
+        ":nvperf_host_lib",
+    ]),
+)
+
+cc_import(
+    name = "nvperf_target_so",
+    shared_library = "%{component_name}/%{libpath}/libnvperf_target.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_import(
+    name = "nvperf_target_lib",
+    interface_library = "%{component_name}/extras/CUPTI/lib64/nvperf_target.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvperf_target",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":nvperf_target_so",
+    ]) + if_windows([
+        ":cupti_headers",
+        ":nvperf_target_lib",
+    ]),
+)

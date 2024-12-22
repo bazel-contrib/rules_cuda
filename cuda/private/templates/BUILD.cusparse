@@ -1,0 +1,22 @@
+cc_import_versioned_sos(
+    name = "cusparse_so",
+    shared_library = "%{component_name}/%{libpath}/libcusparse.so",
+)
+
+cc_import(
+    name = "cusparse_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/cusparse.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "cusparse",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":cusparse_so",
+    ]) + if_windows([
+        ":cusparse_lib",
+    ]),
+)

@@ -1,0 +1,22 @@
+cc_import_versioned_sos(
+    name = "nvrtc_so",
+    shared_library = "%{component_name}/%{libpath}/libnvrtc.so",
+)
+
+cc_import(
+    name = "nvrtc_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/nvrtc.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvrtc",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":nvrtc_so",
+    ]) + if_windows([
+        ":nvrtc_lib",
+    ]),
+)
