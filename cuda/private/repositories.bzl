@@ -85,14 +85,14 @@ def _detect_local_cuda_toolkit(repository_ctx):
     )
 
 def _detect_deliverable_cuda_toolkit(repository_ctx):
-    # for c in repository_ctx.attr.components:
+    # for c in repository_ctx.attr.components_mapping:
     #     c_ws_root = Label("@local_cuda_{}".format(c)).workspace_root
     #     # FIXME: repository_ctx.path only resolves path in repo, not in workspace
     #     if not repository_ctx.path(c_ws_root).exists:
     #         fail("cuda component '{c}' (repo 'local_cuda_{c}') is not configured".format(c=c))
 
     is_bzlmod_enabled = str(Label("//:invalid")).startswith("@@")
-    nvcc_repo = repository_ctx.attr.components["nvcc"]
+    nvcc_repo = repository_ctx.attr.components_mapping["nvcc"]
     nvcc_repo = ("@@{}" if is_bzlmod_enabled else "@{}").format(nvcc_repo)
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
@@ -134,7 +134,7 @@ def detect_cuda_toolkit(repository_ctx):
     Returns:
         A struct contains the information of CUDA Toolkit.
     """
-    if repository_ctx.attr.components != []:
+    if repository_ctx.attr.components_mapping != []:
         return _detect_deliverable_cuda_toolkit(repository_ctx)
     else:
         return _detect_local_cuda_toolkit(repository_ctx)
@@ -152,7 +152,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     # None: cuda toolkit is not presented
     is_local_ctk = None
 
-    if len(repository_ctx.attr.components) != 0:
+    if len(repository_ctx.attr.components_mapping) != 0:
         is_local_ctk = False
 
     if is_local_ctk == None and cuda.path != None:
@@ -174,7 +174,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         template_helper.generate_build(
             repository_ctx,
             libpath = "lib",
-            components = repository_ctx.attr.components,
+            components = repository_ctx.attr.components_mapping,
             is_local_cuda = True,
             is_deliverable = True,
         )
@@ -241,7 +241,7 @@ local_cuda = repository_rule(
     implementation = _local_cuda_impl,
     attrs = {
         "toolkit_path": attr.string(mandatory = False),
-        "components": attr.string_dict(),
+        "components_mapping": attr.string_dict(),
     },
     configure = True,
     local = True,
@@ -326,13 +326,9 @@ def _cuda_redist_json_impl(repository_ctx):
     if the_url == None:
         fail("Failed to retrieve the redist json file.")
 
-    repository_ctx.symlink(Label("//cuda/private:templates/BUILD.redist_json"), "BUILD")
-
+    # convert redist.json to list of spec (list of dicts with cuda_components attrs)
+    specs = []
     redist = json.decode(repository_ctx.read("redist.json"))
-    redist_bzl_content = """
-
-
-"""
     for c in repository_ctx.attr.components:
         c_full = FULL_COMPONENT_NAME[c]
         os = None
@@ -346,28 +342,19 @@ def _cuda_redist_json_impl(repository_ctx):
 
         payload = redist[c_full][platform]
         payload_relative_path = payload["relative_path"]
-        payload_sha256 = payload["sha256"]
         payload_url = the_url.rsplit("/", 1)[0] + "/" + payload_relative_path
-        payload_archive_name = payload_relative_path.rsplit("/", 1)[1].split("-archive.")[0] + "-archive"
+        archive_name = payload_relative_path.rsplit("/", 1)[1].split("-archive.")[0] + "-archive"
 
-        tpl = """
-    cuda_component(
-        name = "local_cuda_{c}",
-        component_name = "{c}",
-        sha256 = "{sha256}",
-        strip_prefix = "{archive_name}",
-        urls = ["{url}"],
-    )
-"""
+        specs.append({
+            "component_name": c,
+            "urls": [payload_url],
+            "sha256": payload["sha256"],
+            "strip_prefix": archive_name,
+            "version": redist[c_full]["version"],
+        })
 
-        redist_bzl_content += tpl.format(
-            c = c,
-            sha256 = payload_sha256,
-            archive_name = payload_archive_name,
-            url = payload_url,
-        )
-
-    repository_ctx.file("redist.bzl", redist_bzl_content)
+    template_helper.generate_redist_bzl(repository_ctx, specs)
+    repository_ctx.symlink(Label("//cuda/private:templates/BUILD.redist_json"), "BUILD")
 
 cuda_redist_json = repository_rule(
     implementation = _cuda_redist_json_impl,
@@ -402,44 +389,20 @@ def rules_cuda_dependencies():
         ],
     )
 
-    # cuda_component(
-    #     # name = "local_cuda_cudart",
-    #     name = "local_cuda_cudart_v12.4.127",
-    #     component_name = "cudart",
-    #     sha256 = "0483bff9a36e7a44465db3cd42874f6f70f019297dcf803fbefcbf58d7448c8f",
-    #     urls = [
-    #         "https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.4.127-archive.tar.xz",
-    #     ],
-    #     strip_prefix = "cuda_cudart-linux-x86_64-12.4.127-archive",
-    # )
-
-    # cuda_component(
-    #     # name = "local_cuda_nvcc",
-    #     name = "local_cuda_nvcc_v12.4.131",
-    #     component_name = "nvcc",
-    #     sha256 = "7ffba1ada0e4b8c17e451ac7a60d386aa2642ecd08d71202a0b100c98bd74681",
-    #     urls = [
-    #         "https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.4.131-archive.tar.xz",
-    #     ],
-    #     strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
-    # )
-
-def rules_cuda_toolchains(toolkit_path = None, redistrib_url = None, components = None, register_toolchains = False):
+def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, register_toolchains = False):
     """Populate the local_cuda repo.
 
     Args:
         toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
-        redistrib_url:
-        components:
+        components_mapping: dict mapping from component_name to its corresponding cuda_component's repo_name
         register_toolchains: Register the toolchains if enabled.
     """
 
-    local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = default_components_dict(["cudart", "nvcc"]))
-    # local_cuda(name = "local_cuda", toolkit_path = toolkit_path, components = {
-    #     "cudart": "local_cuda_cudart_v12.4.127",
-    #     "nvcc": "local_cuda_nvcc_v12.4.131",
-    # })
-    # local_cuda(name = "local_cuda", toolkit_path = toolkit_path)
+    local_cuda(
+        name = "local_cuda",
+        toolkit_path = toolkit_path,
+        components_mapping = components_mapping,
+    )
 
-    if register:
+    if register_toolchains:
         register_detected_cuda_toolchains()
