@@ -298,7 +298,12 @@ cuda_component = repository_rule(
     },
 )
 
-def default_components_dict(components):
+def default_components_mapping(components):
+    """Create a default components_mapping from list of component names.
+
+    Args:
+        components: list of string, a list of component names.
+    """
     return {c: "local_cuda_" + c for c in components}
 
 def _cuda_redist_json_impl(repository_ctx):
