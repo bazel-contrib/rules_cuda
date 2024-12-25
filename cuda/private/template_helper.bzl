@@ -33,9 +33,11 @@ def _generate_local_cuda_build_impl(repository_ctx, libpath, components, is_loca
         template_content.append(repository_ctx.read(frag))
 
     if is_local_cuda and is_deliverable:  # generate `@local_cuda//BUILD` for CTK with deliverables
-        for comp, repo in components.items():
+        for comp, label in components.items():
             for target in REGISTRY[comp]:
-                line = 'alias(name = "{target}", actual = "@{repo}//:{target}")'.format(target = target, repo = repo)
+                # canonical_repo_name = label.repo_name
+                apparent_repo_name = label.name
+                line = 'alias(name = "{target}", actual = "@{repo}//:{target}")'.format(target = target, repo = apparent_repo_name)
                 template_content.append(line)
 
             # add an empty line to separate aliased targets from different components
@@ -121,7 +123,7 @@ def _generate_redist_bzl(repository_ctx, component_specs):
                 urls = repr(spec["urls"]),
             ),
         )
-        mapping[spec["component_name"]] = repo_name
+        mapping[spec["component_name"]] = "@" + repo_name
 
     tpl_label = Label("//cuda/private:templates/redist.bzl.tpl")
     substitutions = {

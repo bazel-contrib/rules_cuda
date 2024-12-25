@@ -92,8 +92,8 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
             fail('component "{}" is required.'.format(rc))
 
     is_bzlmod_enabled = str(Label("//:invalid")).startswith("@@")
-    nvcc_repo = repository_ctx.attr.components_mapping["nvcc"]
-    nvcc_repo = ("@@{}" if is_bzlmod_enabled else "@{}").format(nvcc_repo)
+    canonical_nvcc_repo_name = repository_ctx.attr.components_mapping["nvcc"].repo_name
+    nvcc_repo = ("@@{}" if is_bzlmod_enabled else "@{}").format(canonical_nvcc_repo_name)
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
     nvlink = str(Label(nvcc_repo + "//:nvcc/bin/nvlink{}".format(bin_ext)))
@@ -241,7 +241,7 @@ local_cuda = repository_rule(
     implementation = _local_cuda_impl,
     attrs = {
         "toolkit_path": attr.string(mandatory = False),
-        "components_mapping": attr.string_dict(),
+        "components_mapping": attr.string_keyed_label_dict(),
     },
     configure = True,
     local = True,
@@ -304,7 +304,7 @@ def default_components_mapping(components):
     Args:
         components: list of string, a list of component names.
     """
-    return {c: "local_cuda_" + c for c in components}
+    return {c: "@local_cuda_" + c for c in components}
 
 def _cuda_redist_json_impl(repository_ctx):
     the_url = None  # the url that successfully fetch redist json, we then use it to fetch deliverables

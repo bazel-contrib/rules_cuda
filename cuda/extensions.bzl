@@ -54,7 +54,10 @@ cuda_redist_json_tag = tag_class(attrs = {
 cuda_toolkit_tag = tag_class(attrs = {
     "name": attr.string(doc = "Name for the toolchain repository", default = "local_cuda"),
     "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
-    "components_mapping": attr.string_dict(doc = "Component names of a deliverable CUDA Toolkit."),
+    "components_mapping": attr.string_keyed_label_dict(
+        doc = "A mapping from component names to component repos of a deliverable CUDA Toolkit. " +
+              "Only the repo part of the label is usefull",
+    ),
 })
 
 def _find_modules(module_ctx):
