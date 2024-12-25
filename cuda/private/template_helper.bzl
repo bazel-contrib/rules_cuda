@@ -80,10 +80,10 @@ def _generate_build(repository_ctx, libpath, components = None, is_local_cuda = 
 
     _generate_local_cuda_build_impl(repository_ctx, libpath, components, is_local_cuda, is_deliverable)
 
-def _generate_defs_bzl(repository_ctx, is_local_cuda):
+def _generate_defs_bzl(repository_ctx, is_local_ctk):
     tpl_label = Label("//cuda/private:templates/defs.bzl.tpl")
     substitutions = {
-        "%{is_local_cuda}": str(is_local_cuda),
+        "%{is_local_ctk}": str(is_local_ctk),
     }
     repository_ctx.template("defs.bzl", tpl_label, substitutions = substitutions, executable = False)
 
