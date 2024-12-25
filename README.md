@@ -47,7 +47,7 @@ archive_override(
 )
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-cuda.local_toolchain(
+cuda.toolkit(
     name = "local_cuda",
     toolkit_path = "",
 )

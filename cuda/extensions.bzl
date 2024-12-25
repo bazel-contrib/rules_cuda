@@ -71,58 +71,47 @@ def _find_modules(module_ctx):
 
     return root, our_module
 
+def module_tag_to_dict(t):
+    return {attr: getattr(t, attr) for attr in dir(t)}
+
 def _impl(module_ctx):
     # Toolchain configuration is only allowed in the root module, or in rules_cuda.
     root, rules_cuda = _find_modules(module_ctx)
     components = None
     redist_jsons = None
-    toolchains = None
-    if root.tags.local_toolchain:
+    toolkits = None
+    if root.tags.toolkit:
         components = root.tags.component
         redist_jsons = root.tags.redist_json
-        toolchains = root.tags.local_toolchain
+        toolkits = root.tags.toolkit
     else:
         components = rules_cuda.tags.component
         redist_jsons = rules_cuda.tags.redist_json
-        toolchains = rules_cuda.tags.local_toolchain
+        toolkits = rules_cuda.tags.toolkit
 
     for component in components:
-        cuda_component(
-            name = component.name,
-            integrity = component.integrity,
-            sha256 = component.sha256,
-            strip_prefix = component.strip_prefix,
-            urls = component.urls,
-        )
+        cuda_component(**module_tag_to_dict(component))
 
     for redist_json in redist_jsons:
-        cuda_redist_json(
-            name = redist_json.name,
-            components = redist_json.components,
-            integrity = redist_json.integrity,
-            sha256 = redist_json.sha256,
-            urls = redist_json.urls,
-            version = redist_json.version,
-        )
+        cuda_redist_json(**module_tag_to_dict(redist_json))
 
     registrations = {}
-    for toolchain in toolchains:
-        if toolchain.name in registrations.keys():
-            # FIXME: how to handle components?
-            if toolchain.toolkit_path == registrations[toolchain.name]:
-                # No problem to register a matching toolchain twice
+    for toolkit in toolkits:
+        if toolkit.name in registrations.keys():
+            if toolkit.toolkit_path == registrations[toolkit.name].toolkit_path:
+                # No problem to register a matching toolkit twice
                 continue
-            fail("Multiple conflicting toolchains declared for name {} ({} and {}".format(toolchain.name, toolchain.toolkit_path, registrations[toolchain.name]))
+            fail("Multiple conflicting toolkits declared for name {} ({} and {}".format(toolkit.name, toolkit.toolkit_path, registrations[toolkit.name].toolkit_path))
         else:
-            registrations[toolchain.name] = toolchain.toolkit_path
-    for name, toolkit_path in registrations.items():
-        local_cuda(name = name, toolkit_path = toolkit_path)
+            registrations[toolkit.name] = toolkit
+    for name, toolkit in registrations.items():
+        local_cuda(**module_tag_to_dict(toolkit))
 
-toolchain = module_extension(  # TODO: rename toolchain to cuda
+toolchain = module_extension(
     implementation = _impl,
     tag_classes = {
         "component": cuda_component_tag,
         "redist_json": cuda_redist_json_tag,
-        "local_toolchain": cuda_toolkit_tag,  # TODO: rename local_toolchain to toolkit
+        "toolkit": cuda_toolkit_tag,
     },
 )

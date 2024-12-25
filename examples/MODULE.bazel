@@ -41,7 +41,7 @@ cuda.component(
     strip_prefix = "cuda_nvcc-linux-x86_64-12.4.131-archive",
 )
 
-cuda.local_toolchain(
+cuda.toolkit(
     name = "local_cuda",
     # toolkit_path = "",
     components = ["nvcc", "cudart"],
