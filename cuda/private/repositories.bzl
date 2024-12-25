@@ -85,11 +85,11 @@ def _detect_local_cuda_toolkit(repository_ctx):
     )
 
 def _detect_deliverable_cuda_toolkit(repository_ctx):
-    # for c in repository_ctx.attr.components_mapping:
-    #     c_ws_root = Label("@local_cuda_{}".format(c)).workspace_root
-    #     # FIXME: repository_ctx.path only resolves path in repo, not in workspace
-    #     if not repository_ctx.path(c_ws_root).exists:
-    #         fail("cuda component '{c}' (repo 'local_cuda_{c}') is not configured".format(c=c))
+    # NOTE: component nvcc contains some headers that will be used.
+    required_components = ["cccl", "cudart", "nvcc"]
+    for rc in required_components:
+        if rc not in repository_ctx.attr.components_mapping:
+            fail('component "{}" is required.'.format(rc))
 
     is_bzlmod_enabled = str(Label("//:invalid")).startswith("@@")
     nvcc_repo = repository_ctx.attr.components_mapping["nvcc"]
