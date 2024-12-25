@@ -10,23 +10,6 @@ def _is_windows(ctx):
     return ctx.os.name.lower().startswith("windows")
 
 def _generate_local_cuda_build_impl(repository_ctx, libpath, components, is_local_cuda, is_deliverable):
-    """Generate `@local_cuda//BUILD`
-
-    Notes:
-        - is_local_cuda==False and is_deliverable==False is an error
-        - is_local_cuda==True  and is_deliverable==False generate `@local_cuda//BUILD` for local host CTK
-        - is_local_cuda==True  and is_deliverable==True  generate `@local_cuda//BUILD` for CTK with deliverables
-        - is_local_cuda==False and is_deliverable==True  generate `@local_cuda_<component>//BUILD` for a deliverable
-        generates `@local_cuda//BUILD`
-
-    Args:
-        repository_ctx: repository_ctx
-        libpath: substitution of %{libpath}
-        components: dict[str, str], the components of CTK to be included, mappeed to the repo names for the components
-        is_local_cuda: See Notes
-        is_deliverable: See Notes
-    """
-
     # stitch template fragment
     fragments = [
         Label("//cuda/private:templates/BUILD.local_cuda_shared"),
@@ -70,6 +53,23 @@ def _generate_local_cuda_build_impl(repository_ctx, libpath, components, is_loca
     repository_ctx.template("BUILD", template_path, substitutions = substitutions, executable = False)
 
 def _generate_build(repository_ctx, libpath, components = None, is_local_cuda = True, is_deliverable = False):
+    """Generate `@local_cuda//BUILD`
+
+    Notes:
+        - is_local_cuda==False and is_deliverable==False is an error
+        - is_local_cuda==True  and is_deliverable==False generate `@local_cuda//BUILD` for local host CTK
+        - is_local_cuda==True  and is_deliverable==True  generate `@local_cuda//BUILD` for CTK with deliverables
+        - is_local_cuda==False and is_deliverable==True  generate `@local_cuda_<component>//BUILD` for a deliverable
+        generates `@local_cuda//BUILD`
+
+    Args:
+        repository_ctx: repository_ctx
+        libpath: substitution of %{libpath}
+        components: dict[str, str], the components of CTK to be included, mappeed to the repo names for the components
+        is_local_cuda: See Notes, True for @local_cuda generation, False for @local_cuda_<component> generation.
+        is_deliverable: See Notes
+    """
+
     if is_local_cuda and not is_deliverable:
         if components == None:
             components = [c for c in REGISTRY if len(REGISTRY[c]) > 0]
