@@ -263,7 +263,7 @@ def _cuda_component_impl(repository_ctx):
         component_name = repository_ctx.name[len("local_cuda_"):]
         if component_name not in REGISTRY:
             fail("invalid derived component '{}', available: {}, ".format(component_name, repr(REGISTRY.keys())) +
-                 " if derivation result is expected, please specify `component_name` attribute manually")
+                 " if derivation result is unexpected, please specify `component_name` attribute manually")
 
     if not repository_ctx.attr.url and not repository_ctx.attr.urls:
         fail("either attribute `url` or `urls` must be filled")

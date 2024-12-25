@@ -4,6 +4,7 @@ load("//cuda/private:repositories.bzl", "cuda_component", "cuda_redist_json", "l
 
 cuda_component_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
+    "component_name": attr.string(doc = "Short name of the component defined in registry."),
     "integrity": attr.string(
         doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
               "This must match the checksum of the file downloaded.",
@@ -53,7 +54,7 @@ cuda_redist_json_tag = tag_class(attrs = {
 cuda_toolkit_tag = tag_class(attrs = {
     "name": attr.string(doc = "Name for the toolchain repository", default = "local_cuda"),
     "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
-    "components": attr.string_list(doc = "Component names of a deliverable CUDA Toolkit."),
+    "components_mapping": attr.string_dict(doc = "Component names of a deliverable CUDA Toolkit."),
 })
 
 def _find_modules(module_ctx):
