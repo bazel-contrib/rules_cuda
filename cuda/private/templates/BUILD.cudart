@@ -38,7 +38,7 @@ cc_library(
         "-lpthread",
         "-lrt",
     ]),
-    deps = [
+    deps = additional_header_deps("cudart") + [
         ":%{component_name}_headers",
     ] + if_linux([
         # devrt is required for jit linking when rdc is enabled
@@ -66,7 +66,7 @@ cc_library(
         "-lpthread",
         "-lrt",
     ]),
-    deps = [":cudadevrt_a"],
+    deps = additional_header_deps("cudart") + [":cudadevrt_a"],
     # FIXME:
     # visibility = ["@rules_cuda//cuda:__pkg__"],
 )
