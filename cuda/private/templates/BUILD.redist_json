@@ -1,0 +1,18 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "redist_bzl",
+    srcs = [":redist.bzl"],
+)
+
+filegroup(
+    name = "redist_json",
+    srcs = [":redist.json"],
+)
+
+exports_files([
+    "redist.bzl",
+    "redist.json",
+])
