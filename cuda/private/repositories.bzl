@@ -3,6 +3,7 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("//cuda/private:template_helper.bzl", "template_helper")
+load("//cuda/private:toolchain.bzl", "register_detected_cuda_toolchains")
 
 def _to_forward_slash(s):
     return s.replace("\\", "/")
@@ -197,12 +198,8 @@ local_cuda = repository_rule(
     # remotable = True,
 )
 
-def rules_cuda_dependencies(toolkit_path = None):
-    """Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.
-
-    Args:
-        toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
-    """
+def rules_cuda_dependencies():
+    """Populate the dependencies for rules_cuda. This will setup other bazel rules as workspace dependencies"""
     maybe(
         name = "bazel_skylib",
         repo_rule = http_archive,
@@ -223,4 +220,18 @@ def rules_cuda_dependencies(toolkit_path = None):
         ],
     )
 
-    local_cuda(name = "local_cuda", toolkit_path = toolkit_path)
+def rules_cuda_toolchains(toolkit_path = None, register_toolchains = False):
+    """Populate the local_cuda repo.
+
+    Args:
+        toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
+        register_toolchains: Register the toolchains if enabled.
+    """
+
+    local_cuda(
+        name = "local_cuda",
+        toolkit_path = toolkit_path,
+    )
+
+    if register_toolchains:
+        register_detected_cuda_toolchains()
