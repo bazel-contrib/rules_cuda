@@ -1,0 +1,37 @@
+cc_import_versioned_sos(
+    name = "nvjpeg_so",
+    shared_library = "%{component_name}/%{libpath}/libnvjpeg.so",
+)
+
+cc_import(
+    name = "nvjpeg_lib",
+    interface_library = "%{component_name}/%{libpath}/x64/nvjpeg.lib",
+    system_provided = 1,
+    target_compatible_with = ["@platforms//os:windows"],
+)
+
+cc_library(
+    name = "nvjpeg",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":nvjpeg_so",
+    ]) + if_windows([
+        ":nvjpeg_lib",
+    ]),
+)
+
+cc_import(
+    name = "nvjpeg_static_a",
+    static_library = "%{component_name}/%{libpath}/libnvjpeg_static.a",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+cc_library(
+    name = "nvjpeg_static",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":nvjpeg_static_a",
+    ]),
+)
