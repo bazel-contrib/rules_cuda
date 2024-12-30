@@ -4,7 +4,7 @@ REGISTRY = {
     "nvcc": ["compiler_deps", "nvptxcompiler"],
     "cccl": ["cub", "thrust"],
     "cublas": ["cublas"],
-    "cufft": ["cufft"],
+    "cufft": ["cufft", "cufft_static"],
     "cufile": [],
     "cupti": ["cupti", "nvperf_host", "nvperf_target"],
     "curand": ["curand"],
