@@ -1,0 +1,51 @@
+module(name = "bzlmod_use_repo_no_toolchain")
+
+bazel_dep(name = "rules_cuda", version = "0.0.0")
+local_path_override(
+    module_name = "rules_cuda",
+    path = "../../..",
+)
+
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.component(
+    name = "local_cuda_cccl",
+    component_name = "cccl",
+    sha256 = "9c3145ef01f73e50c0f5fcf923f0899c847f487c529817daa8f8b1a3ecf20925",
+    strip_prefix = "cuda_cccl-linux-x86_64-12.6.77-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_cccl/linux-x86_64/cuda_cccl-linux-x86_64-12.6.77-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_cudart",
+    component_name = "cudart",
+    sha256 = "f74689258a60fd9c5bdfa7679458527a55e22442691ba678dcfaeffbf4391ef9",
+    strip_prefix = "cuda_cudart-linux-x86_64-12.6.77-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.6.77-archive.tar.xz"],
+)
+cuda.component(
+    name = "local_cuda_nvcc",
+    component_name = "nvcc",
+    sha256 = "840deff234d9bef20d6856439c49881cb4f29423b214f9ecd2fa59b7ac323817",
+    strip_prefix = "cuda_nvcc-linux-x86_64-12.6.85-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.6.85-archive.tar.xz"],
+)
+cuda.toolkit(
+    name = "local_cuda",
+    components_mapping = {
+        "cccl": "@local_cuda_cccl",
+        "cudart": "@local_cuda_cudart",
+        "nvcc": "@local_cuda_nvcc",
+    },
+)
+use_repo(
+    cuda,
+    "local_cuda",
+    "local_cuda_cccl",
+    "local_cuda_cudart",
+    "local_cuda_nvcc",
+)
+
+bazel_dep(name = "rules_cuda_examples", version = "0.0.0")
+local_path_override(
+    module_name = "rules_cuda_examples",
+    path = "../../../examples",
+)
