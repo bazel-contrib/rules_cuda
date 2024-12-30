@@ -8,3 +8,8 @@ bool_setting(
     name = "valid_toolchain_found",
     build_setting_default = False,
 )
+
+filegroup(
+    name = "compiler_deps",
+    srcs = [],
+)
