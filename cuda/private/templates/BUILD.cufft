@@ -59,7 +59,7 @@ cc_library(
         ":%{component_name}_headers",
     ] + if_linux([
         ":cufftw_static_a",
-    ])
+    ]),
 )
 
 cc_library(
@@ -69,7 +69,7 @@ cc_library(
     ] + if_linux([
         ":cufftw_static_a",
         ":cufft_static_a",
-    ])
+    ]),
 )
 
 cc_library(
@@ -79,5 +79,5 @@ cc_library(
     ] + if_linux([
         ":cufftw_static_a",
         ":cufft_static_nocallback_a",
-    ])
+    ]),
 )
