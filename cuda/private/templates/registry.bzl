@@ -12,7 +12,7 @@ REGISTRY = {
     "cusparse": ["cusparse"],
     "npp": ["nppc", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
     "nvidia_fs": [],
-    "nvjitlink": [],
+    "nvjitlink": ["nvjitlink", "nvjitlink_static"],
     "nvjpeg": [],
     "nvml": ["nvml"],
     "nvprof": [],
