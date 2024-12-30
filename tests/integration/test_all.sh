@@ -2,7 +2,7 @@
 
 this_dir=$(realpath $(dirname $0))
 
-set -ev
+set -ex
 
 # toolchain configured by the root module of the user
 pushd "$this_dir/toolchain_root"
