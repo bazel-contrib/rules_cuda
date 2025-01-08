@@ -248,10 +248,15 @@ def _local_cuda_impl(repository_ctx):
 local_cuda = repository_rule(
     implementation = _local_cuda_impl,
     attrs = {
-        "toolkit_path": attr.string(mandatory = False),
-        "components_mapping": components_mapping_compat.attr(),
-        "version": attr.string(),
-        "nvcc_version": attr.string(),
+        "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
+        "components_mapping": components_mapping_compat.attr(
+            doc = "A mapping from component names to component repos of a deliverable CUDA Toolkit. " +
+                  "Only the repo part of the label is usefull",
+        ),
+        "version": attr.string(doc = "cuda toolkit version. Required for deliverable toolkit only."),
+        "nvcc_version": attr.string(
+            doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
+        ),
     },
     configure = True,
     local = True,
@@ -299,12 +304,32 @@ def _cuda_component_impl(repository_ctx):
 cuda_component = repository_rule(
     implementation = _cuda_component_impl,
     attrs = {
-        "component_name": attr.string(),
-        "url": attr.string(),
-        "urls": attr.string_list(),
-        "integrity": attr.string(),
-        "sha256": attr.string(),
-        "strip_prefix": attr.string(),
+        "component_name": attr.string(doc = "Short name of the component defined in registry."),
+        "integrity": attr.string(
+            doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
+                  "This must match the checksum of the file downloaded.",
+        ),
+        "sha256": attr.string(
+            doc = "The expected SHA-256 of the file downloaded. This must match the SHA-256 of the file downloaded.",
+        ),
+        "strip_prefix": attr.string(
+            doc = "A directory prefix to strip from the extracted files. " +
+                  "Many archives contain a top-level directory that contains all of the useful files in archive.",
+        ),
+        "url": attr.string(
+            doc = "A URL to a file that will be made available to Bazel. " +
+                  "This must be a file, http or https URL." +
+                  "Redirections are followed. Authentication is not supported. " +
+                  "More flexibility can be achieved by the urls parameter that allows " +
+                  "to specify alternative URLs to fetch from.",
+        ),
+        "urls": attr.string_list(
+            doc = "A list of URLs to a file that will be made available to Bazel. " +
+                  "Each entry must be a file, http or https URL. " +
+                  "Redirections are followed. Authentication is not supported. " +
+                  "URLs are tried in order until one succeeds, so you should list local mirrors first. " +
+                  "If all downloads fail, the rule will fail.",
+        ),
     },
 )
 

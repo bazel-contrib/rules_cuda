@@ -11,32 +11,41 @@ cuda_component_tag = tag_class(attrs = {
               "This must match the checksum of the file downloaded.",
     ),
     "sha256": attr.string(
-        doc = "The expected SHA-256 of the file downloaded. " +
-              "This must match the SHA-256 of the file downloaded.",
+        doc = "The expected SHA-256 of the file downloaded. This must match the SHA-256 of the file downloaded.",
     ),
     "strip_prefix": attr.string(
         doc = "A directory prefix to strip from the extracted files. " +
               "Many archives contain a top-level directory that contains all of the useful files in archive.",
     ),
+    "url": attr.string(
+        doc = "A URL to a file that will be made available to Bazel. " +
+              "This must be a file, http or https URL." +
+              "Redirections are followed. Authentication is not supported. " +
+              "More flexibility can be achieved by the urls parameter that allows " +
+              "to specify alternative URLs to fetch from.",
+    ),
     "urls": attr.string_list(
-        mandatory = True,
         doc = "A list of URLs to a file that will be made available to Bazel. " +
-              "Each entry must be a file, http or https URL. Redirections are followed. " +
-              "Authentication is not supported. " +
+              "Each entry must be a file, http or https URL. " +
+              "Redirections are followed. Authentication is not supported. " +
               "URLs are tried in order until one succeeds, so you should list local mirrors first. " +
               "If all downloads fail, the rule will fail.",
     ),
 })
 
 cuda_toolkit_tag = tag_class(attrs = {
-    "name": attr.string(doc = "Name for the toolchain repository", default = "local_cuda"),
-    "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
+    "name": attr.string(mandatory = True, doc = "Name for the toolchain repository", default = "local_cuda"),
+    "toolkit_path": attr.string(
+        doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
+    ),
     "components_mapping": components_mapping_compat.attr(
         doc = "A mapping from component names to component repos of a deliverable CUDA Toolkit. " +
               "Only the repo part of the label is usefull",
     ),
-    "version": attr.string(),
-    "nvcc_version": attr.string(),
+    "version": attr.string(doc = "cuda toolkit version. Required for deliverable toolkit only."),
+    "nvcc_version": attr.string(
+        doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
+    ),
 })
 
 def _find_modules(module_ctx):
