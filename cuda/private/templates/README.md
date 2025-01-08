@@ -12,7 +12,7 @@
 
 ## Repository organization
 
-We organize the generated repo as follows
+We organize the generated repo as follows, for both `local_cuda` and `local_cuda_<component_repo_name>`
 
 ```
 <repo_root>              # bazel unconditionally creates a directory for us
@@ -40,14 +40,16 @@ If the repo is `local_cuda`, we additionally generate toolchain config as follow
 
 The `registry.bzl` file holds mappings from our (`rules_cuda`) components name to various things.
 
-### 1. maps our component names to fully component names used `redistrib.json` file.
+The registry serve the following purpose:
 
-This is purely for looking up the json files.
+1. maps our component names to full component names used `redistrib.json` file.
 
-### 2. maps our component names to target names to be exposed under `@local_cuda` repo.
+   This is purely for looking up the json files.
 
-To expose those targets, we use a `components_mapping` attr from our component names to labels of component repository
-as follows
+2. maps our component names to target names to be exposed under `@local_cuda` repo.
+
+   To expose those targets, we use a `components_mapping` attr from our component names to labels of component
+   repository (for example, `@local_cuda_nvcc`) as follows
 
 ```starlark
 # in registry.bzl
@@ -71,10 +73,9 @@ local_cuda(
 
 This basically means the component `cudart` has `cuda`, `cuda_runtime` and `cuda_runtime_static` targets defined.
 
-In locally installed CTK, we setup the targets in `@local_cuda` directly.
-
-In a deliverable CTK, we setup the targets in `@local_cuda_cudart_v12.6.77` repo.
-And alias all targets to `@local_cuda` as follows
+- In locally installed CTK, we setup the targets in `@local_cuda` directly.
+- In a deliverable CTK, we setup the targets in `@local_cuda_cudart_v12.6.77` repo. And alias all targets to
+  `@local_cuda` as follows
 
 ```starlark
 alias(name = "cuda", actual = "@local_cuda_cudart_v12.6.77//:cuda")
