@@ -2,6 +2,7 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+load("//cuda/private:compat.bzl", "components_mapping_compat")
 load("//cuda/private:template_helper.bzl", "template_helper")
 load("//cuda/private:templates/registry.bzl", "FULL_COMPONENT_NAME", "REGISTRY")
 load("//cuda/private:toolchain.bzl", "register_detected_cuda_toolchains")
@@ -92,27 +93,33 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
         if rc not in repository_ctx.attr.components_mapping:
             fail('component "{}" is required.'.format(rc))
 
-    is_bzlmod_enabled = str(Label("//:invalid")).startswith("@@")
-    canonical_nvcc_repo_name = repository_ctx.attr.components_mapping["nvcc"].repo_name
-    nvcc_repo = ("@@{}" if is_bzlmod_enabled else "@{}").format(canonical_nvcc_repo_name)
+    nvcc_repo = components_mapping_compat.repo_str(repository_ctx.attr.components_mapping["nvcc"])
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
-    nvlink = str(Label(nvcc_repo + "//:nvcc/bin/nvlink{}".format(bin_ext)))
-    link_stub = str(Label(nvcc_repo + "//:nvcc/bin/crt/link.stub"))
-    bin2c = str(Label(nvcc_repo + "//:nvcc/bin/bin2c{}".format(bin_ext)))
-    fatbinary = str(Label(nvcc_repo + "//:nvcc/bin/fatbinary{}".format(bin_ext)))
+    nvcc = "{}//:nvcc/bin/nvcc{}".format(nvcc_repo, bin_ext)
+    nvlink = "{}//:nvcc/bin/nvlink{}".format(nvcc_repo, bin_ext)
+    link_stub = "{}//:nvcc/bin/crt/link.stub".format(nvcc_repo)
+    bin2c = "{}//:nvcc/bin/bin2c{}".format(nvcc_repo, bin_ext)
+    fatbinary = "{}//:nvcc/bin/fatbinary{}".format(nvcc_repo, bin_ext)
 
-    nvcc_root = Label(nvcc_repo).workspace_root + "/nvcc"
-    nvcc_version_major, nvcc_version_minor = _get_nvcc_version(repository_ctx, nvcc_root)
+    cuda_version_str = repository_ctx.attr.version
+    if cuda_version_str == None or cuda_version_str == "":
+        fail("attr version is required.")
+
+    nvcc_version_str = repository_ctx.attr.nvcc_version
+    if nvcc_version_str == None or nvcc_version_str == "":
+        nvcc_version_str = cuda_version_str
+
+    cuda_version_major, cuda_version_minor = cuda_version_str.split(".")[:2]
+    nvcc_version_major, nvcc_version_minor = nvcc_version_str.split(".")[:2]
 
     return struct(
-        path = nvcc_root,
-        # this should have been extracted from cuda.h, reuse nvcc for now
-        version_major = nvcc_version_major,
-        version_minor = nvcc_version_minor,
-        # this is extracted from `nvcc --version`
+        path = None,  # scattered components
+        version_major = cuda_version_major,
+        version_minor = cuda_version_minor,
         nvcc_version_major = nvcc_version_major,
         nvcc_version_minor = nvcc_version_minor,
+        nvcc_label = nvcc,
         nvlink_label = nvlink,
         link_stub_label = link_stub,
         bin2c_label = bin2c,
@@ -242,7 +249,9 @@ local_cuda = repository_rule(
     implementation = _local_cuda_impl,
     attrs = {
         "toolkit_path": attr.string(mandatory = False),
-        "components_mapping": attr.string_keyed_label_dict(),
+        "components_mapping": components_mapping_compat.attr(),
+        "version": attr.string(),
+        "nvcc_version": attr.string(),
     },
     configure = True,
     local = True,
@@ -329,12 +338,14 @@ def rules_cuda_dependencies():
         ],
     )
 
-def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, register_toolchains = False):
+def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, version = None, nvcc_version = None, register_toolchains = False):
     """Populate the local_cuda repo.
 
     Args:
         toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
         components_mapping: dict mapping from component_name to its corresponding cuda_component's repo_name
+        version: str for cuda toolkit version. Required for deliverable toolkit only.
+        nvcc_version: str for nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.
         register_toolchains: Register the toolchains if enabled.
     """
 
@@ -342,6 +353,8 @@ def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, regist
         name = "local_cuda",
         toolkit_path = toolkit_path,
         components_mapping = components_mapping,
+        version = version,
+        nvcc_version = nvcc_version,
     )
 
     if register_toolchains:

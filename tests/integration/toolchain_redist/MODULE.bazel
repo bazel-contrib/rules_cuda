@@ -35,6 +35,7 @@ cuda.toolkit(
         "cudart": "@local_cuda_cudart",
         "nvcc": "@local_cuda_nvcc",
     },
+    version = "12.6",
 )
 use_repo(
     cuda,

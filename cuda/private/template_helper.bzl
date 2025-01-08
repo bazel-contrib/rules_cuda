@@ -1,3 +1,4 @@
+load("//cuda/private:compat.bzl", "components_mapping_compat")
 load("//cuda/private:templates/registry.bzl", "REGISTRY")
 
 def _to_forward_slash(s):
@@ -33,11 +34,10 @@ def _generate_local_cuda_build_impl(repository_ctx, libpath, components, is_loca
         template_content.append(repository_ctx.read(frag))
 
     if is_local_cuda and is_deliverable:  # generate `@local_cuda//BUILD` for CTK with deliverables
-        for comp, label in components.items():
+        for comp in components:
             for target in REGISTRY[comp]:
-                # canonical_repo_name = label.repo_name
-                apparent_repo_name = label.name
-                line = 'alias(name = "{target}", actual = "@{repo}//:{target}")'.format(target = target, repo = apparent_repo_name)
+                repo = components_mapping_compat.repo_str(components[comp])
+                line = 'alias(name = "{target}", actual = "{repo}//:{target}")'.format(target = target, repo = repo)
                 template_content.append(line)
 
             # add an empty line to separate aliased targets from different components
