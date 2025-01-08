@@ -1,6 +1,12 @@
 package(default_visibility = ["//visibility:public"])
 
 cc_binary(
+    name = "nvcc",
+    srcs = ["dummy.cpp"],
+    defines = ["TOOLNAME=nvcc"],
+)
+
+cc_binary(
     name = "nvlink",
     srcs = ["dummy.cpp"],
     defines = ["TOOLNAME=nvlink"],

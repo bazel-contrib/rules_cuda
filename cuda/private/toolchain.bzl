@@ -2,6 +2,17 @@ load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
 
 def _cuda_toolchain_impl(ctx):
+    has_compiler_executable = ctx.attr.compiler_executable != None and ctx.attr.compiler_executable != ""
+    has_compiler_label = ctx.attr.compiler_label == None
+    if (has_compiler_executable and not has_compiler_label) or (not has_compiler_executable and has_compiler_label):
+        fail("Either compiler_executable or compiler_label must be specified.")
+
+    if has_compiler_executable:
+        compiler_executable = ctx.attr.compiler_executable
+    else:
+        l = ctx.attr.compiler_label.label
+        compiler_executable = "{}/{}/{}".format(l.workspace_root, l.package, l.name)
+
     cuda_toolchain_config = ctx.attr.toolchain_config[CudaToolchainConfigInfo]
     selectables_info = config_helper.collect_selectables_info(cuda_toolchain_config.action_configs + cuda_toolchain_config.features)
     must_have_selectables = []
@@ -16,7 +27,7 @@ def _cuda_toolchain_impl(ctx):
     return [
         platform_common.ToolchainInfo(
             name = ctx.label.name,
-            compiler_executable = ctx.attr.compiler_executable,
+            compiler_executable = compiler_executable,
             all_files = ctx.attr.compiler_files.files if ctx.attr.compiler_files else depset(),
             selectables_info = selectables_info,
             artifact_name_patterns = artifact_name_patterns,
@@ -33,7 +44,8 @@ cuda_toolchain = rule(
             providers = [CudaToolchainConfigInfo],
             doc = "A target that provides a `CudaToolchainConfigInfo`.",
         ),
-        "compiler_executable": attr.string(mandatory = True, doc = "The path of the main executable of this toolchain."),
+        "compiler_executable": attr.string(doc = "The path of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified."),
+        "compiler_label": attr.label(allow_single_file = True, executable = True, cfg = "exec", doc = "The label of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified."),
         "compiler_files": attr.label(allow_files = True, cfg = "exec", doc = "The set of files that are needed when compiling using this toolchain."),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
