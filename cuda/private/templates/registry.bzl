@@ -1,8 +1,8 @@
-# map component name to consumable targets
+# map short component name to consumable targets
 REGISTRY = {
     "cudart": ["cuda", "cuda_runtime", "cuda_runtime_static"],
-    "nvcc": ["compiler_deps", "nvptxcompiler"],
-    "cccl": ["cub", "thrust"],
+    "nvcc": ["compiler_deps", "nvptxcompiler", "nvcc_headers"],
+    "cccl": ["cub", "thrust", "cccl_headers"],
     "cublas": ["cublas"],
     "cufft": ["cufft", "cufft_static"],
     "cufile": [],
@@ -18,4 +18,25 @@ REGISTRY = {
     "nvprof": [],
     "nvrtc": ["nvrtc"],
     "nvtx": ["nvtx"],
+}
+
+# map short component name to full component name
+FULL_COMPONENT_NAME = {
+    "cudart": "cuda_cudart",
+    "nvcc": "cuda_nvcc",
+    "cccl": "cuda_cccl",
+    "cublas": "libcublas",
+    "cufft": "libcufft",
+    "cufile": "libcufile",
+    "cupti": "libcupti",
+    "curand": "libcurand",
+    "cusolver": "libcusolver",
+    "cusparse": "libcusparse",
+    "npp": "libnpp",
+    "nvidia_fs": "nvidia_fs",
+    "nvjitlink": "libnvjitlink",
+    "nvjpeg": "libnvjpeg",
+    "nvml": "cuda_nvml_dev",
+    "nvrtc": "cuda_nvrtc",
+    "nvtx": "cuda_nvtx",
 }
