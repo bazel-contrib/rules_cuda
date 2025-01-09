@@ -89,6 +89,49 @@ def _generate_defs_bzl(repository_ctx, is_local_ctk):
     }
     repository_ctx.template("defs.bzl", tpl_label, substitutions = substitutions, executable = False)
 
+def _generate_redist_bzl(repository_ctx, component_specs):
+    """Generate `@rules_cuda_redist_json//:redist.bzl`
+
+    Args:
+        repository_ctx: repository_ctx
+        component_specs: list of dict, dict keys are component_name, urls, sha256, strip_prefix and version
+    """
+
+    rules_cuda_components_body = []
+    mapping = {}
+
+    component_tpl = """cuda_component(
+        name = "{repo_name}",
+        component_name = "{component_name}",
+        sha256 = {sha256},
+        strip_prefix = {strip_prefix},
+        urls = {urls},
+    )"""
+
+    for spec in component_specs:
+        repo_name = "local_cuda_" + spec["component_name"]
+        version = spec.get("version", None)
+        if version != None:
+            repo_name = repo_name + "_v" + version
+
+        rules_cuda_components_body.append(
+            component_tpl.format(
+                repo_name = repo_name,
+                component_name = spec["component_name"],
+                sha256 = repr(spec["sha256"]),
+                strip_prefix = repr(spec["strip_prefix"]),
+                urls = repr(spec["urls"]),
+            ),
+        )
+        mapping[spec["component_name"]] = "@" + repo_name
+
+    tpl_label = Label("//cuda/private:templates/redist.bzl.tpl")
+    substitutions = {
+        "%{rules_cuda_components_body}": "\n\n    ".join(rules_cuda_components_body),
+        "%{components_mapping}": repr(mapping),
+    }
+    repository_ctx.template("redist.bzl", tpl_label, substitutions = substitutions, executable = False)
+
 def _generate_toolchain_build(repository_ctx, cuda):
     tpl_label = Label(
         "//cuda/private:templates/BUILD.local_toolchain_" +
@@ -127,6 +170,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path):
 template_helper = struct(
     generate_build = _generate_build,
     generate_defs_bzl = _generate_defs_bzl,
+    generate_redist_bzl = _generate_redist_bzl,
     generate_toolchain_build = _generate_toolchain_build,
     generate_toolchain_clang_build = _generate_toolchain_clang_build,
 )
