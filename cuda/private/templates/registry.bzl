@@ -10,7 +10,7 @@ REGISTRY = {
     "curand": ["curand"],
     "cusolver": ["cusolver"],
     "cusparse": ["cusparse"],
-    "npp": ["nppc", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
+    "npp": ["nppc", "nppi", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
     "nvidia_fs": [],
     "nvjitlink": ["nvjitlink", "nvjitlink_static"],
     "nvjpeg": ["nvjpeg", "nvjpeg_static"],
