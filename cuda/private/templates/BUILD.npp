@@ -59,3 +59,19 @@ _NPP_LIBS = {
     )
     for name, hdrs in _NPP_LIBS.items()
 ]
+
+cc_library(
+    name = "nppi",
+    hdrs = ["%{component_name}/include/nppi.h"],
+    deps = [
+        ":nppial",
+        ":nppicc",
+        ":nppidei",
+        ":nppif",
+        ":nppig",
+        ":nppim",
+        ":nppist",
+        ":nppisu",
+        ":nppitc",
+    ],
+)
