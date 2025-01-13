@@ -26,9 +26,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "nccl",
     build_file = "@rules_cuda_examples//nccl:nccl.BUILD",
-    sha256 = "83b299cfc2dfe63887dadf3590b3ac2b8b2fd68ec5515b6878774eda39a697d2",
-    strip_prefix = "nccl-9814c75eea18fc7374cde884592233b6b7dc055b",
-    urls = ["https://github.com/nvidia/nccl/archive/9814c75eea18fc7374cde884592233b6b7dc055b.tar.gz"],
+    sha256 = "5842df6218ccc6bfef65df81e8d865492809cfe11a90ff032e685ddace5aa961",
+    strip_prefix = "nccl-dcdc67c40b1ac368228ba778307965d0ca6ffed6",
+    urls = ["https://github.com/nvidia/nccl/archive/dcdc67c40b1ac368228ba778307965d0ca6ffed6.tar.gz"],
 )
 
 http_archive(
