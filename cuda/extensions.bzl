@@ -2,7 +2,7 @@
 
 load("//cuda/private:repositories.bzl", "local_cuda")
 
-cuda_toolkit = tag_class(attrs = {
+cuda_toolkit_tag = tag_class(attrs = {
     "name": attr.string(doc = "Name for the toolchain repository", default = "local_cuda"),
     "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
 })
@@ -22,24 +22,27 @@ def _find_modules(module_ctx):
 
     return root, our_module
 
+def _module_tag_to_dict(t):
+    return {attr: getattr(t, attr) for attr in dir(t)}
+
 def _init(module_ctx):
     # Toolchain configuration is only allowed in the root module, or in rules_cuda.
     root, rules_cuda = _find_modules(module_ctx)
-    toolchains = root.tags.local_toolchain or rules_cuda.tags.local_toolchain
+    toolkits = root.tags.toolkit or rules_cuda.tags.toolkit
 
     registrations = {}
-    for toolchain in toolchains:
-        if toolchain.name in registrations.keys():
-            if toolchain.toolkit_path == registrations[toolchain.name]:
-                # No problem to register a matching toolchain twice
+    for toolkit in toolkits:
+        if toolkit.name in registrations.keys():
+            if toolkit.toolkit_path == registrations[toolkit.name].toolkit_path:
+                # No problem to register a matching toolkit twice
                 continue
-            fail("Multiple conflicting toolchains declared for name {} ({} and {}".format(toolchain.name, toolchain.toolkit_path, registrations[toolchain.name]))
+            fail("Multiple conflicting toolkits declared for name {} ({} and {}".format(toolkit.name, toolkit.toolkit_path, registrations[toolkit.name].toolkit_path))
         else:
-            registrations[toolchain.name] = toolchain.toolkit_path
-    for name, toolkit_path in registrations.items():
-        local_cuda(name = name, toolkit_path = toolkit_path)
+            registrations[toolkit.name] = toolkit
+    for _, toolkit in registrations.items():
+        local_cuda(**_module_tag_to_dict(toolkit))
 
 toolchain = module_extension(
     implementation = _init,
-    tag_classes = {"local_toolchain": cuda_toolkit},
+    tag_classes = {"toolkit": cuda_toolkit_tag},
 )

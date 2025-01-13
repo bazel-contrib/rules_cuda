@@ -18,13 +18,14 @@ http_archive(
     strip_prefix = "rules_cuda-{git_commit_hash}",
     urls = ["https://github.com/bazel-contrib/rules_cuda/archive/{git_commit_hash}.tar.gz"],
 )
-load("@rules_cuda//cuda:repositories.bzl", "register_detected_cuda_toolchains", "rules_cuda_dependencies")
+load("@rules_cuda//cuda:repositories.bzl", "rules_cuda_dependencies", "rules_cuda_toolchains")
 rules_cuda_dependencies()
-register_detected_cuda_toolchains()
+rules_cuda_toolchains(register_toolchains = True)
 ```
 
-**NOTE**: the use of `register_detected_cuda_toolchains` depends on the environment variable `CUDA_PATH`. You must also
-ensure the host compiler is available. On Windows, this means that you will also need to set the environment variable
+**NOTE**: `rules_cuda_toolchains` implicitly calls to `register_detected_cuda_toolchains`, and the use of
+`register_detected_cuda_toolchains` depends on the environment variable `CUDA_PATH`. You must also ensure the
+host compiler is available. On Windows, this means that you will also need to set the environment variable
 `BAZEL_VC` properly.
 
 [`detect_cuda_toolkit`](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/repositories.bzl#L28-L58)
@@ -47,7 +48,7 @@ archive_override(
 )
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-cuda.local_toolchain(
+cuda.toolkit(
     name = "local_cuda",
     toolkit_path = "",
 )
