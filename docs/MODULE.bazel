@@ -17,4 +17,8 @@ cuda.local_toolchain(
 )
 use_repo(cuda, "local_cuda")
 
-bazel_dep(name = "stardoc", version = "0.6.2")
+bazel_dep(
+    name = "stardoc",
+    version = "0.7.0",
+    repo_name = "io_bazel_stardoc",
+)
