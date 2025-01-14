@@ -1,0 +1,2838 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../providers_docs/">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>Rule Authoring - rules_cuda: Starlark implementation of bazel rules for CUDA</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#actionscompile" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="rules_cuda: Starlark implementation of bazel rules for CUDA" class="md-header__button md-logo" aria-label="rules_cuda: Starlark implementation of bazel rules for CUDA" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            rules_cuda: Starlark implementation of bazel rules for CUDA
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Rule Authoring
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/bazel-contrib/rules_cuda" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../user/user_docs/" class="md-tabs__link">
+          
+  
+  User
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../providers_docs/" class="md-tabs__link">
+          
+  
+  Developer
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="rules_cuda: Starlark implementation of bazel rules for CUDA" class="md-nav__button md-logo" aria-label="rules_cuda: Starlark implementation of bazel rules for CUDA" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    rules_cuda: Starlark implementation of bazel rules for CUDA
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/bazel-contrib/rules_cuda" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    User
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            User
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/user_docs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Using the rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/toolchain_config_docs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configure the toolchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Developer
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../providers_docs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Providers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Rule Authoring
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Rule Authoring
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#actionscompile" class="md-nav__link">
+    <span class="md-ellipsis">
+      actions.compile
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actionsdevice_link" class="md-nav__link">
+    <span class="md-ellipsis">
+      actions.device_link
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperaction_is_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.action_is_enabled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helpercollect_selectables_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.collect_selectables_info
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperconfigure_features" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.configure_features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_artifact_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_artifact_name
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_command_line" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_command_line
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_default_features_and_action_configs" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_default_features_and_action_configs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_enabled_feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_enabled_feature
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_environment_variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_environment_variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_tool_for_action" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_tool_for_action
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperis_configured" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.is_configured
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperis_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.is_enabled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperaction_is_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.action_is_enabled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercheck_must_enforce_rdc" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.check_must_enforce_rdc
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercheck_srcs_extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.check_srcs_extensions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperconfigure_features" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.configure_features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_common" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_common
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_common_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_common_info
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_compile_variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_compile_variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_cuda_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_cuda_info
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_device_link_variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_device_link_variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_arch_specs" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_arch_specs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_artifact_category_from_action" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_artifact_category_from_action
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_artifact_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_artifact_name
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_basename_without_ext" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_basename_without_ext
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_command_line" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_command_line
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_environment_variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_environment_variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_tool_for_action" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_tool_for_action
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperis_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.is_enabled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositoriesconfig_clang" class="md-nav__link">
+    <span class="md-ellipsis">
+      repositories.config_clang
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositoriesconfig_cuda_toolkit_and_nvcc" class="md-nav__link">
+    <span class="md-ellipsis">
+      repositories.config_cuda_toolkit_and_nvcc
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositoriesdetect_clang" class="md-nav__link">
+    <span class="md-ellipsis">
+      repositories.detect_clang
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositoriesdetect_cuda_toolkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      repositories.detect_cuda_toolkit
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolchainfind_cuda_toolchain" class="md-nav__link">
+    <span class="md-ellipsis">
+      toolchain.find_cuda_toolchain
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolchainfind_cuda_toolkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      toolchain.find_cuda_toolkit
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolchainuse_cpp_toolchain" class="md-nav__link">
+    <span class="md-ellipsis">
+      toolchain.use_cpp_toolchain
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolchainuse_cuda_toolchain" class="md-nav__link">
+    <span class="md-ellipsis">
+      toolchain.use_cuda_toolchain
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#actionscompile" class="md-nav__link">
+    <span class="md-ellipsis">
+      actions.compile
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#actionsdevice_link" class="md-nav__link">
+    <span class="md-ellipsis">
+      actions.device_link
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperaction_is_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.action_is_enabled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helpercollect_selectables_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.collect_selectables_info
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperconfigure_features" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.configure_features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_artifact_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_artifact_name
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_command_line" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_command_line
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_default_features_and_action_configs" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_default_features_and_action_configs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_enabled_feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_enabled_feature
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_environment_variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_environment_variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperget_tool_for_action" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.get_tool_for_action
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperis_configured" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.is_configured
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config_helperis_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      config_helper.is_enabled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperaction_is_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.action_is_enabled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercheck_must_enforce_rdc" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.check_must_enforce_rdc
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercheck_srcs_extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.check_srcs_extensions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperconfigure_features" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.configure_features
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_common" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_common
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_common_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_common_info
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_compile_variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_compile_variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_cuda_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_cuda_info
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helpercreate_device_link_variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.create_device_link_variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_arch_specs" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_arch_specs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_artifact_category_from_action" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_artifact_category_from_action
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_artifact_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_artifact_name
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_basename_without_ext" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_basename_without_ext
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_command_line" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_command_line
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_environment_variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_environment_variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperget_tool_for_action" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.get_tool_for_action
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_helperis_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      cuda_helper.is_enabled
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositoriesconfig_clang" class="md-nav__link">
+    <span class="md-ellipsis">
+      repositories.config_clang
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositoriesconfig_cuda_toolkit_and_nvcc" class="md-nav__link">
+    <span class="md-ellipsis">
+      repositories.config_cuda_toolkit_and_nvcc
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositoriesdetect_clang" class="md-nav__link">
+    <span class="md-ellipsis">
+      repositories.detect_clang
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositoriesdetect_cuda_toolkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      repositories.detect_cuda_toolkit
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolchainfind_cuda_toolchain" class="md-nav__link">
+    <span class="md-ellipsis">
+      toolchain.find_cuda_toolchain
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolchainfind_cuda_toolkit" class="md-nav__link">
+    <span class="md-ellipsis">
+      toolchain.find_cuda_toolkit
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolchainuse_cpp_toolchain" class="md-nav__link">
+    <span class="md-ellipsis">
+      toolchain.use_cpp_toolchain
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolchainuse_cuda_toolchain" class="md-nav__link">
+    <span class="md-ellipsis">
+      toolchain.use_cuda_toolchain
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Rule Authoring</h1>
+
+<!-- Generated with Stardoc: http://skydoc.bazel.build -->
+
+<p><a id="actions.compile"></a></p>
+<h2 id="actionscompile">actions.compile</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "actions")
+
+actions.compile(<a href="#actions.compile-ctx">ctx</a>, <a href="#actions.compile-cuda_toolchain">cuda_toolchain</a>, <a href="#actions.compile-cc_toolchain">cc_toolchain</a>, <a href="#actions.compile-srcs">srcs</a>, <a href="#actions.compile-common">common</a>, <a href="#actions.compile-pic">pic</a>, <a href="#actions.compile-rdc">rdc</a>, <a href="#actions.compile-_prefix">_prefix</a>)
+</pre></div>
+
+<p>Perform CUDA compilation, return compiled object files.</p>
+<p>Notes:</p>
+<ul>
+<li>If <code>rdc</code> is set to <code>True</code>, then an additional step of device link must be performed.</li>
+<li>The rules should call this action only once in case srcs have non-unique basenames,
+  say <code>foo/kernel.cu</code> and <code>bar/kernel.cu</code>.</li>
+</ul>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="actions.compile-ctx"></a>ctx</td>
+<td style="text-align: left;">A <a href="https://bazel.build/rules/lib/ctx">context object</a>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.compile-cuda_toolchain"></a>cuda_toolchain</td>
+<td style="text-align: left;">A <code>platform_common.ToolchainInfo</code> of a cuda toolchain, Can be obtained with <code>find_cuda_toolchain(ctx)</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.compile-cc_toolchain"></a>cc_toolchain</td>
+<td style="text-align: left;">A <code>CcToolchainInfo</code>. Can be obtained with <code>find_cpp_toolchain(ctx)</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.compile-srcs"></a>srcs</td>
+<td style="text-align: left;">A list of <code>File</code>s to be compiled.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.compile-common"></a>common</td>
+<td style="text-align: left;">A cuda common object. Can be obtained with <code>cuda_helper.create_common(ctx)</code></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.compile-pic"></a>pic</td>
+<td style="text-align: left;">Whether the <code>srcs</code> are compiled for position independent code.</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.compile-rdc"></a>rdc</td>
+<td style="text-align: left;">Whether the <code>srcs</code> are compiled for relocatable device code.</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.compile-_prefix"></a>_prefix</td>
+<td style="text-align: left;">DON'T USE IT! Prefix of the output dir. Exposed for device link to redirect the output.</td>
+<td style="text-align: left;"><code>"_objs"</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>RETURNS</strong></p>
+<p>An compiled object <code>File</code>.</p>
+<p><a id="actions.device_link"></a></p>
+<h2 id="actionsdevice_link">actions.device_link</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "actions")
+
+actions.device_link(<a href="#actions.device_link-ctx">ctx</a>, <a href="#actions.device_link-cuda_toolchain">cuda_toolchain</a>, <a href="#actions.device_link-cc_toolchain">cc_toolchain</a>, <a href="#actions.device_link-objects">objects</a>, <a href="#actions.device_link-common">common</a>, <a href="#actions.device_link-pic">pic</a>, <a href="#actions.device_link-rdc">rdc</a>, <a href="#actions.device_link-dlto">dlto</a>)
+</pre></div>
+
+<p>Perform device link, return a dlink-ed object file.</p>
+<p>Notes:
+    Compilation is carried out during device linking, which involves the embeeding of the fatbin into the resulting object <code>File</code>.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="actions.device_link-ctx"></a>ctx</td>
+<td style="text-align: left;">A <a href="https://bazel.build/rules/lib/ctx">context object</a>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.device_link-cuda_toolchain"></a>cuda_toolchain</td>
+<td style="text-align: left;">A <code>platform_common.ToolchainInfo</code> of a cuda toolchain, Can be obtained with <code>find_cuda_toolchain(ctx)</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.device_link-cc_toolchain"></a>cc_toolchain</td>
+<td style="text-align: left;">A <code>CcToolchainInfo</code>. Can be obtained with <code>find_cpp_toolchain(ctx)</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.device_link-objects"></a>objects</td>
+<td style="text-align: left;">A <code>depset</code> of <code>File</code>s to be device linked.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.device_link-common"></a>common</td>
+<td style="text-align: left;">A cuda common object. Can be obtained with <code>cuda_helper.create_common(ctx)</code></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.device_link-pic"></a>pic</td>
+<td style="text-align: left;">Whether the <code>objects</code> are compiled for position independent code.</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.device_link-rdc"></a>rdc</td>
+<td style="text-align: left;">Whether the <code>objects</code> are device linked for relocatable device code.</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="actions.device_link-dlto"></a>dlto</td>
+<td style="text-align: left;">Whether the device link time optimization is enabled.</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>RETURNS</strong></p>
+<p>An deviced linked object <code>File</code>.</p>
+<p><a id="config_helper.action_is_enabled"></a></p>
+<h2 id="config_helperaction_is_enabled">config_helper.action_is_enabled</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.action_is_enabled(<a href="#config_helper.action_is_enabled-info">info</a>, <a href="#config_helper.action_is_enabled-name">name</a>)
+</pre></div>
+
+<p>Returns whether a selectable is enable or not.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.action_is_enabled-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.action_is_enabled-name"></a>name</td>
+<td style="text-align: left;">Name of the selectable, that is, an <code>action_config</code> or a <code>feature</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.collect_selectables_info"></a></p>
+<h2 id="config_helpercollect_selectables_info">config_helper.collect_selectables_info</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.collect_selectables_info(<a href="#config_helper.collect_selectables_info-selectables">selectables</a>)
+</pre></div>
+
+<p>Constructor of <code>_SelectablesInfo</code>.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.collect_selectables_info-selectables"></a>selectables</td>
+<td style="text-align: left;">List of <code>action_config</code>s and/or <code>feature</code>s.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.configure_features"></a></p>
+<h2 id="config_helperconfigure_features">config_helper.configure_features</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.configure_features(<a href="#config_helper.configure_features-selectables">selectables</a>, <a href="#config_helper.configure_features-selectables_info">selectables_info</a>, <a href="#config_helper.configure_features-requested_features">requested_features</a>,
+                                 <a href="#config_helper.configure_features-unsupported_features">unsupported_features</a>, <a href="#config_helper.configure_features-_debug">_debug</a>)
+</pre></div>
+
+<p>Constructor of <code>_FeatureConfigurationInfo</code>.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.configure_features-selectables"></a>selectables</td>
+<td style="text-align: left;">List of <code>action_config</code>s and/or <code>feature</code>s.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.configure_features-selectables_info"></a>selectables_info</td>
+<td style="text-align: left;">The <code>_SelectablesInfo</code> returned from <code>_collect_selectables_info</code></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.configure_features-requested_features"></a>requested_features</td>
+<td style="text-align: left;">List of names of <code>action_config</code>s and/or <code>feature</code>s to be enabled.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.configure_features-unsupported_features"></a>unsupported_features</td>
+<td style="text-align: left;">List of names of <code>action_config</code>s and/or <code>feature</code>s to be disabled.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.configure_features-_debug"></a>_debug</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.get_artifact_name"></a></p>
+<h2 id="config_helperget_artifact_name">config_helper.get_artifact_name</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.get_artifact_name(<a href="#config_helper.get_artifact_name-artifact_name_patterns">artifact_name_patterns</a>, <a href="#config_helper.get_artifact_name-category_name">category_name</a>, <a href="#config_helper.get_artifact_name-basename">basename</a>)
+</pre></div>
+
+<p>Returns artifact_name in form of <code>prefix + basename + extension</code>.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_artifact_name-artifact_name_patterns"></a>artifact_name_patterns</td>
+<td style="text-align: left;">A list of <code>artifact_name_pattern</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_artifact_name-category_name"></a>category_name</td>
+<td style="text-align: left;">A string match the <code>category_name</code> field in <code>artifact_name_pattern</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_artifact_name-basename"></a>basename</td>
+<td style="text-align: left;">A string.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.get_command_line"></a></p>
+<h2 id="config_helperget_command_line">config_helper.get_command_line</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.get_command_line(<a href="#config_helper.get_command_line-info">info</a>, <a href="#config_helper.get_command_line-action">action</a>, <a href="#config_helper.get_command_line-value">value</a>)
+</pre></div>
+
+<p>Returns flattened command line flags for given action, using given variables for expansion.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_command_line-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_command_line-action"></a>action</td>
+<td style="text-align: left;">Name of the action.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_command_line-value"></a>value</td>
+<td style="text-align: left;">Build variables to be used for template expansion.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.get_default_features_and_action_configs"></a></p>
+<h2 id="config_helperget_default_features_and_action_configs">config_helper.get_default_features_and_action_configs</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.get_default_features_and_action_configs(<a href="#config_helper.get_default_features_and_action_configs-info">info</a>)
+</pre></div>
+
+<p>Get all default enabled features and action configs.</p>
+<p>Notes:
+    For testing purpose. Default enabled maybe disabled after configuration.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_default_features_and_action_configs-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.get_enabled_feature"></a></p>
+<h2 id="config_helperget_enabled_feature">config_helper.get_enabled_feature</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.get_enabled_feature(<a href="#config_helper.get_enabled_feature-info">info</a>)
+</pre></div>
+
+<p>Get all enabled features.</p>
+<p>Notes:
+    For testing purpose.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_enabled_feature-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.get_environment_variables"></a></p>
+<h2 id="config_helperget_environment_variables">config_helper.get_environment_variables</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.get_environment_variables(<a href="#config_helper.get_environment_variables-info">info</a>, <a href="#config_helper.get_environment_variables-action">action</a>, <a href="#config_helper.get_environment_variables-value">value</a>)
+</pre></div>
+
+<p>Returns environment variables to be set for the given action.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_environment_variables-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_environment_variables-action"></a>action</td>
+<td style="text-align: left;">Name of the action.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_environment_variables-value"></a>value</td>
+<td style="text-align: left;">Build variables to be used for template expansion.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.get_tool_for_action"></a></p>
+<h2 id="config_helperget_tool_for_action">config_helper.get_tool_for_action</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.get_tool_for_action(<a href="#config_helper.get_tool_for_action-info">info</a>, <a href="#config_helper.get_tool_for_action-action_name">action_name</a>)
+</pre></div>
+
+<p>Returns tool path for given action.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_tool_for_action-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.get_tool_for_action-action_name"></a>action_name</td>
+<td style="text-align: left;">Name of the action.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.is_configured"></a></p>
+<h2 id="config_helperis_configured">config_helper.is_configured</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.is_configured(<a href="#config_helper.is_configured-selectables_info">selectables_info</a>, <a href="#config_helper.is_configured-name">name</a>)
+</pre></div>
+
+<p>Whether an action or a feature exists</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.is_configured-selectables_info"></a>selectables_info</td>
+<td style="text-align: left;">The <code>_SelectablesInfo</code> returned from <code>_collect_selectables_info</code></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.is_configured-name"></a>name</td>
+<td style="text-align: left;">Name of the selectable, that is, an <code>action_config</code> or a <code>feature</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="config_helper.is_enabled"></a></p>
+<h2 id="config_helperis_enabled">config_helper.is_enabled</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "config_helper")
+
+config_helper.is_enabled(<a href="#config_helper.is_enabled-info">info</a>, <a href="#config_helper.is_enabled-name">name</a>)
+</pre></div>
+
+<p>Returns whether a selectable is enable or not.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="config_helper.is_enabled-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="config_helper.is_enabled-name"></a>name</td>
+<td style="text-align: left;">Name of the selectable, that is, an <code>action_config</code> or a <code>feature</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.action_is_enabled"></a></p>
+<h2 id="cuda_helperaction_is_enabled">cuda_helper.action_is_enabled</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.action_is_enabled(<a href="#cuda_helper.action_is_enabled-info">info</a>, <a href="#cuda_helper.action_is_enabled-name">name</a>)
+</pre></div>
+
+<p>Returns whether a selectable is enable or not.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.action_is_enabled-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.action_is_enabled-name"></a>name</td>
+<td style="text-align: left;">Name of the selectable, that is, an <code>action_config</code> or a <code>feature</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.check_must_enforce_rdc"></a></p>
+<h2 id="cuda_helpercheck_must_enforce_rdc">cuda_helper.check_must_enforce_rdc</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.check_must_enforce_rdc(<a href="#cuda_helper.check_must_enforce_rdc-arch_specs">arch_specs</a>, <a href="#cuda_helper.check_must_enforce_rdc-cuda_archs_info">cuda_archs_info</a>)
+</pre></div>
+
+<p>Force enable rdc if dlto is enabled.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.check_must_enforce_rdc-arch_specs"></a>arch_specs</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.check_must_enforce_rdc-cuda_archs_info"></a>cuda_archs_info</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.check_srcs_extensions"></a></p>
+<h2 id="cuda_helpercheck_srcs_extensions">cuda_helper.check_srcs_extensions</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.check_srcs_extensions(<a href="#cuda_helper.check_srcs_extensions-ctx">ctx</a>, <a href="#cuda_helper.check_srcs_extensions-allowed_src_files">allowed_src_files</a>, <a href="#cuda_helper.check_srcs_extensions-rule_name">rule_name</a>)
+</pre></div>
+
+<p>Ensure ctx.attr.srcs is valid.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.check_srcs_extensions-ctx"></a>ctx</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.check_srcs_extensions-allowed_src_files"></a>allowed_src_files</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.check_srcs_extensions-rule_name"></a>rule_name</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.configure_features"></a></p>
+<h2 id="cuda_helperconfigure_features">cuda_helper.configure_features</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.configure_features(<a href="#cuda_helper.configure_features-ctx">ctx</a>, <a href="#cuda_helper.configure_features-cuda_toolchain">cuda_toolchain</a>, <a href="#cuda_helper.configure_features-requested_features">requested_features</a>, <a href="#cuda_helper.configure_features-unsupported_features">unsupported_features</a>,
+                               <a href="#cuda_helper.configure_features-_debug">_debug</a>)
+</pre></div>
+
+<p>Creates a feature_configuration instance.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.configure_features-ctx"></a>ctx</td>
+<td style="text-align: left;">The rule context.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.configure_features-cuda_toolchain"></a>cuda_toolchain</td>
+<td style="text-align: left;">cuda_toolchain for which we configure features.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.configure_features-requested_features"></a>requested_features</td>
+<td style="text-align: left;">List of features to be enabled.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.configure_features-unsupported_features"></a>unsupported_features</td>
+<td style="text-align: left;">List of features that are unsupported by the current rule.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.configure_features-_debug"></a>_debug</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.create_common"></a></p>
+<h2 id="cuda_helpercreate_common">cuda_helper.create_common</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.create_common(<a href="#cuda_helper.create_common-ctx">ctx</a>)
+</pre></div>
+
+<p>Helper to gather and process various information from <code>ctx</code> object to ease the parameter passing for internal macros.</p>
+<p>See <code>cuda_helper.create_common_info</code> what information a common object encapsulates.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common-ctx"></a>ctx</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.create_common_info"></a></p>
+<h2 id="cuda_helpercreate_common_info">cuda_helper.create_common_info</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.create_common_info(<a href="#cuda_helper.create_common_info-cuda_archs_info">cuda_archs_info</a>, <a href="#cuda_helper.create_common_info-includes">includes</a>, <a href="#cuda_helper.create_common_info-quote_includes">quote_includes</a>, <a href="#cuda_helper.create_common_info-system_includes">system_includes</a>, <a href="#cuda_helper.create_common_info-headers">headers</a>,
+                               <a href="#cuda_helper.create_common_info-transitive_headers">transitive_headers</a>, <a href="#cuda_helper.create_common_info-defines">defines</a>, <a href="#cuda_helper.create_common_info-local_defines">local_defines</a>, <a href="#cuda_helper.create_common_info-compile_flags">compile_flags</a>, <a href="#cuda_helper.create_common_info-link_flags">link_flags</a>,
+                               <a href="#cuda_helper.create_common_info-host_defines">host_defines</a>, <a href="#cuda_helper.create_common_info-host_local_defines">host_local_defines</a>, <a href="#cuda_helper.create_common_info-host_compile_flags">host_compile_flags</a>, <a href="#cuda_helper.create_common_info-host_link_flags">host_link_flags</a>,
+                               <a href="#cuda_helper.create_common_info-ptxas_flags">ptxas_flags</a>, <a href="#cuda_helper.create_common_info-transitive_cc_info">transitive_cc_info</a>, <a href="#cuda_helper.create_common_info-transitive_linking_contexts">transitive_linking_contexts</a>)
+</pre></div>
+
+<p>Constructor of the common object.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-cuda_archs_info"></a>cuda_archs_info</td>
+<td style="text-align: left;"><code>CudaArchsInfo</code>.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-includes"></a>includes</td>
+<td style="text-align: left;">include paths. Can be used with <code>#include &lt;...&gt;</code> and <code>#include "..."</code>.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-quote_includes"></a>quote_includes</td>
+<td style="text-align: left;">include paths. Can be used with <code>#include "..."</code>.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-system_includes"></a>system_includes</td>
+<td style="text-align: left;">include paths. Can be used with <code>#include &lt;...&gt;</code>.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-headers"></a>headers</td>
+<td style="text-align: left;">headers directly relate with this target.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-transitive_headers"></a>transitive_headers</td>
+<td style="text-align: left;">headers transitively gather from <code>deps</code>.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-defines"></a>defines</td>
+<td style="text-align: left;">public <code>#define</code>s. Pass to compiler driver directly. Will be seen by downstream targets.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-local_defines"></a>local_defines</td>
+<td style="text-align: left;">private <code>#define</code>s. Pass to compiler driver directly. Will not be seen by downstream targets.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-compile_flags"></a>compile_flags</td>
+<td style="text-align: left;">flags pass to compiler driver directly.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-link_flags"></a>link_flags</td>
+<td style="text-align: left;">flags pass to device linker.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-host_defines"></a>host_defines</td>
+<td style="text-align: left;">public <code>#define</code>s. Pass to host compiler. Will be seen by downstream targets.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-host_local_defines"></a>host_local_defines</td>
+<td style="text-align: left;">private <code>#define</code>s. Pass to host compiler. Will not be seen by downstream targets.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-host_compile_flags"></a>host_compile_flags</td>
+<td style="text-align: left;">flags pass to host compiler.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-host_link_flags"></a>host_link_flags</td>
+<td style="text-align: left;">flags pass to host linker.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-ptxas_flags"></a>ptxas_flags</td>
+<td style="text-align: left;">flags pass to <code>ptxas</code>.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-transitive_cc_info"></a>transitive_cc_info</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_common_info-transitive_linking_contexts"></a>transitive_linking_contexts</td>
+<td style="text-align: left;"><code>CcInfo.linking_context</code> extracted from <code>deps</code></td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.create_compile_variables"></a></p>
+<h2 id="cuda_helpercreate_compile_variables">cuda_helper.create_compile_variables</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.create_compile_variables(<a href="#cuda_helper.create_compile_variables-cuda_toolchain">cuda_toolchain</a>, <a href="#cuda_helper.create_compile_variables-feature_configuration">feature_configuration</a>, <a href="#cuda_helper.create_compile_variables-cuda_archs_info">cuda_archs_info</a>,
+                                     <a href="#cuda_helper.create_compile_variables-source_file">source_file</a>, <a href="#cuda_helper.create_compile_variables-output_file">output_file</a>, <a href="#cuda_helper.create_compile_variables-host_compiler">host_compiler</a>, <a href="#cuda_helper.create_compile_variables-compile_flags">compile_flags</a>,
+                                     <a href="#cuda_helper.create_compile_variables-host_compile_flags">host_compile_flags</a>, <a href="#cuda_helper.create_compile_variables-include_paths">include_paths</a>, <a href="#cuda_helper.create_compile_variables-quote_include_paths">quote_include_paths</a>,
+                                     <a href="#cuda_helper.create_compile_variables-system_include_paths">system_include_paths</a>, <a href="#cuda_helper.create_compile_variables-defines">defines</a>, <a href="#cuda_helper.create_compile_variables-host_defines">host_defines</a>, <a href="#cuda_helper.create_compile_variables-ptxas_flags">ptxas_flags</a>,
+                                     <a href="#cuda_helper.create_compile_variables-use_pic">use_pic</a>, <a href="#cuda_helper.create_compile_variables-use_rdc">use_rdc</a>)
+</pre></div>
+
+<p>Returns variables used for <code>compile</code> actions.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-cuda_toolchain"></a>cuda_toolchain</td>
+<td style="text-align: left;">cuda_toolchain for which we are creating build variables.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-feature_configuration"></a>feature_configuration</td>
+<td style="text-align: left;">Feature configuration to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-cuda_archs_info"></a>cuda_archs_info</td>
+<td style="text-align: left;"><code>CudaArchsInfo</code></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-source_file"></a>source_file</td>
+<td style="text-align: left;">source file for the compilation.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-output_file"></a>output_file</td>
+<td style="text-align: left;">output file of the compilation.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-host_compiler"></a>host_compiler</td>
+<td style="text-align: left;">host compiler path.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-compile_flags"></a>compile_flags</td>
+<td style="text-align: left;">flags pass to compiler driver directly.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-host_compile_flags"></a>host_compile_flags</td>
+<td style="text-align: left;">flags pass to host compiler.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-include_paths"></a>include_paths</td>
+<td style="text-align: left;">include paths. Can be used with <code>#include &lt;...&gt;</code> and <code>#include "..."</code>.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-quote_include_paths"></a>quote_include_paths</td>
+<td style="text-align: left;">include paths. Can be used with <code>#include "..."</code>.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-system_include_paths"></a>system_include_paths</td>
+<td style="text-align: left;">include paths. Can be used with <code>#include &lt;...&gt;</code>.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-defines"></a>defines</td>
+<td style="text-align: left;"><code>#define</code>s. Pass to compiler driver directly.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-host_defines"></a>host_defines</td>
+<td style="text-align: left;"><code>#define</code>s. Pass to host compiler.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-ptxas_flags"></a>ptxas_flags</td>
+<td style="text-align: left;">flags pass to <code>ptxas</code>.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-use_pic"></a>use_pic</td>
+<td style="text-align: left;">whether to compile for position independent code.</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_compile_variables-use_rdc"></a>use_rdc</td>
+<td style="text-align: left;">whether to compile for relocatable device code.</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.create_cuda_info"></a></p>
+<h2 id="cuda_helpercreate_cuda_info">cuda_helper.create_cuda_info</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.create_cuda_info(<a href="#cuda_helper.create_cuda_info-defines">defines</a>, <a href="#cuda_helper.create_cuda_info-objects">objects</a>, <a href="#cuda_helper.create_cuda_info-rdc_objects">rdc_objects</a>, <a href="#cuda_helper.create_cuda_info-pic_objects">pic_objects</a>, <a href="#cuda_helper.create_cuda_info-rdc_pic_objects">rdc_pic_objects</a>,
+                             <a href="#cuda_helper.create_cuda_info-archive_objects">archive_objects</a>, <a href="#cuda_helper.create_cuda_info-archive_rdc_objects">archive_rdc_objects</a>, <a href="#cuda_helper.create_cuda_info-archive_pic_objects">archive_pic_objects</a>,
+                             <a href="#cuda_helper.create_cuda_info-archive_rdc_pic_objects">archive_rdc_pic_objects</a>, <a href="#cuda_helper.create_cuda_info-dlink_rdc_objects">dlink_rdc_objects</a>, <a href="#cuda_helper.create_cuda_info-dlink_rdc_pic_objects">dlink_rdc_pic_objects</a>)
+</pre></div>
+
+<p>Constructor for <code>CudaInfo</code>. See the providers documentation for detail.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-defines"></a>defines</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-objects"></a>objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-rdc_objects"></a>rdc_objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-pic_objects"></a>pic_objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-rdc_pic_objects"></a>rdc_pic_objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-archive_objects"></a>archive_objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-archive_rdc_objects"></a>archive_rdc_objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-archive_pic_objects"></a>archive_pic_objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-archive_rdc_pic_objects"></a>archive_rdc_pic_objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-dlink_rdc_objects"></a>dlink_rdc_objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_cuda_info-dlink_rdc_pic_objects"></a>dlink_rdc_pic_objects</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.create_device_link_variables"></a></p>
+<h2 id="cuda_helpercreate_device_link_variables">cuda_helper.create_device_link_variables</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.create_device_link_variables(<a href="#cuda_helper.create_device_link_variables-cuda_toolchain">cuda_toolchain</a>, <a href="#cuda_helper.create_device_link_variables-feature_configuration">feature_configuration</a>, <a href="#cuda_helper.create_device_link_variables-cuda_archs_info">cuda_archs_info</a>,
+                                         <a href="#cuda_helper.create_device_link_variables-output_file">output_file</a>, <a href="#cuda_helper.create_device_link_variables-host_compiler">host_compiler</a>, <a href="#cuda_helper.create_device_link_variables-host_compile_flags">host_compile_flags</a>,
+                                         <a href="#cuda_helper.create_device_link_variables-user_link_flags">user_link_flags</a>, <a href="#cuda_helper.create_device_link_variables-use_pic">use_pic</a>)
+</pre></div>
+
+<p>Returns variables used for <code>device_link</code> actions.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_device_link_variables-cuda_toolchain"></a>cuda_toolchain</td>
+<td style="text-align: left;">cuda_toolchain for which we are creating build variables.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_device_link_variables-feature_configuration"></a>feature_configuration</td>
+<td style="text-align: left;">Feature configuration to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_device_link_variables-cuda_archs_info"></a>cuda_archs_info</td>
+<td style="text-align: left;"><code>CudaArchsInfo</code></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_device_link_variables-output_file"></a>output_file</td>
+<td style="text-align: left;">output file of the device linking.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_device_link_variables-host_compiler"></a>host_compiler</td>
+<td style="text-align: left;">host compiler path.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_device_link_variables-host_compile_flags"></a>host_compile_flags</td>
+<td style="text-align: left;">flags pass to host compiler.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_device_link_variables-user_link_flags"></a>user_link_flags</td>
+<td style="text-align: left;">flags for device linking.</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.create_device_link_variables-use_pic"></a>use_pic</td>
+<td style="text-align: left;">whether to compile for position independent code.</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.get_arch_specs"></a></p>
+<h2 id="cuda_helperget_arch_specs">cuda_helper.get_arch_specs</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.get_arch_specs(<a href="#cuda_helper.get_arch_specs-specs_str">specs_str</a>)
+</pre></div>
+
+<p>Convert string into a list of ArchSpecInfo.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_arch_specs-specs_str"></a>specs_str</td>
+<td style="text-align: left;">a string to be parsed, e.g., "compute_70:sm_70;compute_80:sm_80,sm_86".</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><strong>RETURNS</strong></p>
+<p>A list of <code>ArchSpecInfo</code>s</p>
+<p><a id="cuda_helper.get_artifact_category_from_action"></a></p>
+<h2 id="cuda_helperget_artifact_category_from_action">cuda_helper.get_artifact_category_from_action</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.get_artifact_category_from_action(<a href="#cuda_helper.get_artifact_category_from_action-action_name">action_name</a>, <a href="#cuda_helper.get_artifact_category_from_action-use_pic">use_pic</a>, <a href="#cuda_helper.get_artifact_category_from_action-use_rdc">use_rdc</a>)
+</pre></div>
+
+<p>Query the canonical artifact category name.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_artifact_category_from_action-action_name"></a>action_name</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_artifact_category_from_action-use_pic"></a>use_pic</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_artifact_category_from_action-use_rdc"></a>use_rdc</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.get_artifact_name"></a></p>
+<h2 id="cuda_helperget_artifact_name">cuda_helper.get_artifact_name</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.get_artifact_name(<a href="#cuda_helper.get_artifact_name-cuda_toolchain">cuda_toolchain</a>, <a href="#cuda_helper.get_artifact_name-category_name">category_name</a>, <a href="#cuda_helper.get_artifact_name-output_basename">output_basename</a>)
+</pre></div>
+
+<p>Create the artifact name that follow the toolchain configuration.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_artifact_name-cuda_toolchain"></a>cuda_toolchain</td>
+<td style="text-align: left;">CUDA toolchain returned by <code>find_cuda_toolchain</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_artifact_name-category_name"></a>category_name</td>
+<td style="text-align: left;">The canonical artifact category name return by <code>cuda_helper.get_artifact_category_from_action</code></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_artifact_name-output_basename"></a>output_basename</td>
+<td style="text-align: left;">The basename.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.get_basename_without_ext"></a></p>
+<h2 id="cuda_helperget_basename_without_ext">cuda_helper.get_basename_without_ext</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.get_basename_without_ext(<a href="#cuda_helper.get_basename_without_ext-basename">basename</a>, <a href="#cuda_helper.get_basename_without_ext-allow_exts">allow_exts</a>, <a href="#cuda_helper.get_basename_without_ext-fail_if_not_match">fail_if_not_match</a>)
+</pre></div>
+
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_basename_without_ext-basename"></a>basename</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_basename_without_ext-allow_exts"></a>allow_exts</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_basename_without_ext-fail_if_not_match"></a>fail_if_not_match</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>True</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.get_command_line"></a></p>
+<h2 id="cuda_helperget_command_line">cuda_helper.get_command_line</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.get_command_line(<a href="#cuda_helper.get_command_line-info">info</a>, <a href="#cuda_helper.get_command_line-action">action</a>, <a href="#cuda_helper.get_command_line-value">value</a>)
+</pre></div>
+
+<p>Returns flattened command line flags for given action, using given variables for expansion.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_command_line-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_command_line-action"></a>action</td>
+<td style="text-align: left;">Name of the action.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_command_line-value"></a>value</td>
+<td style="text-align: left;">Build variables to be used for template expansion.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.get_environment_variables"></a></p>
+<h2 id="cuda_helperget_environment_variables">cuda_helper.get_environment_variables</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.get_environment_variables(<a href="#cuda_helper.get_environment_variables-info">info</a>, <a href="#cuda_helper.get_environment_variables-action">action</a>, <a href="#cuda_helper.get_environment_variables-value">value</a>)
+</pre></div>
+
+<p>Returns environment variables to be set for the given action.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_environment_variables-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_environment_variables-action"></a>action</td>
+<td style="text-align: left;">Name of the action.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_environment_variables-value"></a>value</td>
+<td style="text-align: left;">Build variables to be used for template expansion.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.get_tool_for_action"></a></p>
+<h2 id="cuda_helperget_tool_for_action">cuda_helper.get_tool_for_action</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.get_tool_for_action(<a href="#cuda_helper.get_tool_for_action-info">info</a>, <a href="#cuda_helper.get_tool_for_action-action_name">action_name</a>)
+</pre></div>
+
+<p>Returns tool path for given action.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_tool_for_action-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.get_tool_for_action-action_name"></a>action_name</td>
+<td style="text-align: left;">Name of the action.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_helper.is_enabled"></a></p>
+<h2 id="cuda_helperis_enabled">cuda_helper.is_enabled</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "cuda_helper")
+
+cuda_helper.is_enabled(<a href="#cuda_helper.is_enabled-info">info</a>, <a href="#cuda_helper.is_enabled-name">name</a>)
+</pre></div>
+
+<p>Returns whether a selectable is enable or not.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.is_enabled-info"></a>info</td>
+<td style="text-align: left;">A <code>_FeatureConfigurationInfo</code>, returned by <code>configure_features</code>, to be queried.</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_helper.is_enabled-name"></a>name</td>
+<td style="text-align: left;">Name of the selectable, that is, an <code>action_config</code> or a <code>feature</code>.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="repositories.config_clang"></a></p>
+<h2 id="repositoriesconfig_clang">repositories.config_clang</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "repositories")
+
+repositories.config_clang(<a href="#repositories.config_clang-repository_ctx">repository_ctx</a>, <a href="#repositories.config_clang-cuda">cuda</a>, <a href="#repositories.config_clang-clang_path">clang_path</a>)
+</pre></div>
+
+<p>Generate <code>@local_cuda//toolchain/clang/BUILD</code></p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="repositories.config_clang-repository_ctx"></a>repository_ctx</td>
+<td style="text-align: left;">repository_ctx</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="repositories.config_clang-cuda"></a>cuda</td>
+<td style="text-align: left;">The struct returned from <code>detect_cuda_toolkit</code></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="repositories.config_clang-clang_path"></a>clang_path</td>
+<td style="text-align: left;">Path to clang executable returned from <code>detect_clang</code></td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="repositories.config_cuda_toolkit_and_nvcc"></a></p>
+<h2 id="repositoriesconfig_cuda_toolkit_and_nvcc">repositories.config_cuda_toolkit_and_nvcc</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "repositories")
+
+repositories.config_cuda_toolkit_and_nvcc(<a href="#repositories.config_cuda_toolkit_and_nvcc-repository_ctx">repository_ctx</a>, <a href="#repositories.config_cuda_toolkit_and_nvcc-cuda">cuda</a>)
+</pre></div>
+
+<p>Generate <code>@local_cuda//BUILD</code> and <code>@local_cuda//defs.bzl</code> and <code>@local_cuda//toolchain/BUILD</code></p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="repositories.config_cuda_toolkit_and_nvcc-repository_ctx"></a>repository_ctx</td>
+<td style="text-align: left;">repository_ctx</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="repositories.config_cuda_toolkit_and_nvcc-cuda"></a>cuda</td>
+<td style="text-align: left;">The struct returned from detect_cuda_toolkit</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="repositories.detect_clang"></a></p>
+<h2 id="repositoriesdetect_clang">repositories.detect_clang</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "repositories")
+
+repositories.detect_clang(<a href="#repositories.detect_clang-repository_ctx">repository_ctx</a>)
+</pre></div>
+
+<p>Detect local clang installation.</p>
+<p>The path to clang is determined by:</p>
+<ul>
+<li>taken from <code>CUDA_CLANG_PATH</code> environment variable or</li>
+<li>taken from <code>BAZEL_LLVM</code> environment variable as <code>$BAZEL_LLVM/bin/clang</code> or</li>
+<li>determined through <code>which clang</code> or</li>
+<li>treated as being not detected and not configured</li>
+</ul>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="repositories.detect_clang-repository_ctx"></a>repository_ctx</td>
+<td style="text-align: left;">repository_ctx</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><strong>RETURNS</strong></p>
+<p>clang_path (str | None): Optionally return a string of path to clang executable if detected.</p>
+<p><a id="repositories.detect_cuda_toolkit"></a></p>
+<h2 id="repositoriesdetect_cuda_toolkit">repositories.detect_cuda_toolkit</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "repositories")
+
+repositories.detect_cuda_toolkit(<a href="#repositories.detect_cuda_toolkit-repository_ctx">repository_ctx</a>)
+</pre></div>
+
+<p>Detect CUDA Toolkit.</p>
+<p>The path to CUDA Toolkit is determined as:
+  - the value of <code>toolkit_path</code> passed to local_cuda as an attribute
+  - taken from <code>CUDA_PATH</code> environment variable or
+  - determined through 'which ptxas' or
+  - defaults to '/usr/local/cuda'</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="repositories.detect_cuda_toolkit-repository_ctx"></a>repository_ctx</td>
+<td style="text-align: left;">repository_ctx</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><strong>RETURNS</strong></p>
+<p>A struct contains the information of CUDA Toolkit.</p>
+<p><a id="toolchain.find_cuda_toolchain"></a></p>
+<h2 id="toolchainfind_cuda_toolchain">toolchain.find_cuda_toolchain</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "toolchain")
+
+toolchain.find_cuda_toolchain(<a href="#toolchain.find_cuda_toolchain-ctx">ctx</a>)
+</pre></div>
+
+<p>Helper to get the cuda toolchain from context object.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="toolchain.find_cuda_toolchain-ctx"></a>ctx</td>
+<td style="text-align: left;">The rule context for which to find a toolchain.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><strong>RETURNS</strong></p>
+<p>A <code>platform_common.ToolchainInfo</code> that wraps around the necessary information of a cuda toolchain.</p>
+<p><a id="toolchain.find_cuda_toolkit"></a></p>
+<h2 id="toolchainfind_cuda_toolkit">toolchain.find_cuda_toolkit</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "toolchain")
+
+toolchain.find_cuda_toolkit(<a href="#toolchain.find_cuda_toolkit-ctx">ctx</a>)
+</pre></div>
+
+<p>Finds the CUDA toolchain.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="toolchain.find_cuda_toolkit-ctx"></a>ctx</td>
+<td style="text-align: left;">The rule context for which to find a toolchain.</td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><strong>RETURNS</strong></p>
+<p>A CudaToolkitInfo.</p>
+<p><a id="toolchain.use_cpp_toolchain"></a></p>
+<h2 id="toolchainuse_cpp_toolchain">toolchain.use_cpp_toolchain</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "toolchain")
+
+toolchain.use_cpp_toolchain(<a href="#toolchain.use_cpp_toolchain-mandatory">mandatory</a>)
+</pre></div>
+
+<p>Helper to depend on the C++ toolchain.</p>
+<p>Notes:
+    Copied from <a href="https://github.com/bazelbuild/bazel/blob/ac48e65f70/tools/cpp/toolchain_utils.bzl#L53-L72">toolchain_utils.bzl</a></p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="toolchain.use_cpp_toolchain-mandatory"></a>mandatory</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;"><code>True</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="toolchain.use_cuda_toolchain"></a></p>
+<h2 id="toolchainuse_cuda_toolchain">toolchain.use_cuda_toolchain</h2>
+<div class="stardoc-pre"><pre>
+load("@rules_cuda_docs//:developer_docs.bzl", "toolchain")
+
+toolchain.use_cuda_toolchain()
+</pre></div>
+
+<p>Helper to depend on the CUDA toolchain.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+    
+  </body>
+</html>
