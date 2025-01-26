@@ -14,7 +14,7 @@ def cuda_test(name, **attrs):
     }
 
     # https://bazel.build/reference/be/common-definitions?hl=en#common-attributes-tests
-    cc_test_only_attrs = ["args", "env", "env_inherit", "size", "timeout", "flaky", "shard_count", "local"]
+    cc_test_only_attrs = ["args", "env", "env_inherit", "size", "timeout", "flaky", "shard_count", "local", "data"]
 
     cuda_library_attrs = {k: v for k, v in attrs.items() if k not in cc_test_only_attrs}
     for attr in cuda_library_only_attrs_defaults:
