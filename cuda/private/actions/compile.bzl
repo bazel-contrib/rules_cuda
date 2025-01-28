@@ -75,6 +75,7 @@ def compile(
             cuda_toolchain,
             cuda_feature_config,
             common.cuda_archs_info,
+            common.sysroot,
             source_file = src.path,
             output_file = obj_file.path,
             host_compiler = host_compiler,

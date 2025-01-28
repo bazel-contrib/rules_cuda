@@ -174,6 +174,7 @@ def _get_cuda_archs_info(ctx):
 
 def _create_common_info(
         cuda_archs_info = None,
+        sysroot = None,
         includes = [],
         quote_includes = [],
         system_includes = [],
@@ -194,6 +195,7 @@ def _create_common_info(
 
     Args:
         cuda_archs_info: `CudaArchsInfo`.
+        sysroot: The `sysroot`.
         includes: include paths. Can be used with `#include <...>` and `#include "..."`.
         quote_includes: include paths. Can be used with `#include "..."`.
         system_includes: include paths. Can be used with `#include <...>`.
@@ -212,6 +214,7 @@ def _create_common_info(
     """
     return struct(
         cuda_archs_info = cuda_archs_info,
+        sysroot = sysroot,
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,
@@ -279,8 +282,6 @@ def _create_common(ctx):
     host_defines = []
     host_local_defines = [i for i in attr.host_local_defines]
     host_compile_flags = attr._default_host_copts[BuildSettingInfo].value + [i for i in attr.host_copts]
-    if cc_toolchain.sysroot:
-        host_compile_flags.append("--sysroot={}".format(cc_toolchain.sysroot))
     host_link_flags = []
     if hasattr(attr, "host_linkopts"):
         host_link_flags.extend([i for i in attr.host_linkopts])
@@ -295,6 +296,7 @@ def _create_common(ctx):
 
     return _create_common_info(
         cuda_archs_info = _get_cuda_archs_info(ctx),
+        sysroot = getattr(cc_toolchain, "sysroot", None),
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,
@@ -388,6 +390,7 @@ def _create_compile_variables(
         cuda_toolchain,
         feature_configuration,
         cuda_archs_info,
+        sysroot = None,
         source_file = None,
         output_file = None,
         host_compiler = None,
@@ -407,6 +410,7 @@ def _create_compile_variables(
         cuda_toolchain: cuda_toolchain for which we are creating build variables.
         feature_configuration: Feature configuration to be queried.
         cuda_archs_info: `CudaArchsInfo`
+        sysroot: The `sysroot`.
         source_file: source file for the compilation.
         output_file: output file of the compilation.
         host_compiler: host compiler path.
@@ -425,6 +429,10 @@ def _create_compile_variables(
     if not use_rdc:
         use_rdc = _check_must_enforce_rdc(arch_specs = arch_specs)
 
+    optional_variables = {}
+    if sysroot != None:
+        optional_variables["sysroot"] = sysroot
+
     return struct(
         arch_specs = arch_specs,
         use_arch_native = len(arch_specs) == 0,
@@ -441,6 +449,7 @@ def _create_compile_variables(
         ptxas_flags = ptxas_flags,
         use_pic = use_pic,
         use_rdc = use_rdc,
+        **optional_variables
     )
 
 # buildifier: disable=unused-variable
@@ -448,6 +457,7 @@ def _create_device_link_variables(
         cuda_toolchain,
         feature_configuration,
         cuda_archs_info,
+        sysroot = None,
         output_file = None,
         host_compiler = None,
         host_compile_flags = [],
@@ -459,6 +469,7 @@ def _create_device_link_variables(
         cuda_toolchain: cuda_toolchain for which we are creating build variables.
         feature_configuration: Feature configuration to be queried.
         cuda_archs_info: `CudaArchsInfo`
+        sysroot: The `sysroot`.
         output_file: output file of the device linking.
         host_compiler: host compiler path.
         host_compile_flags: flags pass to host compiler.
@@ -477,6 +488,11 @@ def _create_device_link_variables(
             if stage2_arch.lto:
                 use_dlto = True
                 break
+
+    optional_variables = {}
+    if sysroot != None:
+        optional_variables["sysroot"] = sysroot
+
     return struct(
         arch_specs = arch_specs,
         use_arch_native = len(arch_specs) == 0,
@@ -486,6 +502,7 @@ def _create_device_link_variables(
         user_link_flags = user_link_flags,
         use_dlto = use_dlto,
         use_pic = use_pic,
+        **optional_variables
     )
 
 def _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features):
