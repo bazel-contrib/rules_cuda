@@ -382,6 +382,25 @@ def _impl(ctx):
         provides = ["compilation_mode"],
     )
 
+    sysroot_feature = feature(
+        name = "sysroot",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-Xcompiler", "--sysroot=%{sysroot}"],
+                        expand_if_available = "sysroot",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     ptxas_flags_feature = feature(
         name = "ptxas_flags",
         enabled = True,
@@ -498,6 +517,7 @@ def _impl(ctx):
         dbg_feature,
         opt_feature,
         fastbuild_feature,
+        sysroot_feature,
         ptxas_flags_feature,
         compiler_input_flags_feature,
         compiler_output_flags_feature,
