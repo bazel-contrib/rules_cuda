@@ -12,6 +12,9 @@ load(
     "cuda_library_compute61_sm61_flag_test",
     "cuda_library_flag_test",
     "cuda_library_sm100_sm100a_flag_test",
+    "cuda_library_platform_sysroot_flag_test",
+    "cuda_library_platform_no_sysroot_flag_test",
+    "cuda_library_platform_no_sysroot_but_copt_flag_test",
     "cuda_library_sm61_flag_test",
     "cuda_library_sm90a_flag_test",
     "cuda_library_sm90a_sm90_flag_test",
@@ -406,4 +409,34 @@ cuda_library_use_linkopts_flag_test(
     ],
     target_compatible_with = ["@platforms//os:linux"],  # Assuming nvcc toolchain
     target_under_test = ":cpp_opts_test_lib",
+)
+
+###################################################
+# Tests for sysroot from cc toolchain
+###################################################
+cuda_library_platform_no_sysroot_flag_test(
+    name = "cuda_library_no_sysroot_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = ["--sysroot=/sysroot/from/toolchain"],
+    output_name = "kernel.pic.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+cuda_library_platform_no_sysroot_but_copt_flag_test(
+    name = "cuda_library_sysroot_from_copt_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["--sysroot=/sysroot/from/copt"],
+    output_name = "kernel.pic.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+cuda_library_platform_sysroot_flag_test(
+    name = "cuda_library_sysroot_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["--sysroot=/sysroot/from/toolchain"],
+    output_name = "kernel.pic.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
