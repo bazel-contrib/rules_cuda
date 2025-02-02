@@ -48,5 +48,6 @@ jobs:
           method: network
 
       - run: bazelisk test -- //tests/...
+      - run: bazelisk test --platforms=//tests/flag:flag-test-platform -- //tests/...
 
       - run: bazelisk shutdown
