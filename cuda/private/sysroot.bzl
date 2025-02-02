@@ -9,7 +9,7 @@ def _cuda_cc_sysroot_impl(ctx):
     cc_toolchain = find_cpp_toolchain(ctx)
 
     cc_sysroot = None
-    if ctx.attr.path != None:
+    if ctx.attr.path:
         cc_sysroot = ctx.attr.path
     elif getattr(cc_toolchain, "sysroot", None):
         cc_sysroot = cc_toolchain.sysroot
@@ -49,7 +49,9 @@ cuda_cc_sysroot = rule(
     sysroot detection on every CUDA target action.
     """,
     attrs = {
-        "path": attr.string(doc="The explicit value for sysroot, if not filled, will figure out from cc toolchain."),
+        "path": attr.string(
+            mandatory = False,
+            doc="The explicit value for sysroot, if not filled, will figure out from cc toolchain."),
         "_cc_toolchain": attr.label(
             default = "@bazel_tools//tools/cpp:current_cc_toolchain",  # legacy behaviour
         ),
