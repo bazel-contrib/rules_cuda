@@ -111,3 +111,6 @@ cuda_library_sm90a_sm90_flag_test = _create_cuda_library_flag_test(config_settin
 cuda_library_compute60_flag_test = _create_cuda_library_flag_test(config_settings_compute60)
 cuda_library_compute60_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute60_sm61)
 cuda_library_compute61_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute61_sm61)
+
+config_settings_platform_flag_test = {"//command_line_option:platforms": _rules_cuda_target("tests/flag:flag-test-platform")}
+cuda_library_platform_flag_test = _create_cuda_library_flag_test(config_settings_platform_flag_test)
