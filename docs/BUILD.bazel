@@ -13,7 +13,7 @@ stardoc(
     input = "user_docs.bzl",
     deps = [
         ":bazel_tools_bzl_srcs",
-        "@rules_cuda//:bzl_srcs",
+        "@rules_cuda//cuda:bzl_srcs",
     ],
 )
 
@@ -23,7 +23,7 @@ stardoc(
     input = "toolchain_config_docs.bzl",
     deps = [
         ":bazel_tools_bzl_srcs",
-        "@rules_cuda//:bzl_srcs",
+        "@rules_cuda//cuda:bzl_srcs",
     ],
 )
 
@@ -33,7 +33,7 @@ stardoc(
     input = "providers_docs.bzl",
     deps = [
         ":bazel_tools_bzl_srcs",
-        "@rules_cuda//:bzl_srcs",
+        "@rules_cuda//cuda:bzl_srcs",
     ],
 )
 
@@ -43,7 +43,7 @@ stardoc(
     input = "developer_docs.bzl",
     deps = [
         ":bazel_tools_bzl_srcs",
-        "@rules_cuda//:bzl_srcs",
+        "@rules_cuda//cuda:bzl_srcs",
     ],
 )
 
