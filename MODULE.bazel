@@ -21,4 +21,7 @@ register_toolchains(
 )
 
 bazel_dep(name = "rules_cuda_examples", dev_dependency = True)
-local_path_override(module_name = "rules_cuda_examples", path = "./examples")
+local_path_override(
+    module_name = "rules_cuda_examples",
+    path = "./examples",
+)
