@@ -75,6 +75,7 @@ def _compiler_device_link(
         cuda_toolchain,
         cuda_feature_config,
         common.cuda_archs_info,
+        common.sysroot,
         output_file = obj_file.path,
         host_compiler = host_compiler,
         host_compile_flags = common.host_compile_flags,
