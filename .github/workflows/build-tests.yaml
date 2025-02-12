@@ -66,6 +66,26 @@ jobs:
         if: ${{ startsWith(matrix.cases.os, 'windows') }}
 
       # out of @examples repo build requires WORKSPACE-based external dependency system
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//basic:all
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//rdc:all
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//if_cuda:main
+      - run: bazelisk build --jobs=1 @rules_cuda_examples//if_cuda:main --enable_cuda=False
+      # in @examples repo build, bzlmod is enabled by default since Bazel 7
+      - run: cd examples && bazelisk build --jobs=1 //basic:all
+      - run: cd examples && bazelisk build --jobs=1 //rdc:all
+      - run: cd examples && bazelisk build --jobs=1 //if_cuda:main
+      - run: cd examples && bazelisk build --jobs=1 //if_cuda:main --enable_cuda=False
+      - run: bazelisk shutdown
+      # run some repo integration tests
+      - run: cd tests/integration && ./test_all.sh
+
+      # Use Bazel 7
+      - run: echo "USE_BAZEL_VERSION=7.5.0" >> $GITHUB_ENV
+        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
+      - run: echo "USE_BAZEL_VERSION=7.5.0" >> $env:GITHUB_ENV
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
+
+      # out of @examples repo build requires WORKSPACE-based external dependency system
       - run: bazelisk build --jobs=1 --noenable_bzlmod @rules_cuda_examples//basic:all
       - run: bazelisk build --jobs=1 --noenable_bzlmod @rules_cuda_examples//rdc:all
       - run: bazelisk build --jobs=1 --noenable_bzlmod @rules_cuda_examples//if_cuda:main
