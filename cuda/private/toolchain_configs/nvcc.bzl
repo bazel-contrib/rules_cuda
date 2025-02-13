@@ -49,14 +49,30 @@ def _impl(ctx):
         requested_features = ctx.features,
         unsupported_features = ctx.disabled_features,
     )
-    host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
+    host_compiler = cc_common.get_tool_for_action(
+        feature_configuration = cc_feature_configuration,
+        action_name = CC_ACTION_NAMES.cpp_compile,
+    )
+
+    c_compile_variables = cc_common.create_compile_variables(
+        feature_configuration = cc_feature_configuration,
+        cc_toolchain = cc_toolchain,
+    )
+    env = cc_common.get_environment_variables(
+        feature_configuration = cc_feature_configuration,
+        action_name = CC_ACTION_NAMES.cpp_compile,
+        variables = c_compile_variables,
+    )
+
+    # We know we are linux here, so ":" should be save.
+    path = ":".join([env.get("PATH", ""), paths.dirname(host_compiler)])
 
     nvcc_compile_env_feature = feature(
         name = "nvcc_compile_env",
         env_sets = [
             env_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                env_entries = [env_entry("PATH", paths.dirname(host_compiler))],
+                env_entries = [env_entry("PATH", path)],
             ),
         ],
     )
@@ -66,7 +82,7 @@ def _impl(ctx):
         env_sets = [
             env_set(
                 actions = [ACTION_NAMES.device_link],
-                env_entries = [env_entry("PATH", paths.dirname(host_compiler))],
+                env_entries = [env_entry("PATH", path)],
             ),
         ],
     )
