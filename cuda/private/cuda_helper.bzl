@@ -4,6 +4,7 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
+load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
@@ -233,6 +234,36 @@ def _create_common_info(
         transitive_linking_contexts = transitive_linking_contexts,
     )
 
+def _get_sysroot(ctx):
+    cc_toolchain = find_cpp_toolchain(ctx)
+
+    if cc_toolchain.sysroot:
+        return cc_toolchain.sysroot
+
+    feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
+
+    variables = cc_common.create_compile_variables(
+        cc_toolchain = cc_toolchain,
+        feature_configuration = feature_configuration,
+    )
+
+    cc_flags = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_configuration,
+        action_name = CC_ACTION_NAMES.cpp_compile,
+        variables = variables,
+    )
+
+    for flag in cc_flags:
+        if flag.startswith("--sysroot="):
+            return flag.removeprefix("--sysroot=")
+
+    return None
+
 def _create_common(ctx):
     """Helper to gather and process various information from `ctx` object to ease the parameter passing for internal macros.
 
@@ -245,8 +276,6 @@ def _create_common(ctx):
         all_cc_deps.extend([dep for dep in attr._builtin_deps if CcInfo in dep])
 
     merged_cc_info = cc_common.merge_cc_infos(cc_infos = [dep[CcInfo] for dep in all_cc_deps])
-
-    cc_toolchain = find_cpp_toolchain(ctx)
 
     # gather include info
     includes = merged_cc_info.compilation_context.includes.to_list()
@@ -296,7 +325,7 @@ def _create_common(ctx):
 
     return _create_common_info(
         cuda_archs_info = _get_cuda_archs_info(ctx),
-        sysroot = getattr(cc_toolchain, "sysroot", None),
+        sysroot = _get_sysroot(ctx),
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,
