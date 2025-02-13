@@ -23,7 +23,9 @@ def cc_import_versioned_sos(name, shared_library):
         name: Name of the cc_library.
         shared_library: Prefix of the versioned .so files.
     """
-    so_paths = native.glob([shared_library + "*"])
+
+    # NOTE: only empty when the componnent is not installed on the system, say, cublas is not installed with apt-get
+    so_paths = native.glob([shared_library + "*"], allow_empty = True)
 
     [native.cc_import(
         name = paths.basename(p),

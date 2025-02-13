@@ -19,3 +19,9 @@ register_toolchains(
     "@local_cuda//toolchain/clang:clang-local-toolchain",
     "@local_cuda//toolchain/disabled:disabled-local-toolchain",
 )
+
+bazel_dep(name = "rules_cuda_examples", dev_dependency = True)
+local_path_override(
+    module_name = "rules_cuda_examples",
+    path = "./examples",
+)
