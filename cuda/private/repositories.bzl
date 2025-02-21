@@ -265,10 +265,6 @@ local_cuda = repository_rule(
 )
 
 def _cuda_component_impl(repository_ctx):
-    name_fragments = repository_ctx.name.split("local_cuda_")
-    if len(name_fragments) != 2 or (name_fragments[0] != "" and not name_fragments[0].endswith("~")):
-        fail("cuda_component(name='{}') is expected to have a repo name starts with local_cuda_".format(repository_ctx.name))
-
     component_name = None
     if repository_ctx.attr.component_name:
         component_name = repository_ctx.attr.component_name
