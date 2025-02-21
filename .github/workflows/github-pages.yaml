@@ -18,6 +18,7 @@ jobs:
           - { ref: main, name: latest }
           - { ref: v0.2.1, name: 0.2.1 }
           - { ref: v0.2.3, name: 0.2.3 }
+          - { ref: v0.2.4, name: 0.2.4 }
     steps:
       - uses: actions/checkout@v4
         if: ${{ matrix.docs.ref == 'main' }}
