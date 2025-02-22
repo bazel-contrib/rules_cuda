@@ -49,3 +49,14 @@ pushd "$this_dir/toolchain_rules"
     bazel build //:use_rule
     bazel clean && bazel shutdown
 popd
+
+# toolchain configured with deliverables
+pushd "$this_dir/toolchain_redist"
+    bazel build //... --@rules_cuda//cuda:enable=False
+    bazel build //... --@rules_cuda//cuda:enable=True
+    bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=True
+    bazel build //:use_library
+    bazel build //:use_rule
+    bazel clean && bazel shutdown
+popd
