@@ -8,7 +8,7 @@ http_archive(
     urls = ["https://github.com/bazel-contrib/rules_cuda/releases/download/{version}/rules_cuda-{version}.tar.gz"],
 )
 
-load("@rules_cuda//cuda:repositories.bzl", "register_detected_cuda_toolchains", "rules_cuda_dependencies")
+load("@rules_cuda//cuda:repositories.bzl", "rules_cuda_dependencies", "rules_cuda_toolchains")
 rules_cuda_dependencies()
-register_detected_cuda_toolchains()
+rules_cuda_toolchains(register_toolchains = True)
 ```
