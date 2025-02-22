@@ -20,8 +20,8 @@ jobs:
           # NOTE: read from .bazelversion so that we don't randomly break our
           # ci due to latest bazel version change
           - .bazelversion
+          - 7.5.0
           - 6.5.0
-          - 5.4.1
     env:
       USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
     steps:
