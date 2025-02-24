@@ -50,13 +50,24 @@ pushd "$this_dir/toolchain_rules"
     bazel clean && bazel shutdown
 popd
 
-# toolchain configured with deliverables
-pushd "$this_dir/toolchain_redist"
-    bazel build //... --@rules_cuda//cuda:enable=False
-    bazel build //... --@rules_cuda//cuda:enable=True
-    bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=False
-    bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=True
-    bazel build //:use_library
-    bazel build //:use_rule
+# toolchain configured with deliverables (manual components with workspace)
+pushd "$this_dir/toolchain_components"
+    bazel build --enable_workspace //... --@rules_cuda//cuda:enable=False
+    bazel build --enable_workspace //... --@rules_cuda//cuda:enable=True
+    bazel build --enable_workspace //:optinally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build --enable_workspace //:optinally_use_rule --@rules_cuda//cuda:enable=True
+    bazel build --enable_workspace //:use_library
+    bazel build --enable_workspace //:use_rule
+    bazel clean && bazel shutdown
+popd
+
+# toolchain configured with deliverables (manual components with bzlmod)
+pushd "$this_dir/toolchain_components"
+    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=False
+    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=True
+    bazel build --enable_bzlmod //:optinally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build --enable_bzlmod //:optinally_use_rule --@rules_cuda//cuda:enable=True
+    bazel build --enable_bzlmod //:use_library
+    bazel build --enable_bzlmod //:use_rule
     bazel clean && bazel shutdown
 popd
