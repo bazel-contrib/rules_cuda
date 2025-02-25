@@ -71,3 +71,14 @@ pushd "$this_dir/toolchain_components"
     bazel build --enable_bzlmod //:use_rule
     bazel clean && bazel shutdown
 popd
+
+# toolchain configured with deliverables (redistrib.json with workspace)
+pushd "$this_dir/toolchain_redist_json"
+    bazel build --enable_workspace //... --@rules_cuda//cuda:enable=False
+    bazel build --enable_workspace //... --@rules_cuda//cuda:enable=True
+    bazel build --enable_workspace //:optinally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build --enable_workspace //:optinally_use_rule --@rules_cuda//cuda:enable=True
+    bazel build --enable_workspace //:use_library
+    bazel build --enable_workspace //:use_rule
+    bazel clean && bazel shutdown
+popd

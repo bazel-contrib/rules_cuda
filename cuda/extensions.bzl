@@ -1,7 +1,7 @@
 """Entry point for extensions used by bzlmod."""
 
 load("//cuda/private:compat.bzl", "components_mapping_compat")
-load("//cuda/private:repositories.bzl", "cuda_component", "local_cuda")
+load("//cuda/private:repositories.bzl", "cuda_component", "cuda_redist_json", "local_cuda")
 
 cuda_component_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
@@ -30,6 +30,30 @@ cuda_component_tag = tag_class(attrs = {
               "Redirections are followed. Authentication is not supported. " +
               "URLs are tried in order until one succeeds, so you should list local mirrors first. " +
               "If all downloads fail, the rule will fail.",
+    ),
+})
+
+cuda_redist_json_tag = tag_class(attrs = {
+    "name": attr.string(mandatory = True, doc = "Repo name for the cuda_redist_json"),
+    "components": attr.string_list(mandatory = True, doc = "components to be used"),
+    "integrity": attr.string(
+        doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
+              "This must match the checksum of the file downloaded.",
+    ),
+    "sha256": attr.string(
+        doc = "The expected SHA-256 of the file downloaded. " +
+              "This must match the SHA-256 of the file downloaded.",
+    ),
+    "urls": attr.string_list(
+        doc = "A list of URLs to a file that will be made available to Bazel. " +
+              "Each entry must be a file, http or https URL. Redirections are followed. " +
+              "Authentication is not supported. " +
+              "URLs are tried in order until one succeeds, so you should list local mirrors first. " +
+              "If all downloads fail, the rule will fail.",
+    ),
+    "version": attr.string(
+        doc = "Generate a URL by using the specified version." +
+              "This URL will be tried after all URLs specified in the `urls` attribute.",
     ),
 })
 
@@ -70,16 +94,22 @@ def _impl(module_ctx):
     # Toolchain configuration is only allowed in the root module, or in rules_cuda.
     root, rules_cuda = _find_modules(module_ctx)
     components = None
+    redist_jsons = None
     toolkits = None
     if root.tags.toolkit:
         components = root.tags.component
+        redist_jsons = root.tags.redist_json
         toolkits = root.tags.toolkit
     else:
         components = rules_cuda.tags.component
+        redist_jsons = rules_cuda.tags.redist_json
         toolkits = rules_cuda.tags.toolkit
 
     for component in components:
         cuda_component(**_module_tag_to_dict(component))
+
+    for redist_json in redist_jsons:
+        cuda_redist_json(**_module_tag_to_dict(redist_json))
 
     registrations = {}
     for toolkit in toolkits:
@@ -97,6 +127,7 @@ toolchain = module_extension(
     implementation = _impl,
     tag_classes = {
         "component": cuda_component_tag,
+        "redist_json": cuda_redist_json_tag,
         "toolkit": cuda_toolkit_tag,
     },
 )

@@ -1,0 +1,23 @@
+local_repository(
+    name = "rules_cuda",
+    path = "../../..",
+)
+
+# buildifier: disable=load-on-top
+load("@rules_cuda//cuda:repositories.bzl", "cuda_redist_json", "rules_cuda_dependencies")
+
+rules_cuda_dependencies()
+
+cuda_redist_json(
+    name = "rules_cuda_redist_json",
+    components = [
+        "cccl",
+        "cudart",
+        "nvcc",
+    ],
+    version = "12.6.3",
+)
+
+load("@rules_cuda_redist_json//:redist.bzl", "rules_cuda_components_and_toolchains")
+
+rules_cuda_components_and_toolchains(register_toolchains = True)
