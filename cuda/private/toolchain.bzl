@@ -1,17 +1,23 @@
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
 
 def _cuda_toolchain_impl(ctx):
+    cc_toolchain = find_cpp_toolchain(ctx)
+    has_cc_toolchain = cc_toolchain != None
     has_compiler_executable = ctx.attr.compiler_executable != None and ctx.attr.compiler_executable != ""
     has_compiler_label = ctx.attr.compiler_label == None
-    if (has_compiler_executable and not has_compiler_label) or (not has_compiler_executable and has_compiler_label):
-        fail("Either compiler_executable or compiler_label must be specified.")
+    if (has_compiler_executable and not has_compiler_label) or (not has_compiler_executable and has_compiler_label) or (not has_cc_toolchain):
+        fail("Either compiler_executable or compiler_label must be specified or a valid cc_toolchain must be registered.")
 
     if has_compiler_executable:
         compiler_executable = ctx.attr.compiler_executable
-    else:
+    elif has_compiler_label:
         l = ctx.attr.compiler_label.label
         compiler_executable = "{}/{}/{}".format(l.workspace_root, l.package, l.name)
+    
+    if (ctx.attr.compiler_executable == "cuda-clang-not-found" or ctx.attr.compiler_executable.startswith("/")) and has_cc_toolchain:
+        compiler_executable = cc_toolchain.compiler_executable
 
     cuda_toolchain_config = ctx.attr.toolchain_config[CudaToolchainConfigInfo]
     selectables_info = config_helper.collect_selectables_info(cuda_toolchain_config.action_configs + cuda_toolchain_config.features)
@@ -49,6 +55,7 @@ cuda_toolchain = rule(
         "compiler_files": attr.label(allow_files = True, cfg = "exec", doc = "The set of files that are needed when compiling using this toolchain."),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
     },
+    toolchains = use_cpp_toolchain(),
 )
 
 CUDA_TOOLCHAIN_TYPE = "//cuda:toolchain_type"
