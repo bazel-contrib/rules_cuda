@@ -15,7 +15,7 @@ def _cuda_toolchain_impl(ctx):
     elif has_compiler_label:
         l = ctx.attr.compiler_label.label
         compiler_executable = "{}/{}/{}".format(l.workspace_root, l.package, l.name)
-    
+
     if (ctx.attr.compiler_executable == "cuda-clang-not-found" or ctx.attr.compiler_executable.startswith("/")) and has_cc_toolchain:
         compiler_executable = cc_toolchain.compiler_executable
 
