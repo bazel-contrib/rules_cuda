@@ -12,14 +12,12 @@ load(
     "@rules_cuda//cuda/private:toolchain.bzl",
     _find_cuda_toolchain = "find_cuda_toolchain",
     _find_cuda_toolkit = "find_cuda_toolkit",
-    _use_cpp_toolchain = "use_cpp_toolchain",
     _use_cuda_toolchain = "use_cuda_toolchain",
 )
 load("@rules_cuda//cuda/private:toolchain_config_lib.bzl", _config_helper = "config_helper")
 
 # create a struct to group toolchain symbols semantically
 toolchain = struct(
-    use_cpp_toolchain = _use_cpp_toolchain,
     use_cuda_toolchain = _use_cuda_toolchain,
     find_cuda_toolchain = _find_cuda_toolchain,
     find_cuda_toolkit = _find_cuda_toolkit,
