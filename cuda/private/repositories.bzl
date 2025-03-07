@@ -300,7 +300,6 @@ def config_clang(repository_ctx, cuda, clang_path):
 
     if len(repository_ctx.attr.components_mapping) != 0:
         is_local_ctk = False
-    print("debug!")
     # for deliverable ctk, clang needs the toolkit as cuda_path
     if not is_local_ctk:
         nvcc_repo = components_mapping_compat.repo_str(repository_ctx.attr.components_mapping["nvcc"])
