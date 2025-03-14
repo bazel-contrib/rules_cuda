@@ -103,9 +103,11 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
     component_tpl = """cuda_component(
         name = "{repo_name}",
         component_name = "{component_name}",
+        descriptive_name = "{descriptive_name}",
         sha256 = {sha256},
         strip_prefix = {strip_prefix},
         urls = {urls},
+        version = "{version}",
     )"""
 
     for spec in component_specs:
@@ -118,9 +120,11 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
             component_tpl.format(
                 repo_name = repo_name,
                 component_name = spec["component_name"],
+                descriptive_name = spec["descriptive_name"],
                 sha256 = repr(spec["sha256"]),
                 strip_prefix = repr(spec["strip_prefix"]),
                 urls = repr(spec["urls"]),
+                version = spec["version"],
             ),
         )
         mapping[spec["component_name"]] = "@" + repo_name

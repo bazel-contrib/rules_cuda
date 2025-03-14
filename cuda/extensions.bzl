@@ -6,6 +6,7 @@ load("//cuda/private:repositories.bzl", "cuda_component", "cuda_redist_json", "l
 cuda_component_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
     "component_name": attr.string(doc = "Short name of the component defined in registry."),
+    "descriptive_name": attr.string(doc = "Official name of a component or simply the component name."),
     "integrity": attr.string(
         doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
               "This must match the checksum of the file downloaded.",
@@ -31,6 +32,7 @@ cuda_component_tag = tag_class(attrs = {
               "URLs are tried in order until one succeeds, so you should list local mirrors first. " +
               "If all downloads fail, the rule will fail.",
     ),
+    "version": attr.string(doc = "A unique version number for component."),
 })
 
 cuda_redist_json_tag = tag_class(attrs = {
