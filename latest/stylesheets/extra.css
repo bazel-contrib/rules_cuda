@@ -1,0 +1,20 @@
+.md-header {
+  background: #44a147;
+}
+
+.stardoc-pre {
+  height: fit-content;
+  width: inherit;
+  overflow: auto;
+  scrollbar-width: thin;
+  font-size: 0.8em;
+}
+
+.stardoc-pre::-webkit-scrollbar {
+  height: 0.25em;
+  width: 0.25em;
+}
+
+.stardoc-pre::-webkit-scrollbar-thumb {
+  background-color: var(--md-default-fg-color--lighter);
+}
