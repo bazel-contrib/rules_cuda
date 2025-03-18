@@ -43,7 +43,7 @@ bazel_dep(name = "rules_cuda", version = "0.2.1")
 archive_override(
     module_name = "rules_cuda",
     integrity = "{SRI value}",  # see https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
-    urls = "https://github.com/bazel-contrib/rules_cuda/archive/{git_commit_hash}.tar.gz",
+    url = "https://github.com/bazel-contrib/rules_cuda/archive/{git_commit_hash}.tar.gz",
     strip_prefix = "rules_cuda-{git_commit_hash}",
 )
 
