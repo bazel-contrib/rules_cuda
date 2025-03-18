@@ -64,7 +64,7 @@ cuda_toolkit_tag = tag_class(attrs = {
     ),
     "components_mapping": components_mapping_compat.attr(
         doc = "A mapping from component names to component repos of a deliverable CUDA Toolkit. " +
-              "Only the repo part of the label is usefull",
+              "Only the repo part of the label is useful",
     ),
     "version": attr.string(doc = "cuda toolkit version. Required for deliverable toolkit only."),
     "nvcc_version": attr.string(
