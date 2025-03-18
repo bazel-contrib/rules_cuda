@@ -256,6 +256,7 @@ def _create_common(ctx):
     for inc in attr.includes:
         system_includes.extend(_resolve_includes(ctx, inc))
     system_includes.extend(merged_cc_info.compilation_context.system_includes.to_list())
+    system_includes.extend(merged_cc_info.compilation_context.external_includes.to_list())
     quote_includes.extend(merged_cc_info.compilation_context.quote_includes.to_list())
 
     # gather header info
