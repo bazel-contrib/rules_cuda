@@ -14,10 +14,10 @@ local_path_override(
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
 cuda.toolkit(
-    name = "local_cuda",
+    name = "cuda_toolkit",
     toolkit_path = "",
 )
-use_repo(cuda, "local_cuda")
+use_repo(cuda, "cuda_toolkit")
 
 bazel_dep(
     name = "stardoc",

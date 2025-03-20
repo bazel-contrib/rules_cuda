@@ -1,4 +1,4 @@
-# This becomes the BUILD file for @local_cuda//toolchain/ under Windows.
+# This becomes the BUILD file for @cuda_toolkit//toolchain/ under Windows.
 
 load(
     "@rules_cuda//cuda:defs.bzl",

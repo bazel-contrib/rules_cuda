@@ -8,10 +8,10 @@ local_path_override(
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
 cuda.toolkit(
-    name = "local_cuda",
+    name = "cuda_toolkit",
     toolkit_path = "/nonexistent/cuda/toolkit/path",
 )
-use_repo(cuda, "local_cuda")
+use_repo(cuda, "cuda_toolkit")
 
 bazel_dep(name = "rules_cuda_examples", version = "0.0.0")
 local_path_override(

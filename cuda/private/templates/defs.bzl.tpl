@@ -11,8 +11,8 @@ def if_deliverable_cuda_toolkit(if_true, if_false = []):
 def additional_header_deps(component_name):
     if component_name == "cudart":
         return if_deliverable_cuda_toolkit([
-            "@local_cuda//:nvcc_headers",
-            "@local_cuda//:cccl_headers",
+            "@cuda_toolkit//:nvcc_headers",
+            "@cuda_toolkit//:cccl_headers",
         ])
 
     return []

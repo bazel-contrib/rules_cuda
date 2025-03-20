@@ -1,4 +1,4 @@
-"""Generate `@local_cuda//`"""
+"""Generate `@cuda_toolkit//`"""
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
@@ -55,15 +55,15 @@ def _detect_local_cuda_toolkit(repository_ctx):
     fatbinary = "@rules_cuda//cuda/dummy:fatbinary"
     if cuda_path != None:
         if repository_ctx.path(cuda_path + "/bin/nvcc" + bin_ext).exists:
-            nvcc = str(Label("@local_cuda//:cuda/bin/nvcc{}".format(bin_ext)))
+            nvcc = str(Label("@cuda_toolkit//:cuda/bin/nvcc{}".format(bin_ext)))
         if repository_ctx.path(cuda_path + "/bin/nvlink" + bin_ext).exists:
-            nvlink = str(Label("@local_cuda//:cuda/bin/nvlink{}".format(bin_ext)))
+            nvlink = str(Label("@cuda_toolkit//:cuda/bin/nvlink{}".format(bin_ext)))
         if repository_ctx.path(cuda_path + "/bin/crt/link.stub").exists:
-            link_stub = str(Label("@local_cuda//:cuda/bin/crt/link.stub"))
+            link_stub = str(Label("@cuda_toolkit//:cuda/bin/crt/link.stub"))
         if repository_ctx.path(cuda_path + "/bin/bin2c" + bin_ext).exists:
-            bin2c = str(Label("@local_cuda//:cuda/bin/bin2c{}".format(bin_ext)))
+            bin2c = str(Label("@cuda_toolkit//:cuda/bin/bin2c{}".format(bin_ext)))
         if repository_ctx.path(cuda_path + "/bin/fatbinary" + bin_ext).exists:
-            fatbinary = str(Label("@local_cuda//:cuda/bin/fatbinary{}".format(bin_ext)))
+            fatbinary = str(Label("@cuda_toolkit//:cuda/bin/fatbinary{}".format(bin_ext)))
 
     nvcc_version_major = -1
     nvcc_version_minor = -1
@@ -131,7 +131,7 @@ def detect_cuda_toolkit(repository_ctx):
 
     The path to CUDA Toolkit is determined as:
       - use nvcc component from deliverable
-      - the value of `toolkit_path` passed to local_cuda as an attribute
+      - the value of `toolkit_path` passed to `cuda_toolkit` as an attribute
       - taken from `CUDA_PATH` environment variable or
       - determined through 'which ptxas' or
       - defaults to '/usr/local/cuda'
@@ -148,15 +148,15 @@ def detect_cuda_toolkit(repository_ctx):
         return _detect_local_cuda_toolkit(repository_ctx)
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
-    """Generate `@local_cuda//BUILD` and `@local_cuda//defs.bzl` and `@local_cuda//toolchain/BUILD`
+    """Generate `@cuda_toolkit//BUILD` and `@cuda_toolkit//defs.bzl` and `@cuda_toolkit//toolchain/BUILD`
 
     Args:
         repository_ctx: repository_ctx
         cuda: The struct returned from detect_cuda_toolkit
     """
 
-    # True: locally installed cuda toolkit (@local_cuda with full install of local CTK)
-    # False: hermatic cuda toolkit (@local_cuda with alias of components)
+    # True: locally installed cuda toolkit (@cuda_toolkit with full install of local CTK)
+    # False: hermatic cuda toolkit (@cuda_toolkit with alias of components)
     # None: cuda toolkit is not presented
     is_local_ctk = None
 
@@ -172,7 +172,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
             repository_ctx.symlink(cuda.path, "cuda")
         is_local_ctk = True
 
-    # Generate @local_cuda//BUILD
+    # Generate @cuda_toolkit//BUILD
     if is_local_ctk == None:
         repository_ctx.symlink(Label("//cuda/private:templates/BUILD.local_cuda_disabled"), "BUILD")
     elif is_local_ctk:
@@ -187,10 +187,10 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
             is_deliverable = True,
         )
 
-    # Generate @local_cuda//defs.bzl
+    # Generate @cuda_toolkit//defs.bzl
     template_helper.generate_defs_bzl(repository_ctx, is_local_ctk == True)
 
-    # Generate @local_cuda//toolchain/BUILD
+    # Generate @cuda_toolkit//toolchain/BUILD
     template_helper.generate_toolchain_build(repository_ctx, cuda)
 
 def detect_clang(repository_ctx):
@@ -224,7 +224,7 @@ def detect_clang(repository_ctx):
     return clang_path
 
 def config_clang(repository_ctx, cuda, clang_path):
-    """Generate `@local_cuda//toolchain/clang/BUILD`
+    """Generate `@cuda_toolkit//toolchain/clang/BUILD`
 
     Args:
         repository_ctx: repository_ctx
@@ -236,7 +236,7 @@ def config_clang(repository_ctx, cuda, clang_path):
 def config_disabled(repository_ctx):
     repository_ctx.symlink(Label("//cuda/private:templates/BUILD.local_toolchain_disabled"), "toolchain/disabled/BUILD")
 
-def _local_cuda_impl(repository_ctx):
+def _cuda_toolkit_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
     config_cuda_toolkit_and_nvcc(repository_ctx, cuda)
 
@@ -245,8 +245,8 @@ def _local_cuda_impl(repository_ctx):
 
     config_disabled(repository_ctx)
 
-local_cuda = repository_rule(
-    implementation = _local_cuda_impl,
+cuda_toolkit = repository_rule(
+    implementation = _cuda_toolkit_impl,
     attrs = {
         "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
         "components_mapping": components_mapping_compat.attr(
@@ -271,7 +271,7 @@ def _cuda_component_impl(repository_ctx):
         if component_name not in REGISTRY:
             fail("invalid component '{}', available: {}".format(component_name, repr(REGISTRY.keys())))
     else:
-        component_name = repository_ctx.name[len("local_cuda_"):]
+        component_name = repository_ctx.name[len("cuda_"):]
         if component_name not in REGISTRY:
             fail("invalid derived component '{}', available: {}, ".format(component_name, repr(REGISTRY.keys())) +
                  " if derivation result is unexpected, please specify `component_name` attribute manually")
@@ -348,7 +348,7 @@ def default_components_mapping(components):
     Args:
         components: list of string, a list of component names.
     """
-    return {c: "@local_cuda_" + c for c in components}
+    return {c: "@cuda_" + c for c in components}
 
 def _cuda_redist_json_impl(repository_ctx):
     the_url = None  # the url that successfully fetch redist json, we then use it to fetch deliverables
@@ -443,7 +443,7 @@ def rules_cuda_dependencies():
     )
 
 def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, version = None, nvcc_version = None, register_toolchains = False):
-    """Populate the local_cuda repo.
+    """Populate the cuda_toolkit repo.
 
     Args:
         toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
@@ -453,8 +453,8 @@ def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, versio
         register_toolchains: Register the toolchains if enabled.
     """
 
-    local_cuda(
-        name = "local_cuda",
+    cuda_toolkit(
+        name = "cuda_toolkit",
         toolkit_path = toolkit_path,
         components_mapping = components_mapping,
         version = version,
