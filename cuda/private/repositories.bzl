@@ -297,10 +297,22 @@ def _cuda_component_impl(repository_ctx):
         is_deliverable = True,
     )
 
+    desc_name = repository_ctx.attr.descriptive_name or repository_ctx.attr.component_name
+    repository_ctx.file(
+        "{}/version.json".format(component_name),
+        content = json.encode({
+            component_name: {
+                "name": desc_name,
+                "version": repository_ctx.attr.version,
+            },
+        }),
+    )
+
 cuda_component = repository_rule(
     implementation = _cuda_component_impl,
     attrs = {
         "component_name": attr.string(doc = "Short name of the component defined in registry."),
+        "descriptive_name": attr.string(doc = "Official name of a component or simply the component name."),
         "integrity": attr.string(
             doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
                   "This must match the checksum of the file downloaded.",
@@ -326,6 +338,7 @@ cuda_component = repository_rule(
                   "URLs are tried in order until one succeeds, so you should list local mirrors first. " +
                   "If all downloads fail, the rule will fail.",
         ),
+        "version": attr.string(doc = "A unique version number for component. Store in version.json file"),
     },
 )
 
@@ -382,9 +395,11 @@ def _cuda_redist_json_impl(repository_ctx):
         payload_relative_path = payload["relative_path"]
         payload_url = the_url.rsplit("/", 1)[0] + "/" + payload_relative_path
         archive_name = payload_relative_path.rsplit("/", 1)[1].split("-archive.")[0] + "-archive"
+        desc_name = redist[c_full].get("name", c_full)
 
         specs.append({
             "component_name": c,
+            "descriptive_name": desc_name,
             "urls": [payload_url],
             "sha256": payload["sha256"],
             "strip_prefix": archive_name,
