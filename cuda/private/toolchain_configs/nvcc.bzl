@@ -63,8 +63,14 @@ def _impl(ctx):
         variables = c_compile_variables,
     )
 
-    # We know we are linux here, so ":" should be save.
-    path = ":".join([env.get("PATH", ""), paths.dirname(host_compiler)])
+    components = [
+        env.get("PATH"),
+        paths.dirname(host_compiler),
+        ctx.configuration.default_shell_env.get("PATH"),
+    ]
+    path = ctx.configuration.host_path_separator.join(
+        [c for c in components if c],
+    )
 
     nvcc_compile_env_feature = feature(
         name = "nvcc_compile_env",
