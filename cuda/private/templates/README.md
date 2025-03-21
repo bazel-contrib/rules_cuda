@@ -24,7 +24,7 @@ We organize the generated repo as follows, for both `local_cuda` and `local_cuda
 └── WORKSPACE            # generated
 ```
 
-If the repo is `local_cuda`, we additionally generate toolchain config as follows
+If the repo is `cuda_toolkit`, we additionally generate toolchain config as follows
 
 ```
 <repo_root>
@@ -36,7 +36,7 @@ If the repo is `local_cuda`, we additionally generate toolchain config as follow
         └── BUILD        #
 ```
 
-## How are component repositories and `@local_cuda` connected?
+## How are component repositories and `@cuda_toolkit` connected?
 
 The `registry.bzl` file holds mappings from our (`rules_cuda`) components name to various things.
 
@@ -46,10 +46,10 @@ The registry serve the following purpose:
 
    This is purely for looking up the json files.
 
-2. maps our component names to target names to be exposed under `@local_cuda` repo.
+2. maps our component names to target names to be exposed under `@cuda_toolkit` repo.
 
    To expose those targets, we use a `components_mapping` attr from our component names to labels of component
-   repository (for example, `@local_cuda_nvcc`) as follows
+   repository (for example, `@cuda_nvcc`) as follows
 
 ```starlark
 # in registry.bzl
@@ -59,28 +59,28 @@ The registry serve the following purpose:
 
 # in WORKSPACE.bazel
 cuda_component(
-    name = "local_cuda_cudart_v12.6.77",
+    name = "cuda_cudart_v12.6.77",
     component_name = "cudart",
     ...
 )
 
-local_cuda(
-    name = "local_cuda",
-    components_mapping = {"cudart": "@local_cuda_cudart_v12.6.77"},
+cuda_toolkit(
+    name = "cuda_toolkit",
+    components_mapping = {"cudart": "@cuda_cudart_v12.6.77"},
     ...
 )
 ```
 
 This basically means the component `cudart` has `cuda`, `cuda_runtime` and `cuda_runtime_static` targets defined.
 
-- In locally installed CTK, we setup the targets in `@local_cuda` directly.
-- In a deliverable CTK, we setup the targets in `@local_cuda_cudart_v12.6.77` repo. And alias all targets to
-  `@local_cuda` as follows
+- In locally installed CTK, we setup the targets in `@cuda_toolkit` directly.
+- In a deliverable CTK, we setup the targets in `@cuda_cudart_v12.6.77` repo. And alias all targets to
+  `@cuda_toolkit` as follows
 
 ```starlark
-alias(name = "cuda", actual = "@local_cuda_cudart_v12.6.77//:cuda")
-alias(name = "cuda_runtime", actual = "@local_cuda_cudart_v12.6.77//:cuda_runtime")
-alias(name = "cuda_runtime_static", actual = "@local_cuda_cudart_v12.6.77//:cuda_runtime_static")
+alias(name = "cuda", actual = "@cuda_cudart_v12.6.77//:cuda")
+alias(name = "cuda_runtime", actual = "@cuda_cudart_v12.6.77//:cuda_runtime")
+alias(name = "cuda_runtime_static", actual = "@cuda_cudart_v12.6.77//:cuda_runtime_static")
 ```
 
-`cuda_component` is in charge of setting up the repo `@local_cuda_cudart_v12.6.77`.
+`cuda_component` is in charge of setting up the repo `@cuda_cudart_v12.6.77`.
