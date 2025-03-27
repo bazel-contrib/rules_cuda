@@ -13,9 +13,9 @@ def _is_windows(ctx):
 def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable):
     # stitch template fragment
     fragments = [
-        Label("//cuda/private:templates/BUILD.local_cuda_shared"),
-        Label("//cuda/private:templates/BUILD.local_cuda_headers"),
-        Label("//cuda/private:templates/BUILD.local_cuda_build_setting"),
+        Label("//cuda/private:templates/BUILD.cuda_shared"),
+        Label("//cuda/private:templates/BUILD.cuda_headers"),
+        Label("//cuda/private:templates/BUILD.cuda_build_setting"),
     ]
     if is_cuda_repo and not is_deliverable:  # generate `@cuda_toolkit//BUILD` for local host CTK
         fragments.extend([Label("//cuda/private:templates/BUILD.{}".format(c)) for c in components])
@@ -138,7 +138,7 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
 
 def _generate_toolchain_build(repository_ctx, cuda):
     tpl_label = Label(
-        "//cuda/private:templates/BUILD.local_toolchain_" +
+        "//cuda/private:templates/BUILD.toolchain_" +
         ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
     substitutions = {
@@ -158,7 +158,7 @@ def _generate_toolchain_build(repository_ctx, cuda):
     repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
 
 def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path):
-    tpl_label = Label("//cuda/private:templates/BUILD.local_toolchain_clang")
+    tpl_label = Label("//cuda/private:templates/BUILD.toolchain_clang")
     substitutions = {
         "%{clang_path}": _to_forward_slash(clang_path) if clang_path else "cuda-clang-not-found",
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",

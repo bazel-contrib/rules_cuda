@@ -174,7 +174,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
 
     # Generate @cuda_toolkit//BUILD
     if is_local_ctk == None:
-        repository_ctx.symlink(Label("//cuda/private:templates/BUILD.local_cuda_disabled"), "BUILD")
+        repository_ctx.symlink(Label("//cuda/private:templates/BUILD.cuda_disabled"), "BUILD")
     elif is_local_ctk:
         libpath = "lib64" if _is_linux(repository_ctx) else "lib"
         template_helper.generate_build(repository_ctx, libpath)
@@ -234,7 +234,7 @@ def config_clang(repository_ctx, cuda, clang_path):
     template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path)
 
 def config_disabled(repository_ctx):
-    repository_ctx.symlink(Label("//cuda/private:templates/BUILD.local_toolchain_disabled"), "toolchain/disabled/BUILD")
+    repository_ctx.symlink(Label("//cuda/private:templates/BUILD.toolchain_disabled"), "toolchain/disabled/BUILD")
 
 def _cuda_toolkit_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)

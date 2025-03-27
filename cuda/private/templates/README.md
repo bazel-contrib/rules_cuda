@@ -1,18 +1,18 @@
 ## Template files
 
-- `BUILD.local_cuda_shared`: For `local_cuda` repo (CTK + toolchain) or `local_cuda_%{component_name}`
-- `BUILD.local_cuda_headers`: For `local_cuda` repo (CTK + toolchain) or `local_cuda_%{component_name}` headers
-- `BUILD.local_cuda_build_setting`: For `local_cuda` repo (CTK + toolchain) build_setting
-- `BUILD.local_cuda_disabled`: For creating a dummy local configuration.
-- `BUILD.local_toolchain_disabled`: For creating a dummy local toolchain.
-- `BUILD.local_toolchain_clang`: For Clang device compilation toolchain.
-- `BUILD.local_toolchain_nvcc`: For NVCC device compilation toolchain.
-- `BUILD.local_toolchain_nvcc_msvc`: For NVCC device compilation with (MSVC as host compiler) toolchain.
+- `BUILD.cuda_shared`: For `cuda_toolkit` repo (CTK + toolchain) or `cuda_%{component_name}`
+- `BUILD.cuda_headers`: For `cuda_toolkit` repo (CTK + toolchain) or `cuda_%{component_name}` headers
+- `BUILD.cuda_build_setting`: For `cuda_toolkit` repo (CTK + toolchain) build_setting
+- `BUILD.cuda_disabled`: For creating a dummy local configuration.
+- `BUILD.toolchain_disabled`: For creating a dummy local toolchain.
+- `BUILD.toolchain_clang`: For Clang device compilation toolchain.
+- `BUILD.toolchain_nvcc`: For NVCC device compilation toolchain.
+- `BUILD.toolchain_nvcc_msvc`: For NVCC device compilation with (MSVC as host compiler) toolchain.
 - Otherwise, each `BUILD.*` corresponds to a component in CUDA Toolkit.
 
 ## Repository organization
 
-We organize the generated repo as follows, for both `local_cuda` and `local_cuda_<component_repo_name>`
+We organize the generated repo as follows, for both `cuda_toolkit` and `cuda_<component_repo_name>`
 
 ```
 <repo_root>              # bazel unconditionally creates a directory for us
@@ -20,7 +20,7 @@ We organize the generated repo as follows, for both `local_cuda` and `local_cuda
 │   ├── include/         #
 │   └── %{libpath}/      # lib or lib64, platform dependent
 ├── defs.bzl             # generated
-├── BUILD                # generated from BUILD.local_cuda and one/all of the component(s)
+├── BUILD                # generated with template_helper
 └── WORKSPACE            # generated
 ```
 
