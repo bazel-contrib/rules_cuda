@@ -106,7 +106,7 @@ CudaToolchainConfigInfo = provider(
     fields = {
         "action_configs": "A list of action_configs.",
         "artifact_name_patterns": "A list of artifact_name_patterns.",
-        "cuda_toolkit": "CudaToolkitInfo",
+        "cuda_toolkit": "A target that provides a `CudaToolkitInfo`",
         "features": "A list of features.",
         "toolchain_identifier": "nvcc or clang",
     },
