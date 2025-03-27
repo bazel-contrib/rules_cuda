@@ -183,7 +183,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
             repository_ctx,
             libpath = "lib",
             components = repository_ctx.attr.components_mapping,
-            is_local_cuda = True,
+            is_cuda_repo = True,
             is_deliverable = True,
         )
 
@@ -293,7 +293,7 @@ def _cuda_component_impl(repository_ctx):
         repository_ctx,
         libpath = "lib",
         components = {component_name: repository_ctx.name},
-        is_local_cuda = False,
+        is_cuda_repo = False,
         is_deliverable = True,
     )
 

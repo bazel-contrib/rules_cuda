@@ -10,18 +10,18 @@ def _is_linux(ctx):
 def _is_windows(ctx):
     return ctx.os.name.lower().startswith("windows")
 
-def _generate_build_impl(repository_ctx, libpath, components, is_local_cuda, is_deliverable):
+def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable):
     # stitch template fragment
     fragments = [
         Label("//cuda/private:templates/BUILD.local_cuda_shared"),
         Label("//cuda/private:templates/BUILD.local_cuda_headers"),
         Label("//cuda/private:templates/BUILD.local_cuda_build_setting"),
     ]
-    if is_local_cuda and not is_deliverable:  # generate `@cuda_toolkit//BUILD` for local host CTK
+    if is_cuda_repo and not is_deliverable:  # generate `@cuda_toolkit//BUILD` for local host CTK
         fragments.extend([Label("//cuda/private:templates/BUILD.{}".format(c)) for c in components])
-    elif is_local_cuda and is_deliverable:  # generate `@cuda_toolkit//BUILD` for CTK with deliverables
+    elif is_cuda_repo and is_deliverable:  # generate `@cuda_toolkit//BUILD` for CTK with deliverables
         pass
-    elif not is_local_cuda and is_deliverable:  # generate `@cuda_<component>//BUILD` for a deliverable
+    elif not is_cuda_repo and is_deliverable:  # generate `@cuda_<component>//BUILD` for a deliverable
         if len(components) != 1:
             fail("one deliverable at a time")
         fragments.append(Label("//cuda/private:templates/BUILD.{}".format(components.keys()[0])))
@@ -33,7 +33,7 @@ def _generate_build_impl(repository_ctx, libpath, components, is_local_cuda, is_
         template_content.append("# Generated from fragment " + str(frag))
         template_content.append(repository_ctx.read(frag))
 
-    if is_local_cuda and is_deliverable:  # generate `@cuda_toolkit//BUILD` for CTK with deliverables
+    if is_cuda_repo and is_deliverable:  # generate `@cuda_toolkit//BUILD` for CTK with deliverables
         for comp in components:
             for target in REGISTRY[comp]:
                 repo = components_mapping_compat.repo_str(components[comp])
@@ -49,29 +49,29 @@ def _generate_build_impl(repository_ctx, libpath, components, is_local_cuda, is_
     repository_ctx.file(template_path, content = template_content, executable = False)
 
     substitutions = {
-        "%{component_name}": "cuda" if is_local_cuda else components.keys()[0],
+        "%{component_name}": "cuda" if is_cuda_repo else components.keys()[0],
         "%{libpath}": libpath,
     }
     repository_ctx.template("BUILD", template_path, substitutions = substitutions, executable = False)
 
-def _generate_build(repository_ctx, libpath, components = None, is_local_cuda = True, is_deliverable = False):
+def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = True, is_deliverable = False):
     """Generate `@cuda_toolkit//BUILD` or `@cuda_<component>//BUILD`
 
     Notes:
-        - is_local_cuda==False and is_deliverable==False is an error
-        - is_local_cuda==True  and is_deliverable==False generate `@cuda_toolkit//BUILD` for local host CTK
-        - is_local_cuda==True  and is_deliverable==True  generate `@cuda_toolkit//BUILD` for CTK with deliverables
-        - is_local_cuda==False and is_deliverable==True  generate `@cuda_<component>//BUILD` for a deliverable
+        - is_cuda_repo==False and is_deliverable==False is an error
+        - is_cuda_repo==True  and is_deliverable==False generate `@cuda_toolkit//BUILD` for local host CTK
+        - is_cuda_repo==True  and is_deliverable==True  generate `@cuda_toolkit//BUILD` for CTK with deliverables
+        - is_cuda_repo==False and is_deliverable==True  generate `@cuda_<component>//BUILD` for a deliverable
 
     Args:
         repository_ctx: repository_ctx
         libpath: substitution of %{libpath}
         components: dict[str, str], the components of CTK to be included, mappeed to the repo names for the components
-        is_local_cuda: See Notes, True for @cuda_toolkit generation, False for @cuda_<component> generation.
+        is_cuda_repo: See Notes, True for @cuda_toolkit generation, False for @cuda_<component> generation.
         is_deliverable: See Notes
     """
 
-    if is_local_cuda and not is_deliverable:
+    if is_cuda_repo and not is_deliverable:
         if components == None:
             components = [c for c in REGISTRY if len(REGISTRY[c]) > 0]
         else:
@@ -79,7 +79,7 @@ def _generate_build(repository_ctx, libpath, components = None, is_local_cuda = 
                 if c not in REGISTRY:
                     fail("{} is not a valid component")
 
-    _generate_build_impl(repository_ctx, libpath, components, is_local_cuda, is_deliverable)
+    _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable)
 
 def _generate_defs_bzl(repository_ctx, is_local_ctk):
     tpl_label = Label("//cuda/private:templates/defs.bzl.tpl")
