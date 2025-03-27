@@ -1,8 +1,8 @@
 ## Template files
 
-- `BUILD.cuda_shared`: For `cuda_toolkit` repo (CTK + toolchain) or `cuda_%{component_name}`
-- `BUILD.cuda_headers`: For `cuda_toolkit` repo (CTK + toolchain) or `cuda_%{component_name}` headers
-- `BUILD.cuda_build_setting`: For `cuda_toolkit` repo (CTK + toolchain) build_setting
+- `BUILD.cuda_shared`: For `cuda` repo (CTK + toolchain) or `cuda_%{component_name}`
+- `BUILD.cuda_headers`: For `cuda` repo (CTK + toolchain) or `cuda_%{component_name}` headers
+- `BUILD.cuda_build_setting`: For `cuda` repo (CTK + toolchain) build_setting
 - `BUILD.cuda_disabled`: For creating a dummy local configuration.
 - `BUILD.toolchain_disabled`: For creating a dummy local toolchain.
 - `BUILD.toolchain_clang`: For Clang device compilation toolchain.
@@ -12,7 +12,7 @@
 
 ## Repository organization
 
-We organize the generated repo as follows, for both `cuda_toolkit` and `cuda_<component_repo_name>`
+We organize the generated repo as follows, for both `cuda` and `cuda_<component_repo_name>`
 
 ```
 <repo_root>              # bazel unconditionally creates a directory for us
@@ -24,7 +24,7 @@ We organize the generated repo as follows, for both `cuda_toolkit` and `cuda_<co
 └── WORKSPACE            # generated
 ```
 
-If the repo is `cuda_toolkit`, we additionally generate toolchain config as follows
+If the repo is `cuda`, we additionally generate toolchain config as follows
 
 ```
 <repo_root>
@@ -36,7 +36,7 @@ If the repo is `cuda_toolkit`, we additionally generate toolchain config as foll
         └── BUILD        #
 ```
 
-## How are component repositories and `@cuda_toolkit` connected?
+## How are component repositories and `@cuda` connected?
 
 The `registry.bzl` file holds mappings from our (`rules_cuda`) components name to various things.
 
@@ -46,7 +46,7 @@ The registry serve the following purpose:
 
    This is purely for looking up the json files.
 
-2. maps our component names to target names to be exposed under `@cuda_toolkit` repo.
+2. maps our component names to target names to be exposed under `@cuda` repo.
 
    To expose those targets, we use a `components_mapping` attr from our component names to labels of component
    repository (for example, `@cuda_nvcc`) as follows
@@ -65,7 +65,7 @@ cuda_component(
 )
 
 cuda_toolkit(
-    name = "cuda_toolkit",
+    name = "cuda",
     components_mapping = {"cudart": "@cuda_cudart_v12.6.77"},
     ...
 )
@@ -73,9 +73,9 @@ cuda_toolkit(
 
 This basically means the component `cudart` has `cuda`, `cuda_runtime` and `cuda_runtime_static` targets defined.
 
-- In locally installed CTK, we setup the targets in `@cuda_toolkit` directly.
+- In locally installed CTK, we setup the targets in `@cuda` directly.
 - In a deliverable CTK, we setup the targets in `@cuda_cudart_v12.6.77` repo. And alias all targets to
-  `@cuda_toolkit` as follows
+  `@cuda` as follows
 
 ```starlark
 alias(name = "cuda", actual = "@cuda_cudart_v12.6.77//:cuda")

@@ -3,7 +3,7 @@ load("@rules_cuda//cuda:defs.bzl", "cuda_library", "requires_cuda")
 cc_library(
     name = "use_library",
     tags = ["manual"],
-    deps = ["@cuda_toolkit//:cuda_runtime"],
+    deps = ["@cuda//:cuda_runtime"],
 )
 
 cuda_library(

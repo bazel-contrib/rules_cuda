@@ -9,15 +9,15 @@ bazel_dep(name = "platforms", version = "0.0.6")
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
 cuda.toolkit(
-    name = "cuda_toolkit",
+    name = "cuda",
     toolkit_path = "",
 )
-use_repo(cuda, "cuda_toolkit")
+use_repo(cuda, "cuda")
 
 register_toolchains(
-    "@cuda_toolkit//toolchain:nvcc-local-toolchain",
-    "@cuda_toolkit//toolchain/clang:clang-local-toolchain",
-    "@cuda_toolkit//toolchain/disabled:disabled-local-toolchain",
+    "@cuda//toolchain:nvcc-local-toolchain",
+    "@cuda//toolchain/clang:clang-local-toolchain",
+    "@cuda//toolchain/disabled:disabled-local-toolchain",
 )
 
 bazel_dep(name = "rules_cuda_examples", dev_dependency = True)

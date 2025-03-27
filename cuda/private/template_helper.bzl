@@ -17,9 +17,9 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
         Label("//cuda/private:templates/BUILD.cuda_headers"),
         Label("//cuda/private:templates/BUILD.cuda_build_setting"),
     ]
-    if is_cuda_repo and not is_deliverable:  # generate `@cuda_toolkit//BUILD` for local host CTK
+    if is_cuda_repo and not is_deliverable:  # generate `@cuda//BUILD` for local host CTK
         fragments.extend([Label("//cuda/private:templates/BUILD.{}".format(c)) for c in components])
-    elif is_cuda_repo and is_deliverable:  # generate `@cuda_toolkit//BUILD` for CTK with deliverables
+    elif is_cuda_repo and is_deliverable:  # generate `@cuda//BUILD` for CTK with deliverables
         pass
     elif not is_cuda_repo and is_deliverable:  # generate `@cuda_<component>//BUILD` for a deliverable
         if len(components) != 1:
@@ -33,7 +33,7 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
         template_content.append("# Generated from fragment " + str(frag))
         template_content.append(repository_ctx.read(frag))
 
-    if is_cuda_repo and is_deliverable:  # generate `@cuda_toolkit//BUILD` for CTK with deliverables
+    if is_cuda_repo and is_deliverable:  # generate `@cuda//BUILD` for CTK with deliverables
         for comp in components:
             for target in REGISTRY[comp]:
                 repo = components_mapping_compat.repo_str(components[comp])
@@ -55,19 +55,19 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
     repository_ctx.template("BUILD", template_path, substitutions = substitutions, executable = False)
 
 def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = True, is_deliverable = False):
-    """Generate `@cuda_toolkit//BUILD` or `@cuda_<component>//BUILD`
+    """Generate `@cuda//BUILD` or `@cuda_<component>//BUILD`
 
     Notes:
         - is_cuda_repo==False and is_deliverable==False is an error
-        - is_cuda_repo==True  and is_deliverable==False generate `@cuda_toolkit//BUILD` for local host CTK
-        - is_cuda_repo==True  and is_deliverable==True  generate `@cuda_toolkit//BUILD` for CTK with deliverables
+        - is_cuda_repo==True  and is_deliverable==False generate `@cuda//BUILD` for local host CTK
+        - is_cuda_repo==True  and is_deliverable==True  generate `@cuda//BUILD` for CTK with deliverables
         - is_cuda_repo==False and is_deliverable==True  generate `@cuda_<component>//BUILD` for a deliverable
 
     Args:
         repository_ctx: repository_ctx
         libpath: substitution of %{libpath}
         components: dict[str, str], the components of CTK to be included, mappeed to the repo names for the components
-        is_cuda_repo: See Notes, True for @cuda_toolkit generation, False for @cuda_<component> generation.
+        is_cuda_repo: See Notes, True for @cuda generation, False for @cuda_<component> generation.
         is_deliverable: See Notes
     """
 

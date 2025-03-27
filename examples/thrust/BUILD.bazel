@@ -5,7 +5,7 @@ load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 cuda_library(
     name = "thrust_cu",
     srcs = ["thrust.cu"],
-    deps = ["@cuda_toolkit//:thrust"],
+    deps = ["@cuda//:thrust"],
 )
 
 # Run with 'bazel run //examples/thrust:main'

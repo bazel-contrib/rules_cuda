@@ -49,10 +49,10 @@ archive_override(
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
 cuda.toolkit(
-    name = "cuda_toolkit",
+    name = "cuda",
     toolkit_path = "",
 )
-use_repo(cuda, "cuda_toolkit")
+use_repo(cuda, "cuda")
 ```
 
 ### Rules
@@ -109,7 +109,7 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
 - `@rules_cuda//cuda:runtime`
 
-  Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@cuda_toolkit//:cuda_runtime_static` link the static cuda runtime.
+  Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static` link the static cuda runtime.
 
 - `--features=cuda_device_debug`
 

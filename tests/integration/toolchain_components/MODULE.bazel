@@ -29,7 +29,7 @@ cuda.component(
     urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.6.85-archive.tar.xz"],
 )
 cuda.toolkit(
-    name = "cuda_toolkit",
+    name = "cuda",
     components_mapping = {
         "cccl": "@cuda_cccl",
         "cudart": "@cuda_cudart",
@@ -39,7 +39,7 @@ cuda.toolkit(
 )
 use_repo(
     cuda,
-    "cuda_toolkit",
+    "cuda",
     "cuda_cccl",
     "cuda_cudart",
     "cuda_nvcc",

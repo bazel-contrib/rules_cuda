@@ -60,7 +60,7 @@ cuda_redist_json_tag = tag_class(attrs = {
 })
 
 cuda_toolkit_tag = tag_class(attrs = {
-    "name": attr.string(mandatory = True, doc = "Name for the toolchain repository", default = "cuda_toolkit"),
+    "name": attr.string(mandatory = True, doc = "Name for the toolchain repository", default = "cuda"),
     "toolkit_path": attr.string(
         doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
     ),

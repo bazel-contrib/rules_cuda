@@ -1,4 +1,4 @@
-# This becomes the BUILD file for @cuda_toolkit//toolchain/ under Linux.
+# This becomes the BUILD file for @cuda//toolchain/ under Linux.
 
 load(
     "@rules_cuda//cuda:defs.bzl",
@@ -28,7 +28,7 @@ cuda_toolchain_config(
 
 cuda_toolchain(
     name = "nvcc-local",
-    compiler_files = "@cuda_toolkit//:compiler_deps",
+    compiler_files = "@cuda//:compiler_deps",
     compiler_label = "%{nvcc_label}",
     toolchain_config = ":nvcc-local-config",
 )

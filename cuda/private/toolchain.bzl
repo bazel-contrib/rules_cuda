@@ -87,7 +87,7 @@ def register_detected_cuda_toolchains():
 User can setup their own toolchain if needed and ignore the detected ones by not calling this macro.
 """
     native.register_toolchains(
-        "@cuda_toolkit//toolchain:nvcc-local-toolchain",
-        "@cuda_toolkit//toolchain/clang:clang-local-toolchain",
-        "@cuda_toolkit//toolchain/disabled:disabled-local-toolchain",
+        "@cuda//toolchain:nvcc-local-toolchain",
+        "@cuda//toolchain/clang:clang-local-toolchain",
+        "@cuda//toolchain/disabled:disabled-local-toolchain",
     )
