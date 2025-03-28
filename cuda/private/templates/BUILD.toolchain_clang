@@ -1,13 +1,13 @@
-# This becomes the BUILD file for @local_cuda//toolchain/clang if LLVM is detected
+# This becomes the BUILD file for @cuda//toolchain/clang if LLVM is detected
 
 load(
     "@rules_cuda//cuda:defs.bzl",
     "cuda_toolchain",
-    "cuda_toolkit",
+    "cuda_toolkit_info",
     cuda_toolchain_config = "cuda_toolchain_config_clang",
 )
 
-cuda_toolkit(
+cuda_toolkit_info(
     name = "cuda-toolkit",
     bin2c = "%{bin2c_label}",
     fatbinary = "%{fatbinary_label}",
@@ -26,7 +26,7 @@ cuda_toolchain_config(
 cuda_toolchain(
     name = "clang-local",
     compiler_executable = "%{clang_path}",
-    compiler_files = "@local_cuda//:compiler_deps",
+    compiler_files = "@cuda//:compiler_deps",
     toolchain_config = ":clang-local-config",
 )
 
