@@ -443,7 +443,7 @@ def rules_cuda_dependencies():
     )
 
 def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, version = None, nvcc_version = None, register_toolchains = False):
-    """Populate the cuda_toolkit repo.
+    """Populate the @cuda repo.
 
     Args:
         toolkit_path: Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.
