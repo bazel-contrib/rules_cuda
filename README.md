@@ -37,7 +37,7 @@ determains how the toolchains are detected.
 Add the following to your `MODULE.bazel` file and replace the placeholders with actual values.
 
 ```starlark
-bazel_dep(name = "rules_cuda", version = "0.2.1")
+bazel_dep(name = "rules_cuda", version = "0.2.4")
 
 # pick a specific version (this is optional an can be skipped)
 archive_override(
@@ -47,7 +47,7 @@ archive_override(
     strip_prefix = "rules_cuda-{git_commit_hash}",
 )
 
-cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolkit")
 cuda.toolkit(
     name = "local_cuda",
     toolkit_path = "",
