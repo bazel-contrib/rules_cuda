@@ -1,13 +1,13 @@
-# This becomes the BUILD file for @local_cuda//toolchain/ under Windows.
+# This becomes the BUILD file for @cuda//toolchain/ under Linux.
 
 load(
     "@rules_cuda//cuda:defs.bzl",
     "cuda_toolchain",
-    "cuda_toolkit",
-    cuda_toolchain_config = "cuda_toolchain_config_nvcc_msvc",
+    "cuda_toolkit_info",
+    cuda_toolchain_config = "cuda_toolchain_config_nvcc",
 )
 
-cuda_toolkit(
+cuda_toolkit_info(
     name = "cuda-toolkit",
     bin2c = "%{bin2c_label}",
     fatbinary = "%{fatbinary_label}",
@@ -20,7 +20,6 @@ cuda_toolkit(
 cuda_toolchain_config(
     name = "nvcc-local-config",
     cuda_toolkit = ":cuda-toolkit",
-    msvc_env_tmp = "%{env_tmp}",
     # int("%{foo}") instead of %{foo} to make the file valid syntactically.
     nvcc_version_major = int("%{nvcc_version_major}"),
     nvcc_version_minor = int("%{nvcc_version_minor}"),
@@ -29,6 +28,7 @@ cuda_toolchain_config(
 
 cuda_toolchain(
     name = "nvcc-local",
+    compiler_files = "@cuda//:compiler_deps",
     compiler_label = "%{nvcc_label}",
     toolchain_config = ":nvcc-local-config",
 )
@@ -36,12 +36,10 @@ cuda_toolchain(
 toolchain(
     name = "nvcc-local-toolchain",
     exec_compatible_with = [
-        "@platforms//os:windows",
-        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
     ],
     target_compatible_with = [
-        "@platforms//os:windows",
-        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
     ],
     target_settings = [
         "@rules_cuda//cuda:is_enabled",

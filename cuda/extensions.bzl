@@ -1,7 +1,7 @@
 """Entry point for extensions used by bzlmod."""
 
 load("//cuda/private:compat.bzl", "components_mapping_compat")
-load("//cuda/private:repositories.bzl", "cuda_component", "cuda_redist_json", "local_cuda")
+load("//cuda/private:repositories.bzl", "cuda_component", "cuda_redist_json", "cuda_toolkit")
 
 cuda_component_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
@@ -60,7 +60,7 @@ cuda_redist_json_tag = tag_class(attrs = {
 })
 
 cuda_toolkit_tag = tag_class(attrs = {
-    "name": attr.string(mandatory = True, doc = "Name for the toolchain repository", default = "local_cuda"),
+    "name": attr.string(mandatory = True, doc = "Name for the toolchain repository", default = "cuda"),
     "toolkit_path": attr.string(
         doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
     ),
@@ -123,7 +123,7 @@ def _impl(module_ctx):
         else:
             registrations[toolkit.name] = toolkit
     for _, toolkit in registrations.items():
-        local_cuda(**_module_tag_to_dict(toolkit))
+        cuda_toolkit(**_module_tag_to_dict(toolkit))
 
 toolchain = module_extension(
     implementation = _impl,

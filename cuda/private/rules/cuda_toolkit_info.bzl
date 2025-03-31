@@ -12,7 +12,7 @@ def _impl(ctx):
         fatbinary = ctx.file.fatbinary,
     )
 
-cuda_toolkit = rule(
+cuda_toolkit_info = rule(
     doc = """This rule provides CudaToolkitInfo.""",
     implementation = _impl,
     attrs = {

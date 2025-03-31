@@ -35,7 +35,7 @@ config_setting(
 
 config_setting(
     name = "is_valid_toolchain_found",
-    flag_values = {"@local_cuda//:valid_toolchain_found": "True"},
+    flag_values = {"@cuda//:valid_toolchain_found": "True"},
 )
 
 # Command line flag to specify the list of CUDA architectures to compile for.
@@ -86,10 +86,10 @@ repeatable_string_flag(
 #
 # This target is implicitly added as a dependency to cuda_library() targets.
 #
-# Example usage: --@rules_cuda//cuda:runtime=@local_cuda//:cuda_runtime_static
+# Example usage: --@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static
 label_flag(
     name = "runtime",
-    build_setting_default = "@local_cuda//:cuda_runtime",
+    build_setting_default = "@cuda//:cuda_runtime",
 )
 
 constraint_setting(name = "rules_are_enabled_setting")
