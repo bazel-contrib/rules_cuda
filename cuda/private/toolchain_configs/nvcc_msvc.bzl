@@ -287,6 +287,60 @@ def _impl(ctx):
         ],
     )
 
+    cuda_host_use_copts_feature = feature(
+        name = "cuda_host_use_copts",
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-Xcompiler", "%{cpp_copts}"],
+                        iterate_over = "cpp_copts",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    cuda_host_use_cxxopts_feature = feature(
+        name = "cuda_host_use_cxxopts",
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-Xcompiler", "%{cpp_cxxopts}"],
+                        iterate_over = "cpp_cxxopts",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    cuda_host_use_linkopts_feature = feature(
+        name = "cuda_host_use_linkopts",
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-Xlinker", "%{cpp_linkopts}"],
+                        iterate_over = "cpp_linkopts",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     compiler_input_flags_feature = feature(
         name = "compiler_input_flags",
         flag_sets = [
@@ -578,6 +632,9 @@ def _impl(ctx):
         host_defines_feature,
         compile_flags_feature,
         host_compile_flags_feature,
+        cuda_host_use_copts_feature,
+        cuda_host_use_cxxopts_feature,
+        cuda_host_use_linkopts_feature,
         generate_pdb_file_feature,
         frame_pointer_feature,
         static_link_msvcrt_debug_feature,
