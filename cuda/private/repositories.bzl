@@ -216,7 +216,7 @@ def detect_clang(repository_ctx):
     clang_path_or_label = None
     if clang_path == None and clang_label != None:
         clang_path_or_label = clang_label
-    
+
     if clang_path == None:
         bazel_llvm = repository_ctx.os.environ.get("BAZEL_LLVM", None)
         if bazel_llvm != None and repository_ctx.path(bazel_llvm + "/bin/clang" + bin_ext).exists:
@@ -226,7 +226,6 @@ def detect_clang(repository_ctx):
 
     if clang_path_or_label != None and not repository_ctx.path(clang_path).exists:
         clang_path_or_label = None
-    
 
     return clang_path
 

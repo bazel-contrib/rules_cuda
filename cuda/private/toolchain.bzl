@@ -1,4 +1,4 @@
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
 
@@ -21,7 +21,8 @@ def _cuda_toolchain_impl(ctx):
             compiler_executable = cc_toolchain.compiler_executable
         else:
             fail("compiler_use_cc_toolchain set to True but cannot find a configured cc_toolchain")
-    # Next, check for compiler_executable or compiler_label
+
+        # Next, check for compiler_executable or compiler_label
     elif has_compiler_executable:
         compiler_executable = ctx.attr.compiler_executable
     elif has_compiler_label:
