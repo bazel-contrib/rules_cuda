@@ -7,17 +7,26 @@ def _cuda_toolchain_impl(ctx):
     has_cc_toolchain = cc_toolchain != None
     has_compiler_executable = ctx.attr.compiler_executable != None and ctx.attr.compiler_executable != ""
     has_compiler_label = ctx.attr.compiler_label == None
-    if (has_compiler_executable and not has_compiler_label) or (not has_compiler_executable and has_compiler_label) or (not has_cc_toolchain):
-        fail("Either compiler_executable or compiler_label must be specified or a valid cc_toolchain must be registered.")
 
-    if has_compiler_executable:
+    # Validation
+    # compiler_use_cc_toolchain should be used alone and not along with compiler_executable or compiler_label
+    if (ctx.attr.compiler_use_cc_toolchain == True) and (has_compiler_executable or has_compiler_label):
+        fail("compiler_use_cc_toolchain set to True but compiler_executable or compiler_label also set.")
+    elif (not has_compiler_executable) or (not has_compiler_label):
+        fail("Either compiler_executable or compiler_label must be specified or if a valid cc_toolchain is registered, set attr compiler_use_cc_toolchain to True.")
+
+    # First, attempt to use configured cc_toolchain if attr compiler_use_cc_toolchain set.
+    if (ctx.attr.compiler_use_cc_toolchain == True):
+        if has_cc_toolchain:
+            compiler_executable = cc_toolchain.compiler_executable
+        else:
+            fail("compiler_use_cc_toolchain set to True but cannot find a configured cc_toolchain")
+    # Next, check for compiler_executable or compiler_label
+    elif has_compiler_executable:
         compiler_executable = ctx.attr.compiler_executable
     elif has_compiler_label:
         l = ctx.attr.compiler_label.label
         compiler_executable = "{}/{}/{}".format(l.workspace_root, l.package, l.name)
-
-    if (ctx.attr.compiler_executable == "cuda-clang-not-found" or ctx.attr.compiler_executable.startswith("/")) and has_cc_toolchain:
-        compiler_executable = cc_toolchain.compiler_executable
 
     cuda_toolchain_config = ctx.attr.toolchain_config[CudaToolchainConfigInfo]
     selectables_info = config_helper.collect_selectables_info(cuda_toolchain_config.action_configs + cuda_toolchain_config.features)
@@ -50,7 +59,8 @@ cuda_toolchain = rule(
             providers = [CudaToolchainConfigInfo],
             doc = "A target that provides a `CudaToolchainConfigInfo`.",
         ),
-        "compiler_executable": attr.string(doc = "The path of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified."),
+        "compiler_use_cc_toolchain": attr.bool(default = False, doc = "Use existing cc_toolchain if configured as the compiler executable. Overrides compiler_executable or compiler_label"),
+        "compiler_executable": attr.string(doc = "The path of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified if compiler_use_cc_toolchain is not set."),
         "compiler_label": attr.label(allow_single_file = True, executable = True, cfg = "exec", doc = "The label of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified."),
         "compiler_files": attr.label(allow_files = True, cfg = "exec", doc = "The set of files that are needed when compiling using this toolchain."),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
