@@ -224,7 +224,7 @@ def detect_clang(repository_ctx):
     if clang_path_or_label == None:
         clang_path_or_label = str(repository_ctx.which("clang"))
 
-    if clang_path_or_label != None and not repository_ctx.path(clang_path).exists:
+    if clang_path_or_label != None and (not clang_path or not repository_ctx.path(clang_path).exists):
         clang_path_or_label = None
 
     return clang_path
