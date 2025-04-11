@@ -214,20 +214,23 @@ def detect_clang(repository_ctx):
     clang_path = repository_ctx.os.environ.get("CUDA_CLANG_PATH", None)
     clang_label = repository_ctx.os.environ.get("CUDA_CLANG_LABEL", None)
     clang_path_or_label = None
-    if clang_path == None and clang_label != None:
+    
+    # Check CUDA_CLANG_LABEL first
+    if clang_label != None:
         clang_path_or_label = clang_label
-
-    if clang_path == None:
+    # Check CUDA_CLANG_PATH next
+    elif clang_path != None and repository_ctx.path(clang_path).exists:
+        clang_path_or_label = clang_path
+    # Check BAZEL_LLVM
+    else:
         bazel_llvm = repository_ctx.os.environ.get("BAZEL_LLVM", None)
         if bazel_llvm != None and repository_ctx.path(bazel_llvm + "/bin/clang" + bin_ext).exists:
             clang_path_or_label = bazel_llvm + "/bin/clang" + bin_ext
-    if clang_path_or_label == None:
-        clang_path_or_label = str(repository_ctx.which("clang"))
-
-    if clang_path_or_label != None and (not clang_path or not repository_ctx.path(clang_path).exists):
-        clang_path_or_label = None
-
-    return clang_path
+        # Finally try 'which clang'
+        elif repository_ctx.which("clang") != None:
+            clang_path_or_label = str(repository_ctx.which("clang"))
+    
+    return clang_path_or_label
 
 def config_clang(repository_ctx, cuda, clang_path_or_label):
     """Generate `@cuda//toolchain/clang/BUILD`
