@@ -159,17 +159,30 @@ def _generate_toolchain_build(repository_ctx, cuda):
 
 def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     tpl_label = Label("//cuda/private:templates/BUILD.toolchain_clang")
-    clang_path = ""
-    clang_label = ""
+    compiler_attr_line = ""
+    clang_path_for_subst = ""
+    clang_label_for_subst = ""
+
     if clang_path_or_label.startswith("//") or clang_path_or_label.startswith("@"):
-        clang_label = clang_path_or_label
+        # Use compiler_label
+        compiler_attr_line = 'compiler_label = "%{{clang_label}}",'  # Note the double braces {{}} to escape for format
+        clang_label_for_subst = clang_path_or_label
     else:
-        clang_label = ""
-        clang_path = _to_forward_slash(clang_path_or_label) if clang_path_or_label else "cuda-clang-path-not-found"
+        # Use compiler_executable
+        compiler_attr_line = 'compiler_executable = "%{{clang_path}}",'  # Note the double braces {{}}
+        clang_path_for_subst = _to_forward_slash(clang_path_or_label) if clang_path_or_label else "cuda-clang-path-not-found"
+
+    # Use .format() first to insert the correct placeholder name into the line
+    # This makes the substitutions dictionary simpler later.
+    compiler_attr_line = compiler_attr_line.format(
+        clang_label = "%{clang_label}",
+        clang_path = "%{clang_path}",
+    )
 
     substitutions = {
-        "%{clang_path}": clang_path,
-        "%{clang_label}": clang_label,
+        "# %{compiler_attribute_line}": compiler_attr_line,
+        "%{clang_path}": clang_path_for_subst,  # Will be empty if label is used
+        "%{clang_label}": clang_label_for_subst,  # Will be empty if path is used
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_label}": cuda.nvcc_label,
@@ -178,7 +191,19 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
     }
-    repository_ctx.template("toolchain/clang/BUILD", tpl_label, substitutions = substitutions, executable = False)
+
+    # Now remove the unused specific placeholder IF it's not needed by compiler_attribute_line
+    if clang_label_for_subst:  # We used compiler_label
+        substitutions.pop("%{clang_path}")
+    if clang_path_for_subst:  # We used compiler_executable
+        substitutions.pop("%{clang_label}")
+
+    repository_ctx.template(
+        "toolchain/clang/BUILD",
+        tpl_label,
+        substitutions = substitutions,
+        executable = False,
+    )
 
 template_helper = struct(
     generate_build = _generate_build,
