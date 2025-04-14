@@ -1,4 +1,4 @@
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
 
@@ -70,6 +70,7 @@ def _cuda_toolchain_impl(ctx):
 cuda_toolchain = rule(
     doc = """This rule consumes a `CudaToolchainConfigInfo` and provides a `platform_common.ToolchainInfo`, a.k.a, the CUDA Toolchain.""",
     implementation = _cuda_toolchain_impl,
+    toolchains = use_cpp_toolchain(),
     attrs = {
         "toolchain_config": attr.label(
             mandatory = True,
@@ -80,7 +81,7 @@ cuda_toolchain = rule(
         "compiler_executable": attr.string(doc = "The path of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified if compiler_use_cc_toolchain is not set."),
         "compiler_label": attr.label(allow_single_file = True, executable = True, cfg = "exec", doc = "The label of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified."),
         "compiler_files": attr.label(allow_files = True, cfg = "exec", doc = "The set of files that are needed when compiling using this toolchain."),
-        "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),
+        "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
     },
 )
 
