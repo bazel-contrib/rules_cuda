@@ -161,7 +161,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     tpl_label = Label("//cuda/private:templates/BUILD.toolchain_clang")
     clang_path = ""
     clang_label = ""
-    if clang_path_or_label.startswith("//") or not clang_path_or_label.startswith("@"):
+    if clang_path_or_label.startswith("//") or clang_path_or_label.startswith("@"):
         clang_label = clang_path_or_label
     else:
         clang_label = ""
