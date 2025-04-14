@@ -159,15 +159,17 @@ def _generate_toolchain_build(repository_ctx, cuda):
 
 def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     tpl_label = Label("//cuda/private:templates/BUILD.toolchain_clang")
-
-    if clang_path_or_label.startswith("//") or clang_path_or_label.startswith("@"):
-        compiler_executable_or_label = "compiler_label"
+    clang_path = ""
+    clang_label = ""
+    if clang_path_or_label.startswith("//") or not clang_path_or_label.startswith("@"):
+        clang_label = clang_path_or_label
     else:
-        clang_path_or_label = _to_forward_slash(clang_path_or_label) if clang_path_or_label else "cuda-clang-path-not-found"
-        compiler_executable_or_label = "compiler_executable"
+        clang_label = ""
+        clang_path = _to_forward_slash(clang_path_or_label) if clang_path_or_label else "cuda-clang-path-not-found"
+
     substitutions = {
-        "%{compiler_executable_or_label}": compiler_executable_or_label,
-        "%{clang_path_or_label}": clang_path_or_label,
+        "%{clang_path}": clang_path,
+        "%{clang_label}": clang_label,
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_label}": cuda.nvcc_label,
