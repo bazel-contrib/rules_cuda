@@ -6,7 +6,7 @@ def _cuda_toolchain_impl(ctx):
     cc_toolchain = find_cpp_toolchain(ctx)
     has_cc_toolchain = cc_toolchain != None
     has_compiler_executable = ctx.attr.compiler_executable != None and ctx.attr.compiler_executable != ""
-    has_compiler_label = ctx.attr.compiler_label == None
+    has_compiler_label = ctx.attr.compiler_label != None
 
     # Validation
     # compiler_use_cc_toolchain should be used alone and not along with compiler_executable or compiler_label
@@ -40,11 +40,27 @@ def _cuda_toolchain_impl(ctx):
     for pattern in cuda_toolchain_config.artifact_name_patterns:
         artifact_name_patterns[pattern.category_name] = pattern
 
+    compiler_depset = depset()
+    if ctx.attr.compiler_use_cc_toolchain:
+        compiler_depset = cc_toolchain.all_files
+    elif has_compiler_executable:
+        pass
+    elif has_compiler_label:
+        compiler_target_info = ctx.attr.compiler_label[DefaultInfo]
+        if not compiler_target_info.files_to_run or not compiler_target_info.files_to_run.executable:
+            fail("Not an executable")
+        compiler_depset = depset(direct = [compiler_target_info.files_to_run.executable], transitive = [compiler_target_info.default_runfiles.files])
+
+    toolchain_files = depset(transitive = [
+        compiler_depset,
+        ctx.attr.compiler_files.files if ctx.attr.compiler_files else depset(),
+    ])
+
     return [
         platform_common.ToolchainInfo(
             name = ctx.label.name,
             compiler_executable = compiler_executable,
-            all_files = ctx.attr.compiler_files.files if ctx.attr.compiler_files else depset(),
+            all_files = toolchain_files,
             selectables_info = selectables_info,
             artifact_name_patterns = artifact_name_patterns,
             cuda_toolkit = cuda_toolchain_config.cuda_toolkit,
