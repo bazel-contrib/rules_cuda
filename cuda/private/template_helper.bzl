@@ -192,10 +192,9 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{fatbinary_label}": cuda.fatbinary_label,
     }
 
-    # Now remove the unused specific placeholder IF it's not needed by compiler_attribute_line
-    if clang_label_for_subst:  # We used compiler_label
+    if clang_label_for_subst:
         substitutions.pop("%{clang_path}")
-    if clang_path_for_subst:  # We used compiler_executable
+    if clang_path_for_subst:
         substitutions.pop("%{clang_label}")
 
     repository_ctx.template(
