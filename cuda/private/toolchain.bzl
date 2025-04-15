@@ -12,7 +12,7 @@ def _cuda_toolchain_impl(ctx):
     # compiler_use_cc_toolchain should be used alone and not along with compiler_executable or compiler_label
     if (ctx.attr.compiler_use_cc_toolchain == True) and (has_compiler_executable or has_compiler_label):
         fail("compiler_use_cc_toolchain set to True but compiler_executable or compiler_label also set.")
-    elif (not has_compiler_executable) and (not has_compiler_label):
+    elif (ctx.attr.compiler_use_cc_toolchain == False) and not has_compiler_executable and not has_compiler_label:
         fail("Either compiler_executable or compiler_label must be specified or if a valid cc_toolchain is registered, set attr compiler_use_cc_toolchain to True.")
 
     # First, attempt to use configured cc_toolchain if attr compiler_use_cc_toolchain set.

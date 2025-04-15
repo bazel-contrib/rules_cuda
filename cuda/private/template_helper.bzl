@@ -163,7 +163,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     clang_path_for_subst = ""
     clang_label_for_subst = ""
 
-    compiler_use_cc_toolchain_env = repository_ctx.getenv("CUDA_COMPILER_USE_CC_TOOLCHAIN", "false")
+    compiler_use_cc_toolchain_env = repository_ctx.os.environ.get("CUDA_COMPILER_USE_CC_TOOLCHAIN", "false")
     if compiler_use_cc_toolchain_env == "true":
         compiler_attr_line = "compiler_use_cc_toolchain = True,"
     elif clang_path_or_label.startswith("//") or clang_path_or_label.startswith("@"):
