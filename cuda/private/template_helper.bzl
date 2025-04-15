@@ -163,17 +163,18 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     clang_path_for_subst = ""
     clang_label_for_subst = ""
 
-    if clang_path_or_label.startswith("//") or clang_path_or_label.startswith("@"):
+    compiler_use_cc_toolchain_env = repository_ctx.getenv("CUDA_COMPILER_USE_CC_TOOLCHAIN", "false")
+    if compiler_use_cc_toolchain_env == "true":
+        compiler_attr_line = "compiler_use_cc_toolchain = True,"
+    elif clang_path_or_label.startswith("//") or clang_path_or_label.startswith("@"):
         # Use compiler_label
-        compiler_attr_line = 'compiler_label = "%{{clang_label}}",'  # Note the double braces {{}} to escape for format
+        compiler_attr_line = 'compiler_label = "%{{clang_label}}",'
         clang_label_for_subst = clang_path_or_label
     else:
         # Use compiler_executable
-        compiler_attr_line = 'compiler_executable = "%{{clang_path}}",'  # Note the double braces {{}}
+        compiler_attr_line = 'compiler_executable = "%{{clang_path}}",'
         clang_path_for_subst = _to_forward_slash(clang_path_or_label) if clang_path_or_label else "cuda-clang-path-not-found"
 
-    # Use .format() first to insert the correct placeholder name into the line
-    # This makes the substitutions dictionary simpler later.
     compiler_attr_line = compiler_attr_line.format(
         clang_label = "%{clang_label}",
         clang_path = "%{clang_path}",

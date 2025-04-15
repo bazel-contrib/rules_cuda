@@ -198,6 +198,7 @@ def detect_clang(repository_ctx):
 
     The path to clang is determined by:
 
+      - taken from configured cc_toolchain if `CUDA_COMPILER_USE_CC_TOOLCHAIN` = "true"
       - taken from `CUDA_CLANG_LABEL` environment variable
       - taken from `CUDA_CLANG_PATH` environment variable
       - taken from `BAZEL_LLVM` environment variable as `$BAZEL_LLVM/bin/clang` or
@@ -211,6 +212,7 @@ def detect_clang(repository_ctx):
         clang_path_or_label (str | None): Optionally return a string of path or label to clang executable if detected.
     """
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
+
     clang_path = repository_ctx.os.environ.get("CUDA_CLANG_PATH", None)
     clang_label = repository_ctx.os.environ.get("CUDA_CLANG_LABEL", None)
     clang_path_or_label = None
@@ -251,8 +253,8 @@ def _cuda_toolkit_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
     config_cuda_toolkit_and_nvcc(repository_ctx, cuda)
 
-    clang_path = detect_clang(repository_ctx)
-    config_clang(repository_ctx, cuda, clang_path)
+    clang_path_or_label = detect_clang(repository_ctx)
+    config_clang(repository_ctx, cuda, clang_path_or_label)
 
     config_disabled(repository_ctx)
 
@@ -271,7 +273,7 @@ cuda_toolkit = repository_rule(
     },
     configure = True,
     local = True,
-    environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "BAZEL_LLVM"],
+    environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "CUDA_CLANG_LABEL", "BAZEL_LLVM", "CUDA_COMPILER_USE_CC_TOOLCHAIN"],
     # remotable = True,
 )
 

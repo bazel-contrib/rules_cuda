@@ -21,8 +21,6 @@ def _cuda_toolchain_impl(ctx):
             compiler_executable = cc_toolchain.compiler_executable
         else:
             fail("compiler_use_cc_toolchain set to True but cannot find a configured cc_toolchain")
-
-        # Next, check for compiler_executable or compiler_label
     elif has_compiler_executable:
         compiler_executable = ctx.attr.compiler_executable
     elif has_compiler_label:
@@ -40,15 +38,16 @@ def _cuda_toolchain_impl(ctx):
     for pattern in cuda_toolchain_config.artifact_name_patterns:
         artifact_name_patterns[pattern.category_name] = pattern
 
+    # construct compiler_depset
     compiler_depset = depset()
     if ctx.attr.compiler_use_cc_toolchain:
-        compiler_depset = cc_toolchain.all_files
+        compiler_depset = cc_toolchain.all_files  # pass all cc_toolchain to toolchain_files
     elif has_compiler_executable:
         pass
     elif has_compiler_label:
         compiler_target_info = ctx.attr.compiler_label[DefaultInfo]
         if not compiler_target_info.files_to_run or not compiler_target_info.files_to_run.executable:
-            fail("Not an executable")
+            fail("compiler_label specified is not an executable, specify a valid compiler_label")
         compiler_depset = depset(direct = [compiler_target_info.files_to_run.executable], transitive = [compiler_target_info.default_runfiles.files])
 
     toolchain_files = depset(transitive = [
