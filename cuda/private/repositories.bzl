@@ -236,11 +236,6 @@ def detect_clang(repository_ctx):
 
     return clang_path_or_label
 
-<<<<<<< HEAD
-def config_clang(repository_ctx, cuda, clang_path_or_label):
-=======
-    return clang_path
-
 def generate_version_json(repository_ctx):
     """Generates the version.json file."""
     version_data = {
@@ -284,8 +279,8 @@ filegroup(
 """
     build_file_path = repository_ctx.path("clang/BUILD")
     repository_ctx.file(build_file_path, content = build_file_contents, executable = False)
-def config_clang(repository_ctx, cuda, clang_path):
->>>>>>> 7501b76 (clang cuda path working)
+
+def config_clang(repository_ctx, cuda, clang_path_or_label):
     """Generate `@cuda//toolchain/clang/BUILD`
 
     Args:
@@ -293,13 +288,11 @@ def config_clang(repository_ctx, cuda, clang_path):
         cuda: The struct returned from `detect_cuda_toolkit`
         clang_path_or_label: Path or label to clang executable returned from `detect_clang`
     """
-<<<<<<< HEAD
-    template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label)
-=======
     is_local_ctk = None
 
     if len(repository_ctx.attr.components_mapping) != 0:
         is_local_ctk = False
+
     # for deliverable ctk, clang needs the toolkit as cuda_path
     if not is_local_ctk:
         nvcc_repo = components_mapping_compat.repo_str(repository_ctx.attr.components_mapping["nvcc"])
@@ -326,12 +319,10 @@ def config_clang(repository_ctx, cuda, clang_path):
         for source_path in source_paths:
             # executes only in analysis phase, need to declare as action
             repository_ctx.execute(["cp", "-r", str(source_path), clang_cuda_path])
-        
         generate_build(repository_ctx)
 
     # Generate @local_cuda//toolchain/clang/BUILD
-    template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path)
->>>>>>> 7501b76 (clang cuda path working)
+    template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label)
 
 def config_disabled(repository_ctx):
     repository_ctx.symlink(Label("//cuda/private:templates/BUILD.toolchain_disabled"), "toolchain/disabled/BUILD")
