@@ -184,7 +184,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "# %{compiler_attribute_line}": compiler_attr_line,
         "%{clang_path}": clang_path_for_subst,  # Will be empty if label is used
         "%{clang_label}": clang_label_for_subst,  # Will be empty if path is used
-        "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
+        "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "external/rules_cuda++toolchain+cuda/clang",
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_label}": cuda.nvcc_label,
         "%{nvlink_label}": cuda.nvlink_label,

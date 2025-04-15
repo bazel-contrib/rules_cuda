@@ -26,7 +26,7 @@ def _get_nvcc_version(repository_ctx, nvcc_root):
             return version[:2]
     return [-1, -1]
 
-def _detect_local_cuda_toolkit(repository_ctx):
+def _detect_cuda_toolkit(repository_ctx):
     cuda_path = repository_ctx.attr.toolkit_path
     if cuda_path == "":
         cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
@@ -145,7 +145,7 @@ def detect_cuda_toolkit(repository_ctx):
     if repository_ctx.attr.components_mapping != {}:
         return _detect_deliverable_cuda_toolkit(repository_ctx)
     else:
-        return _detect_local_cuda_toolkit(repository_ctx)
+        return _detect_cuda_toolkit(repository_ctx)
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     """Generate `@cuda//BUILD` and `@cuda//defs.bzl` and `@cuda//toolchain/BUILD`
@@ -321,7 +321,7 @@ def config_clang(repository_ctx, cuda, clang_path_or_label):
             repository_ctx.execute(["cp", "-r", str(source_path), clang_cuda_path])
         generate_build(repository_ctx)
 
-    # Generate @local_cuda//toolchain/clang/BUILD
+    # Generate @cuda//toolchain/clang/BUILD
     template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label)
 
 def config_disabled(repository_ctx):
