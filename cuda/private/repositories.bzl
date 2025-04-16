@@ -198,7 +198,9 @@ def detect_clang(repository_ctx):
 
     The path to clang is determined by:
 
-      - taken from `CUDA_CLANG_PATH` environment variable or
+      - taken from configured cc_toolchain if `CUDA_COMPILER_USE_CC_TOOLCHAIN` = "true"
+      - taken from `CUDA_CLANG_LABEL` environment variable
+      - taken from `CUDA_CLANG_PATH` environment variable
       - taken from `BAZEL_LLVM` environment variable as `$BAZEL_LLVM/bin/clang` or
       - determined through `which clang` or
       - treated as being not detected and not configured
@@ -207,31 +209,42 @@ def detect_clang(repository_ctx):
         repository_ctx: repository_ctx
 
     Returns:
-        clang_path (str | None): Optionally return a string of path to clang executable if detected.
+        clang_path_or_label (str | None): Optionally return a string of path or label to clang executable if detected.
     """
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
+
     clang_path = repository_ctx.os.environ.get("CUDA_CLANG_PATH", None)
-    if clang_path == None:
+    clang_label = repository_ctx.os.environ.get("CUDA_CLANG_LABEL", None)
+    clang_path_or_label = None
+
+    if clang_label != None:
+        # Check CUDA_CLANG_LABEL first
+        clang_path_or_label = clang_label
+
+    elif clang_path != None and repository_ctx.path(clang_path).exists:
+        # Check CUDA_CLANG_PATH next
+        clang_path_or_label = clang_path
+
+    else:
+        # Check BAZEL_LLVM
         bazel_llvm = repository_ctx.os.environ.get("BAZEL_LLVM", None)
         if bazel_llvm != None and repository_ctx.path(bazel_llvm + "/bin/clang" + bin_ext).exists:
-            clang_path = bazel_llvm + "/bin/clang" + bin_ext
-    if clang_path == None:
-        clang_path = str(repository_ctx.which("clang"))
+            clang_path_or_label = bazel_llvm + "/bin/clang" + bin_ext
+        elif repository_ctx.which("clang") != None:
+            # Finally try 'which clang'
+            clang_path_or_label = str(repository_ctx.which("clang"))
 
-    if clang_path != None and not repository_ctx.path(clang_path).exists:
-        clang_path = None
+    return clang_path_or_label
 
-    return clang_path
-
-def config_clang(repository_ctx, cuda, clang_path):
+def config_clang(repository_ctx, cuda, clang_path_or_label):
     """Generate `@cuda//toolchain/clang/BUILD`
 
     Args:
         repository_ctx: repository_ctx
         cuda: The struct returned from `detect_cuda_toolkit`
-        clang_path: Path to clang executable returned from `detect_clang`
+        clang_path_or_label: Path or label to clang executable returned from `detect_clang`
     """
-    template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path)
+    template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label)
 
 def config_disabled(repository_ctx):
     repository_ctx.symlink(Label("//cuda/private:templates/BUILD.toolchain_disabled"), "toolchain/disabled/BUILD")
@@ -240,8 +253,8 @@ def _cuda_toolkit_impl(repository_ctx):
     cuda = detect_cuda_toolkit(repository_ctx)
     config_cuda_toolkit_and_nvcc(repository_ctx, cuda)
 
-    clang_path = detect_clang(repository_ctx)
-    config_clang(repository_ctx, cuda, clang_path)
+    clang_path_or_label = detect_clang(repository_ctx)
+    config_clang(repository_ctx, cuda, clang_path_or_label)
 
     config_disabled(repository_ctx)
 
@@ -260,7 +273,7 @@ cuda_toolkit = repository_rule(
     },
     configure = True,
     local = True,
-    environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "BAZEL_LLVM"],
+    environ = ["CUDA_PATH", "PATH", "CUDA_CLANG_PATH", "CUDA_CLANG_LABEL", "BAZEL_LLVM", "CUDA_COMPILER_USE_CC_TOOLCHAIN"],
     # remotable = True,
 )
 

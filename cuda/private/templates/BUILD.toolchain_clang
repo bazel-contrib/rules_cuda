@@ -25,7 +25,7 @@ cuda_toolchain_config(
 
 cuda_toolchain(
     name = "clang-local",
-    compiler_executable = "%{clang_path}",
+    # %{compiler_attribute_line}
     compiler_files = "@cuda//:compiler_deps",
     toolchain_config = ":clang-local-config",
 )
