@@ -14,11 +14,11 @@ jobs:
     strategy:
       matrix:
         cases:
-          - { os: "ubuntu-22.04", cuda-version: "11.2.2", source: "nvidia" }
+          - { os: "ubuntu-22.04", cuda-version: "11.7.0", source: "nvidia" }
           - { os: "ubuntu-22.04", cuda-version: "11.8.0", source: "nvidia" }
           - {
               os: "ubuntu-22.04",
-              cuda-version: "11.6.2",
+              cuda-version: "11.7.0",
               source: "nvidia",
               toolchain: "llvm",
               toolchain-version: "16",

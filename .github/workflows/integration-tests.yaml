@@ -16,13 +16,13 @@ jobs:
         cases:
           - {
               os: "ubuntu-22.04",
-              cuda-version: "11.6.2",
+              cuda-version: "11.7.0",
               source: "nvidia",
               toolchain: "nvcc",
             }
           - {
               os: "ubuntu-22.04",
-              cuda-version: "11.6.2",
+              cuda-version: "11.7.0",
               source: "nvidia",
               toolchain: "llvm",
               toolchain-version: "16",
@@ -83,13 +83,13 @@ jobs:
         cases:
           - {
               os: "ubuntu-22.04",
-              cuda-version: "11.6.2",
+              cuda-version: "11.7.0",
               source: "nvidia",
               toolchain: "nvcc",
             }
           - {
               os: "ubuntu-22.04",
-              cuda-version: "11.6.2",
+              cuda-version: "11.7.0",
               source: "nvidia",
               toolchain: "llvm",
               toolchain-version: "16",
