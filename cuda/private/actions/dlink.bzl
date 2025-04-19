@@ -80,6 +80,8 @@ def _compiler_device_link(
         host_compiler = host_compiler,
         host_compile_flags = common.host_compile_flags,
         user_link_flags = common.link_flags,
+        cpp_copts = common.cpp_copts,
+        cpp_cxxopts = common.cpp_cxxopts,
         use_pic = pic,
     )
     cmd = cuda_helper.get_command_line(cuda_feature_config, ACTION_NAMES.device_link, var)
