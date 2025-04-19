@@ -15,14 +15,14 @@ jobs:
       matrix:
         cases:
           - {
-              os: "ubuntu-20.04",
-              cuda-version: "11.6.2",
+              os: "ubuntu-22.04",
+              cuda-version: "11.7.0",
               source: "nvidia",
               toolchain: "nvcc",
             }
           - {
-              os: "ubuntu-20.04",
-              cuda-version: "11.6.2",
+              os: "ubuntu-22.04",
+              cuda-version: "11.7.0",
               source: "nvidia",
               toolchain: "llvm",
               toolchain-version: "16",
@@ -82,14 +82,14 @@ jobs:
       matrix:
         cases:
           - {
-              os: "ubuntu-20.04",
-              cuda-version: "11.6.2",
+              os: "ubuntu-22.04",
+              cuda-version: "11.7.0",
               source: "nvidia",
               toolchain: "nvcc",
             }
           - {
-              os: "ubuntu-20.04",
-              cuda-version: "11.6.2",
+              os: "ubuntu-22.04",
+              cuda-version: "11.7.0",
               source: "nvidia",
               toolchain: "llvm",
               toolchain-version: "16",
