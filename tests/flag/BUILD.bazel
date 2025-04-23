@@ -15,6 +15,9 @@ load(
     "cuda_library_sm61_flag_test",
     "cuda_library_sm90a_flag_test",
     "cuda_library_sm90a_sm90_flag_test",
+    "cuda_library_use_copts_flag_test",
+    "cuda_library_use_cxxopts_flag_test",
+    "cuda_library_use_linkopts_flag_test",
     "num_actions_test",
 )
 
@@ -358,4 +361,49 @@ cuda_library_sm100_sm100a_flag_test(
         "-gencode arch=compute_100a,code=sm_100a",
     ],
     target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+###################################################
+# Tests for cpp opts propagation features
+###################################################
+cuda_library(
+    name = "cpp_opts_test_lib",
+    srcs = ["@rules_cuda_examples//basic:kernel.cu"],
+    tags = ["manual"],
+)
+
+cuda_library_use_copts_flag_test(
+    name = "cuda_library_use_copts_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        # Expect nvcc to wrap host compiler flags
+        "-Xcompiler",
+        "-Wall",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],  # Assuming nvcc toolchain
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+cuda_library_use_cxxopts_flag_test(
+    name = "cuda_library_use_cxxopts_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        # Expect nvcc to wrap host compiler flags
+        "-Xcompiler",
+        "-std=c++17",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],  # Assuming nvcc toolchain
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+cuda_library_use_linkopts_flag_test(
+    name = "cuda_library_use_linkopts_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        # Expect nvcc to wrap host linker flags
+        "-Xlinker",
+        "-Wl,--verbose",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],  # Assuming nvcc toolchain
+    target_under_test = ":cpp_opts_test_lib",
 )
