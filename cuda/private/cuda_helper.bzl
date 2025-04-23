@@ -190,7 +190,10 @@ def _create_common_info(
         host_link_flags = [],
         ptxas_flags = [],
         transitive_cc_info = None,
-        transitive_linking_contexts = []):
+        transitive_linking_contexts = [],
+        cpp_copts = [],
+        cpp_cxxopts = [],
+        cpp_linkopts = []):
     """Constructor of the common object.
 
     Args:
@@ -211,6 +214,9 @@ def _create_common_info(
         host_link_flags: flags pass to host linker.
         ptxas_flags: flags pass to `ptxas`.
         transitive_linking_contexts: `CcInfo.linking_context` extracted from `deps`
+        cpp_copts: the `copts` fields from C++ configuration fragment
+        cpp_cxxopts: the `cxxopts` fields from C++ configuration fragment
+        cpp_linkopts: the `linkopts` fields from C++ configuration fragment
     """
     return struct(
         cuda_archs_info = cuda_archs_info,
@@ -231,6 +237,9 @@ def _create_common_info(
         transitive_cc_info = transitive_cc_info,
         transitive_linker_inputs = [ctx.linker_inputs for ctx in transitive_linking_contexts],
         transitive_linking_contexts = transitive_linking_contexts,
+        cpp_copts = cpp_copts,
+        cpp_cxxopts = cpp_cxxopts,
+        cpp_linkopts = cpp_linkopts,
     )
 
 def _create_common(ctx):
@@ -314,6 +323,9 @@ def _create_common(ctx):
         ptxas_flags = ptxas_flags,
         transitive_cc_info = merged_cc_info,
         transitive_linking_contexts = transitive_linking_contexts,
+        cpp_copts = ctx.fragments.cpp.copts,
+        cpp_cxxopts = ctx.fragments.cpp.cxxopts,
+        cpp_linkopts = ctx.fragments.cpp.linkopts,
     )
 
 def _create_cuda_info(
@@ -403,6 +415,9 @@ def _create_compile_variables(
         defines = [],
         host_defines = [],
         ptxas_flags = [],
+        cpp_copts = [],
+        cpp_cxxopts = [],
+        cpp_linkopts = [],
         use_pic = False,
         use_rdc = False):
     """Returns variables used for `compile` actions.
@@ -423,6 +438,9 @@ def _create_compile_variables(
         defines: `#define`s. Pass to compiler driver directly.
         host_defines: `#define`s. Pass to host compiler.
         ptxas_flags: flags pass to `ptxas`.
+        cpp_copts: use the `copts` fields from C++ configuration fragment for CUDA host compilation, guarded with feature `cuda_host_use_copts`
+        cpp_cxxopts: use the `cxxopts` fields from C++ configuration fragment for CUDA host compilation, guarded with feature `cuda_host_use_cxxopts`
+        cpp_linkopts: use the `linkopts` fields from C++ configuration fragment for CUDA host linking, guarded with feature `cuda_host_use_linkopts`
         use_pic: whether to compile for position independent code.
         use_rdc: whether to compile for relocatable device code.
     """
@@ -448,6 +466,9 @@ def _create_compile_variables(
         defines = defines,
         host_defines = host_defines,
         ptxas_flags = ptxas_flags,
+        cpp_copts = cpp_copts,
+        cpp_cxxopts = cpp_cxxopts,
+        cpp_linkopts = cpp_linkopts,
         use_pic = use_pic,
         use_rdc = use_rdc,
         **optional_variables
@@ -463,6 +484,8 @@ def _create_device_link_variables(
         host_compiler = None,
         host_compile_flags = [],
         user_link_flags = [],
+        cpp_copts = [],
+        cpp_cxxopts = [],
         use_pic = False):
     """Returns variables used for `device_link` actions.
 
@@ -475,6 +498,8 @@ def _create_device_link_variables(
         host_compiler: host compiler path.
         host_compile_flags: flags pass to host compiler.
         user_link_flags: flags for device linking.
+        cpp_copts: use the `copts` fields from C++ configuration fragment for CUDA host compilation, guarded with feature `cuda_host_use_copts`
+        cpp_cxxopts: use the `cxxopts` fields from C++ configuration fragment for CUDA host compilation, guarded with feature `cuda_host_use_cxxopts`
         use_pic: whether to compile for position independent code.
     """
     arch_specs = cuda_archs_info.arch_specs
@@ -503,6 +528,8 @@ def _create_device_link_variables(
         user_link_flags = user_link_flags,
         use_dlto = use_dlto,
         use_pic = use_pic,
+        cpp_copts = cpp_copts,
+        cpp_cxxopts = cpp_cxxopts,
         **optional_variables
     )
 
