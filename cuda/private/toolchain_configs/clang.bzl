@@ -297,7 +297,6 @@ def _impl(ctx):
             flag_set(
                 actions = [
                     ACTION_NAMES.cuda_compile,
-                    ACTION_NAMES.device_link,
                 ],
                 flag_groups = [
                     flag_group(
