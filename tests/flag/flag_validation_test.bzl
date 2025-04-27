@@ -75,9 +75,9 @@ def _create_cuda_library_flag_test(*config_settings):
         config_settings = merged_config_settings,
         attrs = {
             "action_mnemonic": attr.string(mandatory = True),
-            "output_name": attr.string(),
             "contain_flags": attr.string_list(),
             "not_contain_flags": attr.string_list(),
+            "output_name": attr.string(),
         },
     )
 

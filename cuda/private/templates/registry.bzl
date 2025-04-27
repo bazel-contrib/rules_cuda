@@ -1,9 +1,8 @@
 # map short component name to consumable targets
 REGISTRY = {
-    "cudart": ["cuda", "cuda_runtime", "cuda_runtime_static"],
-    "nvcc": ["compiler_deps", "nvptxcompiler", "nvcc_headers"],
     "cccl": ["cub", "thrust", "cccl_headers"],
     "cublas": ["cublas"],
+    "cudart": ["cuda", "cuda_runtime", "cuda_runtime_static"],
     "cufft": ["cufft", "cufft_static"],
     "cufile": [],
     "cupti": ["cupti", "nvperf_host", "nvperf_target"],
@@ -11,6 +10,7 @@ REGISTRY = {
     "cusolver": ["cusolver"],
     "cusparse": ["cusparse"],
     "npp": ["nppc", "nppi", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
+    "nvcc": ["compiler_deps", "nvptxcompiler", "nvcc_headers"],
     "nvidia_fs": [],
     "nvjitlink": ["nvjitlink", "nvjitlink_static"],
     "nvjpeg": ["nvjpeg", "nvjpeg_static"],
@@ -22,10 +22,9 @@ REGISTRY = {
 
 # map short component name to full component name
 FULL_COMPONENT_NAME = {
-    "cudart": "cuda_cudart",
-    "nvcc": "cuda_nvcc",
     "cccl": "cuda_cccl",
     "cublas": "libcublas",
+    "cudart": "cuda_cudart",
     "cufft": "libcufft",
     "cufile": "libcufile",
     "cupti": "libcupti",
@@ -33,6 +32,7 @@ FULL_COMPONENT_NAME = {
     "cusolver": "libcusolver",
     "cusparse": "libcusparse",
     "npp": "libnpp",
+    "nvcc": "cuda_nvcc",
     "nvidia_fs": "nvidia_fs",
     "nvjitlink": "libnvjitlink",
     "nvjpeg": "libnvjpeg",

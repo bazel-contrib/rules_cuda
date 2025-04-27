@@ -16,12 +16,12 @@ cuda_toolkit_info = rule(
     doc = """This rule provides CudaToolkitInfo.""",
     implementation = _impl,
     attrs = {
-        "path": attr.string(mandatory = True, doc = "Root path to the CUDA Toolkit."),
-        "version": attr.string(mandatory = True, doc = "Version of the CUDA Toolkit."),
-        "nvlink": attr.label(allow_single_file = True, doc = "The nvlink executable."),
-        "link_stub": attr.label(allow_single_file = True, doc = "The link.stub text file."),
         "bin2c": attr.label(allow_single_file = True, doc = "The bin2c executable."),
         "fatbinary": attr.label(allow_single_file = True, doc = "The fatbinary executable."),
+        "link_stub": attr.label(allow_single_file = True, doc = "The link.stub text file."),
+        "nvlink": attr.label(allow_single_file = True, doc = "The nvlink executable."),
+        "path": attr.string(mandatory = True, doc = "Root path to the CUDA Toolkit."),
+        "version": attr.string(mandatory = True, doc = "Version of the CUDA Toolkit."),
     },
     provides = [CudaToolkitInfo],
 )

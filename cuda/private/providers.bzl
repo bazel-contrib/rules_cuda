@@ -36,9 +36,9 @@ ptx embedding process is carried out for `compute_80`. Multiple `Stage2ArchInfo`
 transformed into its final form.""",
     fields = {
         "arch": "str, arch number",
-        "virtual": "bool, use virtual arch, default False",
         "gpu": "bool, use gpu arch, default False",
         "lto": "bool, use lto, default False",
+        "virtual": "bool, use virtual arch, default False",
     },
 )
 
@@ -69,35 +69,35 @@ linking in a flat structure. Objects are grouped by direct and transitive, becau
 if merged a single depset.
 """,
     fields = {
-        "defines": "A depset of strings. It is used for the compilation during device linking.",
-        # direct only:
-        "objects": "A depset of objects. Direct artifacts of the rule.",  # but not rdc and pic
-        "pic_objects": "A depset of position independent code objects. Direct artifacts of the rule.",  # but not rdc
-        "rdc_objects": "A depset of relocatable device code objects. Direct artifacts of the rule.",  # but not pic
-        "rdc_pic_objects": "A depset of relocatable device code and position independent code objects. Direct artifacts of the rule.",
         # transitive archive only (cuda_objects):
         "archive_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
         "archive_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving.",
         "archive_rdc_objects": "A depset of rdc objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
         "archive_rdc_pic_objects": "A depset of rdc pic objects. cuda_objects only. Gathered from the transitive dependencies for archiving or device linking.",
+        "defines": "A depset of strings. It is used for the compilation during device linking.",
 
         # transitive dlink only (cuda_library):
         # NOTE: ideally, we can use the archived library to do the device linking, but the nvlink is not happy with library with *_dlink.o included
         "dlink_rdc_objects": "A depset of rdc objects. cuda_library only. Gathered from the transitive dependencies for device linking.",
         "dlink_rdc_pic_objects": "A depset of rdc pic objects. cuda_library only. Gathered from the transitive dependencies for device linking.",
+        # direct only:
+        "objects": "A depset of objects. Direct artifacts of the rule.",  # but not rdc and pic
+        "pic_objects": "A depset of position independent code objects. Direct artifacts of the rule.",  # but not rdc
+        "rdc_objects": "A depset of relocatable device code objects. Direct artifacts of the rule.",  # but not pic
+        "rdc_pic_objects": "A depset of relocatable device code and position independent code objects. Direct artifacts of the rule.",
     },
 )
 
 CudaToolkitInfo = provider(
     """Provides the information of CUDA Toolkit.""",
     fields = {
+        "bin2c": "File to the bin2c executable",
+        "fatbinary": "File to the fatbinary executable",
+        "link_stub": "File to the link.stub file",
+        "nvlink": "File to the nvlink executable",
         "path": "string of path to cuda toolkit root",
         "version_major": "int of the cuda toolkit major version, e.g, 11 for 11.6",
         "version_minor": "int of the cuda toolkit minor version, e.g, 6 for 11.6",
-        "nvlink": "File to the nvlink executable",
-        "link_stub": "File to the link.stub file",
-        "bin2c": "File to the bin2c executable",
-        "fatbinary": "File to the fatbinary executable",
     },
 )
 

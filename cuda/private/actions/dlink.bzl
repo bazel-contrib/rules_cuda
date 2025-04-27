@@ -1,6 +1,7 @@
 ""
 
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:actions/compile.bzl", "compile")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
@@ -184,8 +185,8 @@ def _wrapper_device_link(
         output = fatbin_c,
         template = cuda_toolkit.link_stub,
         substitutions = {
-            "REGISTERLINKBINARYFILE": '"{}"'.format(register_h.short_path),
             "FATBINFILE": '"{}"'.format(fatbin_h.short_path),
+            "REGISTERLINKBINARYFILE": '"{}"'.format(register_h.short_path),
         },
     )
 

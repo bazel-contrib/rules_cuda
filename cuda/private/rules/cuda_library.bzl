@@ -1,4 +1,6 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("//cuda/private:actions/compile.bzl", "compile")
 load("//cuda/private:actions/dlink.bzl", "device_link")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
@@ -149,30 +151,30 @@ cuda_library = rule(
 [C/C++ Rules](https://bazel.build/reference/be/c-cpp#rules).""",
     implementation = _cuda_library_impl,
     attrs = {
-        "srcs": attr.label_list(allow_files = ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS),
-        "hdrs": attr.label_list(allow_files = ALLOW_CUDA_HDRS),
-        "deps": attr.label_list(providers = [[CcInfo], [CudaInfo]]),
         "alwayslink": attr.bool(default = False),
+        "copts": attr.string_list(doc = "Add these options to the CUDA device compilation command."),
+        "defines": attr.string_list(doc = "List of defines to add to the compile line."),
+        "deps": attr.label_list(providers = [[CcInfo], [CudaInfo]]),
+        "hdrs": attr.label_list(allow_files = ALLOW_CUDA_HDRS),
+        "host_copts": attr.string_list(doc = "Add these options to the CUDA host compilation command."),
+        "host_defines": attr.string_list(doc = "List of defines to add to the compile line."),
+        "host_linkopts": attr.string_list(doc = "Add these flags to the host library link command."),
+        "host_local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
+        "includes": attr.string_list(doc = "List of include dirs to be added to the compile line."),
+        "linkopts": attr.string_list(doc = "Add these flags to the CUDA device link command."),
+        "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
+        "ptxasopts": attr.string_list(doc = "Add these flags to the ptxas command."),
         "rdc": attr.bool(
             default = False,
             doc = ("Whether to perform device linking for relocatable device code. " +
                    "Transitive deps that contain device code must all either be cuda_objects or cuda_library(rdc = True)."),
         ),
-        "includes": attr.string_list(doc = "List of include dirs to be added to the compile line."),
-        "host_copts": attr.string_list(doc = "Add these options to the CUDA host compilation command."),
-        "host_defines": attr.string_list(doc = "List of defines to add to the compile line."),
-        "host_local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
-        "host_linkopts": attr.string_list(doc = "Add these flags to the host library link command."),
-        "copts": attr.string_list(doc = "Add these options to the CUDA device compilation command."),
-        "defines": attr.string_list(doc = "List of defines to add to the compile line."),
-        "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
-        "linkopts": attr.string_list(doc = "Add these flags to the CUDA device link command."),
-        "ptxasopts": attr.string_list(doc = "Add these flags to the ptxas command."),
+        "srcs": attr.label_list(allow_files = ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS),
         "_builtin_deps": attr.label_list(default = ["//cuda:runtime"]),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
+        "_default_cuda_archs": attr.label(default = "//cuda:archs"),
         "_default_cuda_copts": attr.label(default = "//cuda:copts"),
         "_default_host_copts": attr.label(default = "//cuda:host_copts"),
-        "_default_cuda_archs": attr.label(default = "//cuda:archs"),
     },
     fragments = ["cpp"],
     toolchains = use_cpp_toolchain() + use_cuda_toolchain(),

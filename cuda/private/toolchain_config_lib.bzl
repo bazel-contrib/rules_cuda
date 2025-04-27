@@ -293,10 +293,10 @@ _SelectablesInfo = provider(
     fields = {
         "default_enabled_action_configs": "",
         "default_enabled_features": "",
-        "implies": "",
         "implied_by": "",
-        "requires": "",
+        "implies": "",
         "required_by": "",
+        "requires": "",
         "selectables": "dict, name to action_config or feature",
     },
 )
@@ -558,11 +558,11 @@ def eval_env_set(es, value, action_name, info, ret = None):
 _FeatureConfigurationInfo = provider(
     "Contains info of the result of configure_features",
     fields = {
-        "selectables_info": "A _SelectablesInfo, it is immutable.",
-        "requested": "the requested features in configure_features",
         "enabled": "enabled action_config or feature after configure_features",
-        "_parse_flag_cache": "",
+        "requested": "the requested features in configure_features",
+        "selectables_info": "A _SelectablesInfo, it is immutable.",
         "_debug": "print why a feature is disabled during configuration",
+        "_parse_flag_cache": "",
     },
 )
 

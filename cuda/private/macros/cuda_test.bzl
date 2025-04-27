@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("//cuda/private:rules/cuda_library.bzl", _cuda_library = "cuda_library")
 
 def cuda_test(name, **attrs):
@@ -9,8 +10,8 @@ def cuda_test(name, **attrs):
     """
     cuda_library_only_attrs = ["deps", "srcs", "hdrs", "testonly", "alwayslink"]
     cuda_library_only_attrs_defaults = {
-        "testonly": True,
         "alwayslink": True,
+        "testonly": True,
     }
 
     # https://bazel.build/reference/be/common-definitions?hl=en#common-attributes-tests
@@ -26,8 +27,7 @@ def cuda_test(name, **attrs):
         name = cuda_library_name,
         **cuda_library_attrs
     )
-
-    native.cc_test(
+    cc_test(
         name = name,
         deps = [cuda_library_name],
         **{k: v for k, v in attrs.items() if k not in cuda_library_only_attrs}

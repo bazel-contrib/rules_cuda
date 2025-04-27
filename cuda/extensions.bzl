@@ -4,13 +4,13 @@ load("//cuda/private:compat.bzl", "components_mapping_compat")
 load("//cuda/private:repositories.bzl", "cuda_component", "cuda_redist_json", "cuda_toolkit")
 
 cuda_component_tag = tag_class(attrs = {
-    "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
     "component_name": attr.string(doc = "Short name of the component defined in registry."),
     "descriptive_name": attr.string(doc = "Official name of a component or simply the component name."),
     "integrity": attr.string(
         doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
               "This must match the checksum of the file downloaded.",
     ),
+    "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
     "sha256": attr.string(
         doc = "The expected SHA-256 of the file downloaded. This must match the SHA-256 of the file downloaded.",
     ),
@@ -36,12 +36,12 @@ cuda_component_tag = tag_class(attrs = {
 })
 
 cuda_redist_json_tag = tag_class(attrs = {
-    "name": attr.string(mandatory = True, doc = "Repo name for the cuda_redist_json"),
     "components": attr.string_list(mandatory = True, doc = "components to be used"),
     "integrity": attr.string(
         doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
               "This must match the checksum of the file downloaded.",
     ),
+    "name": attr.string(mandatory = True, doc = "Repo name for the cuda_redist_json"),
     "sha256": attr.string(
         doc = "The expected SHA-256 of the file downloaded. " +
               "This must match the SHA-256 of the file downloaded.",
@@ -60,18 +60,18 @@ cuda_redist_json_tag = tag_class(attrs = {
 })
 
 cuda_toolkit_tag = tag_class(attrs = {
-    "name": attr.string(mandatory = True, doc = "Name for the toolchain repository", default = "cuda"),
-    "toolkit_path": attr.string(
-        doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
-    ),
     "components_mapping": components_mapping_compat.attr(
         doc = "A mapping from component names to component repos of a deliverable CUDA Toolkit. " +
               "Only the repo part of the label is useful",
     ),
-    "version": attr.string(doc = "cuda toolkit version. Required for deliverable toolkit only."),
+    "name": attr.string(mandatory = True, doc = "Name for the toolchain repository", default = "cuda"),
     "nvcc_version": attr.string(
         doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
     ),
+    "toolkit_path": attr.string(
+        doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
+    ),
+    "version": attr.string(doc = "cuda toolkit version. Required for deliverable toolkit only."),
 })
 
 def _find_modules(module_ctx):

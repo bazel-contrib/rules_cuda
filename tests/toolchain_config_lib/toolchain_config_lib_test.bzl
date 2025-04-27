@@ -1013,7 +1013,7 @@ def _feature_configuration_env_test_impl(ctx):
         feature(name = "g"),
     ], ["a", "b", "d", "f"])
     environ = config_helper.get_environment_variables(config_info, "c++-compile", struct())
-    ref_environ = {"foo": "bar", "cat": "meow", "dog": "woof", "withFeature": "value1", "withoutNotFeature": "value4"}
+    ref_environ = {"cat": "meow", "dog": "woof", "foo": "bar", "withFeature": "value1", "withoutNotFeature": "value4"}
     asserts.equals(env, ref_environ, environ, "testEnvVars")
     asserts.equals(env, ref_environ.keys(), environ.keys(), "testEnvVars dict in order")
 
