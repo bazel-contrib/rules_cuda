@@ -4,12 +4,19 @@ load("//cuda/private:compat.bzl", "components_mapping_compat")
 load("//cuda/private:repositories.bzl", "cuda_component", "cuda_redist_json", "cuda_toolkit")
 
 cuda_component_tag = tag_class(attrs = {
-    "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
-    "component_name": attr.string(doc = "Short name of the component defined in registry."),
-    "descriptive_name": attr.string(doc = "Official name of a component or simply the component name."),
+    "component_name": attr.string(
+        doc = "Short name of the component defined in registry.",
+    ),
+    "descriptive_name": attr.string(
+        doc = "Official name of a component or simply the component name.",
+    ),
     "integrity": attr.string(
         doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
               "This must match the checksum of the file downloaded.",
+    ),
+    "name": attr.string(
+        doc = "Repo name for the deliverable cuda_component",
+        mandatory = True,
     ),
     "sha256": attr.string(
         doc = "The expected SHA-256 of the file downloaded. This must match the SHA-256 of the file downloaded.",
@@ -32,15 +39,23 @@ cuda_component_tag = tag_class(attrs = {
               "URLs are tried in order until one succeeds, so you should list local mirrors first. " +
               "If all downloads fail, the rule will fail.",
     ),
-    "version": attr.string(doc = "A unique version number for component."),
+    "version": attr.string(
+        doc = "A unique version number for component.",
+    ),
 })
 
 cuda_redist_json_tag = tag_class(attrs = {
-    "name": attr.string(mandatory = True, doc = "Repo name for the cuda_redist_json"),
-    "components": attr.string_list(mandatory = True, doc = "components to be used"),
+    "components": attr.string_list(
+        doc = "components to be used",
+        mandatory = True,
+    ),
     "integrity": attr.string(
         doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
               "This must match the checksum of the file downloaded.",
+    ),
+    "name": attr.string(
+        doc = "Repo name for the cuda_redist_json",
+        mandatory = True,
     ),
     "sha256": attr.string(
         doc = "The expected SHA-256 of the file downloaded. " +
@@ -60,17 +75,23 @@ cuda_redist_json_tag = tag_class(attrs = {
 })
 
 cuda_toolkit_tag = tag_class(attrs = {
-    "name": attr.string(mandatory = True, doc = "Name for the toolchain repository", default = "cuda"),
-    "toolkit_path": attr.string(
-        doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
-    ),
     "components_mapping": components_mapping_compat.attr(
         doc = "A mapping from component names to component repos of a deliverable CUDA Toolkit. " +
               "Only the repo part of the label is useful",
     ),
-    "version": attr.string(doc = "cuda toolkit version. Required for deliverable toolkit only."),
+    "name": attr.string(
+        doc = "Name for the toolchain repository",
+        mandatory = True,
+        default = "cuda",
+    ),
     "nvcc_version": attr.string(
         doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
+    ),
+    "toolkit_path": attr.string(
+        doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
+    ),
+    "version": attr.string(
+        doc = "cuda toolkit version. Required for deliverable toolkit only.",
     ),
 })
 
@@ -92,7 +113,7 @@ def _find_modules(module_ctx):
 def _module_tag_to_dict(t):
     return {attr: getattr(t, attr) for attr in dir(t)}
 
-def _impl(module_ctx):
+def _toolchain_impl(module_ctx):
     # Toolchain configuration is only allowed in the root module, or in rules_cuda.
     root, rules_cuda = _find_modules(module_ctx)
     components = None
@@ -126,7 +147,7 @@ def _impl(module_ctx):
         cuda_toolkit(**_module_tag_to_dict(toolkit))
 
 toolchain = module_extension(
-    implementation = _impl,
+    implementation = _toolchain_impl,
     tag_classes = {
         "component": cuda_component_tag,
         "redist_json": cuda_redist_json_tag,

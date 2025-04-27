@@ -1,3 +1,4 @@
+# buildifier: disable=module-docstring
 load(
     "@rules_cuda//cuda:defs.bzl",
     _cuda_toolchain = "cuda_toolchain",

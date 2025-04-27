@@ -1,4 +1,7 @@
+"""Cuda Compile action"""
+
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_SRCS")
@@ -53,7 +56,7 @@ def compile(
         basename = cuda_helper.get_basename_without_ext(src.basename, ALLOW_CUDA_SRCS, fail_if_not_match = False)
         if not basename:
             continue
-        basename_index = basename_counter.setdefault(basename, default = 0)
+        basename_index = basename_counter.setdefault(basename, 0)
         basename_counter[basename] += 1
         src_and_indexed_basenames.append((src, basename, basename_index))
 

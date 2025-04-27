@@ -1,5 +1,11 @@
+"""utils_test.bzl"""
+
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
+
+# buildifier: disable=bzl-visibility
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
+
+# buildifier: disable=bzl-visibility
 load("//cuda/private:providers.bzl", "ArchSpecInfo", "Stage2ArchInfo")
 
 def _get_arch_specs_test_impl(ctx):

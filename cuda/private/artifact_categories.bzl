@@ -1,3 +1,5 @@
+"""Cuda artifact categories"""
+
 OBJECT_FILE = "object_file"
 PIC_OBJECT_FILE = "pic_object_file"
 RDC_OBJECT_FILE = "rdc_object_file"
