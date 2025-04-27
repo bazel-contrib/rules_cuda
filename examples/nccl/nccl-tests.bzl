@@ -1,9 +1,11 @@
+"""nccl test rules"""
+
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 
 # NOTE: all paths in this file relative to @nccl-tests repo root.
 
-def nccl_tests_binary(name, cc_deps = [], cuda_deps = []):
+def nccl_tests_binary(*, name):
     cuda_library(
         name = name,
         srcs = ["src/{}.cu".format(name)],

@@ -19,6 +19,7 @@ def _create_arch_number(arch_num_str):
     if types.is_int(arch_num_str):
         return (int(arch_num_str), "")
     else:
+        i = 0
         for i, c in enumerate(arch_num_str.elems()):
             if not c.isdigit():
                 break
@@ -212,6 +213,7 @@ def _create_common_info(
         host_compile_flags: flags pass to host compiler.
         host_link_flags: flags pass to host linker.
         ptxas_flags: flags pass to `ptxas`.
+        transitive_cc_info: Transitive `CcInfo` providers.
         transitive_linking_contexts: `CcInfo.linking_context` extracted from `deps`
     """
     return struct(
@@ -508,14 +510,14 @@ def _create_device_link_variables(
         **optional_variables
     )
 
-def _get_all_unsupported_features(ctx, cuda_toolchain, unsupported_features):
+def _get_all_unsupported_features(ctx, _cuda_toolchain, unsupported_features):
     all_unsupported = list(ctx.disabled_features)
     all_unsupported.extend([f[1:] for f in ctx.attr.features if f.startswith("-")])
     if unsupported_features != None:
         all_unsupported.extend(unsupported_features)
     return unique(all_unsupported)
 
-def _get_all_requested_features(ctx, cuda_toolchain, requested_features):
+def _get_all_requested_features(ctx, _cuda_toolchain, requested_features):
     all_features = []
     compilation_mode = ctx.var.get("COMPILATION_MODE", None)
     if compilation_mode == None:

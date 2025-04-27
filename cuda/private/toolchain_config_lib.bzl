@@ -1,3 +1,5 @@
+"""Utilities for toolchain configuration rules"""
+
 load(
     "@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl",
     _action_config = "action_config",
@@ -24,7 +26,7 @@ def _tok_var(chars):
         var.append(chars.pop())
     else:
         fail("expected variable name")
-    for i in range(_MAX_FLAG_LEN + 1):
+    for _ in range(_MAX_FLAG_LEN + 1):
         if len(chars) and chars[-1].isalnum() or chars[-1] in "._":
             var.append(chars.pop())
         else:
@@ -52,6 +54,7 @@ def _copy_flag_info(flag_info):
         expandables = expandables,
     )
 
+# buildifier: disable=function-docstring
 def parse_flag(raw_flag, cache = None):
     if len(raw_flag) > _MAX_FLAG_LEN:
         fail(raw_flag, "is too long!")
@@ -140,6 +143,7 @@ def _single_access(value, path_list, ret):
     ret.append(v)
     return True
 
+# buildifier: disable=function-docstring
 def exist(input_var, path = None, path_list = None):
     if path_list == None:
         path_list = path.split(".")
@@ -154,6 +158,7 @@ def exist(input_var, path = None, path_list = None):
             return True
     return False
 
+# buildifier: disable=function-docstring
 def access(var, path = None, path_list = None, fail_if_not_available = True):
     if path_list == None:
         path_list = path.split(".")
@@ -172,6 +177,7 @@ def access(var, path = None, path_list = None, fail_if_not_available = True):
     else:
         return None
 
+# buildifier: disable=function-docstring
 def create_var_from_value(value, parent = None, path = None, path_list = None):
     if path == None and path_list == None:
         return _NestingVarInfo(this = value, parent = parent)
@@ -183,6 +189,7 @@ def create_var_from_value(value, parent = None, path = None, path_list = None):
         v = struct(**{name: v})
     return _NestingVarInfo(this = v, parent = parent)
 
+# buildifier: disable=function-docstring
 def expand_flag(flag_info, var, name):
     if len(flag_info.expandables) == 0 or name not in flag_info.expandables:
         return
@@ -278,6 +285,7 @@ def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations, _parse_flag_cach
         fail("flag_group evaluation incomplete")
     return ret
 
+# buildifier: disable=function-docstring
 def eval_flag_group(fg, value, max_eval_iterations = 65536, _parse_flag_cache = None):
     ret = []
     _eval_flag_group_impl([], ret, fg, create_var_from_value(value), max_eval_iterations, _parse_flag_cache)
@@ -437,6 +445,7 @@ def _is_satisfied(info, name):
     satisfied = requested_or_implied and implies_met and requires_met
 
     if info._debug and not satisfied:
+        # buildifier: disable=print
         print(
             "Disable {}, requested/implied: {}, implies met: {}, requires met: {}".format(
                 name,
@@ -444,7 +453,7 @@ def _is_satisfied(info, name):
                 implies_met,
                 requires_met,
             ),
-        )  # buildifier: disable=print
+        )
     return satisfied
 
 def _check_activatable(info, to_check):
@@ -496,6 +505,7 @@ def _check_provides_conflict(info):
         if len(features) > 1:
             fail("Symbol", s, "is provided by all of the following features:", " ".join(features))
 
+# buildifier: disable=function-docstring
 def eval_with_features(with_features, info):
     if len(with_features) == 0:
         return True
@@ -513,6 +523,7 @@ def eval_with_features(with_features, info):
             return True
     return False
 
+# buildifier: disable=function-docstring
 def eval_flag_set(fs, value, action_name, info):
     ret = []
     if action_name != None and action_name not in fs.actions:
@@ -523,6 +534,7 @@ def eval_flag_set(fs, value, action_name, info):
         ret.extend(eval_flag_group(fg, value, _parse_flag_cache = info._parse_flag_cache if info != None else None))
     return ret
 
+# buildifier: disable=function-docstring
 def eval_feature(feat, value, action_name, info):
     ret = []
     if feat.type_name == "feature":
@@ -543,7 +555,7 @@ def _eval_env_entry(ee, var, environ, _parse_flag_cache = None):
     (flag_info,) = flag_infos
     environ[ee.key] = "".join(flag_info.chunks)
 
-def eval_env_set(es, value, action_name, info, ret = None):
+def _eval_env_set(es, value, action_name, info, ret = None):
     if ret == None:
         ret = {}
     if action_name not in es.actions:
@@ -569,7 +581,6 @@ _FeatureConfigurationInfo = provider(
 def unique(seq):
     return {elem: None for elem in seq}.keys()
 
-# buildifier: disable=function-docstring-args
 def _configure_features(
         selectables = None,
         selectables_info = None,
@@ -583,6 +594,7 @@ def _configure_features(
         selectables_info: The `_SelectablesInfo` returned from `_collect_selectables_info`
         requested_features: List of names of `action_config`s and/or `feature`s to be enabled.
         unsupported_features: List of names of `action_config`s and/or `feature`s to be disabled.
+        _debug: Enable debug logging.
     """
     if (selectables == None and selectables_info == None) or (selectables != None and selectables_info != None):
         fail("one and only one of selectables and selectables_info must be specified")
@@ -673,7 +685,7 @@ def _get_environment_variables(info, action, value):
         s = info.selectables_info.selectables[name]
         if s.type_name == "feature":
             for es in s.env_sets:
-                eval_env_set(es, value, action, info, environ)
+                _eval_env_set(es, value, action, info, environ)
     return environ
 
 def _get_artifact_name(artifact_name_patterns, category_name, basename):

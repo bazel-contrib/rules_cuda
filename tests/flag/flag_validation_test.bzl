@@ -1,8 +1,9 @@
+"""Flag validation tests"""
+
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 
 def _num_actions_test_impl(ctx):
     env = analysistest.begin(ctx)
-    target_under_test = analysistest.target_under_test(env)
     actions = analysistest.target_actions(env)
     if ctx.attr.num_actions > 0:
         asserts.equals(env, ctx.attr.num_actions, len(actions))
@@ -15,7 +16,7 @@ num_actions_test = analysistest.make(
     },
 )
 
-def cuda_library_flag_test_impl(ctx):
+def _cuda_library_flag_test_impl(ctx):
     env = analysistest.begin(ctx)
     target_under_test = analysistest.target_under_test(env)
     actions = analysistest.target_actions(env)
@@ -71,7 +72,7 @@ def _create_cuda_library_flag_test(*config_settings):
         for k, v in cs.items():
             merged_config_settings[k] = v
     return analysistest.make(
-        cuda_library_flag_test_impl,
+        _cuda_library_flag_test_impl,
         config_settings = merged_config_settings,
         attrs = {
             "action_mnemonic": attr.string(mandatory = True),

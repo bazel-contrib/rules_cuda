@@ -1,3 +1,5 @@
+"""cuda_object implementation"""
+
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
@@ -89,27 +91,61 @@ def _cuda_objects_impl(ctx):
     ]
 
 cuda_objects = rule(
-    doc = """This rule produces incomplete object files that can only be consumed by `cuda_library`. It is created for relocatable device
-code and device link time optimization source files.""",
+    doc = """\
+This rule produces incomplete object files that can only be consumed by `cuda_library`.
+
+It is created for relocatable device code and device link time optimization source files.
+""",
     implementation = _cuda_objects_impl,
     attrs = {
         # non-host attrs will be passed transitively to cuda_* targets only.
-        "copts": attr.string_list(doc = "Add these options to the CUDA device compilation command."),
-        "defines": attr.string_list(doc = "List of defines to add to the compile line."),
-        "deps": attr.label_list(providers = [[CcInfo], [CudaInfo]]),
-        "hdrs": attr.label_list(allow_files = ALLOW_CUDA_HDRS),
+        "copts": attr.string_list(
+            doc = "Add these options to the CUDA device compilation command.",
+        ),
+        "defines": attr.string_list(
+            doc = "List of defines to add to the compile line.",
+        ),
+        "deps": attr.label_list(
+            providers = [[CcInfo], [CudaInfo]],
+        ),
+        "hdrs": attr.label_list(
+            allow_files = ALLOW_CUDA_HDRS,
+        ),
         # host_* attrs will be passed transitively to cc_* and cuda_* targets
-        "host_copts": attr.string_list(doc = "Add these options to the CUDA host compilation command."),
-        "host_defines": attr.string_list(doc = "List of defines to add to the compile line."),
-        "host_local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
-        "includes": attr.string_list(doc = "List of include dirs to be added to the compile line."),
-        "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
-        "ptxasopts": attr.string_list(doc = "Add these flags to the ptxas command."),
-        "srcs": attr.label_list(allow_files = ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS),
-        "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
-        "_default_cuda_archs": attr.label(default = "//cuda:archs"),
-        "_default_cuda_copts": attr.label(default = "//cuda:copts"),
-        "_default_host_copts": attr.label(default = "//cuda:host_copts"),
+        "host_copts": attr.string_list(
+            doc = "Add these options to the CUDA host compilation command.",
+        ),
+        "host_defines": attr.string_list(
+            doc = "List of defines to add to the compile line.",
+        ),
+        "host_local_defines": attr.string_list(
+            doc = "List of defines to add to the compile line, but only apply to this rule.",
+        ),
+        "includes": attr.string_list(
+            doc = "List of include dirs to be added to the compile line.",
+        ),
+        "local_defines": attr.string_list(
+            doc = "List of defines to add to the compile line, but only apply to this rule.",
+        ),
+        "ptxasopts": attr.string_list(
+            doc = "Add these flags to the ptxas command.",
+        ),
+        "srcs": attr.label_list(
+            allow_files = ALLOW_CUDA_SRCS + ALLOW_CUDA_HDRS,
+        ),
+        # legacy behaviour
+        "_cc_toolchain": attr.label(
+            default = "@bazel_tools//tools/cpp:current_cc_toolchain",
+        ),
+        "_default_cuda_archs": attr.label(
+            default = Label("//cuda:archs"),
+        ),
+        "_default_cuda_copts": attr.label(
+            default = Label("//cuda:copts"),
+        ),
+        "_default_host_copts": attr.label(
+            default = Label("//cuda:host_copts"),
+        ),
     },
     fragments = ["cpp"],
     toolchains = use_cpp_toolchain() + use_cuda_toolchain(),

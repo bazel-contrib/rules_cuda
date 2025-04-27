@@ -1,5 +1,7 @@
+"""cuda_binary implementation"""
+
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
-load("//cuda/private:rules/cuda_library.bzl", _cuda_library = "cuda_library")
+load("//cuda/private:rules/cuda_library.bzl", "cuda_library")
 
 def cuda_binary(name, **attrs):
     """A macro wraps cuda_library and cc_binary to ensure the binary is compiled with the CUDA compiler.
@@ -22,7 +24,7 @@ def cuda_binary(name, **attrs):
             cuda_library_attrs[attr] = cuda_library_only_attrs_defaults[attr]
 
     cuda_library_name = "_" + name
-    _cuda_library(
+    cuda_library(
         name = cuda_library_name,
         **cuda_library_attrs
     )

@@ -1,3 +1,5 @@
+"""cuda flags rules"""
+
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:providers.bzl", "CudaArchsInfo")
@@ -7,7 +9,8 @@ def _cuda_archs_flag_impl(ctx):
     return CudaArchsInfo(arch_specs = cuda_helper.get_arch_specs(specs_str))
 
 cuda_archs_flag = rule(
-    doc = """A build setting for specifying cuda archs to compile for.
+    doc = """\
+A build setting for specifying cuda archs to compile for.
 
 To retain the flexibility of NVCC, the [extended notation](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#extended-notation) is adopted.
 
@@ -41,7 +44,8 @@ E.g.:
 Best Practices:
 
 - Library supports a full range of archs from xx to yy, you should embed the yy PTX
-- Library supports a sparse range of archs from xx to yy, you should embed the xx PTX""",
+- Library supports a sparse range of archs from xx to yy, you should embed the xx PTX
+""",
     implementation = _cuda_archs_flag_impl,
     build_setting = config.string(flag = True),
     provides = [CudaArchsInfo],

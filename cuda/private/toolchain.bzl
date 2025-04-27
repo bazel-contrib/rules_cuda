@@ -1,3 +1,5 @@
+"""Cuda toolchain implementation"""
+
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
@@ -7,6 +9,7 @@ def _cuda_toolchain_impl(ctx):
     has_cc_toolchain = cc_toolchain != None
     has_compiler_executable = ctx.attr.compiler_executable != None and ctx.attr.compiler_executable != ""
     has_compiler_label = ctx.attr.compiler_label != None
+    compiler_executable = None
 
     # Validation
     # compiler_use_cc_toolchain should be used alone and not along with compiler_executable or compiler_label
@@ -24,8 +27,8 @@ def _cuda_toolchain_impl(ctx):
     elif has_compiler_executable:
         compiler_executable = ctx.attr.compiler_executable
     elif has_compiler_label:
-        l = ctx.attr.compiler_label.label
-        compiler_executable = "{}/{}/{}".format(l.workspace_root, l.package, l.name)
+        lbl = ctx.attr.compiler_label.label
+        compiler_executable = "{}/{}/{}".format(lbl.workspace_root, lbl.package, lbl.name)
 
     cuda_toolchain_config = ctx.attr.toolchain_config[CudaToolchainConfigInfo]
     selectables_info = config_helper.collect_selectables_info(cuda_toolchain_config.action_configs + cuda_toolchain_config.features)
@@ -71,22 +74,37 @@ cuda_toolchain = rule(
     implementation = _cuda_toolchain_impl,
     toolchains = use_cpp_toolchain(),
     attrs = {
-        "compiler_executable": attr.string(doc = "The path of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified if compiler_use_cc_toolchain is not set."),
-        "compiler_files": attr.label(allow_files = True, cfg = "exec", doc = "The set of files that are needed when compiling using this toolchain."),
-        "compiler_label": attr.label(allow_single_file = True, executable = True, cfg = "exec", doc = "The label of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified."),
-        "compiler_use_cc_toolchain": attr.bool(default = False, doc = "Use existing cc_toolchain if configured as the compiler executable. Overrides compiler_executable or compiler_label"),
+        "compiler_executable": attr.string(
+            doc = "The path of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified if compiler_use_cc_toolchain is not set.",
+        ),
+        "compiler_files": attr.label(
+            doc = "The set of files that are needed when compiling using this toolchain.",
+            allow_files = True,
+            cfg = "exec",
+        ),
+        "compiler_label": attr.label(
+            doc = "The label of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified.",
+            allow_single_file = True,
+            executable = True,
+            cfg = "exec",
+        ),
+        "compiler_use_cc_toolchain": attr.bool(
+            doc = "Use existing cc_toolchain if configured as the compiler executable. Overrides compiler_executable or compiler_label",
+            default = False,
+        ),
         "toolchain_config": attr.label(
             mandatory = True,
             providers = [CudaToolchainConfigInfo],
             doc = "A target that provides a `CudaToolchainConfigInfo`.",
         ),
-        "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
+        "_cc_toolchain": attr.label(
+            default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
+        ),
     },
 )
 
 CUDA_TOOLCHAIN_TYPE = "//cuda:toolchain_type"
 
-# buildifier: disable=unused-variable
 def use_cuda_toolchain():
     """Helper to depend on the CUDA toolchain."""
     return [CUDA_TOOLCHAIN_TYPE]
@@ -117,8 +135,8 @@ def find_cuda_toolkit(ctx):
 def register_detected_cuda_toolchains():
     """Helper to register the automatically detected CUDA toolchain(s).
 
-User can setup their own toolchain if needed and ignore the detected ones by not calling this macro.
-"""
+    User can setup their own toolchain if needed and ignore the detected ones by not calling this macro.
+    """
     native.register_toolchains(
         "@cuda//toolchain:nvcc-local-toolchain",
         "@cuda//toolchain/clang:clang-local-toolchain",

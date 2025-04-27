@@ -1,3 +1,5 @@
+"""`rules_cuda` WORKSPACE dependencies."""
+
 load(
     "//cuda/private:repositories.bzl",
     _cuda_component = "cuda_component",

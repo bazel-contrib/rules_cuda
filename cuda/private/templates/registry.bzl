@@ -1,3 +1,5 @@
+"""Common component definitions."""
+
 # map short component name to consumable targets
 REGISTRY = {
     "cccl": ["cub", "thrust", "cccl_headers"],

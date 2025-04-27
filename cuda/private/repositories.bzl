@@ -268,8 +268,12 @@ cuda_toolkit = repository_rule(
         "nvcc_version": attr.string(
             doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
         ),
-        "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
-        "version": attr.string(doc = "cuda toolkit version. Required for deliverable toolkit only."),
+        "toolkit_path": attr.string(
+            doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
+        ),
+        "version": attr.string(
+            doc = "cuda toolkit version. Required for deliverable toolkit only.",
+        ),
     },
     configure = True,
     local = True,
@@ -455,7 +459,14 @@ def rules_cuda_dependencies():
         ],
     )
 
-def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, version = None, nvcc_version = None, register_toolchains = False):
+# buildifier: disable=unnamed-macro
+def rules_cuda_toolchains(
+        *,
+        toolkit_path = None,
+        components_mapping = None,
+        version = None,
+        nvcc_version = None,
+        register_toolchains = False):
     """Populate the @cuda repo.
 
     Args:

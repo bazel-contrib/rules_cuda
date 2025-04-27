@@ -1,3 +1,5 @@
+"""NVCC toolchain configuration for non MSVC systems."""
+
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
@@ -17,7 +19,7 @@ load(
 )
 load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
 
-def _impl(ctx):
+def _cuda_toolchain_config_impl(ctx):
     artifact_name_patterns = [
         # artifact_name_pattern for object files
         artifact_name_pattern(
@@ -559,13 +561,27 @@ def _impl(ctx):
 
 cuda_toolchain_config = rule(
     doc = """This rule provides the predefined cuda toolchain configuration for NVCC with non MSVC as host compiler.""",
-    implementation = _impl,
+    implementation = _cuda_toolchain_config_impl,
     attrs = {
-        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], doc = "A target that provides a `CudaToolkitInfo`."),
-        "nvcc_version_major": attr.int(doc = "The CUDA Toolkit major version, e.g, 11 for 11.6"),
-        "nvcc_version_minor": attr.int(doc = "The CUDA Toolkit minor version, e.g, 6 for 11.6"),
-        "toolchain_identifier": attr.string(values = ["nvcc"], mandatory = True),
-        "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
+        "cuda_toolkit": attr.label(
+            doc = "A target that provides a `CudaToolkitInfo`.",
+            mandatory = True,
+            providers = [CudaToolkitInfo],
+        ),
+        "nvcc_version_major": attr.int(
+            doc = "The CUDA Toolkit major version, e.g, 11 for 11.6",
+        ),
+        "nvcc_version_minor": attr.int(
+            doc = "The CUDA Toolkit minor version, e.g, 6 for 11.6",
+        ),
+        "toolchain_identifier": attr.string(
+            values = ["nvcc"],
+            mandatory = True,
+        ),
+        # legacy behaviour
+        "_cc_toolchain": attr.label(
+            default = "@bazel_tools//tools/cpp:current_cc_toolchain",
+        ),
     },
     provides = [CudaToolchainConfigInfo],
     toolchains = use_cpp_toolchain(),

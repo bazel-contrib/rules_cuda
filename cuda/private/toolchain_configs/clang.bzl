@@ -1,3 +1,5 @@
+"""Cuda toolchain configuration with Clang."""
+
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
@@ -24,7 +26,7 @@ all_compile_actions = [
 all_link_actions = [
 ]
 
-def _impl(ctx):
+def _cuda_toolchain_config_impl(ctx):
     is_windows = "windows" in ctx.var["TARGET_CPU"]
 
     obj_ext = ".obj" if is_windows else ".o"
@@ -510,11 +512,21 @@ def _impl(ctx):
 
 cuda_toolchain_config = rule(
     doc = """This rule provides the predefined cuda toolchain configuration for Clang.""",
-    implementation = _impl,
+    implementation = _cuda_toolchain_config_impl,
     attrs = {
-        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], doc = "A target that provides a `CudaToolkitInfo`."),
-        "toolchain_identifier": attr.string(values = ["clang"], mandatory = True),
-        "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
+        "cuda_toolkit": attr.label(
+            mandatory = True,
+            providers = [CudaToolkitInfo],
+            doc = "A target that provides a `CudaToolkitInfo`.",
+        ),
+        "toolchain_identifier": attr.string(
+            values = ["clang"],
+            mandatory = True,
+        ),
+        # legacy behaviour
+        "_cc_toolchain": attr.label(
+            default = "@bazel_tools//tools/cpp:current_cc_toolchain",
+        ),
     },
     provides = [CudaToolchainConfigInfo],
     toolchains = use_cpp_toolchain(),

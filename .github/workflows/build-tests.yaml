@@ -114,3 +114,17 @@ jobs:
       - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //if_cuda:main
       - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //if_cuda:main --enable_cuda=False
       - run: bazelisk shutdown
+
+  buildifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Buildifier
+        run: |
+          wget "https://github.com/bazelbuild/buildtools/releases/download/v${BUILDIFIER_VERSION}/buildifier-linux-amd64" -O buildifier
+          chmod +x ./buildifier
+        env:
+          BUILDIFIER_VERSION: 8.0.3
+      - name: Buildifier
+        run: |
+          ./buildifier -lint=warn -mode=check -r ${{ github.workspace }}

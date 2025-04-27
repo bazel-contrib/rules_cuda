@@ -1,6 +1,32 @@
+"""Toolchain configuration library test"""
+
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
+
+# buildifier: disable=bzl-visibility
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo")
-load("//cuda/private:toolchain_config_lib.bzl", "access", "action_config", "config_helper", "create_var_from_value", "env_entry", "env_set", "eval_feature", "eval_flag_group", "exist", "expand_flag", "feature", "feature_set", "flag_group", "flag_set", "parse_flag", "tool", "variable_with_value", "with_feature_set")
+
+# buildifier: disable=bzl-visibility
+load(
+    "//cuda/private:toolchain_config_lib.bzl",
+    "access",
+    "action_config",
+    "config_helper",
+    "create_var_from_value",
+    "env_entry",
+    "env_set",
+    "eval_feature",
+    "eval_flag_group",
+    "exist",
+    "expand_flag",
+    "feature",
+    "feature_set",
+    "flag_group",
+    "flag_set",
+    "parse_flag",
+    "tool",
+    "variable_with_value",
+    "with_feature_set",
+)
 
 def _expect_failure_msg(ctx):
     env = analysistest.begin(ctx)
@@ -19,26 +45,26 @@ def _make_utility_failure_test(name, failure_trigger_rule, failure_msg):
     failure_trigger_rule(name = name + "_trigger", tags = ["manual"])
     failure_msg_test(name = name + "_verifier", failure_msg = failure_msg, target_under_test = ":" + name + "_trigger")
 
-def _parse_flag_failure1(ctx):
-    f = parse_flag("%")
+def _parse_flag_failure1(_ctx):
+    parse_flag("%")
 
 parse_flag_failure1 = rule(_parse_flag_failure1)
 parse_flag_failure1_msg = "expected '{'"
 
-def _parse_flag_failure2(ctx):
-    f = parse_flag("%{")
+def _parse_flag_failure2(_ctx):
+    parse_flag("%{")
 
 parse_flag_failure2 = rule(_parse_flag_failure2)
 parse_flag_failure2_msg = "expected variable name"
 
-def _parse_flag_failure3(ctx):
-    f = parse_flag("%{}")
+def _parse_flag_failure3(_ctx):
+    parse_flag("%{}")
 
 parse_flag_failure3 = rule(_parse_flag_failure3)
 parse_flag_failure3_msg = "expected variable name"
 
-def _parse_flag_failure4(ctx):
-    f = parse_flag("%{v1.v2 ")
+def _parse_flag_failure4(_ctx):
+    parse_flag("%{v1.v2 ")
 
 parse_flag_failure4 = rule(_parse_flag_failure4)
 parse_flag_failure4_msg = "expected '}'"
@@ -102,7 +128,7 @@ def _var_test_impl(ctx):
 
     inner_value = struct(inner = "value")
     outer_value = struct(struct = inner_value)
-    inner_var = create_var_from_value(inner_value)
+    create_var_from_value(inner_value)
     outer_var = create_var_from_value(outer_value)
 
     asserts.false(env, exist(outer_var, "not_exist"))
@@ -317,7 +343,7 @@ def _eval_flag_group_test_impl(ctx):
 
 eval_flag_group_test = unittest.make(_eval_flag_group_test_impl)
 
-def _test_accessing_structure_as_string_fails(ctx):
+def _test_accessing_structure_as_string_fails(_ctx):
     fg = flag_group(flags = ["-A%{struct}"])
     st = struct(struct = struct(foo = "fooValue", bar = "barValue"))
     eval_flag_group(fg, st, 128)
@@ -325,7 +351,7 @@ def _test_accessing_structure_as_string_fails(ctx):
 test_accessing_structure_as_string_fails = rule(_test_accessing_structure_as_string_fails)
 test_accessing_structure_as_string_fails_msg = "Cannot expand variable 'struct': expected string, found struct"  # testAccessingStructureAsStringFails
 
-def _test_accessing_string_value_as_structure_fails(ctx):
+def _test_accessing_string_value_as_structure_fails(_ctx):
     fg = flag_group(flags = ["-A%{stringVar.foo}"])
     st = struct(stringVar = "stringVarValue")
     eval_flag_group(fg, st, 128)
@@ -333,7 +359,7 @@ def _test_accessing_string_value_as_structure_fails(ctx):
 test_accessing_string_value_as_structure_fails = rule(_test_accessing_string_value_as_structure_fails)
 test_accessing_string_value_as_structure_fails_msg = "Cannot expand variable 'stringVar.foo': variable 'stringVar' is string, expected structure"  # testAccessingStringValueAsStructureFails
 
-def _test_accessing_sequence_as_structure_fails(ctx):
+def _test_accessing_sequence_as_structure_fails(_ctx):
     fg = flag_group(flags = ["-A%{sequence.foo}"])
     st = struct(sequence = ["foo1", "foo2"])
     eval_flag_group(fg, st, 128)
@@ -341,7 +367,7 @@ def _test_accessing_sequence_as_structure_fails(ctx):
 test_accessing_sequence_as_structure_fails = rule(_test_accessing_sequence_as_structure_fails)
 test_accessing_sequence_as_structure_fails_msg = "Cannot expand variable 'sequence.foo': variable 'sequence' is sequence, expected structure"  # testAccessingSequenceAsStructureFails
 
-def _test_accessing_missing_structure_field_fails(ctx):
+def _test_accessing_missing_structure_field_fails(_ctx):
     fg = flag_group(flags = ["-A%{struct.missing}"])
     st = struct(struct = struct(bar = "barValue"))
     eval_flag_group(fg, st, 128)
@@ -351,7 +377,7 @@ test_accessing_missing_structure_field_fails_msg = "Cannot expand variable 'stru
 
 # testExpandIfNoneAvailableDoesntExpandIfThereIsOneOfManyAvailable test skipped, See https://github.com/bazelbuild/bazel/issues/7008
 
-def _test_list_variable_expansion_mixed_with_implicitly_accessed_list_variable(ctx):
+def _test_list_variable_expansion_mixed_with_implicitly_accessed_list_variable(_ctx):
     fg = flag_group(
         iterate_over = "v1",
         flags = ["%{v1} %{v2}"],
@@ -363,6 +389,7 @@ test_list_variable_expansion_mixed_with_implicitly_accessed_list_variable = rule
 test_list_variable_expansion_mixed_with_implicitly_accessed_list_variable_msg = "Cannot expand variable 'v2': expected string, found ["  # testListVariableExpansionMixedWithImplicitlyAccessedListVariableFails
 
 def eval_flag_group_failure_tests():
+    """Define eval flag group failure tests"""
     _make_utility_failure_test(
         "test_accessing_structure_as_string_fails",
         test_accessing_structure_as_string_fails,
@@ -807,20 +834,20 @@ def _feature_configuration_test_impl(ctx):
 
 feature_configuration_test = unittest.make(_feature_configuration_test_impl)
 
-def _test_feature_name_collision(ctx):
+def _test_feature_name_collision(_ctx):
     create_config_info([feature(name = "<<<collision>>>"), feature(name = "<<<collision>>>")])
 
 test_feature_name_collision = rule(_test_feature_name_collision)
 test_feature_name_collision_msg = "<<<collision>>>"  # testFeatureNameCollision
 
-def _test_reference_to_undefined_feature(ctx):
+def _test_reference_to_undefined_feature(_ctx):
     implies = ["<<<undefined>>>"]
     create_config_info([feature(name = "a", implies = implies)])
 
 test_reference_to_undefined_feature = rule(_test_reference_to_undefined_feature)
 test_reference_to_undefined_feature_msg = "<<<undefined>>> is not defined"  # testReferenceToUndefinedFeature
 
-def _test_error_for_no_matching_tool(ctx):
+def _test_error_for_no_matching_tool(_ctx):
     config_info = create_config_info([
         action_config(
             action_name = "action-a",
@@ -837,7 +864,7 @@ def _test_error_for_no_matching_tool(ctx):
 test_error_for_no_matching_tool = rule(_test_error_for_no_matching_tool)
 test_error_for_no_matching_tool_msg = "Matching tool for action action-a not found for given feature configuration"  # testErrorForNoMatchingTool
 
-def _test_invalid_action_configuration_duplicate_action_configs(ctx):
+def _test_invalid_action_configuration_duplicate_action_configs(_ctx):
     create_config_info([action_config(action_name = "action-a"), action_config(action_name = "action-a")])
 
 test_invalid_action_configuration_duplicate_action_configs = rule(_test_invalid_action_configuration_duplicate_action_configs)
@@ -845,7 +872,7 @@ test_invalid_action_configuration_duplicate_action_configs_msg = "feature or act
 
 # testInvalidActionConfigurationMultipleActionConfigsForAction failure test skipped, because config_name in action_config has gone!
 
-def _error_for_flag_from_action_config_with_specified_action(ctx):
+def _error_for_flag_from_action_config_with_specified_action(_ctx):
     features = [
         action_config(
             action_name = "c++-compile",
@@ -855,7 +882,7 @@ def _error_for_flag_from_action_config_with_specified_action(ctx):
             )],
         ),
     ]
-    config_info = create_config_info(features, ["c++-compile"])
+    create_config_info(features, ["c++-compile"])
 
 error_for_flag_from_action_config_with_specified_action = rule(_error_for_flag_from_action_config_with_specified_action)
 error_for_flag_from_action_config_with_specified_action_msg = (
@@ -863,17 +890,18 @@ error_for_flag_from_action_config_with_specified_action_msg = (
     "configured action.  Thus, you must not specify action lists in an action_config's flag set."
 ).format("c++-compile")  # testErrorForFlagFromActionConfigWithSpecifiedAction
 
-def _feature_configuration_provides_collision(ctx):
+def _feature_configuration_provides_collision(_ctx):
     features = [
         feature(name = "a", provides = ["provides_string"]),
         feature(name = "b", provides = ["provides_string"]),
     ]
-    config_info = create_config_info(features, ["a", "b"])
+    create_config_info(features, ["a", "b"])
 
 feature_configuration_provides_collision = rule(_feature_configuration_provides_collision)
 feature_configuration_provides_collision_msg = "a b"  # testProvidesCollision
 
 def feature_configuration_failure_tests():
+    """Define feature configuration tests"""
     _make_utility_failure_test(
         "test_feature_name_collision",
         test_feature_name_collision,

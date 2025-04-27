@@ -1,3 +1,5 @@
+"""NCCL utilities."""
+
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cuda//cuda:defs.bzl", "cuda_objects")
 
@@ -15,7 +17,20 @@ def if_cuda_clang(if_true, if_false = []):
         "//conditions:default": if_false,
     })
 
-def nccl_primitive(name, hdrs = [], deps = [], use_bf16 = True):
+def nccl_primitive(
+        *,
+        name,
+        hdrs = [],
+        deps = [],
+        use_bf16 = True):
+    """Define a NCCL primitive object.
+
+    Args:
+        name (str): The name of the target
+        hdrs (list): A list of cuda headers.
+        deps (list): A list of cuda dependencies.
+        use_bf16 (bool): Whether or not to include the bf16 data type.
+    """
     ops = ["sum", "prod", "min", "max", "premulsum", "sumpostdiv"]
     datatypes = ["i8", "u8", "i32", "u32", "i64", "u64", "f16", "f32", "f64"]
     if use_bf16:

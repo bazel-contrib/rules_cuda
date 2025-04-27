@@ -1,3 +1,5 @@
+"""Common definitions for cuda rules"""
+
 ALLOW_CUDA_HDRS = [
     ".cuh",
     ".h",

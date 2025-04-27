@@ -1,6 +1,8 @@
+"""cuda_toolkit_info implementation"""
+
 load("//cuda/private:providers.bzl", "CudaToolkitInfo")
 
-def _impl(ctx):
+def _cuda_toolkit_info_impl(ctx):
     version_major, version_minor = ctx.attr.version.split(".")[:2]
     return CudaToolkitInfo(
         path = ctx.attr.path,
@@ -14,14 +16,32 @@ def _impl(ctx):
 
 cuda_toolkit_info = rule(
     doc = """This rule provides CudaToolkitInfo.""",
-    implementation = _impl,
+    implementation = _cuda_toolkit_info_impl,
     attrs = {
-        "bin2c": attr.label(allow_single_file = True, doc = "The bin2c executable."),
-        "fatbinary": attr.label(allow_single_file = True, doc = "The fatbinary executable."),
-        "link_stub": attr.label(allow_single_file = True, doc = "The link.stub text file."),
-        "nvlink": attr.label(allow_single_file = True, doc = "The nvlink executable."),
-        "path": attr.string(mandatory = True, doc = "Root path to the CUDA Toolkit."),
-        "version": attr.string(mandatory = True, doc = "Version of the CUDA Toolkit."),
+        "bin2c": attr.label(
+            doc = "The bin2c executable.",
+            allow_single_file = True,
+        ),
+        "fatbinary": attr.label(
+            doc = "The fatbinary executable.",
+            allow_single_file = True,
+        ),
+        "link_stub": attr.label(
+            doc = "The link.stub text file.",
+            allow_single_file = True,
+        ),
+        "nvlink": attr.label(
+            doc = "The nvlink executable.",
+            allow_single_file = True,
+        ),
+        "path": attr.string(
+            doc = "Root path to the CUDA Toolkit.",
+            mandatory = True,
+        ),
+        "version": attr.string(
+            doc = "Version of the CUDA Toolkit.",
+            mandatory = True,
+        ),
     },
     provides = [CudaToolkitInfo],
 )
