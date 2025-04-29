@@ -26,7 +26,7 @@ def _get_nvcc_version(repository_ctx, nvcc_root):
             return version[:2]
     return [-1, -1]
 
-def _detect_cuda_toolkit(repository_ctx):
+def _detect_local_cuda_toolkit(repository_ctx):
     cuda_path = repository_ctx.attr.toolkit_path
     if cuda_path == "":
         cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
@@ -145,7 +145,7 @@ def detect_cuda_toolkit(repository_ctx):
     if repository_ctx.attr.components_mapping != {}:
         return _detect_deliverable_cuda_toolkit(repository_ctx)
     else:
-        return _detect_cuda_toolkit(repository_ctx)
+        return _detect_local_cuda_toolkit(repository_ctx)
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     """Generate `@cuda//BUILD` and `@cuda//defs.bzl` and `@cuda//toolchain/BUILD`
@@ -236,49 +236,9 @@ def detect_clang(repository_ctx):
 
     return clang_path_or_label
 
-def generate_version_json(repository_ctx):
-    """Generates the version.json file."""
-    version_data = {
-        "cuda": {
-            "name": "CUDA SDK",
-            "version": "12.3.2",
-        },
-        "cuda_cccl": {
-            "name": "CUDA C++ Core Compute Libraries",
-            "version": "12.3.101",
-        },
-        "cuda_cudart": {
-            "name": "CUDA Runtime (cudart)",
-            "version": "12.3.101",
-        },
-        "cuda_nvcc": {
-            "name": "CUDA NVCC",
-            "version": "12.3.107",
-        },
-        "libcurand": {
-            "name": "CUDA cuRAND",
-            "version": "10.3.4.107",
-        },
-    }
-
-    json_string = json.encode(version_data)
-    version_json_path = repository_ctx.path("clang/version.json")
-    repository_ctx.file(version_json_path, content = json_string, executable = False)
-
-    version_txt_path = repository_ctx.path("clang/version.txt")
-    version_txt_content = "CUDA Version 12.3.2"
-    repository_ctx.file(version_txt_path, content = version_txt_content, executable = False)
-
 def generate_build(repository_ctx):
-    build_file_contents = """
-filegroup(
-    name = "cuda-files",
-    srcs = glob(["**"]),
-    visibility = ["//visibility:public"],
-)
-"""
-    build_file_path = repository_ctx.path("clang/BUILD")
-    repository_ctx.file(build_file_path, content = build_file_contents, executable = False)
+    tpl_label = Label("//cuda/private:templates/BUILD.clang_compiler_deps")
+    repository_ctx.template("clang_compiler_deps/BUILD", tpl_label, executable = False)
 
 def config_clang(repository_ctx, cuda, clang_path_or_label):
     """Generate `@cuda//toolchain/clang/BUILD`
@@ -288,7 +248,7 @@ def config_clang(repository_ctx, cuda, clang_path_or_label):
         cuda: The struct returned from `detect_cuda_toolkit`
         clang_path_or_label: Path or label to clang executable returned from `detect_clang`
     """
-    is_local_ctk = None
+    is_local_ctk = True
 
     if len(repository_ctx.attr.components_mapping) != 0:
         is_local_ctk = False
@@ -299,20 +259,17 @@ def config_clang(repository_ctx, cuda, clang_path_or_label):
         cudart_repo = components_mapping_compat.repo_str(repository_ctx.attr.components_mapping["cudart"])
         cccl_repo = components_mapping_compat.repo_str(repository_ctx.attr.components_mapping["cccl"])
 
-        libpath = "lib"  # any special logic for linux/windows difference?
-        generate_version_json(repository_ctx)
-
-        clang_cuda_path = repository_ctx.path("clang")
-        repository_ctx.execute(["mkdir", "-p", "clang"])
+        clang_cuda_path = repository_ctx.path("clang_compiler_deps")
+        repository_ctx.execute(["mkdir", "-p", "clang_compiler_deps"])
 
         source_paths = [
             repository_ctx.path(Label(nvcc_repo + "//:nvcc/bin")),
             repository_ctx.path(Label(nvcc_repo + "//:nvcc/include")),
             repository_ctx.path(Label(cudart_repo + "//:cudart/include")),
             repository_ctx.path(Label(cccl_repo + "//:cccl/include")),
-            repository_ctx.path(Label(nvcc_repo + "//:nvcc/" + libpath)),
-            repository_ctx.path(Label(cudart_repo + "//:cudart/" + libpath)),
-            repository_ctx.path(Label(cccl_repo + "//:cccl/" + libpath)),
+            repository_ctx.path(Label(nvcc_repo + "//:nvcc/lib")),
+            repository_ctx.path(Label(cudart_repo + "//:cudart/lib")),
+            repository_ctx.path(Label(cccl_repo + "//:cccl/lib")),
             repository_ctx.path(Label(nvcc_repo + "//:nvcc/nvvm")),
         ]
 

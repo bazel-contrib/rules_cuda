@@ -1,0 +1,12 @@
+# clang needs these files at a single location and be passed as `cuda-path` arg.
+# These include, lib, bin, nvvm files are collected from cccl, nvvm, nvcc, cudart in cuda/private/repositories.bzl
+filegroup(
+    name = "clang_compiler_deps",
+    srcs = glob([
+        "bin/**",
+        "include/**",
+        "lib/**",
+        "nvvm/**",
+    ]),
+    visibility = ["//visibility:public"],
+)
