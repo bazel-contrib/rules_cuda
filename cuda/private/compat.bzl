@@ -1,3 +1,5 @@
+"""Utilities for macro-to-rule interfaces."""
+
 _is_attr_string_keyed_label_dict_available = getattr(attr, "string_keyed_label_dict", None) != None
 _is_bzlmod_enabled = str(Label("//:invalid")).startswith("@@")
 

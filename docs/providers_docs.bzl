@@ -1,3 +1,5 @@
+# buildifier: disable=module-docstring
+# buildifier: disable=bzl-visibility
 load(
     "@rules_cuda//cuda/private:providers.bzl",
     _ArchSpecInfo = "ArchSpecInfo",

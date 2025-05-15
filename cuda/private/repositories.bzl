@@ -261,14 +261,18 @@ def _cuda_toolkit_impl(repository_ctx):
 cuda_toolkit = repository_rule(
     implementation = _cuda_toolkit_impl,
     attrs = {
-        "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
         "components_mapping": components_mapping_compat.attr(
             doc = "A mapping from component names to component repos of a deliverable CUDA Toolkit. " +
                   "Only the repo part of the label is useful",
         ),
-        "version": attr.string(doc = "cuda toolkit version. Required for deliverable toolkit only."),
         "nvcc_version": attr.string(
             doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
+        ),
+        "toolkit_path": attr.string(
+            doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
+        ),
+        "version": attr.string(
+            doc = "cuda toolkit version. Required for deliverable toolkit only.",
         ),
     },
     configure = True,
@@ -413,9 +417,9 @@ def _cuda_redist_json_impl(repository_ctx):
         specs.append({
             "component_name": c,
             "descriptive_name": desc_name,
-            "urls": [payload_url],
             "sha256": payload["sha256"],
             "strip_prefix": archive_name,
+            "urls": [payload_url],
             "version": redist[c_full]["version"],
         })
 
@@ -455,7 +459,14 @@ def rules_cuda_dependencies():
         ],
     )
 
-def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, version = None, nvcc_version = None, register_toolchains = False):
+# buildifier: disable=unnamed-macro
+def rules_cuda_toolchains(
+        *,
+        toolkit_path = None,
+        components_mapping = None,
+        version = None,
+        nvcc_version = None,
+        register_toolchains = False):
     """Populate the @cuda repo.
 
     Args:

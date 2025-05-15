@@ -1,6 +1,14 @@
+# buildifier: disable=module-docstring
+# buildifier: disable=bzl-visibility
 load("@rules_cuda//cuda/private:actions/compile.bzl", _compile = "compile")
+
+# buildifier: disable=bzl-visibility
 load("@rules_cuda//cuda/private:actions/dlink.bzl", _device_link = "device_link")
+
+# buildifier: disable=bzl-visibility
 load("@rules_cuda//cuda/private:cuda_helper.bzl", _cuda_helper = "cuda_helper")
+
+# buildifier: disable=bzl-visibility
 load(
     "@rules_cuda//cuda/private:repositories.bzl",
     _config_clang = "config_clang",
@@ -8,12 +16,16 @@ load(
     _detect_clang = "detect_clang",
     _detect_cuda_toolkit = "detect_cuda_toolkit",
 )
+
+# buildifier: disable=bzl-visibility
 load(
     "@rules_cuda//cuda/private:toolchain.bzl",
     _find_cuda_toolchain = "find_cuda_toolchain",
     _find_cuda_toolkit = "find_cuda_toolkit",
     _use_cuda_toolchain = "use_cuda_toolchain",
 )
+
+# buildifier: disable=bzl-visibility
 load("@rules_cuda//cuda/private:toolchain_config_lib.bzl", _config_helper = "config_helper")
 
 # create a struct to group toolchain symbols semantically

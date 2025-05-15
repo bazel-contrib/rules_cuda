@@ -1,3 +1,5 @@
+"""Template helpers"""
+
 load("//cuda/private:compat.bzl", "components_mapping_compat")
 load("//cuda/private:templates/registry.bzl", "REGISTRY")
 
@@ -6,9 +8,6 @@ def _to_forward_slash(s):
 
 def _is_linux(ctx):
     return ctx.os.name.startswith("linux")
-
-def _is_windows(ctx):
-    return ctx.os.name.lower().startswith("windows")
 
 def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable):
     # stitch template fragment
@@ -92,8 +91,9 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
     """Generate `@rules_cuda_redist_json//:redist.bzl`
 
     Args:
-        repository_ctx: repository_ctx
-        component_specs: list of dict, dict keys are component_name, urls, sha256, strip_prefix and version
+        repository_ctx (repository_ctx): The rule's context object.
+        component_specs (list[dict]): list of dict, dict keys are component_name, urls, sha256, strip_prefix and version
+        redist_version (str): The redist version.
     """
 
     rules_cuda_components_body = []
@@ -130,8 +130,8 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
 
     tpl_label = Label("//cuda/private:templates/redist.bzl.tpl")
     substitutions = {
-        "%{rules_cuda_components_body}": "\n\n    ".join(rules_cuda_components_body),
         "%{components_mapping}": repr(mapping),
+        "%{rules_cuda_components_body}": "\n\n    ".join(rules_cuda_components_body),
         "%{version}": redist_version,
     }
     repository_ctx.template("redist.bzl", tpl_label, substitutions = substitutions, executable = False)
@@ -142,15 +142,15 @@ def _generate_toolchain_build(repository_ctx, cuda):
         ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
     substitutions = {
+        "%{bin2c_label}": cuda.bin2c_label,
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
+        "%{fatbinary_label}": cuda.fatbinary_label,
+        "%{link_stub_label}": cuda.link_stub_label,
+        "%{nvcc_label}": cuda.nvcc_label,
         "%{nvcc_version_major}": str(cuda.nvcc_version_major),
         "%{nvcc_version_minor}": str(cuda.nvcc_version_minor),
-        "%{nvcc_label}": cuda.nvcc_label,
         "%{nvlink_label}": cuda.nvlink_label,
-        "%{link_stub_label}": cuda.link_stub_label,
-        "%{bin2c_label}": cuda.bin2c_label,
-        "%{fatbinary_label}": cuda.fatbinary_label,
     }
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:
@@ -182,15 +182,15 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
 
     substitutions = {
         "# %{compiler_attribute_line}": compiler_attr_line,
-        "%{clang_path}": clang_path_for_subst,  # Will be empty if label is used
+        "%{bin2c_label}": cuda.bin2c_label,
         "%{clang_label}": clang_label_for_subst,  # Will be empty if path is used
+        "%{clang_path}": clang_path_for_subst,  # Will be empty if label is used
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
+        "%{fatbinary_label}": cuda.fatbinary_label,
+        "%{link_stub_label}": cuda.link_stub_label,
         "%{nvcc_label}": cuda.nvcc_label,
         "%{nvlink_label}": cuda.nvlink_label,
-        "%{link_stub_label}": cuda.link_stub_label,
-        "%{bin2c_label}": cuda.bin2c_label,
-        "%{fatbinary_label}": cuda.fatbinary_label,
     }
 
     if clang_label_for_subst:

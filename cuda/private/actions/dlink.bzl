@@ -1,6 +1,7 @@
 ""
 
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:actions/compile.bzl", "compile")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
@@ -13,8 +14,7 @@ def device_link(
         objects,
         common,
         pic = False,
-        rdc = False,
-        dlto = False):
+        rdc = False):
     """Perform device link, return a dlink-ed object file.
 
     Notes:
@@ -28,16 +28,15 @@ def device_link(
         common: A cuda common object. Can be obtained with `cuda_helper.create_common(ctx)`
         pic: Whether the `objects` are compiled for position independent code.
         rdc: Whether the `objects` are device linked for relocatable device code.
-        dlto: Whether the device link time optimization is enabled.
 
     Returns:
         An deviced linked object `File`.
     """
     cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.device_link])
     if cuda_helper.is_enabled(cuda_feature_config, "supports_compiler_device_link"):
-        return _compiler_device_link(ctx, cuda_toolchain, cc_toolchain, cuda_feature_config, objects, common, pic = pic, rdc = rdc, dlto = dlto)
+        return _compiler_device_link(ctx, cuda_toolchain, cc_toolchain, cuda_feature_config, objects, common, pic = pic, rdc = rdc)
     elif cuda_helper.is_enabled(cuda_feature_config, "supports_wrapper_device_link"):
-        return _wrapper_device_link(ctx, cuda_toolchain, cc_toolchain, objects, common, pic = pic, rdc = rdc, dlto = dlto)
+        return _wrapper_device_link(ctx, cuda_toolchain, cc_toolchain, objects, common, pic = pic, rdc = rdc)
     else:
         fail("toolchain must be configured to enable feature supports_compiler_device_link or supports_wrapper_device_link.")
 
@@ -49,8 +48,7 @@ def _compiler_device_link(
         objects,
         common,
         pic = False,
-        rdc = False,
-        dlto = False):
+        rdc = False):
     """perform compiler supported native device link, return a dlink-ed object file"""
     if not rdc:
         fail("device link is only meaningful on building relocatable device code")
@@ -106,8 +104,7 @@ def _wrapper_device_link(
         objects,
         common,
         pic = False,
-        rdc = False,
-        dlto = False):
+        rdc = False):
     """perform bazel macro supported device link, return a dlink-ed object file"""
     if not rdc:
         fail("device link is only meaningful on building relocatable device code")
@@ -184,8 +181,8 @@ def _wrapper_device_link(
         output = fatbin_c,
         template = cuda_toolkit.link_stub,
         substitutions = {
-            "REGISTERLINKBINARYFILE": '"{}"'.format(register_h.short_path),
             "FATBINFILE": '"{}"'.format(fatbin_h.short_path),
+            "REGISTERLINKBINARYFILE": '"{}"'.format(register_h.short_path),
         },
     )
 
