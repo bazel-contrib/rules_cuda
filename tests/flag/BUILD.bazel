@@ -2,19 +2,24 @@ load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 load(
     ":flag_validation_test.bzl",
     "cuda_library_c_dbg_flag_test",
+    "cuda_library_c_dbg_clang_flag_test",
     "cuda_library_c_dbg_static_msvcrt_flag_test",
     "cuda_library_c_fastbuild_flag_test",
+    "cuda_library_c_fastbuild_clang_flag_test",
     "cuda_library_c_fastbuild_static_msvcrt_flag_test",
     "cuda_library_c_opt_flag_test",
+    "cuda_library_c_opt_clang_flag_test",
     "cuda_library_c_opt_static_msvcrt_flag_test",
     "cuda_library_compute60_flag_test",
     "cuda_library_compute60_sm61_flag_test",
     "cuda_library_compute61_sm61_flag_test",
     "cuda_library_flag_test",
     "cuda_library_sm100_sm100a_flag_test",
+    "cuda_library_sm100_sm100a_clang_flag_test",
     "cuda_library_sm61_flag_test",
     "cuda_library_sm90a_flag_test",
     "cuda_library_sm90a_sm90_flag_test",
+    "cuda_library_sm90a_sm90_clang_flag_test",
     "num_actions_test",
 )
 
@@ -82,6 +87,44 @@ cuda_library_c_opt_flag_test(
     target_compatible_with = ["@platforms//os:linux"],
     target_under_test = "@rules_cuda_examples//basic:kernel",
 )
+
+cuda_library_c_dbg_clang_flag_test(
+    name = "cuda_library_c_dbg_clang_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-O0",
+        "-g",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+cuda_library_c_fastbuild_clang_flag_test(
+    name = "cuda_library_c_fastbuild_clang_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-O0",
+        "--generate-line-info",
+        "-g1",
+    ],
+    not_contain_flags = ["-DNDEBUG"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+cuda_library_c_opt_clang_flag_test(
+    name = "cuda_library_c_opt_clang_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-g0",
+        "-O2",
+        "-DNDEBUG",
+    ],
+    not_contain_flags = ["-g"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
 
 # Windows dynamic msvcrt and static msvcrt test
 cuda_library_c_dbg_flag_test(

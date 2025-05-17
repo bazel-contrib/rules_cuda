@@ -91,6 +91,12 @@ cuda_library_c_dbg_flag_test = _create_cuda_library_flag_test(config_settings_db
 cuda_library_c_fastbuild_flag_test = _create_cuda_library_flag_test(config_settings_fastbuild)
 cuda_library_c_opt_flag_test = _create_cuda_library_flag_test(config_settings_opt)
 
+config_settings_clang = {_rules_cuda_target("cuda:compiler"): "clang"}
+
+cuda_library_c_dbg_clang_flag_test = _create_cuda_library_flag_test(config_settings_dbg, config_settings_clang)
+cuda_library_c_fastbuild_clang_flag_test = _create_cuda_library_flag_test(config_settings_fastbuild, config_settings_clang)
+cuda_library_c_opt_clang_flag_test = _create_cuda_library_flag_test(config_settings_opt, config_settings_clang)
+
 static_link_msvcrt = {"//command_line_option:features": ["static_link_msvcrt"]}
 
 cuda_library_c_dbg_static_msvcrt_flag_test = _create_cuda_library_flag_test(config_settings_dbg, static_link_msvcrt)
@@ -113,3 +119,6 @@ cuda_library_sm100_sm100a_flag_test = _create_cuda_library_flag_test(config_sett
 cuda_library_compute60_flag_test = _create_cuda_library_flag_test(config_settings_compute60)
 cuda_library_compute60_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute60_sm61)
 cuda_library_compute61_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute61_sm61)
+
+cuda_library_sm90a_sm90_clang_flag_test = _create_cuda_library_flag_test(config_settings_sm90a_sm90, config_settings_clang)
+cuda_library_sm100_sm100a_clang_flag_test = _create_cuda_library_flag_test(config_settings_sm100_sm100a, config_settings_clang)
