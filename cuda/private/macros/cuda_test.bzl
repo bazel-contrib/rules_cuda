@@ -42,7 +42,7 @@ def cuda_test(name, **attrs):
         if dst in cc_attrs:
             cc_attrs.pop(dst)
         if src in cc_attrs:
-            cc_attrs[dst] = cc_attrs[src]
+            cc_attrs[dst] = cc_attrs.pop(src)
 
     native.cc_test(
         name = name,
