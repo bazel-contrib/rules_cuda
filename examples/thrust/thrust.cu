@@ -5,7 +5,14 @@
 int main() {
   const int num_elements = 8192;
   thrust::device_vector<float> vec(num_elements, 42.0);
-  auto sum = thrust::reduce(vec.begin(), vec.end(), (float)0.0, thrust::plus<float>());
-  std::cout << "thrust device_vector created, sum reduce as " << sum << ", mean: " << sum / num_elements << std::endl;
+  auto sum =
+      thrust::reduce(vec.begin(), vec.end(), (float)0.0, thrust::plus<float>());
+  std::cout << "thrust device_vector created, sum reduce as " << sum
+            << ", mean: " << sum / num_elements << std::endl;
+  vec.resize(10, 1);
+  sum =
+      thrust::reduce(vec.begin(), vec.end(), (float)0.0, thrust::plus<float>());
+  std::cout << "thrust device_vector created, sum reduce as " << sum
+            << ", mean: " << sum / num_elements << std::endl;
   return 0;
 }
