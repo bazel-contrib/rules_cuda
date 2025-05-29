@@ -37,7 +37,7 @@ def cuda_binary(name, **attrs):
     )
 
     cc_attrs = {k: v for k, v in attrs.items() if k not in cuda_library_only_attrs}
-    for src, dst in rename_attrs:
+    for src, dst in rename_attrs.items():
         if dst in cc_attrs:
             cc_attrs.pop(dst)
         if src in cc_attrs:
