@@ -180,12 +180,19 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         clang_path = "%{clang_path}",
     )
 
+    cuda_path_for_subst = ""
+    if cuda.path:
+        cuda_path_for_subst = _to_forward_slash(cuda.path)
+    else:
+        # Use repository_ctx.name to get the correct canonical name
+        cuda_path_for_subst = "external/{}/clang_compiler_deps".format(repository_ctx.name)
+
     substitutions = {
         "# %{compiler_attribute_line}": compiler_attr_line,
         "%{clang_compiler_files}": "@cuda//:compiler_deps" if cuda.path else "@cuda//clang_compiler_deps",
         "%{clang_path}": clang_path_for_subst,  # Will be empty if label is used
         "%{clang_label}": clang_label_for_subst,  # Will be empty if path is used
-        "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "external/rules_cuda++toolchain+cuda/clang_compiler_deps",  # needs to be relative to work in RBE.
+        "%{cuda_path}": cuda_path_for_subst,
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_label}": cuda.nvcc_label,
         "%{nvlink_label}": cuda.nvlink_label,
