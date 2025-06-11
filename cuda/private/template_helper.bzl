@@ -184,8 +184,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     if cuda.path:
         cuda_path_for_subst = _to_forward_slash(cuda.path)
     else:
-        # Use repository_ctx.name to get the correct canonical name
-        cuda_path_for_subst = "external/{}/clang_compiler_deps".format(repository_ctx.name)
+        cuda_path_for_subst = "{}/clang_compiler_deps".format(Label("@cuda//cuda").workspace_root)
 
     substitutions = {
         "# %{compiler_attribute_line}": compiler_attr_line,
