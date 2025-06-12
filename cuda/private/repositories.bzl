@@ -236,6 +236,10 @@ def detect_clang(repository_ctx):
 
     return clang_path_or_label
 
+def generate_build(repository_ctx):
+    tpl_label = Label("//cuda/private:templates/BUILD.clang_compiler_deps")
+    repository_ctx.template("clang_compiler_deps/BUILD", tpl_label, executable = False)
+
 def config_clang(repository_ctx, cuda, clang_path_or_label):
     """Generate `@cuda//toolchain/clang/BUILD`
 
@@ -244,6 +248,37 @@ def config_clang(repository_ctx, cuda, clang_path_or_label):
         cuda: The struct returned from `detect_cuda_toolkit`
         clang_path_or_label: Path or label to clang executable returned from `detect_clang`
     """
+    is_local_ctk = True
+
+    if len(repository_ctx.attr.components_mapping) != 0:
+        is_local_ctk = False
+
+    # for deliverable ctk, clang needs the toolkit as cuda_path
+    if not is_local_ctk:
+        nvcc_repo = components_mapping_compat.repo_str(repository_ctx.attr.components_mapping["nvcc"])
+        cudart_repo = components_mapping_compat.repo_str(repository_ctx.attr.components_mapping["cudart"])
+        cccl_repo = components_mapping_compat.repo_str(repository_ctx.attr.components_mapping["cccl"])
+
+        clang_cuda_path = repository_ctx.path("clang_compiler_deps")
+        repository_ctx.execute(["mkdir", "-p", "clang_compiler_deps"])
+
+        source_paths = [
+            repository_ctx.path(Label(nvcc_repo + "//:nvcc/bin")),
+            repository_ctx.path(Label(nvcc_repo + "//:nvcc/include")),
+            repository_ctx.path(Label(cudart_repo + "//:cudart/include")),
+            repository_ctx.path(Label(cccl_repo + "//:cccl/include")),
+            repository_ctx.path(Label(nvcc_repo + "//:nvcc/lib")),
+            repository_ctx.path(Label(cudart_repo + "//:cudart/lib")),
+            repository_ctx.path(Label(cccl_repo + "//:cccl/lib")),
+            repository_ctx.path(Label(nvcc_repo + "//:nvcc/nvvm")),
+        ]
+
+        for source_path in source_paths:
+            # executes only in analysis phase, need to declare as action
+            repository_ctx.execute(["cp", "-r", str(source_path), clang_cuda_path])
+        generate_build(repository_ctx)
+
+    # Generate @cuda//toolchain/clang/BUILD
     template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label)
 
 def config_disabled(repository_ctx):
