@@ -28,7 +28,7 @@ jobs:
           path: ~/.cache/bazel
           key: bazel-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}-${{ hashFiles('.bazelversion') }}
       - name: Install CUDA (Linux)
-        uses: Jimver/cuda-toolkit@v0.2.22
+        uses: Jimver/cuda-toolkit@v0.2.25
         with:
           cuda: ${{ matrix.cuda-version }}
           sub-packages: '["nvcc", "cudart-dev"]'

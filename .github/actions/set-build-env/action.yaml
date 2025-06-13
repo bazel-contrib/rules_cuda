@@ -22,7 +22,7 @@ runs:
   using: "composite"
   steps:
     - name: Install CUDA (NVIDIA, Linux)
-      uses: Jimver/cuda-toolkit@v0.2.22
+      uses: Jimver/cuda-toolkit@v0.2.25
       if: ${{ !startsWith(inputs.os, 'windows') && inputs.source == 'nvidia' }}
       with:
         cuda: ${{ inputs.cuda-version }}
@@ -45,7 +45,7 @@ runs:
         sudo ln -sf /usr/bin/clang-${{ inputs.toolchain-version }} /usr/bin/clang
         clang --version
     - name: Install CURAND For LLVM
-      uses: Jimver/cuda-toolkit@v0.2.22
+      uses: Jimver/cuda-toolkit@v0.2.25
       if: ${{ !startsWith(inputs.os, 'windows') && inputs.toolchain == 'llvm' }}
       with:
         cuda: ${{ inputs.cuda-version }}
@@ -64,7 +64,7 @@ runs:
         echo "CXX=g++-9" >> $GITHUB_ENV
 
     - name: Install CUDA (Windows)
-      uses: Jimver/cuda-toolkit@v0.2.22
+      uses: Jimver/cuda-toolkit@v0.2.25
       if: ${{ startsWith(inputs.os, 'windows') }}
       with:
         cuda: ${{ inputs.cuda-version }}
