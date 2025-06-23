@@ -255,6 +255,59 @@ def _impl(ctx):
         ],
     )
 
+    cuda_host_use_copts_feature = feature(
+        name = "cuda_host_use_copts",
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{cpp_copts}"],
+                        iterate_over = "cpp_copts",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    cuda_host_use_cxxopts_feature = feature(
+        name = "cuda_host_use_cxxopts",
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{cpp_cxxopts}"],
+                        iterate_over = "cpp_cxxopts",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    cuda_host_use_linkopts_feature = feature(
+        name = "cuda_host_use_linkopts",
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{cpp_linkopts}"],
+                        iterate_over = "cpp_linkopts",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     pic_feature = feature(
         name = "pic",
         enabled = True,
@@ -483,6 +536,9 @@ def _impl(ctx):
         opt_feature,
         compile_flags_feature,
         host_compile_flags_feature,
+        cuda_host_use_copts_feature,
+        cuda_host_use_cxxopts_feature,
+        cuda_host_use_linkopts_feature,
         sysroot_feature,
         ptxas_flags_feature,
         compiler_input_flags_feature,

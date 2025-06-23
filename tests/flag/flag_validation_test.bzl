@@ -113,3 +113,21 @@ cuda_library_sm100_sm100a_flag_test = _create_cuda_library_flag_test(config_sett
 cuda_library_compute60_flag_test = _create_cuda_library_flag_test(config_settings_compute60)
 cuda_library_compute60_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute60_sm61)
 cuda_library_compute61_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute61_sm61)
+
+# Config settings for testing cpp opts propagation
+config_settings_use_copts = {
+    "//command_line_option:features": ["cuda_host_use_copts"],
+    "//command_line_option:copt": ["-Wall"],
+}
+config_settings_use_cxxopts = {
+    "//command_line_option:features": ["cuda_host_use_cxxopts"],
+    "//command_line_option:cxxopt": ["-std=c++17"],
+}
+config_settings_use_linkopts = {
+    "//command_line_option:features": ["cuda_host_use_linkopts"],
+    "//command_line_option:linkopt": ["-Wl,--verbose"],
+}
+
+cuda_library_use_copts_flag_test = _create_cuda_library_flag_test(config_settings_use_copts)
+cuda_library_use_cxxopts_flag_test = _create_cuda_library_flag_test(config_settings_use_cxxopts)
+cuda_library_use_linkopts_flag_test = _create_cuda_library_flag_test(config_settings_use_linkopts)

@@ -87,6 +87,9 @@ def compile(
             defines = common.local_defines + common.defines,
             host_defines = common.host_local_defines + common.host_defines,
             ptxas_flags = common.ptxas_flags,
+            cpp_copts = common.cpp_copts,
+            cpp_cxxopts = common.cpp_cxxopts,
+            cpp_linkopts = common.cpp_linkopts,
             use_pic = pic,
             use_rdc = rdc,
         )
