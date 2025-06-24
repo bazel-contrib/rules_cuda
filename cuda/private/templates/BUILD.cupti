@@ -12,15 +12,6 @@ cc_import(
 )
 
 cc_library(
-    name = "cupti_headers",
-    hdrs = glob(
-        ["%{component_name}/extras/CUPTI/include/*.h"],
-        allow_empty = True,
-    ),
-    includes = ["%{component_name}/extras/CUPTI/include"],
-)
-
-cc_library(
     name = "cupti",
     deps = [
         ":%{component_name}_headers",
