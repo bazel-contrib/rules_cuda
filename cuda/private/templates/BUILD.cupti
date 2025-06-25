@@ -12,7 +12,7 @@ cc_import(
 )
 
 cc_library(
-    name = "cupti_headers",
+    name = "cupti_headers_win",
     hdrs = glob(
         ["%{component_name}/extras/CUPTI/include/*.h"],
         allow_empty = True,
@@ -27,7 +27,7 @@ cc_library(
     ] + if_linux([
         ":cupti_so",
     ]) + if_windows([
-        ":cupti_headers",
+        ":cupti_headers_win",
         ":cupti_lib",
     ]),
 )
