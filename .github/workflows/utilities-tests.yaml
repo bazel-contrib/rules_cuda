@@ -41,7 +41,7 @@ jobs:
           path: ~/.cache/bazel
           key: bazel-${{ matrix.os }}-${{ matrix.bazel-version }}
 
-      - uses: Jimver/cuda-toolkit@v0.2.22
+      - uses: Jimver/cuda-toolkit@v0.2.25
         with:
           cuda: 11.7.0
           sub-packages: '["cudart"]'
