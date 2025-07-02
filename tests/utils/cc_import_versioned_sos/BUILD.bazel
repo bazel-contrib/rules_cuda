@@ -1,0 +1,3 @@
+load(":cc_import_versioned_sos_test.bzl", "library_basenames_tests")
+
+library_basenames_tests()
