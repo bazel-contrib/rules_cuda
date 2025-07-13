@@ -5,3 +5,8 @@ load("@rules_cuda//cuda:defs.bzl", "cc_import_versioned_sos", "if_linux", "if_wi
 package(
     default_visibility = ["//visibility:public"],
 )
+
+filegroup(
+    name = "%{component_name}_all_files",
+    srcs = glob(["%{component_name}/**"]),
+)
