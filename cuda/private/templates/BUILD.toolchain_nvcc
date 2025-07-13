@@ -28,7 +28,7 @@ cuda_toolchain_config(
 
 cuda_toolchain(
     name = "nvcc-local",
-    compiler_files = "@cuda//:compiler_deps",
+    compiler_files = ["@cuda//:compiler_deps"],
     compiler_label = "%{nvcc_label}",
     toolchain_config = ":nvcc-local-config",
 )

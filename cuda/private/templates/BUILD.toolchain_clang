@@ -14,6 +14,7 @@ cuda_toolkit_info(
     link_stub = "%{link_stub_label}",
     nvlink = "%{nvlink_label}",
     path = "%{cuda_path}",
+    path_data = %{cuda_path_data},
     version = "%{cuda_version}",
 )
 
@@ -26,7 +27,7 @@ cuda_toolchain_config(
 cuda_toolchain(
     name = "clang-local",
     # %{compiler_attribute_line}
-    compiler_files = "%{clang_compiler_files}",
+    compiler_files = %{clang_compiler_files},
     toolchain_config = ":clang-local-config",
 )
 
