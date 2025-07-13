@@ -187,8 +187,8 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         compiler_files.append("@cuda//:compiler_deps")
         cuda_path_for_subst = _to_forward_slash(cuda.path)
     else:
-        cuda_path_for_subst = "$(location @cuda//:nvcc_root)"
-        cuda_path_data = ["@cuda//:nvcc_root"]
+        cuda_path_for_subst = "$(location @cuda//:compiler_root)"
+        cuda_path_data = ["@cuda//:compiler_root"]
         compiler_files.extend([
             "@cuda//:nvcc_all_files",
             "@cuda//:cccl_all_files",

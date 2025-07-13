@@ -1,7 +1,7 @@
 # map short component name to consumable targets
 REGISTRY = {
     "cudart": ["cudart_all_files", "cudart_headers", "cuda", "cuda_runtime", "cuda_runtime_static"],
-    "nvcc": ["nvcc_all_files", "nvcc_headers", "compiler_deps", "nvptxcompiler"],
+    "nvcc": ["nvcc_all_files", "nvcc_headers", "compiler_root", "compiler_deps", "nvptxcompiler"],
     "cccl": ["cccl_all_files", "cccl_headers", "cub", "thrust"],
     "cublas": ["cublas_all_files", "cublas_headers", "cublas"],
     "cufft": ["cufft_all_files", "cufft_headers", "cufft", "cufft_static"],

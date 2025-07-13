@@ -1,4 +1,9 @@
 filegroup(
+    name = "compiler_root",
+    srcs = [":nvcc"],
+)
+
+filegroup(
     name = "compiler_deps",
     srcs = [
         ":%{component_name}_header_files",
