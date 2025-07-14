@@ -15,7 +15,7 @@ jobs:
       matrix:
         cases:
           - { os: "ubuntu-22.04", cuda-version: "11.7.0", source: "nvidia" }
-          - { os: "ubuntu-22.04", cuda-version: "11.8.0", source: "nvidia" }
+          - { os: "ubuntu-24.04", cuda-version: "12.6.3", source: "nvidia" }
           - {
               os: "ubuntu-22.04",
               cuda-version: "11.7.0",
@@ -28,8 +28,8 @@ jobs:
               cuda-version: "11.5.1-1ubuntu1",
               source: "ubuntu",
             }
-          - { os: "windows-2019", cuda-version: "10.1.243", source: "nvidia" }
-          - { os: "windows-2019", cuda-version: "11.6.2", source: "nvidia" }
+          - { os: "windows-2022", cuda-version: "11.5.2", source: "nvidia" }
+          - { os: "windows-2025", cuda-version: "12.6.3", source: "nvidia" }
     steps:
       - uses: actions/checkout@v4
 
@@ -55,6 +55,16 @@ jobs:
         run: |
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
+
+      # need to test some old CTK, but is not easily available in new CI runner, these are workarounds
+      - name: Bazel build config to allow unsupported compilers (NVCC)
+        if: ${{ matrix.cases.toolchain != 'llvm' }}
+        run: |
+          echo "build --@rules_cuda//cuda:copts=-allow-unsupported-compiler" >> $HOME/.bazelrc
+      - name: Bazel build config to allow unsupported compilers (MSVC)
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
+        run: |
+          echo "build --@rules_cuda//cuda:copts=-D=_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH" >> $HOME/.bazelrc
 
       # Check https://bazel.build/release#support-matrix, manually unroll the the strategy matrix to avoid exploding
       # the combinations.
