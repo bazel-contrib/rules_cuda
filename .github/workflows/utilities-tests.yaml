@@ -15,7 +15,7 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
-          - windows-2019
+          - windows-2025
         bazel-version:
           # NOTE: read from .bazelversion so that we don't randomly break our
           # ci due to latest bazel version change
