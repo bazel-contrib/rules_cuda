@@ -56,6 +56,16 @@ jobs:
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
 
+      # need to test some old CTK, but is not easily available in new CI runner, these are workarounds
+      - name: Bazel build config to allow unsupported compilers (NVCC)
+        if: ${{ matrix.cases.toolchain != 'llvm' }}
+        run: |
+          echo "build --@rules_cuda//cuda:copts=-allow-unsupported-compiler" >> $HOME/.bazelrc
+      - name: Bazel build config to allow unsupported compilers (MSVC)
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
+        run: |
+          echo "build --@rules_cuda//cuda:copts=-D=_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH" >> $HOME/.bazelrc
+
       # Check https://bazel.build/release#support-matrix, manually unroll the the strategy matrix to avoid exploding
       # the combinations.
 
