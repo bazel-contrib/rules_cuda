@@ -28,7 +28,7 @@ jobs:
               cuda-version: "11.5.1-1ubuntu1",
               source: "ubuntu",
             }
-          - { os: "windows-2022", cuda-version: "10.1.243", source: "nvidia" }
+          - { os: "windows-2022", cuda-version: "11.5.2", source: "nvidia" }
           - { os: "windows-2025", cuda-version: "12.6.3", source: "nvidia" }
     steps:
       - uses: actions/checkout@v4
