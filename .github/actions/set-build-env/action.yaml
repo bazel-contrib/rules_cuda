@@ -36,7 +36,7 @@ runs:
         tree ${CUDA_PATH}/include
         tree ${CUDA_PATH}/lib64
     - name: Install LLVM ${{ inputs.toolchain-version }}
-      if: ${{ !startsWith(inputs.os, 'windows') && inputs.toolchain == 'llvm' }}
+      if: ${{ !startsWith(inputs.os, 'windows') && startsWith(inputs.toolchain, 'llvm') }}
       shell: bash
       run: |
         wget https://apt.llvm.org/llvm.sh
@@ -46,7 +46,7 @@ runs:
         clang --version
     - name: Install CURAND For LLVM
       uses: Jimver/cuda-toolkit@v0.2.22
-      if: ${{ !startsWith(inputs.os, 'windows') && inputs.toolchain == 'llvm' }}
+      if: ${{ !startsWith(inputs.os, 'windows') && startsWith(inputs.toolchain, 'llvm') }}
       with:
         cuda: ${{ inputs.cuda-version }}
         sub-packages: '["nvcc", "cudart-dev"]' # avoid full cuda install
