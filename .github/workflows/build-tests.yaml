@@ -20,8 +20,15 @@ jobs:
               os: "ubuntu-22.04",
               cuda-version: "11.7.0",
               source: "nvidia",
-              toolchain: "llvm",
+              toolchain: "llvm_host_only", # clang as host compiler
               toolchain-version: "16",
+            }
+          - {
+              os: "ubuntu-24.04",
+              cuda-version: "12.6.2",
+              source: "nvidia",
+              toolchain: "llvm_host_device", # clang as cuda compiler driver
+              toolchain-version: "19",
             }
           - {
               os: "ubuntu-22.04",
@@ -50,15 +57,22 @@ jobs:
           toolchain: ${{ matrix.cases.toolchain }}
           toolchain-version: ${{ matrix.cases.toolchain-version }}
 
-      - name: Bazel build config for LLVM
-        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm' }}
+      - name: Bazel build config for LLVM (Host Compiler Only)
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm_host_only' }}
         run: |
           echo "build --config=clang" > $HOME/.bazelrc
           echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
 
+      - name: Bazel build config for LLVM (Compiler Driver)
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.toolchain == 'llvm_host_device' }}
+        run: |
+          echo "build --config=clang" > $HOME/.bazelrc
+          echo "build:clang --@rules_cuda//cuda:archs=sm_80" >> $HOME/.bazelrc
+          echo "build:clang --@rules_cuda//cuda:compiler=clang" >> $HOME/.bazelrc
+
       # need to test some old CTK, but is not easily available in new CI runner, these are workarounds
       - name: Bazel build config to allow unsupported compilers (NVCC)
-        if: ${{ matrix.cases.toolchain != 'llvm' }}
+        if: ${{ !startsWith(matrix.cases.toolchain, 'llvm') }}
         run: |
           echo "build --@rules_cuda//cuda:copts=-allow-unsupported-compiler" >> $HOME/.bazelrc
       - name: Bazel build config to allow unsupported compilers (MSVC)
@@ -106,6 +120,7 @@ jobs:
       - run: cd examples && bazelisk build --jobs=1 //if_cuda:main
       - run: cd examples && bazelisk build --jobs=1 //if_cuda:main --enable_cuda=False
       - run: bazelisk shutdown
+
       # run some repo integration tests
       - run: cd tests/integration && ./test_all.sh
 
