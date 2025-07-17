@@ -40,8 +40,8 @@ COMPONENTS = [
 
 rules_cuda_toolchains(
     components_mapping = default_components_mapping(COMPONENTS),
-    version = "12.6",
     register_toolchains = True,
+    version = "12.6",
 )
 
 local_repository(
