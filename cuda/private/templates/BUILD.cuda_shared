@@ -10,5 +10,8 @@ package(
 # TODO: aggregate all <component>_all_files in this case
 filegroup(
     name = "%{component_name}_all_files",
-    srcs = glob(["%{component_name}/**"], allow_empty = True),
+    srcs = glob(
+        ["%{component_name}/**"],
+        allow_empty = True,
+    ),
 )

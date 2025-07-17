@@ -14,7 +14,7 @@ cuda_redist_json(
         "cccl",
         "cudart",
         "nvcc",
-        "curand", # NOTE: this is only usefull when use clang as cuda compiler driver
+        "curand",  # NOTE: this is only usefull when use clang as cuda compiler driver
     ],
     version = "12.6.3",
 )

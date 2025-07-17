@@ -40,8 +40,8 @@ cuda.toolkit(
     components_mapping = {
         "cccl": "@cuda_cccl",
         "cudart": "@cuda_cudart",
-        "nvcc": "@cuda_nvcc",
         "curand": "@cuda_curand",
+        "nvcc": "@cuda_nvcc",
     },
     version = "12.6",
 )
@@ -50,8 +50,8 @@ use_repo(
     "cuda",
     "cuda_cccl",
     "cuda_cudart",
-    "cuda_nvcc",
     "cuda_curand",
+    "cuda_nvcc",
 )
 
 bazel_dep(name = "rules_cuda_examples", version = "0.0.0")
