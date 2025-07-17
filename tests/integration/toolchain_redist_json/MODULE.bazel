@@ -29,11 +29,19 @@ cuda.component(
     strip_prefix = "cuda_nvcc-linux-x86_64-12.6.85-archive",
     urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.6.85-archive.tar.xz"],
 )
+cuda.component(
+    name = "cuda_curand",
+    component_name = "curand",
+    sha256 = "981339cc86d7b8779e9a3c17e72d8c5e1a8a2d06c24db692eecabed8e746a3c7",
+    strip_prefix = "libcurand-linux-x86_64-10.3.7.77-archive",
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/libcurand/linux-x86_64/libcurand-linux-x86_64-10.3.7.77-archive.tar.xz"],
+)
 cuda.toolkit(
     name = "cuda",
     components_mapping = {
         "cccl": "@cuda_cccl",
         "cudart": "@cuda_cudart",
+        "curand": "@cuda_curand",
         "nvcc": "@cuda_nvcc",
     },
     version = "12.6",
@@ -43,6 +51,7 @@ use_repo(
     "cuda",
     "cuda_cccl",
     "cuda_cudart",
+    "cuda_curand",
     "cuda_nvcc",
 )
 

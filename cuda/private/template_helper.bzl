@@ -180,18 +180,31 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         clang_path = "%{clang_path}",
     )
 
+    compiler_files = []
     cuda_path_for_subst = ""
+    path_data = None
     if cuda.path:
+        compiler_files.append("@cuda//:compiler_deps")
         cuda_path_for_subst = _to_forward_slash(cuda.path)
     else:
-        cuda_path_for_subst = "{}/clang_compiler_deps".format(Label("@cuda//cuda").workspace_root)
+        cuda_path_for_subst = "$(location @cuda//:compiler_root)"
+        path_data = ["@cuda//:compiler_root"]
+        compiler_files.extend([
+            "@cuda//:nvcc_all_files",
+            "@cuda//:cccl_all_files",
+            "@cuda//:cudart_all_files",
+            "@cuda//:curand_all_files",
+        ])
+    path_data_line = "path_data = " + repr(path_data) + ","
+    compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
 
     substitutions = {
         "# %{compiler_attribute_line}": compiler_attr_line,
-        "%{clang_compiler_files}": "@cuda//:compiler_deps" if cuda.path else "@cuda//clang_compiler_deps",
+        "# %{compiler_files_line}": compiler_files_line,
         "%{clang_path}": clang_path_for_subst,  # Will be empty if label is used
         "%{clang_label}": clang_label_for_subst,  # Will be empty if path is used
         "%{cuda_path}": cuda_path_for_subst,
+        "# %{path_data_line}": path_data_line,
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_label}": cuda.nvcc_label,
         "%{nvlink_label}": cuda.nvlink_label,

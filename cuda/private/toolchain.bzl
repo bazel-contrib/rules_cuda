@@ -7,6 +7,7 @@ def _cuda_toolchain_impl(ctx):
     has_cc_toolchain = cc_toolchain != None
     has_compiler_executable = ctx.attr.compiler_executable != None and ctx.attr.compiler_executable != ""
     has_compiler_label = ctx.attr.compiler_label != None
+    compiler_executable = None
 
     # Validation
     # compiler_use_cc_toolchain should be used alone and not along with compiler_executable or compiler_label
@@ -50,10 +51,7 @@ def _cuda_toolchain_impl(ctx):
             fail("compiler_label specified is not an executable, specify a valid compiler_label")
         compiler_depset = depset(direct = [compiler_target_info.files_to_run.executable], transitive = [compiler_target_info.default_runfiles.files])
 
-    toolchain_files = depset(transitive = [
-        compiler_depset,
-        ctx.attr.compiler_files.files if ctx.attr.compiler_files else depset(),
-    ])
+    toolchain_files = depset(transitive = [compiler_depset] + [cf.files for cf in ctx.attr.compiler_files])
 
     return [
         platform_common.ToolchainInfo(
@@ -79,7 +77,7 @@ cuda_toolchain = rule(
         "compiler_use_cc_toolchain": attr.bool(default = False, doc = "Use existing cc_toolchain if configured as the compiler executable. Overrides compiler_executable or compiler_label"),
         "compiler_executable": attr.string(doc = "The path of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified if compiler_use_cc_toolchain is not set."),
         "compiler_label": attr.label(allow_single_file = True, executable = True, cfg = "exec", doc = "The label of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified."),
-        "compiler_files": attr.label(allow_files = True, cfg = "exec", doc = "The set of files that are needed when compiling using this toolchain."),
+        "compiler_files": attr.label_list(allow_files = True, cfg = "exec", doc = "The set of files that are needed when compiling using this toolchain."),
         "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
     },
 )
