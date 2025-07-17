@@ -1,9 +1,10 @@
-load("@rules_cuda//cuda:repositories.bzl", "cuda_component", "default_components_mapping", "rules_cuda_dependencies", "rules_cuda_toolchains")
-
 local_repository(
     name = "rules_cuda",
-    path = "../rules_cuda",
+    path = "../../..",
 )
+
+# buildifier: disable=load-on-top
+load("@rules_cuda//cuda:repositories.bzl", "cuda_component", "default_components_mapping", "rules_cuda_dependencies", "rules_cuda_toolchains")
 
 rules_cuda_dependencies()
 
@@ -41,4 +42,9 @@ rules_cuda_toolchains(
     components_mapping = default_components_mapping(COMPONENTS),
     version = "12.6",
     register_toolchains = True,
+)
+
+local_repository(
+    name = "rules_cuda_examples",
+    path = "../../../examples",
 )
