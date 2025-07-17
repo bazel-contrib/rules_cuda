@@ -1,4 +1,3 @@
-load("//cuda/private:compat.bzl", "components_mapping_compat")
 load("//cuda/private:templates/registry.bzl", "REGISTRY")
 
 def _to_forward_slash(s):
@@ -36,7 +35,7 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
     if is_cuda_repo and is_deliverable:  # generate `@cuda//BUILD` for CTK with deliverables
         for comp in components:
             for target in REGISTRY[comp]:
-                repo = components_mapping_compat.repo_str(components[comp])
+                repo = components[comp]
                 line = 'alias(name = "{target}", actual = "{repo}//:{target}")'.format(target = target, repo = repo)
                 template_content.append(line)
 

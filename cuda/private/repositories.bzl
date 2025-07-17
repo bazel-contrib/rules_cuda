@@ -2,7 +2,6 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
-load("//cuda/private:compat.bzl", "components_mapping_compat")
 load("//cuda/private:template_helper.bzl", "template_helper")
 load("//cuda/private:templates/registry.bzl", "FULL_COMPONENT_NAME", "REGISTRY")
 load("//cuda/private:toolchain.bzl", "register_detected_cuda_toolchains")
@@ -93,7 +92,7 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
         if rc not in repository_ctx.attr.components_mapping:
             fail('component "{}" is required.'.format(rc))
 
-    nvcc_repo = components_mapping_compat.repo_str(repository_ctx.attr.components_mapping["nvcc"])
+    nvcc_repo = repository_ctx.attr.components_mapping["nvcc"]
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
     nvcc = "{}//:nvcc/bin/nvcc{}".format(nvcc_repo, bin_ext)
@@ -268,7 +267,7 @@ cuda_toolkit = repository_rule(
     implementation = _cuda_toolkit_impl,
     attrs = {
         "toolkit_path": attr.string(doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path."),
-        "components_mapping": components_mapping_compat.attr(
+        "components_mapping": attr.string_dict(
             doc = "A mapping from component names to component repos of a deliverable CUDA Toolkit. " +
                   "Only the repo part of the label is useful",
         ),
