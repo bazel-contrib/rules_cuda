@@ -45,14 +45,7 @@ cuda.toolkit(
     },
     version = "12.6",
 )
-use_repo(
-    cuda,
-    "cuda",
-    "cuda_cccl",
-    "cuda_cudart",
-    "cuda_curand",
-    "cuda_nvcc",
-)
+use_repo(cuda, "cuda")
 
 bazel_dep(name = "rules_cuda_examples", version = "0.0.0")
 local_path_override(

@@ -1,6 +1,5 @@
 """Entry point for extensions used by bzlmod."""
 
-load("//cuda/private:compat.bzl", "components_mapping_compat")
 load("//cuda/private:repositories.bzl", "cuda_component", "cuda_redist_json", "cuda_toolkit")
 
 cuda_component_tag = tag_class(attrs = {
@@ -64,7 +63,7 @@ cuda_toolkit_tag = tag_class(attrs = {
     "toolkit_path": attr.string(
         doc = "Path to the CUDA SDK, if empty the environment variable CUDA_PATH will be used to deduce this path.",
     ),
-    "components_mapping": components_mapping_compat.attr(
+    "components_mapping": attr.string_dict(
         doc = "A mapping from component names to component repos of a deliverable CUDA Toolkit. " +
               "Only the repo part of the label is useful",
     ),
