@@ -1,6 +1,5 @@
 module(name = "bzlmod_components")
 
-# FIXME: cuda_redist_json is not exposed in bzlmod now. Fallback to manually specified components for tests
 bazel_dep(name = "rules_cuda", version = "0.0.0")
 local_path_override(
     module_name = "rules_cuda",
@@ -8,44 +7,17 @@ local_path_override(
 )
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-cuda.component(
-    name = "cuda_cccl",
-    component_name = "cccl",
-    sha256 = "9c3145ef01f73e50c0f5fcf923f0899c847f487c529817daa8f8b1a3ecf20925",
-    strip_prefix = "cuda_cccl-linux-x86_64-12.6.77-archive",
-    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_cccl/linux-x86_64/cuda_cccl-linux-x86_64-12.6.77-archive.tar.xz"],
+cuda.redist_json(
+    name = "rules_cuda_redist_json",
+    components = [
+        "cccl",
+        "cudart",
+        "nvcc",
+        "curand",  # NOTE: this is only usefull when use clang as cuda compiler driver
+    ],
+    version = "12.6.3",
 )
-cuda.component(
-    name = "cuda_cudart",
-    component_name = "cudart",
-    sha256 = "f74689258a60fd9c5bdfa7679458527a55e22442691ba678dcfaeffbf4391ef9",
-    strip_prefix = "cuda_cudart-linux-x86_64-12.6.77-archive",
-    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.6.77-archive.tar.xz"],
-)
-cuda.component(
-    name = "cuda_nvcc",
-    component_name = "nvcc",
-    sha256 = "840deff234d9bef20d6856439c49881cb4f29423b214f9ecd2fa59b7ac323817",
-    strip_prefix = "cuda_nvcc-linux-x86_64-12.6.85-archive",
-    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.6.85-archive.tar.xz"],
-)
-cuda.component(
-    name = "cuda_curand",
-    component_name = "curand",
-    sha256 = "981339cc86d7b8779e9a3c17e72d8c5e1a8a2d06c24db692eecabed8e746a3c7",
-    strip_prefix = "libcurand-linux-x86_64-10.3.7.77-archive",
-    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/libcurand/linux-x86_64/libcurand-linux-x86_64-10.3.7.77-archive.tar.xz"],
-)
-cuda.toolkit(
-    name = "cuda",
-    components_mapping = {
-        "cccl": "@cuda_cccl",
-        "cudart": "@cuda_cudart",
-        "curand": "@cuda_curand",
-        "nvcc": "@cuda_nvcc",
-    },
-    version = "12.6",
-)
+cuda.toolkit(name = "cuda")  # automatically populate attrs if redist_json is used
 use_repo(cuda, "cuda")
 
 bazel_dep(name = "rules_cuda_examples", version = "0.0.0")

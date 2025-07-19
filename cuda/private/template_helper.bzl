@@ -1,3 +1,4 @@
+load("//cuda/private:redist_json_helper.bzl", "redist_json_helper")
 load("//cuda/private:templates/registry.bzl", "REGISTRY")
 
 def _to_forward_slash(s):
@@ -93,6 +94,7 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
     Args:
         repository_ctx: repository_ctx
         component_specs: list of dict, dict keys are component_name, urls, sha256, strip_prefix and version
+        redist_version: str
     """
 
     rules_cuda_components_body = []
@@ -109,10 +111,7 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
     )"""
 
     for spec in component_specs:
-        repo_name = "cuda_" + spec["component_name"]
-        version = spec.get("version", None)
-        if version != None:
-            repo_name = repo_name + "_v" + version
+        repo_name = redist_json_helper.get_repo_name(repository_ctx, spec)
 
         rules_cuda_components_body.append(
             component_tpl.format(
