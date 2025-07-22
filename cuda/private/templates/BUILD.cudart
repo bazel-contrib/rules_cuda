@@ -93,7 +93,7 @@ cc_import(
 
 cc_library(
     name = "cuda",
-    deps = [
+    deps = additional_header_deps("cudart") + [
         ":%{component_name}_headers",
     ] + if_linux([
         ":cuda_so",
