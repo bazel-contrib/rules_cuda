@@ -129,11 +129,11 @@ def _single_access(value, path_list, ret):
             v = getattr(v, name)
             if i < len(path_list) - 1:
                 type_str = type(v)
-                if type_str == "list" or type_str == "string":
+                if type_str == type([]) or type_str == type(""):
                     fail("Cannot expand variable '{}': variable '{}' is {}, expected structure".format(
                         ".".join(path_list),
                         name,
-                        "sequence" if type_str == "list" else type_str,
+                        "sequence" if type_str == type([]) else type_str,
                     ))
         else:
             return False
@@ -189,7 +189,7 @@ def expand_flag(flag_info, var, name):
     if not exist(var, name):
         fail("Cannot expand variable '{}'".format(name))
     value = access(var, name)
-    if type(value) != "string":
+    if type(value) != type(""):
         fail("Cannot expand variable '" + name + "': expected string, found", value)
     for i in flag_info.expandables[name]:
         flag_info.chunks[i] = value
@@ -257,7 +257,7 @@ def _eval_flag_group_impl(stack, ret, fg, var, eval_iterations, _parse_flag_cach
         if _can_be_expanded(fg, var):
             if fg.iterate_over != None:
                 iterated_over_values = access(var, fg.iterate_over)
-                if type(iterated_over_values) != "list":
+                if type(iterated_over_values) != type([]):
                     fail(fg.iterate_over, "is not an iterable")
 
                 path_list = fg.iterate_over.split(".")
