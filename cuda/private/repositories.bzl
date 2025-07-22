@@ -2,8 +2,9 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+load("//cuda/private:redist_json_helper.bzl", "redist_json_helper")
 load("//cuda/private:template_helper.bzl", "template_helper")
-load("//cuda/private:templates/registry.bzl", "FULL_COMPONENT_NAME", "REGISTRY")
+load("//cuda/private:templates/registry.bzl", "REGISTRY")
 load("//cuda/private:toolchain.bzl", "register_detected_cuda_toolchains")
 
 def _is_linux(ctx):
@@ -369,60 +370,10 @@ def default_components_mapping(components):
     return {c: "@cuda_" + c for c in components}
 
 def _cuda_redist_json_impl(repository_ctx):
-    the_url = None  # the url that successfully fetch redist json, we then use it to fetch deliverables
-    urls = [u for u in repository_ctx.attr.urls]
-
-    redist_ver = repository_ctx.attr.version
-    if redist_ver:
-        urls.append("https://developer.download.nvidia.com/compute/cuda/redist/redistrib_{}.json".format(redist_ver))
-
-    if len(urls) == 0:
-        fail("`urls` or `version` must be specified.")
-
-    for url in urls:
-        ret = repository_ctx.download(
-            output = "redist.json",
-            integrity = repository_ctx.attr.integrity,
-            sha256 = repository_ctx.attr.sha256,
-            url = url,
-        )
-        if ret.success:
-            the_url = url
-            break
-
-    if the_url == None:
-        fail("Failed to retrieve the redist json file.")
-
-    # convert redist.json to list of spec (list of dicts with cuda_components attrs)
-    specs = []
-    redist = json.decode(repository_ctx.read("redist.json"))
-    if not redist_ver:
-        redist_ver = redist["release_label"]
-    for c in repository_ctx.attr.components:
-        c_full = FULL_COMPONENT_NAME[c]
-        os = None
-        if _is_linux(repository_ctx):
-            os = "linux"
-        elif _is_windows(repository_ctx):
-            os = "windows"
-
-        arch = "x86_64"  # TODO: support cross compiling
-        platform = "{os}-{arch}".format(os = os, arch = arch)
-
-        payload = redist[c_full][platform]
-        payload_relative_path = payload["relative_path"]
-        payload_url = the_url.rsplit("/", 1)[0] + "/" + payload_relative_path
-        archive_name = payload_relative_path.rsplit("/", 1)[1].split("-archive.")[0] + "-archive"
-        desc_name = redist[c_full].get("name", c_full)
-
-        specs.append({
-            "component_name": c,
-            "descriptive_name": desc_name,
-            "urls": [payload_url],
-            "sha256": payload["sha256"],
-            "strip_prefix": archive_name,
-            "version": redist[c_full]["version"],
-        })
+    attr = repository_ctx.attr
+    url, json_object = redist_json_helper.get(repository_ctx, attr)
+    redist_ver = redist_json_helper.get_redist_version(repository_ctx, attr, json_object)
+    specs = redist_json_helper.collect_specs(repository_ctx, attr, json_object, url)
 
     template_helper.generate_redist_bzl(repository_ctx, specs, redist_ver)
     repository_ctx.symlink(Label("//cuda/private:templates/BUILD.redist_json"), "BUILD")

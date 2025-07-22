@@ -1,6 +1,7 @@
 """Entry point for extensions used by bzlmod."""
 
-load("//cuda/private:repositories.bzl", "cuda_component", "cuda_redist_json", "cuda_toolkit")
+load("//cuda/private:redist_json_helper.bzl", "redist_json_helper")
+load("//cuda/private:repositories.bzl", "cuda_component", "cuda_toolkit")
 
 cuda_component_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
@@ -91,6 +92,21 @@ def _find_modules(module_ctx):
 def _module_tag_to_dict(t):
     return {attr: getattr(t, attr) for attr in dir(t)}
 
+def _redist_json_impl(module_ctx, attr):
+    url, json_object = redist_json_helper.get(module_ctx, attr)
+    redist_ver = redist_json_helper.get_redist_version(module_ctx, attr, json_object)
+    component_specs = redist_json_helper.collect_specs(module_ctx, attr, json_object, url)
+
+    mapping = {}
+    for spec in component_specs:
+        repo_name = redist_json_helper.get_repo_name(module_ctx, spec)
+        mapping[spec["component_name"]] = "@" + repo_name
+
+        attr = {key: value for key, value in spec.items()}
+        attr["name"] = repo_name
+        cuda_component(**attr)
+    return redist_ver, mapping
+
 def _impl(module_ctx):
     # Toolchain configuration is only allowed in the root module, or in rules_cuda.
     root, rules_cuda = _find_modules(module_ctx)
@@ -109,8 +125,13 @@ def _impl(module_ctx):
     for component in components:
         cuda_component(**_module_tag_to_dict(component))
 
+    if len(redist_jsons) > 1:
+        fail("Using multiple cuda.redist_json is not supported yet.")
+
+    redist_version = None
+    components_mapping = None
     for redist_json in redist_jsons:
-        cuda_redist_json(**_module_tag_to_dict(redist_json))
+        redist_version, components_mapping = _redist_json_impl(module_ctx, redist_json)
 
     registrations = {}
     for toolkit in toolkits:
@@ -121,8 +142,15 @@ def _impl(module_ctx):
             fail("Multiple conflicting toolkits declared for name {} ({} and {}".format(toolkit.name, toolkit.toolkit_path, registrations[toolkit.name].toolkit_path))
         else:
             registrations[toolkit.name] = toolkit
+
+    if len(registrations) > 1:
+        fail("multiple cuda.toolkit is not supported")
+
     for _, toolkit in registrations.items():
-        cuda_toolkit(**_module_tag_to_dict(toolkit))
+        if components_mapping != None:
+            cuda_toolkit(name = toolkit.name, components_mapping = components_mapping, version = redist_version)
+        else:
+            cuda_toolkit(**_module_tag_to_dict(toolkit))
 
 toolchain = module_extension(
     implementation = _impl,
