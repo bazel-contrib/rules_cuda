@@ -1,6 +1,7 @@
 cc_import(
     name = "nvidia-ml_so",
-    shared_library = "%{component_name}/%{libpath}/stubs/libnvidia-ml.so",
+    interface_library = "%{component_name}/%{libpath}/stubs/libnvidia-ml.so",
+    system_provided = 1,
     target_compatible_with = ["@platforms//os:linux"],
 )
 
