@@ -71,16 +71,18 @@ def _collect_specs(ctx, attr, redist, the_url):
     """
 
     specs = []
-    for c in attr.components:
-        c_full = FULL_COMPONENT_NAME[c]
-        os = None
-        if _is_linux(ctx):
-            os = "linux"
-        elif _is_windows(ctx):
-            os = "windows"
+    os = None
+    if _is_linux(ctx):
+        os = "linux"
+    elif _is_windows(ctx):
+        os = "windows"
 
-        arch = "x86_64"  # TODO: support cross compiling
-        platform = "{os}-{arch}".format(os = os, arch = arch)
+    arch = "x86_64"  # TODO: support cross compiling
+    platform = "{os}-{arch}".format(os = os, arch = arch)
+    components = attr.components if attr.components else [k for k, v in FULL_COMPONENT_NAME.items() if v in redist]
+
+    for c in components:
+        c_full = FULL_COMPONENT_NAME[c]
 
         payload = redist[c_full][platform]
         payload_relative_path = payload["relative_path"]
