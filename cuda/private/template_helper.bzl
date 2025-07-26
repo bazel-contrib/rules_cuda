@@ -10,28 +10,74 @@ def _is_linux(ctx):
 def _is_windows(ctx):
     return ctx.os.name.lower().startswith("windows")
 
+def _expand_template(repository_ctx, tpl_label, substitutions):
+    template_content = "# Generated from fragment " + str(tpl_label) + "\n"
+    template_content += repository_ctx.read(tpl_label)
+
+    for k, v in substitutions.items():
+        template_content = template_content.replace(k, v)
+    return template_content
+
+def _expand_lctk_cuda(repository_ctx, components):
+    tpl_label = Label("//cuda/private:templates/BUILD.lctk_cuda")
+    substitutions = {
+        "%{component_name}": "cuda",
+    }
+    return _expand_template(repository_ctx, tpl_label, substitutions = substitutions)
+
+def _expand_dctk_cuda(repository_ctx, components):
+    tpl_label = Label("//cuda/private:templates/BUILD.dctk_cuda")
+
+    all_files_srcs_line = [comp + "_all_files" for comp in components.keys()]
+    all_files_srcs_line = "srcs = " + repr(all_files_srcs_line)
+
+    license_srcs_line = [comp + "_license" for comp in components.keys()]
+    license_srcs_line = "srcs = " + repr(license_srcs_line)
+
+    headers_deps_line = [comp + "_headers" for comp in components.keys()]
+    headers_deps_line = "deps = " + repr(headers_deps_line)
+
+    substitutions = {
+        "# %{dctk_cuda_all_files_srcs_line}": all_files_srcs_line,
+        "# %{dctk_cuda_license_srcs_line}": license_srcs_line,
+        "# %{dctk_cuda_headers_deps_line}": headers_deps_line,
+    }
+    return _expand_template(repository_ctx, tpl_label, substitutions = substitutions)
+
+def _expand_dctk_component(repository_ctx, component):
+    tpl_label = Label("//cuda/private:templates/BUILD.dctk_comp")
+    substitutions = {
+        "%{component_name}": component,
+    }
+    return _expand_template(repository_ctx, tpl_label, substitutions = substitutions)
+
 def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable):
     # stitch template fragment
     fragments = [
         Label("//cuda/private:templates/BUILD.cuda_shared"),
-        Label("//cuda/private:templates/BUILD.cuda_headers"),
         Label("//cuda/private:templates/BUILD.cuda_build_setting"),
     ]
     if is_cuda_repo and not is_deliverable:  # generate `@cuda//BUILD` for local host CTK
+        fragments.append(_expand_lctk_cuda(repository_ctx, components))
         fragments.extend([Label("//cuda/private:templates/BUILD.{}".format(c)) for c in components])
     elif is_cuda_repo and is_deliverable:  # generate `@cuda//BUILD` for CTK with deliverables
-        pass
+        fragments.append(_expand_dctk_cuda(repository_ctx, components))
     elif not is_cuda_repo and is_deliverable:  # generate `@cuda_<component>//BUILD` for a deliverable
         if len(components) != 1:
             fail("one deliverable at a time")
-        fragments.append(Label("//cuda/private:templates/BUILD.{}".format(components.keys()[0])))
+        comp = components.keys()[0]
+        fragments.append(_expand_dctk_component(repository_ctx, comp))
+        fragments.append(Label("//cuda/private:templates/BUILD.{}".format(comp)))
     else:
         fail("unreachable")
 
     template_content = []
     for frag in fragments:
-        template_content.append("# Generated from fragment " + str(frag))
-        template_content.append(repository_ctx.read(frag))
+        if type(frag) == type(""):
+            template_content.append(frag)
+        else:
+            template_content.append("# Generated from fragment " + str(frag))
+            template_content.append(repository_ctx.read(frag))
 
     if is_cuda_repo and is_deliverable:  # generate `@cuda//BUILD` for CTK with deliverables
         for comp in components:

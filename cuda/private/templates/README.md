@@ -1,7 +1,9 @@
 ## Template files
 
 - `BUILD.cuda_shared`: For `cuda` repo (CTK + toolchain) or `cuda_%{component_name}`
-- `BUILD.cuda_headers`: For `cuda` repo (CTK + toolchain) or `cuda_%{component_name}` headers
+- `BUILD.lctk_cuda`: For `cuda` repo only in locally installed CTK case, expand separately.
+- `BUILD.dctk_cuda`: For `cuda` repo only in deliverable CTK case, expand separately.
+- `BUILD.dctk_comp`: For component repos only in deliverable CTK case, expand separately.
 - `BUILD.cuda_build_setting`: For `cuda` repo (CTK + toolchain) build_setting
 - `BUILD.cuda_disabled`: For creating a dummy local configuration.
 - `BUILD.toolchain_disabled`: For creating a dummy local toolchain.
