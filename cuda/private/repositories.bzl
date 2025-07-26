@@ -338,7 +338,7 @@ def _cuda_component_impl(repository_ctx):
             content = (
                 "Deliverable archive download from " + repr(repository_ctx.attr.url or repository_ctx.attr.urls) +
                 " does not provides a LICENSE file.\n\nPlease consult deliverable archive provider for details."
-            )
+            ),
         )
 
 cuda_component = repository_rule(

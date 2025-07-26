@@ -5,7 +5,7 @@ filegroup(
 
 filegroup(
     name = "%{component_name}_license",
-    srcs = ["%{component_name}/LICENSE"]
+    srcs = ["%{component_name}/LICENSE"],
 )
 
 filegroup(
