@@ -1,0 +1,16 @@
+filegroup(
+    name = "cuda_all_files",
+    # aggregate all <component>_all_files
+    # %{dctk_cuda_all_files_srcs_line},
+)
+
+filegroup(
+    name = "cuda_license",
+    # aggregate all <component>_license
+    # %{dctk_cuda_license_srcs_line},
+)
+
+cc_library(
+    name = "%{component_name}_headers",
+    # %{dctk_cuda_headers_deps_line},
+)

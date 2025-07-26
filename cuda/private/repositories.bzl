@@ -327,6 +327,20 @@ def _cuda_component_impl(repository_ctx):
         }),
     )
 
+    # redistrib_<version>.json have fields of "license_path" which can be accessed
+    # For example https://developer.download.nvidia.cn/compute/cuda/redist/redistrib_12.8.1.json
+    #         "license_path": "cuda_cccl/LICENSE.txt"
+    # can be accessed from https://developer.download.nvidia.cn/compute/cuda/redist/cuda_nvcc/LICENSE.txt
+    license_path = repository_ctx.path("{}/LICENSE".format(component_name))
+    if not license_path.exists:
+        repository_ctx.file(
+            license_path,
+            content = (
+                "Deliverable archive download from " + repr(repository_ctx.attr.url or repository_ctx.attr.urls) +
+                " does not provides a LICENSE file.\n\nPlease consult deliverable archive provider for details."
+            )
+        )
+
 cuda_component = repository_rule(
     implementation = _cuda_component_impl,
     attrs = {
