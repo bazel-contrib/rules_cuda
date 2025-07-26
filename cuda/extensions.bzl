@@ -37,7 +37,7 @@ cuda_component_tag = tag_class(attrs = {
 
 cuda_redist_json_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True, doc = "Repo name for the cuda_redist_json"),
-    "components": attr.string_list(mandatory = True, doc = "components to be used"),
+    "components": attr.string_list(doc = "Components to be used. If not specified, all components will be used."),
     "integrity": attr.string(
         doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
               "This must match the checksum of the file downloaded.",
@@ -94,6 +94,9 @@ def _module_tag_to_dict(t):
 
 def _redist_json_impl(module_ctx, attr):
     url, json_object = redist_json_helper.get(module_ctx, attr)
+    # Sets the default to be all the components contained if not specified.
+    if attr.components == None:
+        attr.components = json_object.keys()
     redist_ver = redist_json_helper.get_redist_version(module_ctx, attr, json_object)
     component_specs = redist_json_helper.collect_specs(module_ctx, attr, json_object, url)
 
