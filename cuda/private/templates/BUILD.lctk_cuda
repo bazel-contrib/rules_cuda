@@ -1,4 +1,9 @@
 filegroup(
+    name = "%{component_name}_all_files",
+    srcs = glob(["%{component_name}/**"]),
+)
+
+filegroup(
     name = "%{component_name}_header_files",
     srcs = glob(
         ["%{component_name}/include/**"],
