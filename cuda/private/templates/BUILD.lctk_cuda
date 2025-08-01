@@ -3,6 +3,12 @@ filegroup(
     srcs = glob(["%{component_name}/**"]),
 )
 
+exports_files(
+    glob(
+        ["%{component_name}/**"],
+    ),
+)
+
 filegroup(
     name = "%{component_name}_header_files",
     srcs = glob(
