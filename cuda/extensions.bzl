@@ -37,7 +37,7 @@ cuda_component_tag = tag_class(attrs = {
 
 cuda_redist_json_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True, doc = "Repo name for the cuda_redist_json"),
-    "components": attr.string_list(mandatory = True, doc = "components to be used"),
+    "components": attr.string_list(doc = "Components to be used. If not specified, all components will be used."),
     "integrity": attr.string(
         doc = "Expected checksum in Subresource Integrity format of the file downloaded. " +
               "This must match the checksum of the file downloaded.",
