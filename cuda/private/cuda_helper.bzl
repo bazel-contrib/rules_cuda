@@ -4,11 +4,11 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
-load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
+load("//cuda/private:toolchain.bzl", "find_cuda_toolchain")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper", "unique")
 
 def _create_arch_number(arch_num_str):
@@ -244,32 +244,15 @@ def _create_common_info(
     )
 
 def _get_sysroot(ctx):
+    cuda_toolchain = find_cuda_toolchain(ctx)
     cc_toolchain = find_cpp_toolchain(ctx)
 
-    if cc_toolchain.sysroot:
-        return cc_toolchain.sysroot
-
-    feature_configuration = cc_common.configure_features(
-        ctx = ctx,
-        cc_toolchain = cc_toolchain,
-        requested_features = ctx.features,
-        unsupported_features = ctx.disabled_features,
-    )
-
-    variables = cc_common.create_compile_variables(
-        cc_toolchain = cc_toolchain,
-        feature_configuration = feature_configuration,
-    )
-
-    cc_flags = cc_common.get_memory_inefficient_command_line(
-        feature_configuration = feature_configuration,
-        action_name = CC_ACTION_NAMES.cpp_compile,
-        variables = variables,
-    )
-
-    for flag in cc_flags:
-        if flag.startswith("--sysroot="):
-            return flag.removeprefix("--sysroot=")
+    if getattr(cuda_toolchain, "cc_sysroot", None):
+        return getattr(cuda_toolchain, "cc_sysroot")
+    elif getattr(cc_toolchain, "sysroot", None):
+        # NOTE: cuda_toolchain may or maynot be configured with cc_sysroot.
+        # so we need to query it again if the attr is not available.
+        return getattr(cc_toolchain, "sysroot")
 
     return None
 
