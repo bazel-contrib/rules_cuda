@@ -1,5 +1,5 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
-load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
+load("//cuda/private:providers.bzl", "CudaCcSysrootInfo", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
 
 def _cuda_toolchain_impl(ctx):
@@ -53,6 +53,12 @@ def _cuda_toolchain_impl(ctx):
 
     toolchain_files = depset(transitive = [compiler_depset] + [cf.files for cf in ctx.attr.compiler_files])
 
+    optional_attributes = {}
+    if ctx.attr.cc_sysroot:
+        # NOTE: cuda_toolchain may or may not be configured with cc_sysroot.
+        # If cuda_toolchain has the attr, it will be correct. Otherwise, it is not configured.
+        optional_attributes["cc_sysroot"] = ctx.attr.cc_sysroot[CudaCcSysrootInfo].cc_sysroot
+
     return [
         platform_common.ToolchainInfo(
             name = ctx.label.name,
@@ -61,6 +67,7 @@ def _cuda_toolchain_impl(ctx):
             selectables_info = selectables_info,
             artifact_name_patterns = artifact_name_patterns,
             cuda_toolkit = cuda_toolchain_config.cuda_toolkit,
+            **optional_attributes,
         ),
     ]
 
@@ -78,6 +85,11 @@ cuda_toolchain = rule(
         "compiler_executable": attr.string(doc = "The path of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified if compiler_use_cc_toolchain is not set."),
         "compiler_label": attr.label(allow_single_file = True, executable = True, cfg = "exec", doc = "The label of the main executable of this toolchain. Either compiler_executable or compiler_label must be specified."),
         "compiler_files": attr.label_list(allow_files = True, cfg = "exec", doc = "The set of files that are needed when compiling using this toolchain."),
+        "cc_sysroot": attr.label(
+            mandatory = False,
+            providers = [CudaCcSysrootInfo],
+            doc = "A target that provides a `CudaCcSysrootInfo`.",
+          ),
         "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
     },
 )
