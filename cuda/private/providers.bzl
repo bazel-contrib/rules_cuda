@@ -110,6 +110,13 @@ CudaToolkitInfo = provider(
     },
 )
 
+CudaCcSysrootInfo = provider(
+    """Provides the sysroot path from C++ toolchain.""",
+    fields = {
+        "cc_sysroot": "The sysroot path",
+    },
+)
+
 CudaToolchainConfigInfo = provider(
     """Provides the information of what the toolchain is and how the toolchain is configured.""",
     fields = {

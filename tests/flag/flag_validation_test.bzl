@@ -131,3 +131,11 @@ config_settings_use_linkopts = {
 cuda_library_use_copts_flag_test = _create_cuda_library_flag_test(config_settings_use_copts)
 cuda_library_use_cxxopts_flag_test = _create_cuda_library_flag_test(config_settings_use_cxxopts)
 cuda_library_use_linkopts_flag_test = _create_cuda_library_flag_test(config_settings_use_linkopts)
+
+# Config settings for testing sysroot from cc toolchain
+config_settings_platform_sysroot_test = {"//command_line_option:platforms": _rules_cuda_target("tests/flag/testonly_toolchains:sysroot-test-platform")}
+config_settings_platform_no_sysroot_test = {"//command_line_option:platforms": _rules_cuda_target("tests/flag/testonly_toolchains:no-sysroot-test-platform")}
+config_settings_platform_copt_sysroot_test = {"//command_line_option:copt": ["--sysroot=/sysroot/from/copt"]}
+cuda_library_platform_sysroot_flag_test = _create_cuda_library_flag_test(config_settings_platform_sysroot_test)
+cuda_library_platform_no_sysroot_flag_test = _create_cuda_library_flag_test(config_settings_platform_no_sysroot_test)
+cuda_library_platform_no_sysroot_but_copt_flag_test = _create_cuda_library_flag_test(config_settings_platform_no_sysroot_test, config_settings_platform_copt_sysroot_test)
