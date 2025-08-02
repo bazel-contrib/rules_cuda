@@ -25,6 +25,7 @@ def _cuda_cc_sysroot_impl(ctx):
         variables = cc_common.create_compile_variables(
             cc_toolchain = cc_toolchain,
             feature_configuration = feature_configuration,
+            user_compile_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts,
         )
 
         cc_flags = cc_common.get_memory_inefficient_command_line(
