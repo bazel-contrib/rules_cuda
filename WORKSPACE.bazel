@@ -14,3 +14,9 @@ rules_cuda_toolchains(register_toolchains = True)
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 
 bazel_skylib_workspace()
+
+# dev_dependency, for internal test only
+register_toolchains(
+    "//tests/flag/testonly_toolchains:sysroot-test-toolchain",
+    "//tests/flag/testonly_toolchains:no-sysroot-test-toolchain",
+)
