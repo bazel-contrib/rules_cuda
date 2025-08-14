@@ -51,7 +51,7 @@ def config_sysroot_test_toolchain(identifier, sysroot):
     flag_test_toolchain_config(
         name = toolchain_config_name,
         toolchain_identifier = identifier,
-        **optional_sysroot,
+        **optional_sysroot
     )
 
     native.cc_toolchain(
