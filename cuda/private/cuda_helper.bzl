@@ -3,11 +3,11 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS")
+load("//cuda/private:toolchain.bzl", "find_cuda_toolchain")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper", "unique")
 
 def _create_arch_number(arch_num_str):
@@ -242,6 +242,10 @@ def _create_common_info(
         cpp_linkopts = cpp_linkopts,
     )
 
+def _get_cc_sysroot(ctx):
+    cuda_toolchain = find_cuda_toolchain(ctx)
+    return getattr(cuda_toolchain, "cc_sysroot", None)
+
 def _create_common(ctx):
     """Helper to gather and process various information from `ctx` object to ease the parameter passing for internal macros.
 
@@ -254,8 +258,6 @@ def _create_common(ctx):
         all_cc_deps.extend([dep for dep in attr._builtin_deps if CcInfo in dep])
 
     merged_cc_info = cc_common.merge_cc_infos(cc_infos = [dep[CcInfo] for dep in all_cc_deps])
-
-    cc_toolchain = find_cpp_toolchain(ctx)
 
     # gather include info
     includes = merged_cc_info.compilation_context.includes.to_list()
@@ -306,7 +308,7 @@ def _create_common(ctx):
 
     return _create_common_info(
         cuda_archs_info = _get_cuda_archs_info(ctx),
-        sysroot = getattr(cc_toolchain, "sysroot", None),
+        sysroot = _get_cc_sysroot(ctx),
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,

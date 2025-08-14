@@ -1,0 +1,16 @@
+load(":config_sysroot_test_toolchain.bzl", "config_sysroot_test_toolchain")
+
+filegroup(
+    name = "empty",
+    srcs = [],
+)
+
+config_sysroot_test_toolchain(
+    identifier = "no-sysroot",
+    sysroot = None,
+)
+
+config_sysroot_test_toolchain(
+    identifier = "sysroot",
+    sysroot = "/sysroot/from/toolchain",
+)

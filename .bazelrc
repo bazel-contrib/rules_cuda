@@ -16,3 +16,6 @@ build:clang --//cuda:compiler=clang
 
 # https://github.com/bazel-contrib/rules_cuda/issues/1
 # build --ui_event_filters=-INFO
+
+test --extra_toolchains=//tests/flag/testonly_toolchains:sysroot-test-toolchain
+test --extra_toolchains=//tests/flag/testonly_toolchains:no-sysroot-test-toolchain
