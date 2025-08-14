@@ -2,13 +2,10 @@
 
 load(
     "@rules_cuda//cuda:defs.bzl",
-    "cuda_cc_sysroot",
     "cuda_toolchain",
     "cuda_toolkit_info",
     cuda_toolchain_config = "cuda_toolchain_config_nvcc",
 )
-
-cuda_cc_sysroot(name = "cc-sysroot")
 
 cuda_toolkit_info(
     name = "cuda-toolkit",
@@ -34,7 +31,6 @@ cuda_toolchain(
     compiler_files = ["@cuda//:compiler_deps"],
     compiler_label = "%{nvcc_label}",
     toolchain_config = ":nvcc-local-config",
-    cc_sysroot = ":cc-sysroot",
 )
 
 toolchain(
