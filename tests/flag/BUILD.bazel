@@ -372,6 +372,7 @@ cuda_library(
     srcs = ["@rules_cuda_examples//basic:kernel.cu"],
     hdrs = ["@rules_cuda_examples//basic:kernel.h"],
     archs = ["compute_80:sm_90"],
+    tags = ["manual"],
 )
 
 cuda_library_sm100_sm100a_flag_test(
