@@ -377,12 +377,12 @@ cuda_library(
 cuda_library_sm100_sm100a_flag_test(
     name = "cuda_library_sm100_sm100a_per_target_sm_90_kernel_arch_flag_test",
     action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_80,code=sm_90",
+    ],
     not_contain_flags = [
         "-gencode arch=compute_100,code=sm_100",
         "-gencode arch=compute_100a,code=sm_100a",
-    ],
-    contain_flags = [
-        "-gencode arch=compute_80,code=sm_90",
     ],
     target_under_test = ":cuda_library_sm100_sm100a_per_target_sm_90_kernel",
 )
