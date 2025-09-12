@@ -104,6 +104,7 @@ code and device link time optimization source files.""",
         "defines": attr.string_list(doc = "List of defines to add to the compile line."),
         "local_defines": attr.string_list(doc = "List of defines to add to the compile line, but only apply to this rule."),
         "ptxasopts": attr.string_list(doc = "Add these flags to the ptxas command."),
+        "archs": attr.string_list(doc = "Cuda arch specs for this target only. If specified, cuda archs passed from commandline will be ignored"),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
         "_default_cuda_copts": attr.label(default = "//cuda:copts"),
         "_default_host_copts": attr.label(default = "//cuda:host_copts"),

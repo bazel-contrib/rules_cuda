@@ -366,6 +366,28 @@ cuda_library_sm100_sm100a_flag_test(
     target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
+# test for per-target arch specification
+cuda_library(
+    name = "cuda_library_sm100_sm100a_per_target_sm_90_kernel",
+    srcs = ["@rules_cuda_examples//basic:kernel.cu"],
+    hdrs = ["@rules_cuda_examples//basic:kernel.h"],
+    archs = ["compute_80:sm_90"],
+    tags = ["manual"],
+)
+
+cuda_library_sm100_sm100a_flag_test(
+    name = "cuda_library_sm100_sm100a_per_target_sm_90_kernel_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_80,code=sm_90",
+    ],
+    not_contain_flags = [
+        "-gencode arch=compute_100,code=sm_100",
+        "-gencode arch=compute_100a,code=sm_100a",
+    ],
+    target_under_test = ":cuda_library_sm100_sm100a_per_target_sm_90_kernel",
+)
+
 ###################################################
 # Tests for cpp opts propagation features
 ###################################################
