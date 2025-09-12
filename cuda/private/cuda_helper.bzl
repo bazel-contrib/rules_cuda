@@ -172,7 +172,7 @@ def _check_opts(opt):
 def _get_cuda_archs_info(ctx):
     if ctx.attr.archs:
         specs_str = ";".join(ctx.attr.archs)
-        return CudaArchsInfo(arch_specs = cuda_helper.get_arch_specs(specs_str))
+        return CudaArchsInfo(arch_specs = _get_arch_specs(specs_str))
 
     return ctx.attr._default_cuda_archs[CudaArchsInfo]
 
