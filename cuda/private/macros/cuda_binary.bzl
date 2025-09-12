@@ -10,7 +10,7 @@ def cuda_binary(name, **attrs):
         name: A unique name for this target (cc_binary).
         **attrs: attrs of cc_binary and cuda_library.
     """
-    cuda_library_only_attrs = ["deps", "srcs", "hdrs", "alwayslink", "rdc", "ptxasopts"]
+    cuda_library_only_attrs = ["deps", "srcs", "hdrs", "alwayslink", "rdc", "ptxasopts", "archs"]
     cuda_library_only_attrs_defaults = {
         "alwayslink": True,
     }
