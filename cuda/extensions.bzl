@@ -57,6 +57,7 @@ cuda_redist_json_tag = tag_class(attrs = {
         doc = "Generate a URL by using the specified version." +
               "This URL will be tried after all URLs specified in the `urls` attribute.",
     ),
+    "archs": attr.string_list(doc = "Target architectures to support. If not specified, only x86_64 will be supported."),
 })
 
 cuda_toolkit_tag = tag_class(attrs = {
@@ -100,7 +101,8 @@ def _redist_json_impl(module_ctx, attr):
     mapping = {}
     for spec in component_specs:
         repo_name = redist_json_helper.get_repo_name(module_ctx, spec)
-        mapping[spec["component_name"]] = "@" + repo_name
+        component_name = spec["component_name"]
+        mapping["{}__{}".format(component_name, spec["arch"])] = "@" + repo_name
 
         attr = {key: value for key, value in spec.items()}
         attr["name"] = repo_name

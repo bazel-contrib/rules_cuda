@@ -77,27 +77,30 @@ def _collect_specs(ctx, attr, redist, the_url):
     elif _is_windows(ctx):
         os = "windows"
 
-    arch = "x86_64"  # TODO: support cross compiling
-    platform = "{os}-{arch}".format(os = os, arch = arch)
-    components = attr.components if attr.components else [k for k, v in FULL_COMPONENT_NAME.items() if v in redist]
+    archs = attr.archs or ["x86_64"]
 
-    for c in components:
-        c_full = FULL_COMPONENT_NAME[c]
+    for arch in archs:
+        platform = "{os}-{arch}".format(os = os, arch = arch)
+        components = attr.components if attr.components else [k for k, v in FULL_COMPONENT_NAME.items() if v in redist]
 
-        payload = redist[c_full][platform]
-        payload_relative_path = payload["relative_path"]
-        payload_url = the_url.rsplit("/", 1)[0] + "/" + payload_relative_path
-        archive_name = payload_relative_path.rsplit("/", 1)[1].split("-archive.")[0] + "-archive"
-        desc_name = redist[c_full].get("name", c_full)
+        for c in components:
+            c_full = FULL_COMPONENT_NAME[c]
 
-        specs.append({
-            "component_name": c,
-            "descriptive_name": desc_name,
-            "urls": [payload_url],
-            "sha256": payload["sha256"],
-            "strip_prefix": archive_name,
-            "version": redist[c_full]["version"],
-        })
+            payload = redist[c_full][platform]
+            payload_relative_path = payload["relative_path"]
+            payload_url = the_url.rsplit("/", 1)[0] + "/" + payload_relative_path
+            archive_name = payload_relative_path.rsplit("/", 1)[1].split("-archive.")[0] + "-archive"
+            desc_name = redist[c_full].get("name", c_full)
+
+            specs.append({
+                "component_name": c,
+                "descriptive_name": desc_name,
+                "urls": [payload_url],
+                "sha256": payload["sha256"],
+                "strip_prefix": archive_name,
+                "version": redist[c_full]["version"],
+                "arch": arch,
+            })
 
     return specs
 
@@ -113,6 +116,9 @@ def _get_repo_name(ctx, spec):
     version = spec.get("version", None)
     if version != None:
         repo_name = repo_name + "_v" + version
+    arch = spec.get("arch", None)
+    if arch != None:
+        repo_name = repo_name + "_" + arch
 
     return repo_name
 

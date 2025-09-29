@@ -13,6 +13,9 @@ def _is_linux(ctx):
 def _is_windows(ctx):
     return ctx.os.name.lower().startswith("windows")
 
+def _is_aarch64(ctx):
+    return ctx.os.arch == "aarch64"
+
 def _get_nvcc_version(repository_ctx, nvcc_root):
     result = repository_ctx.execute([nvcc_root + "/bin/nvcc", "--version"])
     if result.return_code != 0:
@@ -90,10 +93,14 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     # NOTE: component nvcc contains some headers that will be used.
     required_components = ["cccl", "cudart", "nvcc"]
     for rc in required_components:
-        if rc not in repository_ctx.attr.components_mapping:
-            fail('component "{}" is required.'.format(rc))
+        for arch in repository_ctx.attr.archs:
+            if "{}__{}".format(rc, arch) not in repository_ctx.attr.components_mapping:
+                fail('component "{}" for {} is required.'.format(rc, arch))
 
-    nvcc_repo = repository_ctx.attr.components_mapping["nvcc"]
+    nvcc_repo = repository_ctx.attr.components_mapping.get("nvcc", None)
+    if not nvcc_repo:
+        host_arch = "aarch64" if _is_aarch64(repository_ctx) else "x86_64"
+        nvcc_repo = repository_ctx.attr.components_mapping["nvcc__{}".format(host_arch)]
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
     nvcc = "{}//:nvcc/bin/nvcc{}".format(nvcc_repo, bin_ext)
@@ -276,6 +283,7 @@ cuda_toolkit = repository_rule(
         "nvcc_version": attr.string(
             doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
         ),
+        "archs": attr.string_list(doc = "list of host target architectures to support (e.g., x86_64)"),
     },
     configure = True,
     local = True,
@@ -372,6 +380,7 @@ cuda_component = repository_rule(
                   "If all downloads fail, the rule will fail.",
         ),
         "version": attr.string(doc = "A unique version number for component. Store in version.json file"),
+        "arch": attr.string(doc = "The supported target host architecture (e.g., x86_64, aarch64). If omitted, x86_64 is assumed."),
     },
 )
 
@@ -425,7 +434,7 @@ def rules_cuda_dependencies():
         ],
     )
 
-def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, version = None, nvcc_version = None, register_toolchains = False):
+def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, version = None, nvcc_version = None, register_toolchains = False, archs = None):
     """Populate the @cuda repo.
 
     Args:
@@ -442,6 +451,7 @@ def rules_cuda_toolchains(toolkit_path = None, components_mapping = None, versio
         components_mapping = components_mapping,
         version = version,
         nvcc_version = nvcc_version,
+        archs = archs,
     )
 
     if register_toolchains:

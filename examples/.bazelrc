@@ -8,6 +8,9 @@ build --flag_alias=cuda_copts=@rules_cuda//cuda:copts
 build --flag_alias=cuda_runtime=@rules_cuda//cuda:runtime
 
 build --enable_cuda=True
+build --cuda_archs=sm_86,sm_89,sm_120
+
+build:aarch64 --cuda_archs=sm_87
 
 # Use --config=clang to build with clang instead of gcc and nvcc.
 build:clang --repo_env=CC=clang
@@ -15,3 +18,13 @@ build:clang --@rules_cuda//cuda:compiler=clang
 
 # https://github.com/bazel-contrib/rules_cuda/issues/1
 # build --ui_event_filters=-INFO
+
+common --enable_bzlmod
+common --noenable_workspace
+
+build --platforms=//:linux_x86_64
+
+# add a config for aarch64 cross compilation
+build:aarch64 --platforms=//:linux_aarch64
+query:aarch64 --platforms=//:linux_aarch64
+
