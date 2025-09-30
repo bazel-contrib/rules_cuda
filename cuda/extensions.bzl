@@ -102,7 +102,7 @@ def _redist_json_impl(module_ctx, attr):
     for spec in component_specs:
         repo_name = redist_json_helper.get_repo_name(module_ctx, spec)
         component_name = spec["component_name"]
-        mapping["{}__{}".format(component_name, spec["arch"])] = "@" + repo_name
+        mapping[redist_json_helper.get_repo_mapping_key(component_name, spec["arch"])] = "@" + repo_name
 
         attr = {key: value for key, value in spec.items()}
         attr["name"] = repo_name

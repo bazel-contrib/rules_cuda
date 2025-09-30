@@ -94,13 +94,15 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     required_components = ["cccl", "cudart", "nvcc"]
     for rc in required_components:
         for arch in repository_ctx.attr.archs:
-            if "{}__{}".format(rc, arch) not in repository_ctx.attr.components_mapping:
+            mapping_key = redist_json_helper.get_repo_mapping_key(rc, arch)
+            if mapping_key not in repository_ctx.attr.components_mapping:
                 fail('component "{}" for {} is required.'.format(rc, arch))
 
     nvcc_repo = repository_ctx.attr.components_mapping.get("nvcc", None)
     if not nvcc_repo:
         host_arch = "aarch64" if _is_aarch64(repository_ctx) else "x86_64"
-        nvcc_repo = repository_ctx.attr.components_mapping["nvcc__{}".format(host_arch)]
+        nvcc_mapping_key = redist_json_helper.get_repo_mapping_key("nvcc", host_arch)
+        nvcc_repo = repository_ctx.attr.components_mapping[nvcc_mapping_key]
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
     nvcc = "{}//:nvcc/bin/nvcc{}".format(nvcc_repo, bin_ext)

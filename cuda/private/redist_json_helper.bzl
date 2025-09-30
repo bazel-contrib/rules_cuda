@@ -122,9 +122,19 @@ def _get_repo_name(ctx, spec):
 
     return repo_name
 
+def _get_repo_mapping_key(spec):
+    """Generate a key (string) to identify a component/arch pair (e.g., "cublas__x86_64").
+
+    Args:
+        spec: cuda_component attrs
+    """
+
+    return "{}__{}".format(spec["component_name"], spec["arch"])
+
 redist_json_helper = struct(
     get = _get,
     get_redist_version = _get_redist_version,
     collect_specs = _collect_specs,
     get_repo_name = _get_repo_name,
+    get_repo_mapping_key = _get_repo_mapping_key,
 )
