@@ -25,7 +25,7 @@ jobs:
     env:
       USE_BAZEL_VERSION: ${{ matrix.bazel-version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # conditionally override USE_BAZEL_VERSION
       - run: if [ "${{ matrix.bazel-version }}" = ".bazelversion" ]; then echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $GITHUB_ENV; fi
