@@ -4,6 +4,13 @@ load("@io_bazel_stardoc//stardoc:stardoc.bzl", "stardoc")
 bzl_library(
     name = "bazel_tools_bzl_srcs",
     srcs = ["@bazel_tools//tools:bzl_srcs"],
+    deps = [
+        # NOTE: workaround for https://github.com/bazelbuild/rules_cc/issues/279
+        # see https://github.com/bazel-contrib/rules_go/issues/4394#issuecomment-3063983207
+        "@rules_cc//cc:cc_toolchain_config_lib.bzl",
+        "@rules_cc//cc:find_cc_toolchain_bzl",
+        "@rules_cc//cc/common",
+    ],
 )
 
 # NOTE: when the `out` is changed, the `nav` part of `mkdocs.yaml` must be also be changed correspondingly.
