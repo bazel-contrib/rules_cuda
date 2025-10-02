@@ -39,7 +39,7 @@ jobs:
           - { os: "windows-2022", cuda-version: "11.5.2", source: "nvidia" }
           - { os: "windows-2025", cuda-version: "12.6.3", source: "nvidia" }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: bazelbuild/setup-bazelisk@v3
       - name: Mount bazel cache

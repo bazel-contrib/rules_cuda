@@ -20,9 +20,9 @@ jobs:
           - { ref: v0.2.3, name: 0.2.3 }
           - { ref: v0.2.4, name: 0.2.4 }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: ${{ matrix.docs.ref == 'main' }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ matrix.docs.ref }}
         if: ${{ matrix.docs.ref != 'main' }}
@@ -53,7 +53,7 @@ jobs:
     if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v5
         with:
