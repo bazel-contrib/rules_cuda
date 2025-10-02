@@ -4,6 +4,8 @@ module(
     compatibility_level = 1,
 )
 
+bazel_dep(name = "platforms", version = "0.0.11")
+
 bazel_dep(name = "rules_cuda", version = "0.2.3")
 local_path_override(
     module_name = "rules_cuda",
@@ -11,9 +13,22 @@ local_path_override(
 )
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.redist_json(
+    name = "rules_cuda_redist_json",
+    components = [
+        "cccl",
+        "cudart",
+        "nvcc",
+        "cublas",
+    ],
+    archs = [
+        "x86_64",
+        "aarch64",
+    ],
+    version = "12.8.1",
+)
 cuda.toolkit(
     name = "cuda",
-    toolkit_path = "",
 )
 use_repo(cuda, "cuda")
 
@@ -21,4 +36,66 @@ use_repo(cuda, "cuda")
 # Dependencies for nccl example #
 #################################
 # See WORKSPACE.bzlmod for the remaining parts
-bazel_dep(name = "bazel_skylib", version = "1.4.2")
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+
+#################################
+# LLVM toolchain
+#################################
+
+bazel_dep(name = "toolchains_llvm", version = "1.5.0")
+
+# Configure and register the toolchain.
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
+llvm.toolchain(
+    name = "llvm_toolchain",
+    cxx_standard = {"": "c++20"},
+    llvm_version = "17.0.6",
+    stdlib = {
+        "": "dynamic-stdc++",
+    },
+)
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "org_chromium_sysroot_linux_x86_64",
+    build_file_content = """
+filegroup(
+  name = "sysroot",
+  srcs = glob(["*/**"], exclude=["lib/systemd/*/**"]),
+  visibility = ["//visibility:public"],
+)
+""",
+    sha256 = "36a164623d03f525e3dfb783a5e9b8a00e98e1ddd2b5cff4e449bd016dd27e50",
+    urls = ["https://commondatastorage.googleapis.com/chrome-linux-sysroot/36a164623d03f525e3dfb783a5e9b8a00e98e1ddd2b5cff4e449bd016dd27e50"],
+    type = "tar.xz",
+)
+
+llvm.sysroot(
+    name = "llvm_toolchain",
+    label = "@org_chromium_sysroot_linux_x86_64//:sysroot",
+    targets = ["linux-x86_64"],
+)
+
+http_archive(
+    name = "org_chromium_sysroot_linux_aarch64",
+    build_file_content = """
+filegroup(
+  name = "sysroot",
+  srcs = glob(["*/**"], exclude=["lib/systemd/*/**"]),
+  visibility = ["//visibility:public"],
+)
+""",
+    sha256 = "2f915d821eec27515c0c6d21b69898e23762908d8d7ccc1aa2a8f5f25e8b7e18",
+    urls = ["https://commondatastorage.googleapis.com/chrome-linux-sysroot/2f915d821eec27515c0c6d21b69898e23762908d8d7ccc1aa2a8f5f25e8b7e18"],
+    type = "tar.xz",
+)
+
+llvm.sysroot(
+    name = "llvm_toolchain",
+    label = "@org_chromium_sysroot_linux_aarch64//:sysroot",
+    targets = ["linux-aarch64"],
+)
+use_repo(llvm, "llvm_toolchain")
+
+register_toolchains("@llvm_toolchain//:all")

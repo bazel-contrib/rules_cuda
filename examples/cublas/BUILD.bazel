@@ -2,5 +2,8 @@
 cc_binary(
     name = "main",
     srcs = ["cublas.cpp"],
-    deps = ["@cuda//:cublas"],
+    deps = [
+        "@cuda//:cublas",
+        "@cuda//:cuda_runtime",
+    ],
 )

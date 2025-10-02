@@ -7,8 +7,11 @@ def _to_forward_slash(s):
 def _is_linux(ctx):
     return ctx.os.name.startswith("linux")
 
-def _is_windows(ctx):
-    return ctx.os.name.lower().startswith("windows")
+def _is_x86_64(ctx):
+    return ctx.os.arch == "amd64"
+
+def _is_aarch64(ctx):
+    return ctx.os.arch == "aarch64"
 
 def _expand_template(repository_ctx, tpl_label, substitutions):
     template_content = "# Generated from fragment " + str(tpl_label) + "\n"
@@ -80,11 +83,28 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
             template_content.append(repository_ctx.read(frag))
 
     if is_cuda_repo and is_deliverable:  # generate `@cuda//BUILD` for CTK with deliverables
-        for comp in components:
+        component_names = set([name.split("__")[0] for name in components])
+        archs = set([name.split("__")[1] for name in components])
+
+        for comp in component_names:
+            repo_x86_64 = components[comp + "__x86_64"]
+            repo_aarch64 = components[comp + "__aarch64"]
             for target in REGISTRY[comp]:
-                repo = components[comp]
-                line = 'alias(name = "{target}", actual = "{repo}//:{target}")'.format(target = target, repo = repo)
-                template_content.append(line)
+                if comp == "nvcc":
+                    repo_host_architecture = repo_aarch64 if _is_aarch64(repository_ctx) else repo_x86_64
+                    alias_line = 'alias(name = "{target}", actual = "{repo}//:{target}")'.format(target = target, repo = repo_host_architecture)
+                else:
+                    alias_line = """
+alias(
+    name = "{target}",
+    actual = select({{
+    "@platforms//cpu:x86_64": "{repo_x86_64}//:{target}",
+    "@platforms//cpu:aarch64": "{repo_aarch64}//:{target}",
+    }})
+)
+""".format(target = target, repo_x86_64 = repo_x86_64, repo_aarch64 = repo_aarch64)
+
+                template_content.append(alias_line)
 
             # add an empty line to separate aliased targets from different components
             template_content.append("")

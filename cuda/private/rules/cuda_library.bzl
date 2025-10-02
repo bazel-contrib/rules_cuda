@@ -144,7 +144,7 @@ def _cuda_library_impl(ctx):
         ),
     ]
 
-cuda_library = rule(
+_cuda_library = rule(
     doc = """This rule compiles and creates static library for CUDA kernel code. The resulting targets can then be consumed by
 [C/C++ Rules](https://bazel.build/reference/be/c-cpp#rules).""",
     implementation = _cuda_library_impl,
@@ -179,3 +179,20 @@ cuda_library = rule(
     toolchains = use_cpp_toolchain() + use_cuda_toolchain(),
     provides = [DefaultInfo, OutputGroupInfo, CcInfo, CudaInfo],
 )
+
+def cuda_library(name, **kwargs):
+    copts = kwargs.get("copts", []) + select({
+        "@platforms//cpu:x86_64": [
+            "-Xcompiler",
+            "--target=x86_64-unknown-linux-gnu",
+        ],
+        "@platforms//cpu:aarch64": [
+            "-Xcompiler",
+            "--target=aarch64-unknown-linux-gnu",
+        ],
+    })
+    _cuda_library(
+        name = name,
+        copts = copts,
+        **kwargs
+    )
