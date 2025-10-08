@@ -28,7 +28,7 @@ FULL_COMPONENT_NAME = {
     "cublas": "libcublas",
     "cufft": "libcufft",
     "cufile": "libcufile",
-    "cupti": "libcupti",
+    "cupti": "cuda_cupti",
     "curand": "libcurand",
     "cusolver": "libcusolver",
     "cusparse": "libcusparse",
