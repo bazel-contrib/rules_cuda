@@ -26,15 +26,13 @@ pushd "$this_dir/toolchain_none"
     ERR=$(bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=True 2>&1 || true)
     if ! [[ $ERR == *"didn't satisfy constraint"*"valid_toolchain_is_configured"* ]]; then exit 1; fi
 
-    # use library fails because the library file does not exist
-    ERR=$(bazel build //:use_library 2>&1 || true)
-    if ! [[ $ERR =~ "target 'cuda_runtime' not declared in package" ]]; then exit 1; fi
-    if ! [[ $ERR =~ "ERROR: Analysis of target '//:use_library' failed" ]]; then exit 1; fi
+    # use library should analyse build successfully (empty cuda_runtime target exists)
+    bazel build //:use_library
 
-    # use rule fails because rules_cuda depends non-existent cuda toolkit
+    # use rule analyses correctly but fails during compilation because nvcc doesn't exist
     ERR=$(bazel build //:use_rule 2>&1 || true)
-    if ! [[ $ERR =~ "target 'cuda_runtime' not declared in package" ]]; then exit 1; fi
-    if ! [[ $ERR =~ "ERROR: Analysis of target '//:use_rule' failed" ]]; then exit 1; fi
+    if ! [[ $ERR =~ "No such file or directory" ]]; then exit 1; fi
+    if ! [[ $ERR =~ "ERROR: Build did NOT complete successfully" ]]; then exit 1; fi
 
     bazel clean && bazel shutdown
 popd
