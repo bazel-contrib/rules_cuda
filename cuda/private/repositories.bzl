@@ -88,7 +88,7 @@ def _detect_local_cuda_toolkit(repository_ctx):
 
 def _detect_deliverable_cuda_toolkit(repository_ctx):
     # NOTE: component nvcc contains some headers that will be used.
-    required_components = ["cccl", "cudart", "nvcc"]
+    required_components = ["cccl", "crt", "cudart", "nvcc"]
     for rc in required_components:
         if rc not in repository_ctx.attr.components_mapping:
             fail('component "{}" is required.'.format(rc))
