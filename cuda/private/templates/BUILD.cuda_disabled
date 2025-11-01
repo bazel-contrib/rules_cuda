@@ -13,3 +13,7 @@ filegroup(
     name = "compiler_deps",
     srcs = [],
 )
+
+cc_library(
+    name = "cuda_runtime",
+)
