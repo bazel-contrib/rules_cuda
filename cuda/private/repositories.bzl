@@ -188,7 +188,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         )
 
     # Generate @cuda//defs.bzl
-    template_helper.generate_defs_bzl(repository_ctx, is_local_ctk == True)
+    template_helper.generate_defs_bzl(repository_ctx, cuda.version_major, cuda.version_minor, is_local_ctk == True)
 
     # Generate @cuda//toolchain/BUILD
     template_helper.generate_toolchain_build(repository_ctx, cuda)

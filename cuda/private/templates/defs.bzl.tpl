@@ -1,3 +1,10 @@
+def if_cuda_toolkit_version_ge(version, if_true, if_false = []):
+    ctk_version = (%{version_major}, %{version_minor})
+    if ctk_version >= version:
+        return if_true
+    else:
+        return if_false
+
 def if_local_cuda_toolkit(if_true, if_false = []):
     is_local_ctk = %{is_local_ctk}
     if is_local_ctk:
