@@ -4,6 +4,7 @@ REGISTRY = {
     "nvcc": ["nvcc_all_files", "nvcc_license", "nvcc_headers", "compiler_root", "compiler_deps", "nvptxcompiler"],
     "cccl": ["cccl_all_files", "cccl_license", "cccl_headers", "libcudacxx", "cub", "thrust"],
     "crt": ["crt_all_files", "crt_license", "crt_headers", "crt"],
+    "culibos": ["culibos_all_files", "culibos_license", "culibos_a"],  # culibos_a is not for end users
     "cublas": ["cublas_all_files", "cublas_license", "cublas_headers", "cublas"],
     "cufft": ["cufft_all_files", "cufft_license", "cufft_headers", "cufft", "cufft_static"],
     "cufile": [],
@@ -27,6 +28,7 @@ FULL_COMPONENT_NAME = {
     "nvcc": "cuda_nvcc",
     "cccl": "cuda_cccl",
     "crt": "cuda_crt",
+    "culibos": "cuda_culibos",
     "cublas": "libcublas",
     "cufft": "libcufft",
     "cufile": "libcufile",

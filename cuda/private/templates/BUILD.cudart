@@ -9,10 +9,20 @@ cc_library(
     target_compatible_with = ["@platforms//os:linux"],
 )
 
-cc_library(
-    name = "culibos_a",
-    srcs = ["%{component_name}/%{libpath}/libculibos.a"],
-    target_compatible_with = ["@platforms//os:linux"],
+# NOTE: for cuda toolkit older than 13.0, culibos_a is defined here, BUILD.culibos otherwise.
+[
+    cc_library(
+        name = "culibos_a",
+        srcs = ["%{component_name}/%{libpath}/libculibos.a"],
+        target_compatible_with = ["@platforms//os:linux"],
+    )
+    for name in if_cuda_toolkit_version_ge((13,0), [], ["culibos"])
+]
+
+conditional_culibos_a = if_cuda_toolkit_version_ge(
+  (13,0),
+  if_local_cuda_toolkit([":culibos_a"], ["@cuda//:culibos_a"]),
+  [":culibos_a"],
 )
 
 cc_import(
@@ -43,9 +53,8 @@ cc_library(
     ] + if_linux([
         # devrt is required for jit linking when rdc is enabled
         ":cudadevrt_a",
-        ":culibos_a",
         ":cudart_so",
-    ]) + if_windows([
+    ] + conditional_culibos_a) + if_windows([
         # devrt is required for jit linking when rdc is enabled
         ":cudadevrt_lib",
         ":cudart_lib",
