@@ -206,8 +206,8 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "%{link_stub_label}": cuda.link_stub_label,
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
-        "%{cicc_label}": cuda.cicc_label,
-        "%{libdevice_label}": cuda.libdevice_label,
+        "%{cicc_label}": cuda.cicc_label if cuda.cicc_label else "None",
+        "%{libdevice_label}": cuda.libdevice_label if cuda.libdevice_label else "None",
     }
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:
@@ -268,8 +268,8 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{link_stub_label}": cuda.link_stub_label,
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
-        "%{cicc_label}": cuda.cicc_label,
-        "%{libdevice_label}": cuda.libdevice_label,
+        "%{cicc_label}": cuda.cicc_label if cuda.cicc_label else "None",
+        "%{libdevice_label}": cuda.libdevice_label if cuda.libdevice_label else "None",
     }
 
     if clang_label_for_subst:
