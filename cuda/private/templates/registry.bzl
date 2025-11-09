@@ -13,7 +13,7 @@ REGISTRY = {
     "curand": ["curand_all_files", "curand_license", "curand_headers", "curand"],
     "cusolver": ["cusolver_all_files", "cusolver_license", "cusolver_headers", "cusolver"],
     "cusparse": ["cusparse_all_files", "cusparse_license", "cusparse_headers", "cusparse"],
-    "npp": ["npp_all_files", "npp_license", "npp_headers", "nppc", "nppi", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
+    "npp": ["npp_all_files", "npp_license", "npp_headers", "npp", "nppc", "nppi", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
     "nvidia_fs": [],
     "nvjitlink": ["nvjitlink_all_files", "nvjitlink_license", "nvjitlink_headers", "nvjitlink", "nvjitlink_static"],
     "nvjpeg": ["nvjpeg_all_files", "nvjpeg_license", "nvjpeg_headers", "nvjpeg", "nvjpeg_static"],
