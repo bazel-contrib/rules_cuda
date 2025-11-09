@@ -13,6 +13,8 @@ cuda_toolkit_info(
     fatbinary = "%{fatbinary_label}",
     link_stub = "%{link_stub_label}",
     nvlink = "%{nvlink_label}",
+    cicc = "%{cicc_label}",
+    libdevice = "%{libdevice_label}",
     path = "%{cuda_path}",
     version = "%{cuda_version}",
 )
@@ -28,7 +30,7 @@ cuda_toolchain_config(
 
 cuda_toolchain(
     name = "nvcc-local",
-    compiler_files = ["@cuda//:compiler_deps"],
+    # %{compiler_files_line}
     compiler_label = "%{nvcc_label}",
     toolchain_config = ":nvcc-local-config",
 )

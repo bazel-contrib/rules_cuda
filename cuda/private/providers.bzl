@@ -107,6 +107,8 @@ CudaToolkitInfo = provider(
         "link_stub": "File to the link.stub file",
         "bin2c": "File to the bin2c executable",
         "fatbinary": "File to the fatbinary executable",
+        "cicc": "File to the cicc executable",
+        "libdevice": "File to the libdevice LLVM bitcode library (libdevice.10.bc)",
     },
 )
 

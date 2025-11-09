@@ -187,7 +187,16 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "//cuda/private:templates/BUILD.toolchain_" +
         ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
+    compiler_files = ["@cuda//:compiler_deps"]
+    if int(cuda.version_major) >= 13:
+        if cuda.cicc_label != None:
+            compiler_files.append(cuda.cicc_label)
+        if cuda.libdevice_label != None:
+            compiler_files.append(cuda.libdevice_label)
+    compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
+
     substitutions = {
+        "# %{compiler_files_line}": compiler_files_line,
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_version_major}": str(cuda.nvcc_version_major),
@@ -197,6 +206,8 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "%{link_stub_label}": cuda.link_stub_label,
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
+        "%{cicc_label}": cuda.cicc_label,
+        "%{libdevice_label}": cuda.libdevice_label,
     }
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:
@@ -257,6 +268,8 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{link_stub_label}": cuda.link_stub_label,
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
+        "%{cicc_label}": cuda.cicc_label,
+        "%{libdevice_label}": cuda.libdevice_label,
     }
 
     if clang_label_for_subst:
