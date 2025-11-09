@@ -25,9 +25,10 @@ def additional_header_deps(component_name):
     if component_name == "cudart":
         return if_deliverable_cuda_toolkit([
             "@cuda//:nvcc_headers",
-            "@cuda//:crt_headers",
             "@cuda//:cccl_headers",
-        ]) + if_cuda_clang(if_deliverable_cuda_toolkit([
+        ]) + if_deliverable_cuda_toolkit(if_cuda_toolkit_version_ge((13, 0), [
+            "@cuda//:crt_headers",
+        ])) + if_deliverable_cuda_toolkit(if_cuda_clang([
             "@cuda//:curand_headers",
         ]))
 
