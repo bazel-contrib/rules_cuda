@@ -304,6 +304,8 @@ def _patch_nvcc_profile_pre(repository_ctx, component_name):
 
     if component_name != "nvcc":
         return patch_nvcc_profile, rename_files
+    if getattr(repository_ctx.attr, "version") == None or repository_ctx.attr.version == "":
+        fail("attribute `version` must be filled for 'nvcc' component")
 
     nvcc_major_version = int(repository_ctx.attr.version.split(".")[0])
     if nvcc_major_version >= 13:
