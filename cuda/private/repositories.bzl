@@ -395,7 +395,7 @@ def _cuda_redist_json_impl(repository_ctx):
 cuda_redist_json = repository_rule(
     implementation = _cuda_redist_json_impl,
     attrs = {
-        "components": attr.string_list(mandatory = True),
+        "components": attr.string_list(),
         "integrity": attr.string(mandatory = False),
         "sha256": attr.string(mandatory = False),
         "urls": attr.string_list(mandatory = False),
