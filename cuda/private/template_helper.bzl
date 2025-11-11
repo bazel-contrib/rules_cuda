@@ -206,9 +206,12 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "%{link_stub_label}": cuda.link_stub_label,
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
-        "%{cicc_label}": cuda.cicc_label if cuda.cicc_label else "None",
-        "%{libdevice_label}": cuda.libdevice_label if cuda.libdevice_label else "None",
     }
+    if cuda.cicc_label:
+        substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
+    if cuda.libdevice_label:
+        substitutions["# %{libdevice_line}"] = "libdevice = " + repr(cuda.libdevice_label)
+
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:
         substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
@@ -268,9 +271,11 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{link_stub_label}": cuda.link_stub_label,
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
-        "%{cicc_label}": cuda.cicc_label if cuda.cicc_label else "None",
-        "%{libdevice_label}": cuda.libdevice_label if cuda.libdevice_label else "None",
     }
+    if cuda.cicc_label:
+        substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
+    if cuda.libdevice_label:
+        substitutions["# %{libdevice_line}"] = "libdevice = " + repr(cuda.libdevice_label)
 
     if clang_label_for_subst:
         substitutions.pop("%{clang_path}")

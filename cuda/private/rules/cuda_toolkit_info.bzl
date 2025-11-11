@@ -27,8 +27,8 @@ cuda_toolkit_info = rule(
         "link_stub": attr.label(allow_single_file = True, doc = "The link.stub text file."),
         "bin2c": attr.label(allow_single_file = True, doc = "The bin2c executable."),
         "fatbinary": attr.label(allow_single_file = True, doc = "The fatbinary executable."),
-        "cicc": attr.label(allow_single_file = True, doc = "The cicc executable."),
-        "libdevice": attr.label(allow_single_file = True, doc = "The libdevice LLVM bitcode library."),
+        "cicc": attr.label(default = None, allow_single_file = True, doc = "The cicc executable."),
+        "libdevice": attr.label(default = None, allow_single_file = True, doc = "The libdevice LLVM bitcode library."),
     },
     provides = [CudaToolkitInfo],
 )
