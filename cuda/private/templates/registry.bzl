@@ -2,7 +2,7 @@
 REGISTRY = {
     "cudart": ["cudart_all_files", "cudart_license", "cudart_headers", "cuda", "cuda_runtime", "cuda_runtime_static"],
     "nvcc": ["nvcc_all_files", "nvcc_license", "nvcc_headers", "compiler_root", "compiler_deps", "nvptxcompiler"],
-    "cccl": ["cccl_all_files", "cccl_license", "cccl_headers", "cub", "thrust"],
+    "cccl": ["cccl_all_files", "cccl_license", "cccl_headers", "libcudacxx", "cub", "thrust"],
     "cublas": ["cublas_all_files", "cublas_license", "cublas_headers", "cublas"],
     "cufft": ["cufft_all_files", "cufft_license", "cufft_headers", "cufft", "cufft_static"],
     "cufile": [],

@@ -1,4 +1,18 @@
 cc_library(
+    name = "libcudacxx",
+    hdrs = glob(
+        [
+            "%{component_name}/include/cuda/**",
+            "%{component_name}/include/nv/**",
+        ],
+        allow_empty = True,
+    ),
+    includes = [
+        "%{component_name}/include",
+    ],
+)
+
+cc_library(
     name = "cub",
     hdrs = glob(
         ["%{component_name}/include/cub/**"],
