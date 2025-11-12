@@ -17,7 +17,7 @@ REGISTRY = {
     "nvml": ["nvml_all_files", "nvml_license", "nvml_headers", "nvml"],
     "nvprof": [],
     "nvrtc": ["nvrtc_all_files", "nvrtc_license", "nvrtc_headers", "nvrtc"],
-    "nvtx": ["nvtx_all_files", "nvtx_license", "nvtx_headers", "nvtx"],
+    "nvtx": ["nvtx_all_files", "nvtx_license", "nvtx_headers", "nvtx", "nvtx3"],
 }
 
 # map short component name to full component name

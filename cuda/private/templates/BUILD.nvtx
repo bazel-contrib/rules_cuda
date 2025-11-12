@@ -1,10 +1,10 @@
 cc_import_versioned_sos(
-    name = "nvtx_so",
+    name = "libnvToolsExt_so",
     shared_library = "%{component_name}/%{libpath}/libnvToolsExt.so",
 )
 
 cc_import(
-    name = "nvtx_lib",
+    name = "libnvToolsExt_lib",
     interface_library = "%{component_name}/%{libpath}/x64/libnvToolsExt.lib",
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
@@ -15,8 +15,23 @@ cc_library(
     deps = [
         ":%{component_name}_headers",
     ] + if_linux([
-        ":nvtx_so",
+        ":libnvToolsExt_so",
     ]) + if_windows([
-        ":nvtx_lib",
+        ":libnvToolsExt_lib",
+    ]),
+)
+
+cc_import_versioned_sos(
+    name = "libnvtx3interop_so",
+    shared_library = "%{component_name}/%{libpath}/libnvtx3interop.so",
+)
+
+cc_library(
+    name = "nvtx3",
+    deps = [
+        ":%{component_name}_headers",
+    ] + if_linux([
+        ":libnvToolsExt_so",
+        ":libnvtx3interop_so",
     ]),
 )
