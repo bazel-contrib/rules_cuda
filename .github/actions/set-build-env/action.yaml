@@ -68,7 +68,7 @@ runs:
       if: ${{ startsWith(inputs.os, 'windows') }}
       with:
         cuda: ${{ inputs.cuda-version }}
-        sub-packages: '["nvcc", "cudart"]'
+        sub-packages: ${{ (startsWith(inputs.cuda-version, '11') || startsWith(inputs.cuda-version, '12')) && '["nvcc", "cudart"]' || '["nvcc", "cudart", "crt", "nvvm"]' }}
         method: network
     - name: Show bin, include, lib64 (Windows)
       if: ${{ startsWith(inputs.os, 'windows') }}
