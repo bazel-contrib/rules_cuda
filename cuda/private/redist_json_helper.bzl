@@ -79,7 +79,8 @@ def _collect_specs(ctx, attr, redist, the_url):
 
     arch = "x86_64"  # TODO: support cross compiling
     platform = "{os}-{arch}".format(os = os, arch = arch)
-    components = attr.components if attr.components else [k for k, v in FULL_COMPONENT_NAME.items() if v in redist]
+    all_components_on_platform = [k for k, v in FULL_COMPONENT_NAME.items() if v in redist and platform in redist[v]]
+    components = attr.components if attr.components else all_components_on_platform
 
     for c in components:
         c_full = FULL_COMPONENT_NAME[c]
