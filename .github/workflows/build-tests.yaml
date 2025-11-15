@@ -32,13 +32,13 @@ jobs:
               toolchain: "llvm_host_device", # clang as cuda compiler driver
               toolchain-version: "19",
             }
-          - {
-              os: "ubuntu-24.04",
-              cuda-version: "13.0.2",
-              source: "nvidia",
-              toolchain: "llvm_host_only", # clang as host compiler
-              toolchain-version: "21",
-            }
+          # - {  # FIXME: enable once llvm 22 is released
+          #     os: "ubuntu-24.04",
+          #     cuda-version: "13.0.2",
+          #     source: "nvidia",
+          #     toolchain: "llvm_host_only", # clang as host compiler
+          #     toolchain-version: "21",
+          #   }
           - {
               os: "ubuntu-22.04",
               cuda-version: "11.5.1-1ubuntu1",
