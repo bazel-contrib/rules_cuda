@@ -7,7 +7,7 @@ default_language_version:
 
 # Commitizen runs in commit-msg stage
 # but we don't want to run the other hooks on commit messages
-default_stages: [commit]
+default_stages: [pre-commit]
 
 repos:
   # Check formatting and lint for starlark code
