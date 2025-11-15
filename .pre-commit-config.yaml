@@ -11,10 +11,10 @@ default_stages: [pre-commit]
 
 repos:
   # Check formatting and lint for starlark code
-  - repo: https://github.com/garymm/bazel-buildifier-pre-commit-hooks
-    rev: v6.1.2
+  - repo: https://github.com/keith/pre-commit-buildifier
+    rev: 8.2.1
     hooks:
-      - id: bazel-buildifier
+      - id: buildifier
   # Enforce that commit messages allow for later changelog generation
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v2.18.0
