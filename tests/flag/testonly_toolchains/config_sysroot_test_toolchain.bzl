@@ -1,4 +1,6 @@
 load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl", "tool_path")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/toolchains:cc_toolchain.bzl", "cc_toolchain")
 
 def _impl(ctx):
     return cc_common.create_cc_toolchain_config_info(
@@ -53,8 +55,7 @@ def config_sysroot_test_toolchain(identifier, sysroot):
         toolchain_identifier = identifier,
         **optional_sysroot
     )
-
-    native.cc_toolchain(
+    cc_toolchain(
         name = cc_toolchain_name,
         all_files = ":empty",
         compiler_files = ":empty",

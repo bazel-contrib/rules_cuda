@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_SRCS")
