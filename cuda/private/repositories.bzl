@@ -84,7 +84,7 @@ def _detect_local_cuda_toolkit(repository_ctx):
         link_stub_label = link_stub,
         bin2c_label = bin2c,
         fatbinary_label = fatbinary,
-        cicc_label = None,       # local CTK do not need this
+        cicc_label = None,  # local CTK do not need this
         libdevice_label = None,  # local CTK do not need this
     )
 
@@ -121,8 +121,8 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     libdevice = None
     if int(cuda_version_major) >= 13:
         nvvm_repo = repository_ctx.attr.components_mapping["nvvm"]
-        cicc = "{}//:nvvm/nvvm/bin/cicc{}".format(nvvm_repo, bin_ext)            # TODO: can we use @cuda//:cicc?
-        libdevice = "{}//:nvvm/nvvm/libdevice/libdevice.10.bc".format(nvvm_repo) # TODO: can we use @cuda//:libdevice?
+        cicc = "{}//:nvvm/nvvm/bin/cicc{}".format(nvvm_repo, bin_ext)  # TODO: can we use @cuda//:cicc?
+        libdevice = "{}//:nvvm/nvvm/libdevice/libdevice.10.bc".format(nvvm_repo)  # TODO: can we use @cuda//:libdevice?
 
     return struct(
         path = None,  # scattered components
