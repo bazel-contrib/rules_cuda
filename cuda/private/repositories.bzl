@@ -327,7 +327,7 @@ def _patch_nvcc_profile_post(repository_ctx, patch_nvcc_profile):
         key_to_replace = ["CICC_PATH", "NVVMIR_LIBRARY_DIR"]
         for key in key_to_replace:
             s = line.find(key)
-            if s == 0 or (s > 0 and line[s-1] != "(" and line[s-1] != "%"):  # ensure it is a env key assignment, not a reference
+            if s == 0 or (s > 0 and line[s - 1] != "(" and line[s - 1] != "%"):  # ensure it is a env key assignment, not a reference
                 # we will then pass the env from outside to
                 new_line = key + " ?= " + key + "/in/nvcc.profile/replaced/by/rules_cuda/but/not/set/at/runtime"
                 lines[i] = new_line
