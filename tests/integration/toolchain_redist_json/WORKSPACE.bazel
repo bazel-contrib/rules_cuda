@@ -10,12 +10,6 @@ rules_cuda_dependencies()
 
 cuda_redist_json(
     name = "rules_cuda_redist_json",
-    components = [
-        "cccl",
-        "cudart",
-        "nvcc",
-        "curand",  # NOTE: this is only usefull when use clang as cuda compiler driver
-    ],
     version = "12.6.3",
 )
 

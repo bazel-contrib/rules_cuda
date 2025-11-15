@@ -1,0 +1,10 @@
+cc_library(
+    name = "crt",
+    hdrs = glob(
+        ["%{component_name}/include/crt/**"],
+        allow_empty = True,
+    ),
+    includes = [
+        "%{component_name}/include",
+    ],
+)

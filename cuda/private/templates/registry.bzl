@@ -2,7 +2,10 @@
 REGISTRY = {
     "cudart": ["cudart_all_files", "cudart_license", "cudart_headers", "cuda", "cuda_runtime", "cuda_runtime_static"],
     "nvcc": ["nvcc_all_files", "nvcc_license", "nvcc_headers", "compiler_root", "compiler_deps", "nvptxcompiler"],
+    "nvvm": ["nvvm_all_files", "nvvm_license", "nvvm_headers", "cicc", "libdevice"],
     "cccl": ["cccl_all_files", "cccl_license", "cccl_headers", "libcudacxx", "cub", "thrust"],
+    "crt": ["crt_all_files", "crt_license", "crt_headers", "crt"],
+    "culibos": ["culibos_all_files", "culibos_license", "culibos_a"],  # culibos_a is not for end users
     "cublas": ["cublas_all_files", "cublas_license", "cublas_headers", "cublas"],
     "cufft": ["cufft_all_files", "cufft_license", "cufft_headers", "cufft", "cufft_static"],
     "cufile": [],
@@ -10,7 +13,7 @@ REGISTRY = {
     "curand": ["curand_all_files", "curand_license", "curand_headers", "curand"],
     "cusolver": ["cusolver_all_files", "cusolver_license", "cusolver_headers", "cusolver"],
     "cusparse": ["cusparse_all_files", "cusparse_license", "cusparse_headers", "cusparse"],
-    "npp": ["npp_all_files", "npp_license", "npp_headers", "nppc", "nppi", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
+    "npp": ["npp_all_files", "npp_license", "npp_headers", "npp", "nppc", "nppi", "nppial", "nppicc", "nppidei", "nppif", "nppig", "nppim", "nppist", "nppisu", "nppitc", "npps"],
     "nvidia_fs": [],
     "nvjitlink": ["nvjitlink_all_files", "nvjitlink_license", "nvjitlink_headers", "nvjitlink", "nvjitlink_static"],
     "nvjpeg": ["nvjpeg_all_files", "nvjpeg_license", "nvjpeg_headers", "nvjpeg", "nvjpeg_static"],
@@ -24,7 +27,10 @@ REGISTRY = {
 FULL_COMPONENT_NAME = {
     "cudart": "cuda_cudart",
     "nvcc": "cuda_nvcc",
+    "nvvm": "libnvvm",
     "cccl": "cuda_cccl",
+    "crt": "cuda_crt",
+    "culibos": "cuda_culibos",
     "cublas": "libcublas",
     "cufft": "libcufft",
     "cufile": "libcufile",

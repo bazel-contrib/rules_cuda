@@ -9,12 +9,6 @@ local_path_override(
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
 cuda.redist_json(
     name = "rules_cuda_redist_json",
-    components = [
-        "cccl",
-        "cudart",
-        "nvcc",
-        "curand",  # NOTE: this is only usefull when use clang as cuda compiler driver
-    ],
     version = "12.6.3",
 )
 cuda.toolkit(name = "cuda")  # automatically populate attrs if redist_json is used

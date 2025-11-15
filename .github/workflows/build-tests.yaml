@@ -17,6 +17,7 @@ jobs:
         cases:
           - { os: "ubuntu-22.04", cuda-version: "11.7.0", source: "nvidia" }
           - { os: "ubuntu-24.04", cuda-version: "12.6.3", source: "nvidia" }
+          - { os: "ubuntu-24.04", cuda-version: "13.0.2", source: "nvidia" }
           - {
               os: "ubuntu-22.04",
               cuda-version: "11.7.0",
@@ -31,6 +32,13 @@ jobs:
               toolchain: "llvm_host_device", # clang as cuda compiler driver
               toolchain-version: "19",
             }
+          # - {  # FIXME: enable once llvm 22 is released
+          #     os: "ubuntu-24.04",
+          #     cuda-version: "13.0.2",
+          #     source: "nvidia",
+          #     toolchain: "llvm_host_only", # clang as host compiler
+          #     toolchain-version: "21",
+          #   }
           - {
               os: "ubuntu-22.04",
               cuda-version: "11.5.1-1ubuntu1",
@@ -38,6 +46,7 @@ jobs:
             }
           - { os: "windows-2022", cuda-version: "11.5.2", source: "nvidia" }
           - { os: "windows-2025", cuda-version: "12.6.3", source: "nvidia" }
+          - { os: "windows-2025", cuda-version: "13.0.2", source: "nvidia" }
     steps:
       - uses: actions/checkout@v5
 

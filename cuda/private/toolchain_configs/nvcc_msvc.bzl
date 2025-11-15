@@ -51,6 +51,25 @@ def _impl(ctx):
     )
     host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
 
+    cicc_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc else None
+    libdevice_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice else None
+    nvcc_profile_env = []
+    if nvcc_version_ge(ctx, 13, 0):
+        if cicc_dir != None:
+            nvcc_profile_env.append(
+                env_set(
+                    actions = [ACTION_NAMES.cuda_compile],
+                    env_entries = [env_entry("CICC_PATH", cicc_dir)],
+                ),
+            )
+        if libdevice_dir != None:
+            nvcc_profile_env.append(
+                env_set(
+                    actions = [ACTION_NAMES.cuda_compile],
+                    env_entries = [env_entry("NVVMIR_LIBRARY_DIR", libdevice_dir)],
+                ),
+            )
+
     nvcc_compile_env_feature = feature(
         name = "nvcc_compile_env",
         env_sets = [
@@ -66,7 +85,7 @@ def _impl(ctx):
                     env_entry("TMP", ctx.attr.msvc_env_tmp),
                 ],
             ),
-        ],
+        ] + nvcc_profile_env,
     )
 
     host_compiler_feature = feature(

@@ -72,6 +72,25 @@ def _impl(ctx):
         [c for c in components if c],
     )
 
+    cicc_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc else None
+    libdevice_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice else None
+    nvcc_profile_env = []
+    if nvcc_version_ge(ctx, 13, 0):
+        if cicc_dir != None:
+            nvcc_profile_env.append(
+                env_set(
+                    actions = [ACTION_NAMES.cuda_compile],
+                    env_entries = [env_entry("CICC_PATH", cicc_dir)],
+                ),
+            )
+        if libdevice_dir != None:
+            nvcc_profile_env.append(
+                env_set(
+                    actions = [ACTION_NAMES.cuda_compile],
+                    env_entries = [env_entry("NVVMIR_LIBRARY_DIR", libdevice_dir)],
+                ),
+            )
+
     nvcc_compile_env_feature = feature(
         name = "nvcc_compile_env",
         env_sets = [
@@ -79,7 +98,7 @@ def _impl(ctx):
                 actions = [ACTION_NAMES.cuda_compile],
                 env_entries = [env_entry("PATH", path)],
             ),
-        ],
+        ] + nvcc_profile_env,
     )
 
     nvcc_device_link_env_feature = feature(
