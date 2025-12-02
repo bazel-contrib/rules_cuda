@@ -59,6 +59,7 @@ def _impl(ctx):
         unsupported_features = ctx.disabled_features,
     )
     host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
+    env_include = [] if len(cc_toolchain.built_in_include_directories) == 0 else [env_entry("INCLUDE", ";".join(cc_toolchain.built_in_include_directories))]
 
     clang_compile_env_feature = feature(
         name = "clang_compile_env",
@@ -70,9 +71,8 @@ def _impl(ctx):
                     ACTION_NAMES.device_link,
                 ],
                 env_entries = [
-                    env_entry("INCLUDE", ";".join(cc_toolchain.built_in_include_directories)),
                     env_entry("PATH", paths.dirname(host_compiler) + ";C:/Windows/system32"),
-                ],
+                ] + env_include,
             ),
         ],
     )
