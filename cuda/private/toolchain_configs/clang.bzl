@@ -255,6 +255,25 @@ def _impl(ctx):
         ],
     )
 
+    host_toolchain_flags_feature = feature(
+        name = "cuda_host_use_toolchain_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{toolchain_host_compile_flags}"],
+                        iterate_over = "toolchain_host_compile_flags",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     cuda_host_use_copts_feature = feature(
         name = "cuda_host_use_copts",
         flag_sets = [
@@ -536,6 +555,7 @@ def _impl(ctx):
         opt_feature,
         compile_flags_feature,
         host_compile_flags_feature,
+        host_toolchain_flags_feature,
         cuda_host_use_copts_feature,
         cuda_host_use_cxxopts_feature,
         cuda_host_use_linkopts_feature,
