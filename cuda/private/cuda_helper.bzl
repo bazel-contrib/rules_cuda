@@ -3,6 +3,8 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "ArchSpecInfo", "CudaArchsInfo", "CudaInfo", "Stage2ArchInfo", "cuda_archs")
@@ -191,6 +193,7 @@ def _create_common_info(
         host_defines = [],
         host_local_defines = [],
         host_compile_flags = [],
+        toolchain_host_compile_flags = [],
         host_link_flags = [],
         ptxas_flags = [],
         transitive_cc_info = None,
@@ -215,6 +218,7 @@ def _create_common_info(
         host_defines: public `#define`s. Pass to host compiler. Will be seen by downstream targets.
         host_local_defines: private `#define`s. Pass to host compiler. Will not be seen by downstream targets.
         host_compile_flags: flags pass to host compiler.
+        toolchain_host_compile_flags: host flags coming from cc toolchain configuration.
         host_link_flags: flags pass to host linker.
         ptxas_flags: flags pass to `ptxas`.
         transitive_linking_contexts: `CcInfo.linking_context` extracted from `deps`
@@ -236,6 +240,7 @@ def _create_common_info(
         host_defines = host_defines,
         host_local_defines = host_local_defines,
         host_compile_flags = host_compile_flags,
+        toolchain_host_compile_flags = toolchain_host_compile_flags,
         host_link_flags = host_link_flags,
         ptxas_flags = ptxas_flags,
         transitive_cc_info = transitive_cc_info,
@@ -249,6 +254,55 @@ def _create_common_info(
 def _get_cc_sysroot(ctx):
     cuda_toolchain = find_cuda_toolchain(ctx)
     return getattr(cuda_toolchain, "cc_sysroot", None)
+
+def _get_cc_host_compile_flags(ctx):
+    dummy_src = "__rules_cuda_host_compile_source__"
+    dummy_out = "__rules_cuda_host_compile_output__"
+    user_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts
+
+    cc_toolchain = find_cpp_toolchain(ctx)
+    if cc_toolchain == None:
+        return []
+
+    feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
+
+    variables = cc_common.create_compile_variables(
+        cc_toolchain = cc_toolchain,
+        feature_configuration = feature_configuration,
+        user_compile_flags = [],
+        source_file = dummy_src,
+        output_file = dummy_out,
+    )
+
+    command_line = cc_common.get_memory_inefficient_command_line(
+        feature_configuration = feature_configuration,
+        action_name = CC_ACTION_NAMES.cpp_compile,
+        variables = variables,
+    )
+
+    filtered_flags = []
+    skip_next = False
+    for flag in command_line:
+        if skip_next:
+            skip_next = False
+            continue
+        if flag == "-c":
+            continue
+        if dummy_src in flag or dummy_out in flag:
+            continue
+        if flag in ["--sysroot", "-o"]:
+            skip_next = True
+            continue
+        if flag.startswith("--sysroot="):
+            continue
+        filtered_flags.append(flag)
+
+    return filtered_flags
 
 def _create_common(ctx):
     """Helper to gather and process various information from `ctx` object to ease the parameter passing for internal macros.
@@ -301,6 +355,7 @@ def _create_common(ctx):
     host_link_flags = []
     if hasattr(attr, "host_linkopts"):
         host_link_flags.extend([i for i in attr.host_linkopts])
+    toolchain_host_compile_flags = _get_cc_host_compile_flags(ctx)
     for dep in attr.deps:
         if CudaInfo in dep:
             defines.extend(dep[CudaInfo].defines.to_list())
@@ -325,6 +380,7 @@ def _create_common(ctx):
         host_defines = host_defines,
         host_local_defines = host_local_defines,
         host_compile_flags = host_compile_flags,
+        toolchain_host_compile_flags = toolchain_host_compile_flags,
         host_link_flags = host_link_flags,
         ptxas_flags = ptxas_flags,
         transitive_cc_info = merged_cc_info,
@@ -415,6 +471,7 @@ def _create_compile_variables(
         host_compiler = None,
         compile_flags = [],
         host_compile_flags = [],
+        toolchain_host_compile_flags = [],
         include_paths = [],
         quote_include_paths = [],
         system_include_paths = [],
@@ -438,6 +495,7 @@ def _create_compile_variables(
         host_compiler: host compiler path.
         compile_flags: flags pass to compiler driver directly.
         host_compile_flags: flags pass to host compiler.
+        toolchain_host_compile_flags: host flags provided by the cc toolchain.
         include_paths: include paths. Can be used with `#include <...>` and `#include "..."`.
         quote_include_paths: include paths. Can be used with `#include "..."`.
         system_include_paths: include paths. Can be used with `#include <...>`.
@@ -466,6 +524,7 @@ def _create_compile_variables(
         host_compiler = host_compiler,
         compile_flags = compile_flags,
         host_compile_flags = host_compile_flags,
+        toolchain_host_compile_flags = toolchain_host_compile_flags,
         include_paths = include_paths,
         quote_include_paths = quote_include_paths,
         system_include_paths = system_include_paths,
@@ -489,6 +548,7 @@ def _create_device_link_variables(
         output_file = None,
         host_compiler = None,
         host_compile_flags = [],
+        toolchain_host_compile_flags = [],
         user_link_flags = [],
         cpp_copts = [],
         cpp_cxxopts = [],
@@ -503,6 +563,7 @@ def _create_device_link_variables(
         output_file: output file of the device linking.
         host_compiler: host compiler path.
         host_compile_flags: flags pass to host compiler.
+        toolchain_host_compile_flags: host flags provided by the cc toolchain.
         user_link_flags: flags for device linking.
         cpp_copts: use the `copts` fields from C++ configuration fragment for CUDA host compilation, guarded with feature `cuda_host_use_copts`
         cpp_cxxopts: use the `cxxopts` fields from C++ configuration fragment for CUDA host compilation, guarded with feature `cuda_host_use_cxxopts`
@@ -531,6 +592,7 @@ def _create_device_link_variables(
         output_file = output_file,
         host_compiler = host_compiler,
         host_compile_flags = host_compile_flags,
+        toolchain_host_compile_flags = toolchain_host_compile_flags,
         user_link_flags = user_link_flags,
         use_dlto = use_dlto,
         use_pic = use_pic,
