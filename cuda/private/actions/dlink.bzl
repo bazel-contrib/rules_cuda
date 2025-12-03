@@ -79,6 +79,7 @@ def _compiler_device_link(
         output_file = obj_file.path,
         host_compiler = host_compiler,
         host_compile_flags = common.host_compile_flags,
+        toolchain_host_compile_flags = common.toolchain_host_compile_flags,
         user_link_flags = common.link_flags,
         cpp_copts = common.cpp_copts,
         cpp_cxxopts = common.cpp_cxxopts,
@@ -212,6 +213,7 @@ def _wrapper_device_link(
         # suppress cuda mode as c++ mode
         compile_flags = ["-x", "c++"],
         host_compile_flags = common.host_compile_flags,
+        toolchain_host_compile_flags = common.toolchain_host_compile_flags,
     )
     ret = compile(ctx, cuda_toolchain, cc_toolchain, srcs = [fatbin_c], common = compile_common, pic = pic, rdc = rdc, _prefix = "_objs/_dlink")
     return ret[0]
