@@ -298,7 +298,7 @@ def _get_cc_host_compile_flags(ctx):
         if flag in ["--sysroot", "-o"]:
             skip_next = True
             continue
-        if flag.startswith("--sysroot="):
+        if any([flag.startswith(f) for f in ("-std=", "--sysroot=")]):
             continue
         filtered_flags.append(flag)
 
