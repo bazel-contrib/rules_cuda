@@ -58,7 +58,7 @@ def _get_redist_version(ctx, attr, redist):
 
     return redist_ver
 
-def _collect_specs(ctx, attr, redist, the_url):
+def _collect_specs(ctx, attr, platform, redist, the_url):
     """Convert redistrib_<version>.json content to the specs for instantiating cuda_component repos.
 
     List of specs, aka, list of dicts with cuda_component attrs.
@@ -66,19 +66,12 @@ def _collect_specs(ctx, attr, redist, the_url):
     Args:
         ctx: repository_ctx | module_ctx
         attr: cuda_component repo attr or cuda_redist_json_tag
+        platform: string, the platform for which we are collecting specs
         redist: json object, read from the redistrib_<version>.json file.
         the_url: string, the very unique url from which we get the redistrib_<version>.json file.
     """
 
     specs = []
-    os = None
-    if _is_linux(ctx):
-        os = "linux"
-    elif _is_windows(ctx):
-        os = "windows"
-
-    arch = "x86_64"  # TODO: support cross compiling
-    platform = "{os}-{arch}".format(os = os, arch = arch)
     all_components_on_platform = [k for k, v in FULL_COMPONENT_NAME.items() if v in redist and platform in redist[v]]
     components = attr.components if attr.components else all_components_on_platform
 
@@ -111,10 +104,6 @@ def _get_repo_name(ctx, spec):
     """
 
     repo_name = "cuda_" + spec["component_name"]
-    version = spec.get("version", None)
-    if version != None:
-        repo_name = repo_name + "_v" + version
-
     return repo_name
 
 redist_json_helper = struct(

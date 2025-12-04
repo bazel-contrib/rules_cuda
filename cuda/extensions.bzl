@@ -2,6 +2,7 @@
 
 load("//cuda/private:redist_json_helper.bzl", "redist_json_helper")
 load("//cuda/private:repositories.bzl", "cuda_component", "cuda_toolkit")
+load("//cuda:platform_alias_extension.bzl", "platform_alias_repo")
 
 cuda_component_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
@@ -53,6 +54,9 @@ cuda_redist_json_tag = tag_class(attrs = {
               "URLs are tried in order until one succeeds, so you should list local mirrors first. " +
               "If all downloads fail, the rule will fail.",
     ),
+    "platforms": attr.string_list(
+        doc = "A list of platforms to generate components for.",
+    ),
     "version": attr.string(
         doc = "Generate a URL by using the specified version." +
               "This URL will be tried after all URLs specified in the `urls` attribute.",
@@ -73,6 +77,40 @@ cuda_toolkit_tag = tag_class(attrs = {
         doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
     ),
 })
+
+platform_alias_tag = tag_class(
+    attrs = {
+        "name": attr.string(
+            mandatory = True,
+            doc = "Name of the alias repository to create",
+        ),
+        "component_name": attr.string(
+            mandatory = True,
+            doc = "Name of the component to create aliases for",
+        ),
+        "linux_x86_64_repo": attr.string(
+            mandatory = True,
+            doc = "Name of the repository to use for x86_64 platform",
+        ),
+        "linux_aarch64_repo": attr.string(
+            mandatory = True,
+            doc = "Name of the repository to use for ARM64/Jetpack platform",
+        ),
+        "linux_sbsa_repo": attr.string(
+            mandatory = True,
+            doc = "Name of the repository to use for SBSA platform",
+        ),
+        "versions": attr.string_list(
+            mandatory = True,
+            doc = "List of versions to create aliases for",
+        ),
+    },
+    doc = """Defines a platform-specific alias repository.
+    
+    Each alias tag creates a repository with targets that select between
+    x86_64 and ARM64 repositories based on the build platform.
+    """,
+)
 
 def _find_modules(module_ctx):
     root = None
@@ -95,18 +133,20 @@ def _module_tag_to_dict(t):
 def _redist_json_impl(module_ctx, attr):
     url, json_object = redist_json_helper.get(module_ctx, attr)
     redist_ver = redist_json_helper.get_redist_version(module_ctx, attr, json_object)
-    component_specs = redist_json_helper.collect_specs(module_ctx, attr, json_object, url)
 
-    mapping = {}
-    for spec in component_specs:
-        repo_name = redist_json_helper.get_repo_name(module_ctx, spec)
-        mapping[spec["component_name"]] = "@" + repo_name
+    platform_mapping = {}
+    for platform in attr.platforms:
+        component_specs = redist_json_helper.collect_specs(module_ctx, attr, platform, json_object, url)
+        mapping = {}
+        for spec in component_specs:
+            repo_name = redist_json_helper.get_repo_name(module_ctx, spec)
+            mapping[spec["component_name"]] = repo_name
 
-        attr = {key: value for key, value in spec.items()}
-        attr["name"] = repo_name
-        cuda_component(**attr)
-    return redist_ver, mapping
-
+            component_attr = {key: value for key, value in spec.items()}
+            component_attr["name"] = repo_name + "_" + platform.replace("-", "_") + "_" + redist_ver.replace(".", "_")
+            cuda_component(**component_attr)
+        platform_mapping[platform] = mapping
+    return redist_ver, platform_mapping
 def _impl(module_ctx):
     # Toolchain configuration is only allowed in the root module, or in rules_cuda.
     root, rules_cuda = _find_modules(module_ctx)
@@ -117,22 +157,38 @@ def _impl(module_ctx):
         components = root.tags.component
         redist_jsons = root.tags.redist_json
         toolkits = root.tags.toolkit
+        platform_aliases = root.tags.platform_alias
     else:
         components = rules_cuda.tags.component
         redist_jsons = rules_cuda.tags.redist_json
         toolkits = rules_cuda.tags.toolkit
-
+        platform_aliases = rules_cuda.tags.platform_alias
     for component in components:
         cuda_component(**_module_tag_to_dict(component))
 
-    if len(redist_jsons) > 1:
-        fail("Using multiple cuda.redist_json is not supported yet.")
-
     redist_version = None
     components_mapping = None
+    redist_versions = []
+    redist_components_mapping = {}
     for redist_json in redist_jsons:
-        redist_version, components_mapping = _redist_json_impl(module_ctx, redist_json)
+        components_mapping = {}
+        redist_version, platform_mapping = _redist_json_impl(module_ctx, redist_json)
+        redist_versions.append(redist_version)
+        for platform in platform_mapping.keys():
+            for component_name, repo_name in platform_mapping[platform].items():
+                redist_components_mapping[component_name] = repo_name
 
+    for component_name in redist_components_mapping.keys():
+        platform_alias_repo(
+                name = redist_components_mapping[component_name],
+                repo_name = redist_components_mapping[component_name],
+                component_name = component_name,
+                linux_x86_64_repo = "cuda_" + component_name + "_linux_x86_64",
+                linux_aarch64_repo = "cuda_" + component_name + "_linux_aarch64",
+                linux_sbsa_repo = "cuda_" + component_name + "_linux_sbsa",
+                versions = redist_versions,
+            )
+        components_mapping[component_name] = "@" + redist_components_mapping[component_name]
     registrations = {}
     for toolkit in toolkits:
         if toolkit.name in registrations.keys():
@@ -152,11 +208,24 @@ def _impl(module_ctx):
         else:
             cuda_toolkit(**_module_tag_to_dict(toolkit))
 
+    for alias_tag in platform_aliases:
+            # Create a repository for each alias tag
+            platform_alias_repo(
+                name = alias_tag.name,
+                repo_name = alias_tag.name,
+                component_name = alias_tag.component_name,
+                linux_x86_64_repo = alias_tag.linux_x86_64_repo,
+                linux_aarch64_repo = alias_tag.linux_aarch64_repo,
+                linux_sbsa_repo = alias_tag.linux_sbsa_repo,
+                versions = alias_tag.versions,
+            )
+
 toolchain = module_extension(
     implementation = _impl,
     tag_classes = {
         "component": cuda_component_tag,
         "redist_json": cuda_redist_json_tag,
         "toolkit": cuda_toolkit_tag,
+        "platform_alias": platform_alias_tag,
     },
 )

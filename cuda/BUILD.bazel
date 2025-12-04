@@ -38,6 +38,112 @@ config_setting(
     flag_values = {"@cuda//:valid_toolchain_found": "True"},
 )
 
+string_flag(
+    name = "version",
+    build_setting_default = "13.0.2",
+    values = [
+        "12.0.0",
+        "12.0.1",
+        "12.1.0",
+        "12.1.1",
+        "12.2.0",
+        "12.2.1",
+        "12.2.2",
+        "12.3.0",
+        "12.3.1",
+        "12.3.2",
+        "12.4.0",
+        "12.4.1",
+        "12.5.0",
+        "12.5.1",
+        "12.6.0",
+        "12.6.1",
+        "12.6.2",
+        "12.6.3",
+        "12.8.0",
+        "12.8.1",
+        "12.9.0",
+        "12.9.1",
+        "13.0.0",
+        "13.0.1",
+        "13.0.2",
+    ],
+)
+
+string_flag(
+    name = "runtime_platform",
+    build_setting_default = "linux-x86_64",
+    values = [
+        "linux-x86_64",
+        "linux-sbsa",
+        "linux-aarch64",
+        "linux-ppc64le",
+        "windows-x86_64",
+    ],
+)
+
+config_setting(
+    name = "runtime_platform_is_linux_x86_64",
+    flag_values = {":runtime_platform": "linux-x86_64"},
+)
+
+config_setting(
+    name = "runtime_platform_is_linux_aarch64",
+    flag_values = {":runtime_platform": "linux-aarch64"},
+)
+
+config_setting(
+    name = "runtime_platform_is_linux_ppc64le",
+    flag_values = {":runtime_platform": "linux-ppc64le"},
+)
+
+config_setting(
+    name = "runtime_platform_is_linux_sbsa",
+    flag_values = {":runtime_platform": "linux-sbsa"},
+)
+
+config_setting(
+    name = "runtime_platform_is_windows_x86_64",
+    flag_values = {":runtime_platform": "windows-x86_64"},
+)
+
+string_flag(
+    name = "nvcc_platform",
+    build_setting_default = "linux-x86_64",
+    values = [
+        "linux-x86_64",
+        "linux-sbsa",
+        "linux-aarch64",
+        "linux-ppc64le",
+        "windows-x86_64",
+    ],
+)
+
+config_setting(
+    name = "nvcc_platform_is_linux_x86_64",
+    flag_values = {":nvcc_platform": "linux-x86_64"},
+)
+
+config_setting(
+    name = "nvcc_platform_is_linux_aarch64",
+    flag_values = {":nvcc_platform": "linux-aarch64"},
+)
+
+config_setting(
+    name = "nvcc_platform_is_linux_ppc64le",
+    flag_values = {":nvcc_platform": "linux-ppc64le"},
+)
+
+config_setting(
+    name = "nvcc_platform_is_linux_sbsa",
+    flag_values = {":nvcc_platform": "linux-sbsa"},
+)
+
+config_setting(
+    name = "nvcc_platform_is_windows_x86_64",
+    flag_values = {":nvcc_platform": "windows-x86_64"},
+)
+
 # Command line flag to specify the list of CUDA architectures to compile for.
 #
 # Provides CudaArchsInfo of the list of archs to build.
