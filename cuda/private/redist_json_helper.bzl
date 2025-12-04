@@ -27,9 +27,21 @@ def _get(ctx, attr):
     if len(urls) == 0:
         fail("`urls` or `version` must be specified.")
 
+    # Use the name of the repository or tag to avoid collisions when multiple
+    # redist_json are defined.
+    name = getattr(attr, "name", None)
+    if not name and hasattr(ctx, "name"):
+        name = ctx.name
+
+    # In case name is still not found (unlikely), use a default
+    if not name:
+        name = "default"
+
+    output_filename = "redist_{}.json".format(name)
+
     for url in urls:
         ret = ctx.download(
-            output = "redist.json",
+            output = output_filename,
             integrity = attr.integrity,
             sha256 = attr.sha256,
             url = url,
@@ -41,7 +53,7 @@ def _get(ctx, attr):
     if the_url == None:
         fail("Failed to retrieve the redist json file.")
 
-    return the_url, json.decode(ctx.read("redist.json"))
+    return the_url, json.decode(ctx.read(output_filename))
 
 def _get_redist_version(ctx, attr, redist):
     """Get version string.
