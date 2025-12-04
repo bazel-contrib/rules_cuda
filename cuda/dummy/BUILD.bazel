@@ -33,3 +33,25 @@ cc_binary(
     srcs = ["dummy.cpp"],
     defines = ["TOOLNAME=ptxas"],
 )
+
+# Empty cc_library that provides CcInfo for components not available in this CUDA version.
+cc_library(
+    name = "dummy",
+    srcs = [],
+    hdrs = [],
+)
+
+# Dummy executable for cicc that doesn't exist in this version.
+genrule(
+    name = "cicc_gen",
+    outs = ["cicc"],
+    cmd = "echo '#!/bin/bash' > $@ && echo 'echo Error: cicc not available in this CUDA version' >> $@ && chmod +x $@",
+    executable = True,
+)
+
+# Dummy bitcode for libdevice that doesn't exist in this version.
+genrule(
+    name = "libdevice_gen",
+    outs = ["libdevice.10.bc"],
+    cmd = "echo '; Placeholder bitcode' > $@",
+)
