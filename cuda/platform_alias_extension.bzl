@@ -248,7 +248,7 @@ def _platform_alias_repo_impl(ctx):
         build_content.append('    actual = select({')
         for version in ctx.attr.versions:
             build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
-            build_content.append('            "@{}_{}//:{}",'.format(ctx.attr.linux_x86_64_repo, version.replace(".", "_"), target_name))
+            build_content.append('            "@{}_{}//{}",'.format(ctx.attr.linux_x86_64_repo, version.replace(".", "_"), target if target.find(":") != -1 else ":" + target))
         build_content.append('    }),')
         build_content.append('    visibility = ["//visibility:public"],')
         build_content.append(')')
