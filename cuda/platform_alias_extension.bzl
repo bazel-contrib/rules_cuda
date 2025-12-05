@@ -29,7 +29,7 @@ def _platform_alias_repo_impl(ctx):
     use_dict_api = len(ctx.attr.linux_x86_64_repos) > 0
 
     # Build a target for the name of the repo (only if at least one platform is available).
-    platform_type = "nvcc" if ctx.attr.component_name in ["nvcc", "nvvm"] else "runtime"
+    platform_type = "exec" if ctx.attr.component_name in ["nvcc", "nvvm"] else "target"
 
     # Check which platforms are available.
     platforms_available = []
@@ -98,17 +98,17 @@ def _platform_alias_repo_impl(ctx):
                 for version in ctx.attr.versions:
                     if version in ctx.attr.linux_x86_64_repos:
                         repo_name = ctx.attr.linux_x86_64_repos[version]
-                        build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
+                        build_content.append('        "@rules_cuda//cuda:version_is_{}": '.format(version.replace(".", "_")))
                         build_content.append('            "@{}//{}",'.format(repo_name, target if target.find(":") != -1 else ":" + target))
                     else:
-                        build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
+                        build_content.append('        "@rules_cuda//cuda:version_is_{}": '.format(version.replace(".", "_")))
                         build_content.append('            "{}",'.format(dummy_target))
                 # Add default for versions where this component doesn't exist.
                 build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
             else:
                 # Old string-based API for backward compatibility.
                 for version in ctx.attr.versions:
-                    build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
+                    build_content.append('        "@rules_cuda//cuda:version_is_{}": '.format(version.replace(".", "_")))
                     build_content.append('            "@{}_{}//{}",'.format(ctx.attr.linux_x86_64_repo, version.replace(".", "_"), target if target.find(":") != -1 else ":" + target))
                 build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
             build_content.append("    }),")
@@ -124,10 +124,10 @@ def _platform_alias_repo_impl(ctx):
                 for version in ctx.attr.versions:
                     if version in ctx.attr.linux_sbsa_repos:
                         repo_name = ctx.attr.linux_sbsa_repos[version]
-                        build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
+                        build_content.append('        "@rules_cuda//cuda:version_is_{}": '.format(version.replace(".", "_")))
                         build_content.append('            "@{}//{}",'.format(repo_name, target if target.find(":") != -1 else ":" + target))
                     else:
-                        build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
+                        build_content.append('        "@rules_cuda//cuda:version_is_{}": '.format(version.replace(".", "_")))
                         build_content.append('            "{}",'.format(dummy_target))
 
                 # Add default for versions where this component doesn't exist.
@@ -135,7 +135,7 @@ def _platform_alias_repo_impl(ctx):
             else:
                 # Old string-based API for backward compatibility.
                 for version in ctx.attr.versions:
-                    build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
+                    build_content.append('        "@rules_cuda//cuda:version_is_{}": '.format(version.replace(".", "_")))
                     build_content.append('            "@{}_{}//{}",'.format(ctx.attr.linux_sbsa_repo, version.replace(".", "_"), target if target.find(":") != -1 else ":" + target))
                 build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
             build_content.append("    }),")
@@ -151,17 +151,17 @@ def _platform_alias_repo_impl(ctx):
                 for version in ctx.attr.versions:
                     if version in ctx.attr.linux_aarch64_repos:
                         repo_name = ctx.attr.linux_aarch64_repos[version]
-                        build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
+                        build_content.append('        "@rules_cuda//cuda:version_is_{}": '.format(version.replace(".", "_")))
                         build_content.append('            "@{}//{}",'.format(repo_name, target if target.find(":") != -1 else ":" + target))
                     else:
-                        build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
+                        build_content.append('        "@rules_cuda//cuda:version_is_{}": '.format(version.replace(".", "_")))
                         build_content.append('            "{}",'.format(dummy_target))
                 # Add default for versions where this component doesn't exist.
                 build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
             else:
                 # Old string-based API for backward compatibility.
                 for version in ctx.attr.versions:
-                    build_content.append('        "@rules_cuda//cuda/versions:version_is_{}": '.format(version.replace(".", "_")))
+                    build_content.append('        "@rules_cuda//cuda:version_is_{}": '.format(version.replace(".", "_")))
                     build_content.append('            "@{}_{}//{}",'.format(ctx.attr.linux_aarch64_repo, version.replace(".", "_"), target if target.find(":") != -1 else ":" + target))
                 build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
             build_content.append("    }),")
