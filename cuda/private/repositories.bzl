@@ -121,8 +121,8 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     libdevice = None
     if int(cuda_version_major) >= 13:
         nvvm_repo = repository_ctx.attr.components_mapping["nvvm"]
-        cicc = "{}//:cicc{}".format(nvvm_repo, bin_ext)  # TODO: can we use @cuda//:cicc?
-        libdevice = "{}//:libdevice.10.bc".format(nvvm_repo)  # TODO: can we use @cuda//:libdevice?
+        cicc = "{}//:cicc{}".format(nvvm_repo, bin_ext)
+        libdevice = "{}//:libdevice.10.bc".format(nvvm_repo)
 
     return struct(
         path = None,  # scattered components
