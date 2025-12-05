@@ -4,7 +4,6 @@ load(
     "bool_flag",
     "string_flag",
 )
-load("//cuda/private:cuda_versions.bzl", "CUDA_VERSIONS")
 load("//cuda/private:rules/flags.bzl", "cuda_archs_flag", "repeatable_string_flag")
 
 package(default_visibility = ["//visibility:public"])
@@ -51,14 +50,6 @@ string_flag(
     name = "version",
     build_setting_default = "13.0.0",
 )
-
-[
-    config_setting(
-        name = "version_is_{}".format(version.replace(".", "_")),
-        flag_values = {"@rules_cuda//cuda:version": "{}".format(version)},
-    ) for version in CUDA_VERSIONS
-]
-
 
 string_flag(
     name = "target_platform",
