@@ -111,18 +111,18 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     nvcc_repo = repository_ctx.attr.components_mapping["nvcc"]
 
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
-    nvcc = "{}//:nvcc/bin/nvcc{}".format(nvcc_repo, bin_ext)
-    nvlink = "{}//:nvcc/bin/nvlink{}".format(nvcc_repo, bin_ext)
-    link_stub = "{}//:nvcc/bin/crt/link.stub".format(nvcc_repo)
-    bin2c = "{}//:nvcc/bin/bin2c{}".format(nvcc_repo, bin_ext)
-    fatbinary = "{}//:nvcc/bin/fatbinary{}".format(nvcc_repo, bin_ext)
+    nvcc = "{}//:nvcc{}".format(nvcc_repo, bin_ext)
+    nvlink = "{}//:nvlink{}".format(nvcc_repo, bin_ext)
+    link_stub = "{}//:link.stub".format(nvcc_repo)
+    bin2c = "{}//:bin2c{}".format(nvcc_repo, bin_ext)
+    fatbinary = "{}//:fatbinary{}".format(nvcc_repo, bin_ext)
 
     cicc = None
     libdevice = None
     if int(cuda_version_major) >= 13:
         nvvm_repo = repository_ctx.attr.components_mapping["nvvm"]
-        cicc = "{}//:nvvm/nvvm/bin/cicc{}".format(nvvm_repo, bin_ext)  # TODO: can we use @cuda//:cicc?
-        libdevice = "{}//:nvvm/nvvm/libdevice/libdevice.10.bc".format(nvvm_repo)  # TODO: can we use @cuda//:libdevice?
+        cicc = "{}//:cicc{}".format(nvvm_repo, bin_ext)
+        libdevice = "{}//:libdevice.10.bc".format(nvvm_repo)
 
     return struct(
         path = None,  # scattered components

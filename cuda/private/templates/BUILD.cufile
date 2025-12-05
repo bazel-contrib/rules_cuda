@@ -1,0 +1,9 @@
+exports_files(glob(["**"]))
+
+cc_library(
+    name = "cufile",
+    srcs = glob(["cufile/lib/**/*.so*"]),
+    hdrs = glob(["cufile/include/**/*.h"]),
+    includes = ["cufile/include"],
+    visibility = ["//visibility:public"],
+)
