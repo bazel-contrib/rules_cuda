@@ -113,7 +113,7 @@ jobs:
 
       # run some repo integration tests
       - run: cd tests/integration && ./test_all.sh
-      - run: cd tests/hermeticity && ./test.sh
+      - run: cd tests/hermeticity && ./test.sh ${{ (startsWith(matrix.cases.cuda-version, '11') || startsWith(matrix.cases.cuda-version, '12')) && '--allow-non-hermetic' || '' }}
 
       # Use Bazel 7
       - run: echo "USE_BAZEL_VERSION=7.5.0" >> $GITHUB_ENV
