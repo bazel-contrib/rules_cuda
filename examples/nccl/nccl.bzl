@@ -1,5 +1,5 @@
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
-load("@rules_cuda//cuda:defs.bzl", "cuda_library", "cuda_objects")
+load("@rules_cuda//cuda:defs.bzl", "cuda_objects")
 
 # NOTE: all paths in this file relative to @nccl repo root.
 
