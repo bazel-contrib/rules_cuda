@@ -1,9 +1,19 @@
-exports_files(glob(["**"]))
+cc_import_versioned_sos(
+    name = "cufile_so",
+    shared_library = "%{component_name}/%{libpath}/libcufile.so",
+)
+
+cc_import_versioned_sos(
+    name = "cufile_rdma_so",
+    shared_library = "%{component_name}/%{libpath}/libcufile_rdma.so",
+)
 
 cc_library(
-    name = "cufile",
-    srcs = glob(["cufile/lib/**/*.so*"]),
-    hdrs = glob(["cufile/include/**/*.h"]),
-    includes = ["cufile/include"],
-    visibility = ["//visibility:public"],
+    name = "curand",
+    deps = [
+        ":%{component_name}_headers",
+        ":cufile_so",
+        ":cufile_rdma_so",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],
 )
