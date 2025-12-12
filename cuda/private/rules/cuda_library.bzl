@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
+load("@rules_cc//cc:defs.bzl", "CcInfo")
 load("//cuda/private:actions/compile.bzl", "compile")
 load("//cuda/private:actions/dlink.bzl", "device_link")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
