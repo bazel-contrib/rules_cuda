@@ -24,13 +24,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 file=$(bazel info execution_root)/$(bazel cquery --output=files :cuda_test)
+hermetic_flags=(\
+    --@rules_cuda//cuda:copts=-Xcompiler=-ffile-prefix-map=$(pwd)=. \
+    --@rules_cuda//cuda:copts=-Xcompiler=-fdebug-prefix-map=$(pwd)=. \
+    --@rules_cuda//cuda:copts=-objtemp)
 
-bazel build :cuda_test
+bazel build "${hermetic_flags[@]}" :cuda_test
 build_output1=$(strings ${file})
 
 bazel clean
 
-bazel build :cuda_test
+bazel build "${hermetic_flags[@]}" :cuda_test
 build_output2=$(strings ${file})
 
 diff_output=$(diff -u <(echo "$build_output1") <(echo "$build_output2") --color=always || true)
