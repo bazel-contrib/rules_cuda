@@ -110,8 +110,11 @@ jobs:
       - run: cd examples && bazelisk build --jobs=1 //if_cuda:main
       - run: cd examples && bazelisk build --jobs=1 //if_cuda:main --enable_cuda=False
       - run: bazelisk shutdown
+
       # run some repo integration tests
       - run: cd tests/integration && ./test_all.sh
+      - run: cd tests/hermeticity && ./test.sh ${{ (startsWith(matrix.cases.cuda-version, '11') || startsWith(matrix.cases.cuda-version, '12')) && '--allow-non-hermetic' || '' }}
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && !startsWith(matrix.cases.toolchain, 'llvm') }} # only run for nvcc on linux
 
       # Use Bazel 7
       - run: echo "USE_BAZEL_VERSION=7.5.0" >> $GITHUB_ENV
