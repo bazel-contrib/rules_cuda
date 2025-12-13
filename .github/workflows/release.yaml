@@ -45,7 +45,7 @@ jobs:
           echo "ARCHIVE_SHA256=$(shasum -a 256 ${{ github.workspace }}/.github/rules_cuda.tar.gz | cut -d ' ' -f 1)" >> $GITHUB_ENV
           echo "RELEASE_VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
       # Upload the artifact in case creating a release fails so all artifacts can then be manually recovered.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: "rules_cuda.tar.gz"
           path: ${{ github.workspace }}/.github/rules_cuda.tar.gz
