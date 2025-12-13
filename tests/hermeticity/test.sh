@@ -43,7 +43,7 @@ if [[ -n "$diff_output" ]]; then
     if [[ "$ALLOW_NON_HERMETIC" == "1" ]]; then
         echo -e "${YELLOW}WARNING: Build outputs are not hermetic (differences detected), but continuing due to --allow-non-hermetic flag:${NC}"
         echo "$diff_output"
-        echo -e "${YELLOW}Note: This is expected with some newer nvcc versions${NC}"
+        echo -e "${YELLOW}Note: This is expected, hermeticity is only guaranteed with some newer nvcc versions${NC}"
         exit 0
     else
         echo -e "${RED}ERROR: Build outputs are not hermetic (differences detected):${NC}"
