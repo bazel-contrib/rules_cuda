@@ -4,10 +4,12 @@ cuda_library(
     name = "cuda_lib",
     srcs = ["lib.cu"],
     hdrs = ["lib.h"],
+    tags = ["manual"],
 )
 
 cuda_binary(
     name = "cuda_test",
     srcs = ["main.cu"],
+    tags = ["manual"],
     deps = [":cuda_lib"],
 )
