@@ -260,6 +260,8 @@ def _get_cc_host_compile_flags(ctx):
     dummy_out = "__rules_cuda_host_compile_output__"
     user_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts
 
+    cuda_toolchain = find_cuda_toolchain(ctx)
+
     cc_toolchain = find_cpp_toolchain(ctx)
     if cc_toolchain == None:
         return []
@@ -285,20 +287,39 @@ def _get_cc_host_compile_flags(ctx):
         variables = variables,
     )
 
+    flags_to_skip = [
+        "-c",
+    ]
+
+    if cuda_toolchain.toolchain_identifier == "clang":
+        flags_to_skip.append(
+            "-fno-canonical-system-headers",
+        )
+
+    flag_prefixes_to_skip = [
+        "-std=",
+        "--sysroot=",
+    ]
+
+    flags_with_value_to_skip = [
+        "--sysroot",
+        "-o",
+    ]
+
     filtered_flags = []
     skip_next = False
     for flag in command_line:
         if skip_next:
             skip_next = False
             continue
-        if flag == "-c":
+        if flag in flags_to_skip:
+            continue
+        if flag in flags_with_value_to_skip:
+            skip_next = True
             continue
         if dummy_src in flag or dummy_out in flag:
             continue
-        if flag in ["--sysroot", "-o"]:
-            skip_next = True
-            continue
-        if any([flag.startswith(f) for f in ("-std=", "--sysroot=")]):
+        if any([flag.startswith(f) for f in flag_prefixes_to_skip]):
             continue
         filtered_flags.append(flag)
 
