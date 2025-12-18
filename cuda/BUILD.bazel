@@ -8,6 +8,14 @@ load("//cuda/private:rules/flags.bzl", "cuda_archs_flag", "repeatable_string_fla
 
 package(default_visibility = ["//visibility:public"])
 
+CUDA_PLATFORMS = [
+    "linux-x86_64",
+    "linux-sbsa",
+    "linux-aarch64",
+    "linux-ppc64le",
+    "windows-x86_64",
+]
+
 bzl_library(
     name = "bzl_srcs",
     srcs = glob(["*.bzl"]),
@@ -37,6 +45,37 @@ config_setting(
     name = "is_valid_toolchain_found",
     flag_values = {"@cuda//:valid_toolchain_found": "True"},
 )
+
+string_flag(
+    name = "version",
+    build_setting_default = "13.0.0",
+)
+
+string_flag(
+    name = "target_platform",
+    build_setting_default = "linux-x86_64",
+    values = CUDA_PLATFORMS,
+)
+
+[
+    config_setting(
+        name = "target_platform_is_{}".format(platform.replace("-", "_")),
+        flag_values = {":target_platform": platform},
+    ) for platform in CUDA_PLATFORMS
+]
+
+string_flag(
+    name = "exec_platform",
+    build_setting_default = "linux-x86_64",
+    values = CUDA_PLATFORMS,
+)
+
+[
+    config_setting(
+        name = "exec_platform_is_{}".format(platform.replace("-", "_")),
+        flag_values = {":exec_platform": platform},
+    ) for platform in CUDA_PLATFORMS
+]
 
 # Command line flag to specify the list of CUDA architectures to compile for.
 #
