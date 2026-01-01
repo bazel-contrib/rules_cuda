@@ -33,7 +33,7 @@ jobs:
       - uses: bazelbuild/setup-bazelisk@v3
       - name: Mount bazel cache
         if: ${{ !startsWith(matrix.cases.os, 'windows') }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/bazel
           key: ${{ matrix.cases.toolchain }}-${{ matrix.cases.toolchain-version }}
@@ -106,7 +106,7 @@ jobs:
       - uses: bazelbuild/setup-bazelisk@v3
       - name: Mount bazel cache
         if: ${{ !startsWith(matrix.cases.os, 'windows') }}
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/bazel
           key: ${{ matrix.cases.toolchain }}-${{ matrix.cases.toolchain-version }}
