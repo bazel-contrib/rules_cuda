@@ -1,0 +1,23 @@
+# Export individual files as simple target names
+exports_files([
+    "%{component_name}/nvvm/bin/cicc",
+    "%{component_name}/nvvm/libdevice/libdevice.10.bc",
+], visibility = ["//visibility:public"])
+
+# Create aliases with simple names for toolchain compatibility
+alias(
+    name = "cicc",
+    actual = "%{component_name}/nvvm/bin/cicc",
+)
+
+alias(
+    name = "libdevice.10.bc",
+    actual = "%{component_name}/nvvm/libdevice/libdevice.10.bc",
+)
+
+# Alias for generic libdevice name
+alias(
+    name = "libdevice",
+    actual = ":libdevice.10.bc",
+)
+

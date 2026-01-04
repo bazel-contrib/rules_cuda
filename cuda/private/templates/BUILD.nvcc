@@ -1,3 +1,38 @@
+# Export individual executables as simple target names
+exports_files([
+    "%{component_name}/bin/nvcc",
+    "%{component_name}/bin/nvlink",
+    "%{component_name}/bin/bin2c",
+    "%{component_name}/bin/fatbinary",
+    "%{component_name}/bin/crt/link.stub",
+], visibility = ["//visibility:public"])
+
+# Create aliases with simple names for toolchain compatibility
+alias(
+    name = "nvcc",
+    actual = "%{component_name}/bin/nvcc",
+)
+
+alias(
+    name = "nvlink",
+    actual = "%{component_name}/bin/nvlink",
+)
+
+alias(
+    name = "bin2c",
+    actual = "%{component_name}/bin/bin2c",
+)
+
+alias(
+    name = "fatbinary",
+    actual = "%{component_name}/bin/fatbinary",
+)
+
+alias(
+    name = "link.stub",
+    actual = "%{component_name}/bin/crt/link.stub",
+)
+
 filegroup(
     name = "compiler_root",
     srcs = [":nvcc"],
