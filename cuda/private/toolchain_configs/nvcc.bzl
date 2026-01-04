@@ -196,6 +196,11 @@ def _impl(ctx):
                     ],
                 ),
                 flag_group(flags = ["-dlto"], expand_if_true = "use_dlto"),
+                flag_group(
+                    flags = ["%{user_link_flags}"],
+                    iterate_over = "user_link_flags",
+                    expand_if_available = "user_link_flags",
+                ),
             ]),
         ],
         implies = [
