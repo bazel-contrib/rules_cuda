@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 def if_linux(if_true, if_false = []):
     return select({
         "@platforms//os:linux": if_true,
@@ -25,7 +27,7 @@ def cc_import_versioned_sos(name, shared_library):
     # NOTE: only empty when the componnent is not installed on the system, say, cublas is not installed with apt-get
     so_paths = native.glob([shared_library + "*"], allow_empty = True)
 
-    native.cc_library(
+    cc_library(
         name = name,
         srcs = so_paths,
         target_compatible_with = ["@platforms//os:linux"],
