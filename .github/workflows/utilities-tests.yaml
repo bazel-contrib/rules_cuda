@@ -19,6 +19,7 @@ jobs:
         bazel-version:
           # NOTE: read from .bazelversion so that we don't randomly break our
           # ci due to latest bazel version change
+          - 9.0.0rc3
           - .bazelversion
           - 7.5.0
           - 6.5.0
