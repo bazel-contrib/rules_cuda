@@ -113,6 +113,7 @@ def _cuda_toolchain_impl(ctx):
             selectables_info = selectables_info,
             artifact_name_patterns = artifact_name_patterns,
             cuda_toolkit = cuda_toolchain_config.cuda_toolkit,
+            toolchain_identifier = cuda_toolchain_config.toolchain_identifier,
             **optional_attributes
         ),
     ]

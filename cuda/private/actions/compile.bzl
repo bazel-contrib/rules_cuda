@@ -82,6 +82,7 @@ def compile(
             host_compiler = host_compiler,
             compile_flags = common.compile_flags,
             host_compile_flags = common.host_compile_flags,
+            toolchain_host_compile_flags = common.toolchain_host_compile_flags,
             include_paths = common.includes,
             quote_include_paths = common.quote_includes,
             system_include_paths = common.system_includes,
