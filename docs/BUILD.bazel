@@ -8,6 +8,7 @@ bzl_library(
         # NOTE: workaround for https://github.com/bazelbuild/rules_cc/issues/279
         # see https://github.com/bazel-contrib/rules_go/issues/4394#issuecomment-3063983207
         "@rules_cc//cc:core_rules",
+        "@rules_cc//cc:defs_bzl",
         "@rules_cc//cc:cc_toolchain_config_lib.bzl",
         "@rules_cc//cc:find_cc_toolchain_bzl",
         "@rules_cc//cc/common",
