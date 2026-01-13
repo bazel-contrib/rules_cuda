@@ -5,6 +5,12 @@ local_repository(
     path = "examples",
 )
 
+# rules_cc 0.2.14+ requires the @cc_compatibility_proxy repository to be set up
+# for WORKSPACE builds. This provides compatibility shims for native cc_* rules.
+load("@rules_cc//cc:extensions.bzl", "compatibility_proxy_repo")
+
+compatibility_proxy_repo()
+
 load("@rules_cuda//cuda:repositories.bzl", "rules_cuda_dependencies", "rules_cuda_toolchains")
 
 rules_cuda_dependencies()
