@@ -9,7 +9,7 @@ cc_import_versioned_sos(
 )
 
 cc_library(
-    name = "curand",
+    name = "cufile",
     deps = [
         ":%{component_name}_headers",
         ":cufile_so",
