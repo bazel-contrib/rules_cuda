@@ -12,6 +12,16 @@ Add the following to your `WORKSPACE` file and replace the placeholders with act
 
 ```starlark
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "rules_cc",
+    sha256 = "{rules_cc_sha256}",
+    strip_prefix = "rules_cc-{rules_cc_version}",
+    urls = ["https://github.com/bazelbuild/rules_cc/releases/download/{rules_cc_version}/rules_cc-{rules_cc_version}.tar.gz"],
+)
+load("@rules_cc//cc:extensions.bzl", "compatibility_proxy_repo")
+compatibility_proxy_repo()
+
 http_archive(
     name = "rules_cuda",
     sha256 = "{sha256_to_replace}",
@@ -22,6 +32,8 @@ load("@rules_cuda//cuda:repositories.bzl", "rules_cuda_dependencies", "rules_cud
 rules_cuda_dependencies()
 rules_cuda_toolchains(register_toolchains = True)
 ```
+
+`rules_cc` needs to be available before loading `rules_cuda`, and `compatibility_proxy_repo()` must be called to populate the compatibility repository that `rules_cc` expects.
 
 **NOTE**: `rules_cuda_toolchains` implicitly calls to `register_detected_cuda_toolchains`, and the use of
 `register_detected_cuda_toolchains` depends on the environment variable `CUDA_PATH`. You must also ensure the
@@ -37,6 +49,7 @@ determains how the toolchains are detected.
 Add the following to your `MODULE.bazel` file and replace the placeholders with actual values.
 
 ```starlark
+bazel_dep(name = "rules_cc", version = "{rules_cc_version}")
 bazel_dep(name = "rules_cuda", version = "0.2.1")
 
 # pick a specific version (this is optional an can be skipped)
@@ -54,6 +67,8 @@ cuda.toolkit(
 )
 use_repo(cuda, "cuda")
 ```
+
+`rules_cc` provides the C++ toolchain dependency for `rules_cuda`; in Bzlmod the compatibility repository is handled by `rules_cc` itself.
 
 ### Rules
 

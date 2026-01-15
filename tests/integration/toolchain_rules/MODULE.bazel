@@ -1,5 +1,6 @@
 module(name = "bzlmod_use_repo")
 
+bazel_dep(name = "rules_cc", version = "0.2.14")
 bazel_dep(name = "rules_cuda", version = "0.0.0")
 local_path_override(
     module_name = "rules_cuda",
