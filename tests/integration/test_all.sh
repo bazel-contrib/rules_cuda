@@ -29,9 +29,10 @@ pushd "$this_dir/toolchain_none"
     # use library should analyse build successfully (empty cuda_runtime target exists)
     bazel build //:use_library
 
-    # use rule analyses correctly but fails during compilation because nvcc doesn't exist
+    # use rule analyses correctly but fails during compilation because cuda toolkit doesn't exist
     ERR=$(bazel build //:use_rule 2>&1 || true)
-    if ! [[ $ERR =~ "No such file or directory" ]]; then exit 1; fi
+    # nvcc toolchain fails with "No such file or directory", clang toolchain fails with "cannot find CUDA installation"
+    if ! [[ $ERR =~ "No such file or directory" || $ERR =~ "cannot find CUDA installation" ]]; then exit 1; fi
     if ! [[ $ERR =~ "ERROR: Build did NOT complete successfully" ]]; then exit 1; fi
 
     bazel clean && bazel shutdown
