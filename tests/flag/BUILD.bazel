@@ -10,6 +10,7 @@ load(
     "cuda_library_compute60_flag_test",
     "cuda_library_compute60_sm61_flag_test",
     "cuda_library_compute61_sm61_flag_test",
+    "cuda_library_external_include_paths_flag_test",
     "cuda_library_flag_test",
     "cuda_library_platform_no_sysroot_but_copt_flag_test",
     "cuda_library_platform_no_sysroot_flag_test",
@@ -429,6 +430,17 @@ cuda_library_use_linkopts_flag_test(
         "-Wl,--verbose",
     ],
     target_compatible_with = ["@platforms//os:linux"],  # Assuming nvcc toolchain
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+###################################################
+# Tests for external_include_paths feature
+###################################################
+cuda_library_external_include_paths_flag_test(
+    name = "cuda_library_external_include_paths_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-isystem"],
+    target_compatible_with = ["@platforms//os:linux"],
     target_under_test = ":cpp_opts_test_lib",
 )
 
