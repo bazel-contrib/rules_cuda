@@ -305,6 +305,24 @@ def _impl(ctx):
         ],
     )
 
+    external_include_paths_feature = feature(
+        name = "external_include_paths",
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-isystem", "%{external_include_paths}"],
+                        iterate_over = "external_include_paths",
+                        expand_if_available = "external_include_paths",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     defines_feature = feature(
         name = "defines",
         enabled = True,
@@ -638,6 +656,7 @@ def _impl(ctx):
         host_compiler_feature,
         supports_compiler_device_link_feature,
         include_paths_feature,
+        external_include_paths_feature,
         dbg_feature,
         opt_feature,
         fastbuild_feature,

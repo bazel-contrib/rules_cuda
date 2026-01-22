@@ -132,6 +132,12 @@ cuda_library_use_copts_flag_test = _create_cuda_library_flag_test(config_setting
 cuda_library_use_cxxopts_flag_test = _create_cuda_library_flag_test(config_settings_use_cxxopts)
 cuda_library_use_linkopts_flag_test = _create_cuda_library_flag_test(config_settings_use_linkopts)
 
+# Config settings for testing external_include_paths feature
+config_settings_external_include_paths = {
+    "//command_line_option:features": ["external_include_paths"],
+}
+cuda_library_external_include_paths_flag_test = _create_cuda_library_flag_test(config_settings_external_include_paths)
+
 # Config settings for testing sysroot from cc toolchain
 config_settings_toolchain_resolution = {"//command_line_option:incompatible_enable_cc_toolchain_resolution": "1"}  # NOTE: this is required for bazel version < 7
 config_settings_platform_sysroot_test = {"//command_line_option:platforms": _rules_cuda_target("tests/flag/testonly_toolchains:sysroot-test-platform")}
