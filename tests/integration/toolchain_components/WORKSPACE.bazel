@@ -30,6 +30,7 @@ cuda_component(
     sha256 = "840deff234d9bef20d6856439c49881cb4f29423b214f9ecd2fa59b7ac323817",
     strip_prefix = "cuda_nvcc-linux-x86_64-12.6.85-archive",
     urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.6.85-archive.tar.xz"],
+    version = "12.6.85",
 )
 
 # NOTE: this is only usefull when use clang as cuda compiler driver

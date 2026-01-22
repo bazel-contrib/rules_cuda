@@ -1,5 +1,6 @@
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper")
 
@@ -34,6 +35,19 @@ def _get_cc_sysroot(ctx, cc_toolchain):
 
     return None
 
+def _get_cc_compiler(ctx, cc_toolchain):
+    feature_configuration = cc_common.configure_features(
+        ctx = ctx,
+        cc_toolchain = cc_toolchain,
+        requested_features = ctx.features,
+        unsupported_features = ctx.disabled_features,
+    )
+
+    return cc_common.get_tool_for_action(
+        feature_configuration = feature_configuration,
+        action_name = CC_ACTION_NAMES.cpp_compile,
+    )
+
 def _cuda_toolchain_impl(ctx):
     cc_toolchain = find_cpp_toolchain(ctx)
     has_compiler_executable = ctx.attr.compiler_executable != None and ctx.attr.compiler_executable != ""
@@ -52,7 +66,7 @@ def _cuda_toolchain_impl(ctx):
 
     # First, attempt to use configured cc_toolchain if attr compiler_use_cc_toolchain set.
     if (ctx.attr.compiler_use_cc_toolchain == True):
-        compiler_executable = cc_toolchain.compiler_executable
+        compiler_executable = _get_cc_compiler(ctx, cc_toolchain)
     elif has_compiler_executable:
         compiler_executable = ctx.attr.compiler_executable
     elif has_compiler_label:
@@ -99,6 +113,7 @@ def _cuda_toolchain_impl(ctx):
             selectables_info = selectables_info,
             artifact_name_patterns = artifact_name_patterns,
             cuda_toolkit = cuda_toolchain_config.cuda_toolkit,
+            toolchain_identifier = cuda_toolchain_config.toolchain_identifier,
             **optional_attributes
         ),
     ]

@@ -1,4 +1,5 @@
 load("@bazel_skylib//lib:unittest.bzl", "analysistest")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("//cuda/private:os_helpers.bzl", "cc_import_versioned_sos")
 
 def _library_basenames_test_impl(ctx):

@@ -1,0 +1,9 @@
+# NOTE: for cuda toolkit newer than 13.0 (inclusive), culibos_a is defined here, BUILD.cudart otherwise.
+[
+    cc_library(
+        name = "culibos_a",
+        srcs = ["%{component_name}/%{libpath}/libculibos.a"],
+        target_compatible_with = ["@platforms//os:linux"],
+    )
+    for name in if_cuda_toolkit_version_ge((13,0), ["culibos"])
+]

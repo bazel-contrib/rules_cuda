@@ -1,22 +1,57 @@
 cc_library(
-    name = "cub",
+    name = "libcudacxx",
     hdrs = glob(
-        ["%{component_name}/include/cub/**"],
+        if_cuda_toolkit_version_ge(
+            (13, 0),
+            [
+                "%{component_name}/include/cccl/cuda/**",
+                "%{component_name}/include/cccl/nv/**",
+            ],
+            [
+                "%{component_name}/include/cuda/**",
+                "%{component_name}/include/nv/**",
+            ],
+        ),
         allow_empty = True,
     ),
-    includes = [
-        "%{component_name}/include",
-    ],
+    includes = if_cuda_toolkit_version_ge(
+        (13, 0),
+        ["%{component_name}/include/cccl"],
+        ["%{component_name}/include"],
+    ),
+)
+
+cc_library(
+    name = "cub",
+    hdrs = glob(
+        if_cuda_toolkit_version_ge(
+            (13, 0),
+            ["%{component_name}/include/cccl/cub/**"],
+            ["%{component_name}/include/cub/**"],
+        ),
+        allow_empty = True,
+    ),
+    includes = if_cuda_toolkit_version_ge(
+        (13, 0),
+        ["%{component_name}/include/cccl"],
+        ["%{component_name}/include"],
+    ),
 )
 
 cc_library(
     name = "thrust",
     hdrs = glob(
-        ["%{component_name}/include/thrust/**"],
+        if_cuda_toolkit_version_ge(
+            (13, 0),
+            ["%{component_name}/include/cccl/thrust/**"],
+            ["%{component_name}/include/thrust/**"],
+        ),
         allow_empty = True,
     ),
-    includes = [
-        "%{component_name}/include",
-    ],
+    includes = if_cuda_toolkit_version_ge(
+        (13, 0),
+        ["%{component_name}/include/cccl"],
+        ["%{component_name}/include"],
+    ),
     deps = [":cub"],
 )

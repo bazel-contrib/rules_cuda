@@ -1,5 +1,6 @@
 module(name = "bzlmod_components")
 
+bazel_dep(name = "rules_cc", version = "0.2.14")
 bazel_dep(name = "rules_cuda", version = "0.0.0")
 local_path_override(
     module_name = "rules_cuda",
@@ -27,6 +28,7 @@ cuda.component(
     sha256 = "840deff234d9bef20d6856439c49881cb4f29423b214f9ecd2fa59b7ac323817",
     strip_prefix = "cuda_nvcc-linux-x86_64-12.6.85-archive",
     urls = ["https://developer.download.nvidia.com/compute/cuda/redist/cuda_nvcc/linux-x86_64/cuda_nvcc-linux-x86_64-12.6.85-archive.tar.xz"],
+    version = "12.6.85",
 )
 cuda.component(
     name = "cuda_curand",

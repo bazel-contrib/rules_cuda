@@ -84,11 +84,26 @@ def _detect_local_cuda_toolkit(repository_ctx):
         link_stub_label = link_stub,
         bin2c_label = bin2c,
         fatbinary_label = fatbinary,
+        cicc_label = None,  # local CTK do not need this
+        libdevice_label = None,  # local CTK do not need this
     )
 
 def _detect_deliverable_cuda_toolkit(repository_ctx):
+    cuda_version_str = repository_ctx.attr.version
+    if cuda_version_str == None or cuda_version_str == "":
+        fail("attr version is required.")
+
+    nvcc_version_str = repository_ctx.attr.nvcc_version
+    if nvcc_version_str == None or nvcc_version_str == "":
+        nvcc_version_str = cuda_version_str
+
+    cuda_version_major, cuda_version_minor = cuda_version_str.split(".")[:2]
+    nvcc_version_major, nvcc_version_minor = nvcc_version_str.split(".")[:2]
+
     # NOTE: component nvcc contains some headers that will be used.
     required_components = ["cccl", "cudart", "nvcc"]
+    if int(cuda_version_major) >= 13:
+        required_components.extend(["crt", "nvvm"])
     for rc in required_components:
         if rc not in repository_ctx.attr.components_mapping:
             fail('component "{}" is required.'.format(rc))
@@ -102,16 +117,12 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     bin2c = "{}//:nvcc/bin/bin2c{}".format(nvcc_repo, bin_ext)
     fatbinary = "{}//:nvcc/bin/fatbinary{}".format(nvcc_repo, bin_ext)
 
-    cuda_version_str = repository_ctx.attr.version
-    if cuda_version_str == None or cuda_version_str == "":
-        fail("attr version is required.")
-
-    nvcc_version_str = repository_ctx.attr.nvcc_version
-    if nvcc_version_str == None or nvcc_version_str == "":
-        nvcc_version_str = cuda_version_str
-
-    cuda_version_major, cuda_version_minor = cuda_version_str.split(".")[:2]
-    nvcc_version_major, nvcc_version_minor = nvcc_version_str.split(".")[:2]
+    cicc = None
+    libdevice = None
+    if int(cuda_version_major) >= 13:
+        nvvm_repo = repository_ctx.attr.components_mapping["nvvm"]
+        cicc = "{}//:nvvm/nvvm/bin/cicc{}".format(nvvm_repo, bin_ext)  # TODO: can we use @cuda//:cicc?
+        libdevice = "{}//:nvvm/nvvm/libdevice/libdevice.10.bc".format(nvvm_repo)  # TODO: can we use @cuda//:libdevice?
 
     return struct(
         path = None,  # scattered components
@@ -124,6 +135,8 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
         link_stub_label = link_stub,
         bin2c_label = bin2c,
         fatbinary_label = fatbinary,
+        cicc_label = cicc,
+        libdevice_label = libdevice,
     )
 
 def detect_cuda_toolkit(repository_ctx):
@@ -188,7 +201,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
         )
 
     # Generate @cuda//defs.bzl
-    template_helper.generate_defs_bzl(repository_ctx, is_local_ctk == True)
+    template_helper.generate_defs_bzl(repository_ctx, cuda.version_major, cuda.version_minor, is_local_ctk == True)
 
     # Generate @cuda//toolchain/BUILD
     template_helper.generate_toolchain_build(repository_ctx, cuda)
@@ -283,6 +296,44 @@ cuda_toolkit = repository_rule(
     # remotable = True,
 )
 
+def _patch_nvcc_profile_pre(repository_ctx, component_name):
+    """nvcc after 13 needs to adjust nvcc.profile to support distributed components"""
+
+    patch_nvcc_profile = False
+    rename_files = {}
+
+    if component_name != "nvcc":
+        return patch_nvcc_profile, rename_files
+    if getattr(repository_ctx.attr, "version") == None or repository_ctx.attr.version == "":
+        fail("attribute `version` must be filled for 'nvcc' component")
+
+    nvcc_major_version = int(repository_ctx.attr.version.split(".")[0])
+    if nvcc_major_version >= 13:
+        patch_nvcc_profile = True
+
+    if patch_nvcc_profile:
+        nvcc_profile = repository_ctx.attr.strip_prefix + "/bin/nvcc.profile"
+        rename_files[nvcc_profile] = nvcc_profile + ".renamed_by_rules_cuda"
+
+    return patch_nvcc_profile, rename_files
+
+def _patch_nvcc_profile_post(repository_ctx, patch_nvcc_profile):
+    if not patch_nvcc_profile:
+        return
+
+    nvcc_profile_content = repository_ctx.read("nvcc/bin/nvcc.profile.renamed_by_rules_cuda")
+    lines = nvcc_profile_content.split("\n")
+    for i, line in enumerate(lines):
+        key_to_replace = ["CICC_PATH", "NVVMIR_LIBRARY_DIR"]
+        for key in key_to_replace:
+            s = line.find(key)
+            if s == 0 or (s > 0 and line[s - 1] != "(" and line[s - 1] != "%"):  # ensure it is a env key assignment, not a reference
+                # we will then pass the env from outside to
+                new_line = key + " ?= " + key + "/in/nvcc.profile/replaced/by/rules_cuda/but/not/set/at/runtime"
+                lines[i] = new_line
+    nvcc_profile_content = "\n".join(lines)
+    repository_ctx.file("nvcc/bin/nvcc.profile", nvcc_profile_content)
+
 def _cuda_component_impl(repository_ctx):
     component_name = None
     if repository_ctx.attr.component_name:
@@ -300,13 +351,18 @@ def _cuda_component_impl(repository_ctx):
     if repository_ctx.attr.url and repository_ctx.attr.urls:
         fail("attributes `url` and `urls` cannot be used at the same time")
 
+    patch_nvcc_profile, rename_files = _patch_nvcc_profile_pre(repository_ctx, component_name)
+
     repository_ctx.download_and_extract(
         url = repository_ctx.attr.url or repository_ctx.attr.urls,
         output = component_name,
         integrity = repository_ctx.attr.integrity,
         sha256 = repository_ctx.attr.sha256,
         stripPrefix = repository_ctx.attr.strip_prefix,
+        rename_files = rename_files,
     )
+
+    _patch_nvcc_profile_post(repository_ctx, patch_nvcc_profile)
 
     template_helper.generate_build(
         repository_ctx,
@@ -395,7 +451,7 @@ def _cuda_redist_json_impl(repository_ctx):
 cuda_redist_json = repository_rule(
     implementation = _cuda_redist_json_impl,
     attrs = {
-        "components": attr.string_list(mandatory = True),
+        "components": attr.string_list(),
         "integrity": attr.string(mandatory = False),
         "sha256": attr.string(mandatory = False),
         "urls": attr.string_list(mandatory = False),

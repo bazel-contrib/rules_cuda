@@ -1,0 +1,15 @@
+load("@rules_cuda//cuda:defs.bzl", "cuda_binary", "cuda_library")
+
+cuda_library(
+    name = "cuda_lib",
+    srcs = ["lib.cu"],
+    hdrs = ["lib.h"],
+    tags = ["manual"],
+)
+
+cuda_binary(
+    name = "cuda_test",
+    srcs = ["main.cu"],
+    tags = ["manual"],
+    deps = [":cuda_lib"],
+)

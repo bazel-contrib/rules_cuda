@@ -1,3 +1,4 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("//cuda/private:rules/cuda_library.bzl", _cuda_library = "cuda_library")
 
 def cuda_binary(name, **attrs):
@@ -43,7 +44,7 @@ def cuda_binary(name, **attrs):
         if src in cc_attrs:
             cc_attrs[dst] = cc_attrs.pop(src)
 
-    native.cc_binary(
+    cc_binary(
         name = name,
         deps = [cuda_library_name],
         **cc_attrs

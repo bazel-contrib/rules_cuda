@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_SRCS")
@@ -81,6 +82,7 @@ def compile(
             host_compiler = host_compiler,
             compile_flags = common.compile_flags,
             host_compile_flags = common.host_compile_flags,
+            toolchain_host_compile_flags = common.toolchain_host_compile_flags,
             include_paths = common.includes,
             quote_include_paths = common.quote_includes,
             system_include_paths = common.system_includes,

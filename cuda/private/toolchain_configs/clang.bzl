@@ -59,6 +59,7 @@ def _impl(ctx):
         unsupported_features = ctx.disabled_features,
     )
     host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
+    env_include = [] if len(cc_toolchain.built_in_include_directories) == 0 else [env_entry("INCLUDE", ";".join(cc_toolchain.built_in_include_directories))]
 
     clang_compile_env_feature = feature(
         name = "clang_compile_env",
@@ -70,9 +71,8 @@ def _impl(ctx):
                     ACTION_NAMES.device_link,
                 ],
                 env_entries = [
-                    env_entry("INCLUDE", ";".join(cc_toolchain.built_in_include_directories)),
                     env_entry("PATH", paths.dirname(host_compiler) + ";C:/Windows/system32"),
-                ],
+                ] + env_include,
             ),
         ],
     )
@@ -249,6 +249,25 @@ def _impl(ctx):
                     flag_group(
                         flags = ["%{host_compile_flags}"],
                         iterate_over = "host_compile_flags",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    host_toolchain_flags_feature = feature(
+        name = "cuda_host_use_toolchain_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{toolchain_host_compile_flags}"],
+                        iterate_over = "toolchain_host_compile_flags",
                     ),
                 ],
             ),
@@ -536,6 +555,7 @@ def _impl(ctx):
         opt_feature,
         compile_flags_feature,
         host_compile_flags_feature,
+        host_toolchain_flags_feature,
         cuda_host_use_copts_feature,
         cuda_host_use_cxxopts_feature,
         cuda_host_use_linkopts_feature,

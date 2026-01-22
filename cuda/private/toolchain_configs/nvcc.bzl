@@ -1,6 +1,7 @@
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
@@ -72,6 +73,25 @@ def _impl(ctx):
         [c for c in components if c],
     )
 
+    cicc_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc else None
+    libdevice_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice else None
+    nvcc_profile_env = []
+    if nvcc_version_ge(ctx, 13, 0):
+        if cicc_dir != None:
+            nvcc_profile_env.append(
+                env_set(
+                    actions = [ACTION_NAMES.cuda_compile],
+                    env_entries = [env_entry("CICC_PATH", cicc_dir)],
+                ),
+            )
+        if libdevice_dir != None:
+            nvcc_profile_env.append(
+                env_set(
+                    actions = [ACTION_NAMES.cuda_compile],
+                    env_entries = [env_entry("NVVMIR_LIBRARY_DIR", libdevice_dir)],
+                ),
+            )
+
     nvcc_compile_env_feature = feature(
         name = "nvcc_compile_env",
         env_sets = [
@@ -79,7 +99,7 @@ def _impl(ctx):
                 actions = [ACTION_NAMES.cuda_compile],
                 env_entries = [env_entry("PATH", path)],
             ),
-        ],
+        ] + nvcc_profile_env,
     )
 
     nvcc_device_link_env_feature = feature(
@@ -358,6 +378,25 @@ def _impl(ctx):
         ],
     )
 
+    host_toolchain_flags_feature = feature(
+        name = "cuda_host_use_toolchain_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-Xcompiler", "%{toolchain_host_compile_flags}"],
+                        iterate_over = "toolchain_host_compile_flags",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     cuda_host_use_copts_feature = feature(
         name = "cuda_host_use_copts",
         flag_sets = [
@@ -450,7 +489,7 @@ def _impl(ctx):
         flag_sets = [
             flag_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                flag_groups = [flag_group(flags = ["-O0", "--generate-line-info", "-Xcompiler", "-g1"])],
+                flag_groups = [flag_group(flags = ["-O0", "-Xcompiler", "-g1"])],
             ),
         ],
         provides = ["compilation_mode"],
@@ -559,6 +598,21 @@ def _impl(ctx):
         ],
     )
 
+    # NOTE: this only works on compiler newer than 12.9
+    nvcc_fixed_random_seed_feature = feature(
+        name = "nvcc_fixed_random_seed",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
+                ],
+                flag_groups = [flag_group(flags = ["--frandom-seed=%{output_file}"])],
+            ),
+        ] if nvcc_version_ge(ctx, 12, 9) else [],
+    )
+
     cuda_device_debug_feature = feature(
         name = "cuda_device_debug",
         flag_sets = [
@@ -591,6 +645,7 @@ def _impl(ctx):
         host_defines_feature,
         compile_flags_feature,
         host_compile_flags_feature,
+        host_toolchain_flags_feature,
         cuda_host_use_copts_feature,
         cuda_host_use_cxxopts_feature,
         cuda_host_use_linkopts_feature,
@@ -601,6 +656,7 @@ def _impl(ctx):
         nvcc_allow_unsupported_compiler_feature,
         nvcc_relaxed_constexpr_feature,
         nvcc_extended_lambda_feature,
+        nvcc_fixed_random_seed_feature,
         cuda_device_debug_feature,
     ]
 

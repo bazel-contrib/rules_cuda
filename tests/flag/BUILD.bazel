@@ -64,7 +64,6 @@ cuda_library_c_fastbuild_flag_test(
     contain_flags = [
         # gcc default to -O0 so bazel does not explicitly set the flag. Whereas nvcc defaults to -O3.
         "-O0",
-        "--generate-line-info",
         "-g1",
         # There is no -gmlt option (not merged) as claimed in bazel user manual
         # https://codereview.appspot.com/4440072

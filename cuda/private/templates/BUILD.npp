@@ -1,6 +1,5 @@
 _NPP_LIBS = {
     "nppc": [
-        "npp.h",
         "nppcore.h",
         "nppdefs.h",
     ],
@@ -73,5 +72,15 @@ cc_library(
         ":nppist",
         ":nppisu",
         ":nppitc",
+    ],
+)
+
+cc_library(
+    name = "npp",
+    hdrs = ["%{component_name}/include/npp.h"],
+    deps = [
+        ":nppc",
+        ":nppi",
+        ":npps",
     ],
 )

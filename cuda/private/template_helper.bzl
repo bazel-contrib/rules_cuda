@@ -127,9 +127,11 @@ def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = T
 
     _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable)
 
-def _generate_defs_bzl(repository_ctx, is_local_ctk):
+def _generate_defs_bzl(repository_ctx, version_major, version_minor, is_local_ctk):
     tpl_label = Label("//cuda/private:templates/defs.bzl.tpl")
     substitutions = {
+        "%{version_major}": str(version_major),
+        "%{version_minor}": str(version_minor),
         "%{is_local_ctk}": str(is_local_ctk),
     }
     repository_ctx.template("defs.bzl", tpl_label, substitutions = substitutions, executable = False)
@@ -185,7 +187,16 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "//cuda/private:templates/BUILD.toolchain_" +
         ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
+    compiler_files = ["@cuda//:compiler_deps"]
+    if int(cuda.version_major) >= 13:
+        if cuda.cicc_label != None:
+            compiler_files.append(cuda.cicc_label)
+        if cuda.libdevice_label != None:
+            compiler_files.append(cuda.libdevice_label)
+    compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
+
     substitutions = {
+        "# %{compiler_files_line}": compiler_files_line,
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_version_major}": str(cuda.nvcc_version_major),
@@ -196,6 +207,11 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
     }
+    if cuda.cicc_label:
+        substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
+    if cuda.libdevice_label:
+        substitutions["# %{libdevice_line}"] = "libdevice = " + repr(cuda.libdevice_label)
+
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:
         substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
@@ -256,6 +272,10 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
     }
+    if cuda.cicc_label:
+        substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
+    if cuda.libdevice_label:
+        substitutions["# %{libdevice_line}"] = "libdevice = " + repr(cuda.libdevice_label)
 
     if clang_label_for_subst:
         substitutions.pop("%{clang_path}")
