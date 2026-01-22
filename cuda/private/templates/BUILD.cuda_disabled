@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -10,6 +11,35 @@ bool_setting(
 )
 
 filegroup(
+    name = "compiler_root",
+    srcs = ["@rules_cuda//cuda/dummy:link.stub"],
+)
+
+filegroup(
     name = "compiler_deps",
     srcs = [],
+)
+
+filegroup(
+    name = "nvcc_all_files",
+    srcs = [],
+)
+
+filegroup(
+    name = "cccl_all_files",
+    srcs = [],
+)
+
+filegroup(
+    name = "cudart_all_files",
+    srcs = [],
+)
+
+filegroup(
+    name = "curand_all_files",
+    srcs = [],
+)
+
+cc_library(
+    name = "cuda_runtime",
 )
