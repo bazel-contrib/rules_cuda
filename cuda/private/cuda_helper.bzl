@@ -186,6 +186,7 @@ def _create_common_info(
         includes = [],
         quote_includes = [],
         system_includes = [],
+        external_includes = [],
         headers = [],
         transitive_headers = [],
         defines = [],
@@ -211,6 +212,7 @@ def _create_common_info(
         includes: include paths. Can be used with `#include <...>` and `#include "..."`.
         quote_includes: include paths. Can be used with `#include "..."`.
         system_includes: include paths. Can be used with `#include <...>`.
+        external_includes: include paths for external dependencies (when external_include_paths feature is enabled).
         headers: headers directly relate with this target.
         transitive_headers: headers transitively gather from `deps`.
         defines: public `#define`s. Pass to compiler driver directly. Will be seen by downstream targets.
@@ -234,6 +236,7 @@ def _create_common_info(
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,
+        external_includes = external_includes,
         headers = depset(headers, transitive = transitive_headers),
         defines = defines,
         local_defines = local_defines,
@@ -348,7 +351,7 @@ def _create_common(ctx):
     for inc in attr.includes:
         system_includes.extend(_resolve_includes(ctx, inc))
     system_includes.extend(merged_cc_info.compilation_context.system_includes.to_list())
-    system_includes.extend(getattr(merged_cc_info.compilation_context, "external_includes", depset()).to_list())
+    external_includes = getattr(merged_cc_info.compilation_context, "external_includes", depset()).to_list()
     quote_includes.extend(merged_cc_info.compilation_context.quote_includes.to_list())
 
     # gather header info
@@ -394,6 +397,7 @@ def _create_common(ctx):
         includes = includes,
         quote_includes = quote_includes,
         system_includes = system_includes,
+        external_includes = external_includes,
         headers = headers,
         transitive_headers = transitive_headers,
         defines = defines,
@@ -498,6 +502,7 @@ def _create_compile_variables(
         include_paths = [],
         quote_include_paths = [],
         system_include_paths = [],
+        external_include_paths = [],
         defines = [],
         host_defines = [],
         ptxas_flags = [],
@@ -522,6 +527,7 @@ def _create_compile_variables(
         include_paths: include paths. Can be used with `#include <...>` and `#include "..."`.
         quote_include_paths: include paths. Can be used with `#include "..."`.
         system_include_paths: include paths. Can be used with `#include <...>`.
+        external_include_paths: include paths for external dependencies (when external_include_paths feature is enabled).
         defines: `#define`s. Pass to compiler driver directly.
         host_defines: `#define`s. Pass to host compiler.
         ptxas_flags: flags pass to `ptxas`.
@@ -538,6 +544,8 @@ def _create_compile_variables(
     optional_variables = {}
     if sysroot != None:
         optional_variables["sysroot"] = sysroot
+    if external_include_paths:
+        optional_variables["external_include_paths"] = external_include_paths
 
     return struct(
         arch_specs = arch_specs,
