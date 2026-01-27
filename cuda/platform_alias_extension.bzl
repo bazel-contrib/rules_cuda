@@ -4,6 +4,7 @@ This extension creates repositories with alias targets that select between x86_6
 repositories based on the build platform. It also selects between versions of the component.
 """
 
+load("//cuda/private:platforms.bzl", "SUPPORTED_PLATFORMS")
 load("//cuda/private:templates/registry.bzl", "REGISTRY")
 
 # Use REGISTRY as the source of truth for component targets
@@ -35,32 +36,22 @@ def _platform_alias_repo_impl(ctx):
     build_content.append('unsupported_cuda_version(name = "unsupported_cuda_version", component = "{}", available_versions = {})'.format(ctx.attr.component_name, ctx.attr.versions))
     build_content.append("")
 
-    # Check if using new dict-based API or old string-based API.
-    use_dict_api = len(ctx.attr.linux_x86_64_repos) > 0
-
     # Build a target for the name of the repo (only if at least one platform is available).
     platform_type = "exec" if ctx.attr.component_name in ["nvcc", "nvvm"] else "target"
 
-    # Check which platforms are available.
+    # Check which platforms are available (have at least one version).
     platforms_available = []
-    if use_dict_api:
-        if len(ctx.attr.linux_x86_64_repos) > 0:
-            platforms_available.append("linux-x86_64")
-        if len(ctx.attr.linux_sbsa_repos) > 0:
-            platforms_available.append("linux-sbsa")
-        if len(ctx.attr.linux_aarch64_repos) > 0:
-            platforms_available.append("linux-aarch64")
-    else:
-        if ctx.attr.linux_x86_64_repo != "":
-            platforms_available.append("linux-x86_64")
-        if ctx.attr.linux_sbsa_repo != "":
-            platforms_available.append("linux-sbsa")
-        if ctx.attr.linux_aarch64_repo != "":
-            platforms_available.append("linux-aarch64")
+    if len(ctx.attr.linux_x86_64_repos) > 0:
+        platforms_available.append("linux-x86_64")
+    if len(ctx.attr.linux_sbsa_repos) > 0:
+        platforms_available.append("linux-sbsa")
+    if len(ctx.attr.linux_aarch64_repos) > 0:
+        platforms_available.append("linux-aarch64")
 
-    if len(platforms_available) > 0:
-        build_content.append('unsupported_cuda_platform(name = "unsupported_cuda_platform", component = "{}", available_platforms = {})'.format(ctx.attr.component_name, platforms_available))
-        build_content.append("")
+    # Always create unsupported_cuda_platform target - it's used as the default case
+    # in select() when no platform condition matches.
+    build_content.append('unsupported_cuda_platform(name = "unsupported_cuda_platform", component = "{}", available_platforms = {})'.format(ctx.attr.component_name, platforms_available))
+    build_content.append("")
 
     # Only generate target aliases if this component is in TARGET_MAPPING.
     if ctx.attr.component_name not in TARGET_MAPPING:
@@ -69,27 +60,11 @@ def _platform_alias_repo_impl(ctx):
         return
 
     for target in TARGET_MAPPING[ctx.attr.component_name]:
-        # Create alias for each target with platform selection (only if platforms are available).
+        # Create alias for each target with platform selection.
+        # Always add conditions for ALL platforms so that builds on any platform
+        # have a matching select condition. Platforms where the component doesn't
+        # exist will use a dummy target.
         target_name = target if target.find("/") == -1 else target.split("/")[-1]
-
-        if len(platforms_available) > 0:
-            build_content.append("alias(")
-            build_content.append('    name = "{}",'.format(target_name))
-            build_content.append("    actual = select({")
-            if "linux-x86_64" in platforms_available:
-                build_content.append('        "@rules_cuda//cuda:{}_platform_is_linux_x86_64":'.format(platform_type))
-                build_content.append('            ":linux_x86_64_{}",'.format(target_name))
-            if "linux-sbsa" in platforms_available:
-                build_content.append('        "@rules_cuda//cuda:{}_platform_is_linux_sbsa":'.format(platform_type))
-                build_content.append('            ":linux_sbsa_{}",'.format(target_name))
-            if "linux-aarch64" in platforms_available:
-                build_content.append('        "@rules_cuda//cuda:{}_platform_is_linux_aarch64":'.format(platform_type))
-                build_content.append('            ":linux_aarch64_{}",'.format(target_name))
-            build_content.append('        "//conditions:default": ":unsupported_cuda_platform",')
-            build_content.append("    }),")
-            build_content.append('    visibility = ["//visibility:public"],')
-            build_content.append(")")
-            build_content.append("")
 
         # Determine appropriate dummy target based on the target name.
         dummy_target = "@rules_cuda//cuda/dummy:dummy"
@@ -98,83 +73,54 @@ def _platform_alias_repo_impl(ctx):
         elif target_name == "libdevice.10.bc":
             dummy_target = "@rules_cuda//cuda/dummy:libdevice.10.bc"
 
-        # Generate platform-specific aliases for this target (only if versions exist).
-        if "linux-x86_64" in platforms_available:
-            build_content.append("alias(")
-            build_content.append('    name = "linux_x86_64_{}",'.format(target_name))
-            build_content.append("    actual = select({")
-            if use_dict_api:
-                for version in ctx.attr.versions:
-                    if version in ctx.attr.linux_x86_64_repos:
-                        repo_name = ctx.attr.linux_x86_64_repos[version]
-                        build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
-                        build_content.append('            "@{}//{}",'.format(repo_name, target if target.find(":") != -1 else ":" + target))
-                    else:
-                        build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
-                        build_content.append('            "{}",'.format(dummy_target))
-
-                # Add default for versions where this component doesn't exist.
-                build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
+        build_content.append("alias(")
+        build_content.append('    name = "{}",'.format(target_name))
+        build_content.append("    actual = select({")
+        # Add conditions for ALL platforms, using dummy for unavailable ones.
+        for platform in SUPPORTED_PLATFORMS:
+            platform_suffix = platform.replace("-", "_")
+            build_content.append('        "@rules_cuda//cuda:{}_platform_is_{}":'.format(platform_type, platform_suffix))
+            if platform in platforms_available:
+                build_content.append('            ":{}_{}",'.format(platform_suffix, target_name))
             else:
-                # Old string-based API for backward compatibility.
-                for version in ctx.attr.versions:
-                    build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
-                    build_content.append('            "@{}_{}//{}",'.format(ctx.attr.linux_x86_64_repo, version.replace(".", "_"), target if target.find(":") != -1 else ":" + target))
-                build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
-            build_content.append("    }),")
-            build_content.append('    visibility = ["//visibility:public"],')
-            build_content.append(")")
-            build_content.append("")
+                # Platform doesn't have this component, use dummy target.
+                build_content.append('            "{}",'.format(dummy_target))
+        build_content.append('        "//conditions:default": ":unsupported_cuda_platform",')
+        build_content.append("    }),")
+        build_content.append('    visibility = ["//visibility:public"],')
+        build_content.append(")")
+        build_content.append("")
 
-        if "linux-sbsa" in platforms_available:
+        # Generate platform-specific aliases for ALL platforms.
+        # Platforms where the component exists get version-based selection.
+        # Platforms where it doesn't exist get dummy targets for all versions.
+        # This ensures builds on any platform have matching select conditions.
+
+        platform_repos_map = {
+            "linux-x86_64": ctx.attr.linux_x86_64_repos,
+            "linux-sbsa": ctx.attr.linux_sbsa_repos,
+            "linux-aarch64": ctx.attr.linux_aarch64_repos,
+        }
+
+        for platform in SUPPORTED_PLATFORMS:
+            platform_suffix = platform.replace("-", "_")
+            repos_dict = platform_repos_map[platform]
+            platform_available = platform in platforms_available
+
             build_content.append("alias(")
-            build_content.append('    name = "linux_sbsa_{}",'.format(target_name))
+            build_content.append('    name = "{}_{}",'.format(platform_suffix, target_name))
             build_content.append("    actual = select({")
-            if use_dict_api:
-                for version in ctx.attr.versions:
-                    if version in ctx.attr.linux_sbsa_repos:
-                        repo_name = ctx.attr.linux_sbsa_repos[version]
-                        build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
-                        build_content.append('            "@{}//{}",'.format(repo_name, target if target.find(":") != -1 else ":" + target))
-                    else:
-                        build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
-                        build_content.append('            "{}",'.format(dummy_target))
 
-                # Add default for versions where this component doesn't exist.
-                build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
-            else:
-                # Old string-based API for backward compatibility.
-                for version in ctx.attr.versions:
-                    build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
-                    build_content.append('            "@{}_{}//{}",'.format(ctx.attr.linux_sbsa_repo, version.replace(".", "_"), target if target.find(":") != -1 else ":" + target))
-                build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
-            build_content.append("    }),")
-            build_content.append('    visibility = ["//visibility:public"],')
-            build_content.append(")")
-            build_content.append("")
+            for version in ctx.attr.versions:
+                build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
+                if platform_available and version in repos_dict:
+                    repo_name = repos_dict[version]
+                    build_content.append('            "@{}//{}",'.format(repo_name, target if target.find(":") != -1 else ":" + target))
+                else:
+                    # Platform doesn't have this component for this version, use dummy.
+                    build_content.append('            "{}",'.format(dummy_target))
+            build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
 
-        if "linux-aarch64" in platforms_available:
-            build_content.append("alias(")
-            build_content.append('    name = "linux_aarch64_{}",'.format(target_name))
-            build_content.append("    actual = select({")
-            if use_dict_api:
-                for version in ctx.attr.versions:
-                    if version in ctx.attr.linux_aarch64_repos:
-                        repo_name = ctx.attr.linux_aarch64_repos[version]
-                        build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
-                        build_content.append('            "@{}//{}",'.format(repo_name, target if target.find(":") != -1 else ":" + target))
-                    else:
-                        build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
-                        build_content.append('            "{}",'.format(dummy_target))
-
-                # Add default for versions where this component doesn't exist.
-                build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
-            else:
-                # Old string-based API for backward compatibility.
-                for version in ctx.attr.versions:
-                    build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
-                    build_content.append('            "@{}_{}//{}",'.format(ctx.attr.linux_aarch64_repo, version.replace(".", "_"), target if target.find(":") != -1 else ":" + target))
-                build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
             build_content.append("    }),")
             build_content.append('    visibility = ["//visibility:public"],')
             build_content.append(")")
@@ -194,7 +140,6 @@ platform_alias_repo = repository_rule(
             mandatory = True,
             doc = "Name of the component",
         ),
-        # New dict-based API (preferred).
         "linux_x86_64_repos": attr.string_dict(
             default = {},
             doc = "Dictionary mapping versions to x86_64 repository names",
@@ -206,19 +151,6 @@ platform_alias_repo = repository_rule(
         "linux_sbsa_repos": attr.string_dict(
             default = {},
             doc = "Dictionary mapping versions to SBSA repository names",
-        ),
-        # Old string-based API (for backward compatibility).
-        "linux_x86_64_repo": attr.string(
-            default = "",
-            doc = "Base name of the repository to use for x86_64 platform (deprecated, use linux_x86_64_repos)",
-        ),
-        "linux_aarch64_repo": attr.string(
-            default = "",
-            doc = "Base name of the repository to use for ARM64/Jetpack platform (deprecated, use linux_aarch64_repos)",
-        ),
-        "linux_sbsa_repo": attr.string(
-            default = "",
-            doc = "Base name of the repository to use for SBSA platform (deprecated, use linux_sbsa_repos)",
         ),
         "versions": attr.string_list(
             mandatory = True,

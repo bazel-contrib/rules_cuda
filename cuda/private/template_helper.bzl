@@ -30,7 +30,7 @@ def _expand_dctk_cuda(repository_ctx, components):
 
     # Filter out components with empty REGISTRY entries
     valid_components = [comp for comp in components.keys() if len(REGISTRY[comp]) > 0]
-    
+
     all_files_srcs_line = [comp + "_all_files" for comp in valid_components]
     all_files_srcs_line = "srcs = " + repr(all_files_srcs_line)
 
