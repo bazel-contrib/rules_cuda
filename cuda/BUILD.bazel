@@ -4,17 +4,10 @@ load(
     "bool_flag",
     "string_flag",
 )
+load("//cuda/private:platforms.bzl", "SUPPORTED_PLATFORMS")
 load("//cuda/private:rules/flags.bzl", "cuda_archs_flag", "repeatable_string_flag")
 
 package(default_visibility = ["//visibility:public"])
-
-CUDA_PLATFORMS = [
-    "linux-x86_64",
-    "linux-sbsa",
-    "linux-aarch64",
-    "linux-ppc64le",
-    "windows-x86_64",
-]
 
 bzl_library(
     name = "bzl_srcs",
@@ -54,27 +47,27 @@ string_flag(
 string_flag(
     name = "target_platform",
     build_setting_default = "linux-x86_64",
-    values = CUDA_PLATFORMS,
+    values = SUPPORTED_PLATFORMS,
 )
 
 [
     config_setting(
         name = "target_platform_is_{}".format(platform.replace("-", "_")),
         flag_values = {":target_platform": platform},
-    ) for platform in CUDA_PLATFORMS
+    ) for platform in SUPPORTED_PLATFORMS
 ]
 
 string_flag(
     name = "exec_platform",
     build_setting_default = "linux-x86_64",
-    values = CUDA_PLATFORMS,
+    values = SUPPORTED_PLATFORMS,
 )
 
 [
     config_setting(
         name = "exec_platform_is_{}".format(platform.replace("-", "_")),
         flag_values = {":exec_platform": platform},
-    ) for platform in CUDA_PLATFORMS
+    ) for platform in SUPPORTED_PLATFORMS
 ]
 
 # Command line flag to specify the list of CUDA architectures to compile for.
