@@ -9,12 +9,18 @@ cc_binary(
 )
 
 cc_binary(
+    name = "cicc",
+    srcs = ["dummy.cpp"],
+    defines = ["TOOLNAME=cicc"],
+)
+
+cc_binary(
     name = "nvlink",
     srcs = ["dummy.cpp"],
     defines = ["TOOLNAME=nvlink"],
 )
 
-exports_files(["link.stub"])
+exports_files(["link.stub", "libdevice.10.bc"])
 
 cc_binary(
     name = "bin2c",
@@ -26,4 +32,11 @@ cc_binary(
     name = "fatbinary",
     srcs = ["dummy.cpp"],
     defines = ["TOOLNAME=fatbinary"],
+)
+
+# Empty cc_library that provides CcInfo for components not available in this CUDA version.
+cc_library(
+    name = "dummy",
+    srcs = [],
+    hdrs = [],
 )

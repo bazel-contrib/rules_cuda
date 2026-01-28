@@ -2,6 +2,7 @@
 
 load("//cuda/private:redist_json_helper.bzl", "redist_json_helper")
 load("//cuda/private:repositories.bzl", "cuda_component", "cuda_toolkit")
+load("//cuda:platform_alias_extension.bzl", "platform_alias_repo")
 
 cuda_component_tag = tag_class(attrs = {
     "name": attr.string(mandatory = True, doc = "Repo name for the deliverable cuda_component"),
@@ -53,6 +54,9 @@ cuda_redist_json_tag = tag_class(attrs = {
               "URLs are tried in order until one succeeds, so you should list local mirrors first. " +
               "If all downloads fail, the rule will fail.",
     ),
+    "platforms": attr.string_list(
+        doc = "A list of platforms to generate components for.",
+    ),
     "version": attr.string(
         doc = "Generate a URL by using the specified version." +
               "This URL will be tried after all URLs specified in the `urls` attribute.",
@@ -95,17 +99,20 @@ def _module_tag_to_dict(t):
 def _redist_json_impl(module_ctx, attr):
     url, json_object = redist_json_helper.get(module_ctx, attr)
     redist_ver = redist_json_helper.get_redist_version(module_ctx, attr, json_object)
-    component_specs = redist_json_helper.collect_specs(module_ctx, attr, json_object, url)
 
-    mapping = {}
-    for spec in component_specs:
-        repo_name = redist_json_helper.get_repo_name(module_ctx, spec)
-        mapping[spec["component_name"]] = "@" + repo_name
+    platform_mapping = {}
+    for platform in attr.platforms:
+        component_specs = redist_json_helper.collect_specs(module_ctx, attr, platform, json_object, url)
+        mapping = {}
+        for spec in component_specs:
+            repo_name = redist_json_helper.get_repo_name(module_ctx, spec)
+            mapping[spec["component_name"]] = repo_name
 
-        attr = {key: value for key, value in spec.items()}
-        attr["name"] = repo_name
-        cuda_component(**attr)
-    return redist_ver, mapping
+            component_attr = {key: value for key, value in spec.items()}
+            component_attr["name"] = repo_name + "_" + platform.replace("-", "_") + "_" + redist_ver.replace(".", "_")
+            cuda_component(**component_attr)
+        platform_mapping[platform] = mapping
+    return redist_ver, platform_mapping
 
 def _impl(module_ctx):
     # Toolchain configuration is only allowed in the root module, or in rules_cuda.
@@ -121,18 +128,47 @@ def _impl(module_ctx):
         components = rules_cuda.tags.component
         redist_jsons = rules_cuda.tags.redist_json
         toolkits = rules_cuda.tags.toolkit
-
     for component in components:
         cuda_component(**_module_tag_to_dict(component))
 
-    if len(redist_jsons) > 1:
-        fail("Using multiple cuda.redist_json is not supported yet.")
-
     redist_version = None
     components_mapping = None
-    for redist_json in redist_jsons:
-        redist_version, components_mapping = _redist_json_impl(module_ctx, redist_json)
+    redist_versions = []
+    redist_components_mapping = {}
 
+    # Track all versioned repositories for each component and platform.
+    versioned_repos = {}
+    for redist_json in redist_jsons:
+        components_mapping = {}
+        redist_version, platform_mapping = _redist_json_impl(module_ctx, redist_json)
+        redist_versions.append(redist_version)
+        for platform in platform_mapping.keys():
+            for component_name, repo_name in platform_mapping[platform].items():
+                redist_components_mapping[component_name] = repo_name
+
+                # Track the versioned repo name for this component/platform/version.
+                if component_name not in versioned_repos:
+                    versioned_repos[component_name] = {}
+                if platform not in versioned_repos[component_name]:
+                    versioned_repos[component_name][platform] = {}
+                versioned_repos[component_name][platform][redist_version] = repo_name + "_" + platform.replace("-", "_") + "_" + redist_version.replace(".", "_")
+
+    for component_name in redist_components_mapping.keys():
+        # Build dictionaries mapping versions to repo names for each platform.
+        x86_64_repos = {ver: versioned_repos[component_name]["linux-x86_64"][ver] for ver in redist_versions if "linux-x86_64" in versioned_repos[component_name] and ver in versioned_repos[component_name]["linux-x86_64"]}
+        aarch64_repos = {ver: versioned_repos[component_name]["linux-aarch64"][ver] for ver in redist_versions if "linux-aarch64" in versioned_repos[component_name] and ver in versioned_repos[component_name]["linux-aarch64"]}
+        sbsa_repos = {ver: versioned_repos[component_name]["linux-sbsa"][ver] for ver in redist_versions if "linux-sbsa" in versioned_repos[component_name] and ver in versioned_repos[component_name]["linux-sbsa"]}
+
+        platform_alias_repo(
+            name = redist_components_mapping[component_name],
+            repo_name = redist_components_mapping[component_name],
+            component_name = component_name,
+            linux_x86_64_repos = x86_64_repos,
+            linux_aarch64_repos = aarch64_repos,
+            linux_sbsa_repos = sbsa_repos,
+            versions = redist_versions,
+        )
+        components_mapping[component_name] = "@" + redist_components_mapping[component_name]
     registrations = {}
     for toolkit in toolkits:
         if toolkit.name in registrations.keys():
@@ -148,7 +184,16 @@ def _impl(module_ctx):
 
     for _, toolkit in registrations.items():
         if components_mapping != None:
-            cuda_toolkit(name = toolkit.name, components_mapping = components_mapping, version = redist_version)
+            # Always use the maximum version so the toolkit includes all components.
+            # Components that don't exist in older versions will fall back to dummy.
+            toolkit_version = redist_versions[0]
+            for ver in redist_versions:
+                ver_parts = [int(x) for x in ver.split(".")]
+                tv_parts = [int(x) for x in toolkit_version.split(".")]
+                if ver_parts > tv_parts:
+                    toolkit_version = ver
+
+            cuda_toolkit(name = toolkit.name, components_mapping = components_mapping, version = toolkit_version)
         else:
             cuda_toolkit(**_module_tag_to_dict(toolkit))
 
