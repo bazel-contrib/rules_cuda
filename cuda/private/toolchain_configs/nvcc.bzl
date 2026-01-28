@@ -1,7 +1,4 @@
-load("@bazel_skylib//lib:paths.bzl", "paths")
-load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
-load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain", "use_cpp_toolchain")
-load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "use_cpp_toolchain")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
@@ -15,7 +12,7 @@ load(
     "flag_group",
     "flag_set",
 )
-load("//cuda/private:toolchain_configs/utils.bzl", "nvcc_version_ge")
+load("//cuda/private:toolchain_configs/utils.bzl", "collect_paths", "nvcc_version_ge")
 
 def _impl(ctx):
     artifact_name_patterns = [
@@ -42,64 +39,31 @@ def _impl(ctx):
         ),
     ]
 
-    cc_toolchain = find_cpp_toolchain(ctx)
-    cc_feature_configuration = cc_common.configure_features(
-        ctx = ctx,
-        cc_toolchain = cc_toolchain,
-        requested_features = ctx.features,
-        unsupported_features = ctx.disabled_features,
-    )
-    host_compiler = cc_common.get_tool_for_action(
-        feature_configuration = cc_feature_configuration,
-        action_name = CC_ACTION_NAMES.cpp_compile,
-    )
+    path_separator = ctx.configuration.host_path_separator
+    env_paths, _, cicc_dir, libdevice_dir = collect_paths(ctx)
 
-    c_compile_variables = cc_common.create_compile_variables(
-        feature_configuration = cc_feature_configuration,
-        cc_toolchain = cc_toolchain,
-    )
-    env = cc_common.get_environment_variables(
-        feature_configuration = cc_feature_configuration,
-        action_name = CC_ACTION_NAMES.cpp_compile,
-        variables = c_compile_variables,
-    )
-
-    components = [
-        env.get("PATH"),
-        paths.dirname(host_compiler),
-        ctx.configuration.default_shell_env.get("PATH"),
-    ]
-    path = ctx.configuration.host_path_separator.join(
-        [c for c in components if c],
-    )
-
-    cicc_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc else None
-    libdevice_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice else None
-    nvcc_profile_env = []
+    env_sets_nvcc_profile = []
     if nvcc_version_ge(ctx, 13, 0):
-        if cicc_dir != None:
-            nvcc_profile_env.append(
-                env_set(
-                    actions = [ACTION_NAMES.cuda_compile],
-                    env_entries = [env_entry("CICC_PATH", cicc_dir)],
-                ),
-            )
-        if libdevice_dir != None:
-            nvcc_profile_env.append(
-                env_set(
-                    actions = [ACTION_NAMES.cuda_compile],
-                    env_entries = [env_entry("NVVMIR_LIBRARY_DIR", libdevice_dir)],
-                ),
-            )
+        for k, v in {
+            "CICC_PATH": cicc_dir,
+            "NVVMIR_LIBRARY_DIR": libdevice_dir,
+        }.items():
+            if v != None:
+                env_sets_nvcc_profile.append(
+                    env_set(
+                        actions = [ACTION_NAMES.cuda_compile],
+                        env_entries = [env_entry(k, v)],
+                    ),
+                )
 
     nvcc_compile_env_feature = feature(
         name = "nvcc_compile_env",
         env_sets = [
             env_set(
                 actions = [ACTION_NAMES.cuda_compile],
-                env_entries = [env_entry("PATH", path)],
+                env_entries = [env_entry("PATH", path_separator.join(env_paths))],
             ),
-        ] + nvcc_profile_env,
+        ] + env_sets_nvcc_profile,
     )
 
     nvcc_device_link_env_feature = feature(
@@ -107,7 +71,7 @@ def _impl(ctx):
         env_sets = [
             env_set(
                 actions = [ACTION_NAMES.device_link],
-                env_entries = [env_entry("PATH", path)],
+                env_entries = [env_entry("PATH", path_separator.join(env_paths))],
             ),
         ],
     )
