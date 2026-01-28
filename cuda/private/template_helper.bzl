@@ -244,10 +244,10 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     compiler_files = []
     cuda_path_for_subst = ""
     path_data = None
-    if cuda.path:
+    if cuda.path:  # local installation
         compiler_files.append("@cuda//:compiler_deps")
         cuda_path_for_subst = _to_forward_slash(cuda.path)
-    else:
+    else:  # scattered components
         cuda_path_for_subst = "$(location @cuda//:compiler_root)"
         path_data = ["@cuda//:compiler_root"]
         compiler_files.extend([
@@ -256,6 +256,10 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
             "@cuda//:cudart_all_files",
             "@cuda//:curand_all_files",
         ])
+        if int(cuda.version_major) >= 13:
+            compiler_files.extend([
+                "@cuda//:nvvm_all_files",
+            ])
     path_data_line = "path_data = " + repr(path_data) + ","
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
 
