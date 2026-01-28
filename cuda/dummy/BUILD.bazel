@@ -27,3 +27,9 @@ cc_binary(
     srcs = ["dummy.cpp"],
     defines = ["TOOLNAME=fatbinary"],
 )
+
+cc_binary(
+    name = "ptxas",
+    srcs = ["dummy.cpp"],
+    defines = ["TOOLNAME=ptxas"],
+)

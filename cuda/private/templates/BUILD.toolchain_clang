@@ -13,6 +13,7 @@ cuda_toolkit_info(
     fatbinary = "%{fatbinary_label}",
     link_stub = "%{link_stub_label}",
     nvlink = "%{nvlink_label}",
+    ptxas = "%{ptxas_label}",
     # %{cicc_line},
     # %{libdevice_line},
     path = "%{cuda_path}",

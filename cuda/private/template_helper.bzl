@@ -206,6 +206,7 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "%{link_stub_label}": cuda.link_stub_label,
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
+        "%{ptxas_label}": cuda.ptxas_label,
     }
     if cuda.cicc_label:
         substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
@@ -271,6 +272,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{link_stub_label}": cuda.link_stub_label,
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
+        "%{ptxas_label}": cuda.ptxas_label,
     }
     if cuda.cicc_label:
         substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)

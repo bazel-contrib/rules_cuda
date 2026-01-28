@@ -55,7 +55,7 @@ def collect_paths(ctx):
         env_paths.append(paths.join(paths.dirname(libdevice_dir), "bin"))
     if ctx.attr.cuda_toolkit[CudaToolkitInfo].path:
         env_paths.append(paths.join(ctx.attr.cuda_toolkit[CudaToolkitInfo].path, "bin"))
-    for tool_name in ["cicc", "bin2c", "nvlink", "fatbinary"]:
+    for tool_name in ["cicc", "bin2c", "nvlink", "fatbinary", "ptxas"]:
         tool_file = getattr(ctx.attr.cuda_toolkit[CudaToolkitInfo], tool_name, None)
         if tool_file:
             env_paths.append(tool_file.dirname)
