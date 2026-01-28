@@ -53,6 +53,7 @@ def _detect_local_cuda_toolkit(repository_ctx):
     link_stub = "@rules_cuda//cuda/dummy:link.stub"
     bin2c = "@rules_cuda//cuda/dummy:bin2c"
     fatbinary = "@rules_cuda//cuda/dummy:fatbinary"
+    ptxas = "@rules_cuda//cuda/dummy:ptxas"
     if cuda_path != None:
         if repository_ctx.path(cuda_path + "/bin/nvcc" + bin_ext).exists:
             nvcc = str(Label("@cuda//:cuda/bin/nvcc{}".format(bin_ext)))
@@ -64,6 +65,8 @@ def _detect_local_cuda_toolkit(repository_ctx):
             bin2c = str(Label("@cuda//:cuda/bin/bin2c{}".format(bin_ext)))
         if repository_ctx.path(cuda_path + "/bin/fatbinary" + bin_ext).exists:
             fatbinary = str(Label("@cuda//:cuda/bin/fatbinary{}".format(bin_ext)))
+        if repository_ctx.path(cuda_path + "/bin/ptxas" + bin_ext).exists:
+            ptxas = str(Label("@cuda//:cuda/bin/ptxas{}".format(bin_ext)))
 
     nvcc_version_major = -1
     nvcc_version_minor = -1
@@ -84,6 +87,7 @@ def _detect_local_cuda_toolkit(repository_ctx):
         link_stub_label = link_stub,
         bin2c_label = bin2c,
         fatbinary_label = fatbinary,
+        ptxas_label = ptxas,
         cicc_label = None,  # local CTK do not need this
         libdevice_label = None,  # local CTK do not need this
     )
@@ -116,6 +120,7 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     link_stub = "{}//:nvcc/bin/crt/link.stub".format(nvcc_repo)
     bin2c = "{}//:nvcc/bin/bin2c{}".format(nvcc_repo, bin_ext)
     fatbinary = "{}//:nvcc/bin/fatbinary{}".format(nvcc_repo, bin_ext)
+    ptxas = "{}//:nvcc/bin/ptxas{}".format(nvcc_repo, bin_ext)
 
     cicc = None
     libdevice = None
@@ -135,6 +140,7 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
         link_stub_label = link_stub,
         bin2c_label = bin2c,
         fatbinary_label = fatbinary,
+        ptxas_label = ptxas,
         cicc_label = cicc,
         libdevice_label = libdevice,
     )
