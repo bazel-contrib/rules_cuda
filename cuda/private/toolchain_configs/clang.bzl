@@ -1,3 +1,4 @@
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "use_cpp_toolchain")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
@@ -51,7 +52,7 @@ def _impl(ctx):
     ]
 
     path_separator = ctx.configuration.host_path_separator
-    env_paths, env_includes, _, _ = collect_paths(ctx)
+    env_paths, env_includes, _, libdevice_dir = collect_paths(ctx)
     env_entry_include = [env_entry("INCLUDE", path_separator.join(env_includes))] if env_includes else []
 
     clang_compile_env_feature = feature(
@@ -108,6 +109,8 @@ def _impl(ctx):
         ],
     )
 
+    nvvm_root = paths.dirname(paths.dirname(libdevice_dir)) if libdevice_dir else None
+    cuda_root = ctx.attr.cuda_toolkit[CudaToolkitInfo].path
     cuda_path_feature = feature(
         name = "cuda_path",
         enabled = True,
@@ -116,7 +119,7 @@ def _impl(ctx):
                 actions = [
                     ACTION_NAMES.cuda_compile,
                 ],
-                flag_groups = [flag_group(flags = ["--cuda-path=" + ctx.attr.cuda_toolkit[CudaToolkitInfo].path])],
+                flag_groups = [flag_group(flags = ["--cuda-path=" + (nvvm_root or cuda_root)])],
             ),
         ],
     )
