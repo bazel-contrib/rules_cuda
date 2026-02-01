@@ -35,6 +35,12 @@ set -ex
 
 # toolchain configured by the root module of the user
 if [ "$skip_root" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN CONFIGURED BY ROOT MODULE
+============================================================
+EOF
 pushd "$this_dir/toolchain_root"
     bazel build //... --@rules_cuda//cuda:enable=False
     bazel build //... --@rules_cuda//cuda:enable=True
@@ -48,6 +54,12 @@ fi
 
 # toolchain does not exists
 if [ "$skip_none" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN DOES NOT EXIST
+============================================================
+EOF
 pushd "$this_dir/toolchain_none"
     # analysis pass
     bazel build //... --@rules_cuda//cuda:enable=False
@@ -73,6 +85,12 @@ fi
 
 # toolchain configured by rules_cuda
 if [ "$skip_rules" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN CONFIGURED BY RULES_CUDA
+============================================================
+EOF
 pushd "$this_dir/toolchain_rules"
     bazel build //... --@rules_cuda//cuda:enable=False
     bazel build //... --@rules_cuda//cuda:enable=True
@@ -86,6 +104,12 @@ fi
 
 # toolchain configured with deliverables (manual components with workspace)
 if [ "$skip_components_workspace" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN WITH MANUAL COMPONENTS (WORKSPACE)
+============================================================
+EOF
 pushd "$this_dir/toolchain_components"
     bazel build --enable_workspace //... --@rules_cuda//cuda:enable=False
     bazel build --enable_workspace //... --@rules_cuda//cuda:enable=True
@@ -99,6 +123,12 @@ fi
 
 # toolchain configured with deliverables (manual components with bzlmod)
 if [ "$skip_components_bzlmod" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN WITH MANUAL COMPONENTS (BZLMOD)
+============================================================
+EOF
 pushd "$this_dir/toolchain_components"
     bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=False
     bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=True
@@ -112,6 +142,12 @@ fi
 
 # toolchain configured with deliverables (redistrib.json with workspace)
 if [ "$skip_redist_json" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN WITH REDISTRIB.JSON (WORKSPACE)
+============================================================
+EOF
 pushd "$this_dir/toolchain_redist_json"
     bazel build --enable_workspace //... --@rules_cuda//cuda:enable=False
     bazel build --enable_workspace //... --@rules_cuda//cuda:enable=True
