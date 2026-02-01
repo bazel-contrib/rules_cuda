@@ -129,6 +129,17 @@ def _impl(ctx):
     supports_wrapper_device_link_feature = feature(
         name = "supports_wrapper_device_link",
         enabled = True,
+        # see https://discourse.llvm.org/t/rfc-use-the-new-offloding-driver-for-cuda-and-hip-compilation-by-default/77468
+        # and https://github.com/llvm/llvm-project/pull/122312
+        # The binary format is no longer compatible with the NVIDIA compiler's RDC-mode support.
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                ],
+                flag_groups = [flag_group(flags = ["--no-offload-new-driver"])],
+            ),
+        ],
     )
 
     supports_pic_feature = feature(
