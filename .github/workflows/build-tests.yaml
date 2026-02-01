@@ -90,8 +90,17 @@ jobs:
         run: |
           echo "build --@rules_cuda//cuda:copts=-D=_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH" >> $HOME/.bazelrc
 
+      - name: Bazel build config for CI debugging
+        run: echo "build --verbose_failures" >> $HOME/.bazelrc
+
       # Check https://bazel.build/release#support-matrix, manually unroll the the strategy matrix to avoid exploding
       # the combinations.
+
+      # Override cuda redist_json rule version for CI
+      - run: echo "CUDA_REDIST_VERSION_OVERRIDE=${{ matrix.cases.cuda-version }}" >> $GITHUB_ENV
+        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
+      - run: echo "CUDA_REDIST_VERSION_OVERRIDE=${{ matrix.cases.cuda-version }}" >> $env:GITHUB_ENV
+        if: ${{ startsWith(matrix.cases.os, 'windows') }}
 
       # Use Bazel with version specified in .bazelversion
       - run: echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $GITHUB_ENV
@@ -112,7 +121,10 @@ jobs:
       - run: bazelisk shutdown
 
       # run some repo integration tests
-      - run: cd tests/integration && ./test_all.sh
+      - run: cd tests/integration && ./test_all.sh ${{ startsWith(matrix.cases.toolchain, 'llvm') && '--no-components' || '' }}
+        if: ${{ matrix.cases.source == 'nvidia' }}
+      - run: cd tests/integration && ./test_all.sh --no-components --no-redist
+        if: ${{ matrix.cases.source == 'ubuntu' }}
       - run: cd tests/hermeticity && ./test.sh ${{ (startsWith(matrix.cases.cuda-version, '11') || startsWith(matrix.cases.cuda-version, '12')) && '--allow-non-hermetic' || '' }}
         if: ${{ !startsWith(matrix.cases.os, 'windows') && !startsWith(matrix.cases.toolchain, 'llvm') }} # only run for nvcc on linux
 
@@ -135,7 +147,10 @@ jobs:
       - run: bazelisk shutdown
 
       # run some repo integration tests
-      - run: cd tests/integration && ./test_all.sh
+      - run: cd tests/integration && ./test_all.sh ${{ startsWith(matrix.cases.toolchain, 'llvm') && '--no-components' || '' }}
+        if: ${{ matrix.cases.source == 'nvidia' }}
+      - run: cd tests/integration && ./test_all.sh --no-components --no-redist
+        if: ${{ matrix.cases.source == 'ubuntu' }}
 
       # Use Bazel 6
       - run: echo "USE_BAZEL_VERSION=6.4.0" >> $GITHUB_ENV

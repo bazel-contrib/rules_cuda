@@ -6,6 +6,16 @@ def _is_linux(ctx):
 def _is_windows(ctx):
     return ctx.os.name.lower().startswith("windows")
 
+def _get_attr_maybe_override(ctx, attr, name):
+    # NOTE: these overrides are mainly for CI testing purpose.
+    # CUDA_REDIST_INTEGRITY_OVERRIDE, CUDA_REDIST_SHA256_OVERRIDE and CUDA_REDIST_VERSION_OVERRIDE are supported
+    value = getattr(attr, name, None)
+    override = ctx.os.environ.get("CUDA_REDIST_" + name.upper() + "_OVERRIDE", None)
+    if override:
+        print("WARNING: Override CUDA redist_json `{}` {} with {} from env.".format(name, value, override))  # buildifier: disable=print
+        value = override
+    return value
+
 def _get(ctx, attr):
     """Download the redistrib_<version>.json file.
 
@@ -20,7 +30,7 @@ def _get(ctx, attr):
     the_url = None  # the url that successfully fetch redist json, we then use it to fetch deliverables
     urls = [u for u in attr.urls]
 
-    redist_ver = attr.version
+    redist_ver = _get_attr_maybe_override(ctx, attr, "version")
     if redist_ver:
         urls.append("https://developer.download.nvidia.com/compute/cuda/redist/redistrib_{}.json".format(redist_ver))
 
@@ -30,8 +40,8 @@ def _get(ctx, attr):
     for url in urls:
         ret = ctx.download(
             output = "redist.json",
-            integrity = attr.integrity,
-            sha256 = attr.sha256,
+            integrity = _get_attr_maybe_override(ctx, attr, "integrity"),
+            sha256 = _get_attr_maybe_override(ctx, attr, "sha256"),
             url = url,
         )
         if ret.success:
@@ -52,7 +62,7 @@ def _get_redist_version(ctx, attr, redist):
         redist: json object, read from the redistrib_<version>.json file.
     """
 
-    redist_ver = attr.version
+    redist_ver = _get_attr_maybe_override(ctx, attr, "version")
     if not redist_ver:
         redist_ver = redist["release_label"]
 
