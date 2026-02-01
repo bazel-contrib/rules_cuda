@@ -463,6 +463,7 @@ cuda_redist_json = repository_rule(
         "urls": attr.string_list(mandatory = False),
         "version": attr.string(mandatory = False),
     },
+    environ = ["CUDA_REDIST_INTEGRITY_OVERRIDE", "CUDA_REDIST_SHA256_OVERRIDE", "CUDA_REDIST_VERSION_OVERRIDE"],
 )
 
 def rules_cuda_dependencies():
