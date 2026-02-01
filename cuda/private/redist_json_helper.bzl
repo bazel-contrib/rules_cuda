@@ -20,9 +20,26 @@ def _get(ctx, attr):
     the_url = None  # the url that successfully fetch redist json, we then use it to fetch deliverables
     urls = [u for u in attr.urls]
 
-    redist_ver = attr.version
-    if redist_ver:
-        urls.append("https://developer.download.nvidia.com/compute/cuda/redist/redistrib_{}.json".format(redist_ver))
+    redist_integrity = attr.integrity
+    redist_sha256 = attr.sha256
+    redist_version = attr.version
+
+    # NOTE: these overrides are mainly for CI testing purpose.
+    redist_integrity_override = ctx.os.environ.get("CUDA_REDIST_INTEGRITY_OVERRIDE", None)
+    redist_sha256_override = ctx.os.environ.get("CUDA_REDIST_SHA256_OVERRIDE", None)
+    redist_version_override = ctx.os.environ.get("CUDA_REDIST_VERSION_OVERRIDE", None)
+    if redist_integrity_override:
+        print("WARNING: Override CUDA redist_json integrity {} with {} from env.".format(redist_integrity, redist_integrity_override))  # buildifier: disable=print
+        redist_integrity = redist_integrity_override
+    if redist_sha256_override:
+        print("WARNING: Override CUDA redist_json sha256 {} with {} from env.".format(redist_sha256, redist_sha256_override))  # buildifier: disable=print
+        redist_sha256 = redist_sha256_override
+    if redist_version_override:
+        print("WARNING: Override CUDA redist_json version {} with {} from env.".format(redist_version, redist_version_override))  # buildifier: disable=print
+        redist_version = redist_version_override
+
+    if redist_version:
+        urls.append("https://developer.download.nvidia.com/compute/cuda/redist/redistrib_{}.json".format(redist_version))
 
     if len(urls) == 0:
         fail("`urls` or `version` must be specified.")
@@ -30,8 +47,8 @@ def _get(ctx, attr):
     for url in urls:
         ret = ctx.download(
             output = "redist.json",
-            integrity = attr.integrity,
-            sha256 = attr.sha256,
+            integrity = redist_integrity,
+            sha256 = redist_sha256,
             url = url,
         )
         if ret.success:
