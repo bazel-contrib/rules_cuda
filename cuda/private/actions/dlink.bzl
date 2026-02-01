@@ -156,7 +156,12 @@ def _wrapper_device_link(
                 mnemonic = "nvlink",
             )
             cubins.append(cubin)
-            images.append("--image=profile={},file={}".format(arch, cubin.path))
+            if cuda_toolkit.version_major >= 13:
+                # see https://github.com/tensorflow/tensorflow/pull/99186
+                # TODO: supprt kind=ptx
+                images.append("--image3=kind=elf,sm={},file={}".format(stage2_arch.arch, cubin.path))
+            else:
+                images.append("--image=profile={},file={}".format(arch, cubin.path))
 
     # Generate fatbin header from all cubins.
     fatbin = ctx.actions.declare_file("_dlink{suffix}/{0}/{0}.fatbin".format(ctx.attr.name, suffix = pic_suffix))

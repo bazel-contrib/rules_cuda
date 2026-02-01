@@ -340,6 +340,20 @@ def _patch_nvcc_profile_post(repository_ctx, patch_nvcc_profile):
     nvcc_profile_content = "\n".join(lines)
     repository_ctx.file("nvcc/bin/nvcc.profile", nvcc_profile_content)
 
+def _patch_nvvm(repository_ctx, component_name):
+    if component_name != "nvvm":
+        return
+
+    notice = """Clang requires bin/ and include/ and nvvm/libdevice/libdevice.10.bc to make it a valid installation.
+
+See https://github.com/llvm/llvm-project/blob/6de6f7b46/clang/lib/Driver/ToolChains/Cuda.cpp#L206-L211
+and https://github.com/llvm/llvm-project/blob/6de6f7b46/clang/lib/Driver/ToolChains/Cuda.cpp#L221-L225
+and https://github.com/llvm/llvm-project/blob/6de6f7b46/clang/lib/Driver/ToolChains/Cuda.cpp#L287-L291
+"""
+
+    repository_ctx.file("nvvm/bin/__PATCHED_FOR_CLANG__", notice)
+    repository_ctx.file("nvvm/include/__PATCHED_FOR_CLANG__", notice)
+
 def _cuda_component_impl(repository_ctx):
     component_name = None
     if repository_ctx.attr.component_name:
@@ -369,6 +383,7 @@ def _cuda_component_impl(repository_ctx):
     )
 
     _patch_nvcc_profile_post(repository_ctx, patch_nvcc_profile)
+    _patch_nvvm(repository_ctx, component_name)
 
     template_helper.generate_build(
         repository_ctx,
