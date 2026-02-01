@@ -90,6 +90,9 @@ jobs:
         run: |
           echo "build --@rules_cuda//cuda:copts=-D=_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH" >> $HOME/.bazelrc
 
+      - name: Bazel build config for CI debugging
+        run: echo "build --verbose_failures" >> $HOME/.bazelrc
+
       # Check https://bazel.build/release#support-matrix, manually unroll the the strategy matrix to avoid exploding
       # the combinations.
 
