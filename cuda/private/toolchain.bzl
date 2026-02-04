@@ -70,8 +70,7 @@ def _cuda_toolchain_impl(ctx):
     elif has_compiler_executable:
         compiler_executable = ctx.attr.compiler_executable
     elif has_compiler_label:
-        l = ctx.attr.compiler_label.label
-        compiler_executable = "{}/{}/{}".format(l.workspace_root, l.package, l.name)
+        compiler_executable = ctx.file.compiler_label.path
 
     cuda_toolchain_config = ctx.attr.toolchain_config[CudaToolchainConfigInfo]
     selectables_info = config_helper.collect_selectables_info(cuda_toolchain_config.action_configs + cuda_toolchain_config.features)
