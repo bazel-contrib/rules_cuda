@@ -121,7 +121,7 @@ jobs:
       - run: bazelisk shutdown
 
       # run some repo integration tests
-      - run: cd tests/integration && bash ./test_all.sh ${{ startsWith(matrix.cases.toolchain, 'llvm') && '--no-components' || '' }}
+      - run: cd tests/integration && bash ./test_all.sh ${{ (startsWith(matrix.cases.toolchain, 'llvm') || startsWith(matrix.cases.os, 'windows')) && '--no-components' || '' }}
         if: ${{ matrix.cases.source == 'nvidia' }}
       - run: cd tests/integration && bash ./test_all.sh --no-components --no-redist
         if: ${{ matrix.cases.source == 'ubuntu' }}
@@ -147,7 +147,7 @@ jobs:
       - run: bazelisk shutdown
 
       # run some repo integration tests
-      - run: cd tests/integration && bash ./test_all.sh ${{ startsWith(matrix.cases.toolchain, 'llvm') && '--no-components' || '' }}
+      - run: cd tests/integration && bash ./test_all.sh ${{ (startsWith(matrix.cases.toolchain, 'llvm') || startsWith(matrix.cases.os, 'windows')) && '--no-components' || '' }}
         if: ${{ matrix.cases.source == 'nvidia' }}
       - run: cd tests/integration && bash ./test_all.sh --no-components --no-redist
         if: ${{ matrix.cases.source == 'ubuntu' }}
