@@ -90,6 +90,13 @@ On Windows, this means that you will also need to set the environment variable `
   object files that can only be consumed by `cuda_library`. It is created for relocatable device code and device link
   time optimization source files.
 
+### Macros
+
+- `cuda_binary`: A convenience macro for building CUDA-enabled executables.
+  It builds a `cc_binary`-style target from CUDA sources.
+- `cuda_test`: A convenience macro for CUDA-enabled tests.
+  It behaves like `cuda_binary` but creates a `cc_test`-style target that can be run with `bazel test`.
+
 ### Flags
 
 Some flags are defined in [cuda/BUILD.bazel](cuda/BUILD.bazel). To use them, for example:
