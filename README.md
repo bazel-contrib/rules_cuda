@@ -1,10 +1,39 @@
 # CUDA rules for [Bazel](https://bazel.build)
 
-This repository contains [Starlark](https://github.com/bazelbuild/starlark) implementation of CUDA rules in Bazel.
+This repository contains [Starlark](https://github.com/bazelbuild/starlark) implementation of CUDA rules for Bazel.
 
-These rules provide some macros and rules that make it easier to build CUDA with Bazel.
+These rules provide a set of rules and macros that make it easier to build CUDA with Bazel.
 
 ## Getting Started
+
+### Bzlmod
+
+Add the following to your `MODULE.bazel` file and replace the placeholders with actual values.
+
+```starlark
+bazel_dep(name = "rules_cc", version = "{rules_cc_version}")
+bazel_dep(name = "rules_cuda", version = "0.2.5")
+
+# pick a specific version (this is optional and can be skipped)
+archive_override(
+    module_name = "rules_cuda",
+    integrity = "{SRI value}",  # see https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
+    url = "https://github.com/bazel-contrib/rules_cuda/archive/{git_commit_hash}.tar.gz",
+    strip_prefix = "rules_cuda-{git_commit_hash}",
+)
+
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.toolkit(
+    name = "cuda",
+    toolkit_path = "",
+)
+use_repo(cuda, "cuda")
+```
+
+`rules_cc` provides the C++ toolchain dependency for `rules_cuda`; in Bzlmod, the compatibility repository is handled by `rules_cc` itself.
+
+<details>
+<summary>Traditional WORKSPACE approach</summary>
 
 ### Traditional WORKSPACE approach
 
@@ -35,40 +64,23 @@ rules_cuda_toolchains(register_toolchains = True)
 
 `rules_cc` needs to be available before loading `rules_cuda`, and `compatibility_proxy_repo()` must be called to populate the compatibility repository that `rules_cc` expects.
 
-**NOTE**: `rules_cuda_toolchains` implicitly calls to `register_detected_cuda_toolchains`, and the use of
-`register_detected_cuda_toolchains` depends on the environment variable `CUDA_PATH`. You must also ensure the
-host compiler is available. On Windows, this means that you will also need to set the environment variable
-`BAZEL_VC` properly.
+**NOTE**: `rules_cuda_toolchains` implicitly calls `register_detected_cuda_toolchains`, and the use of
+`register_detected_cuda_toolchains` depends on the auto-detection of installed CUDA toolkits.
 
-[`detect_cuda_toolkit`](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/repositories.bzl#L28-L58)
-and [`detect_clang`](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/repositories.bzl#L143-L166)
-determains how the toolchains are detected.
+</details>
 
-### Bzlmod
+### Toolchain Detection
 
-Add the following to your `MODULE.bazel` file and replace the placeholders with actual values.
+For hermetic toolchains, the rules handle toolchain configuration and library downloading automatically.
+See [cuda.redist_json integration test](tests/integration/toolchain_redist_json) for a comprehensible example.
 
-```starlark
-bazel_dep(name = "rules_cc", version = "{rules_cc_version}")
-bazel_dep(name = "rules_cuda", version = "0.2.1")
+For locally installed toolchains,
+[`_detect_local_cuda_toolkit`](https://github.com/bazel-contrib/rules_cuda/blob/ce98e4ae5c/cuda/private/repositories.bzl#L30-L45)
+and [`detect_clang`](https://github.com/bazel-contrib/rules_cuda/blob/ce98e4ae5c/cuda/private/repositories.bzl#L215-L256)
+determines how they are detected.
 
-# pick a specific version (this is optional an can be skipped)
-archive_override(
-    module_name = "rules_cuda",
-    integrity = "{SRI value}",  # see https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
-    url = "https://github.com/bazel-contrib/rules_cuda/archive/{git_commit_hash}.tar.gz",
-    strip_prefix = "rules_cuda-{git_commit_hash}",
-)
-
-cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-cuda.toolkit(
-    name = "cuda",
-    toolkit_path = "",
-)
-use_repo(cuda, "cuda")
-```
-
-`rules_cc` provides the C++ toolchain dependency for `rules_cuda`; in Bzlmod the compatibility repository is handled by `rules_cc` itself.
+Either situation depends on cc toolchain availability, so you must also ensure the cc compiler is properly configured.
+On Windows, this means that you will also need to set the environment variable `BAZEL_VC` properly.
 
 ### Rules
 
@@ -77,6 +89,13 @@ use_repo(cuda, "cuda")
 - `cuda_objects`: If you don't understand what _device link_ means, you must never use it. This rule produces incomplete
   object files that can only be consumed by `cuda_library`. It is created for relocatable device code and device link
   time optimization source files.
+
+### Macros
+
+- `cuda_binary`: A convenience macro for building CUDA-enabled executables.
+  It builds a `cc_binary`-style target from CUDA sources.
+- `cuda_test`: A convenience macro for CUDA-enabled tests.
+  It behaves like `cuda_binary` but creates a `cc_test`-style target that can be run with `bazel test`.
 
 ### Flags
 
@@ -93,7 +112,7 @@ In `.bazelrc` file, you can define a shortcut alias for the flag, for example:
 build --flag_alias=cuda_archs=@rules_cuda//cuda:archs
 ```
 
-and then you can use it as following:
+and then you can use it as follows:
 
 ```
 bazel build --cuda_archs=compute_61:compute_61,sm_61
@@ -103,28 +122,28 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
 - `@rules_cuda//cuda:enable`
 
-  Enable or disable all rules_cuda related rules. When disabled, the detected cuda toolchains will also be disabled to avoid potential human error.
+  Enable or disable all rules_cuda related rules. When disabled, the detected CUDA toolchains will also be disabled to avoid potential human error.
   By default, rules_cuda rules are enabled. See `examples/if_cuda` for how to support both cuda-enabled and cuda-free builds.
 
 - `@rules_cuda//cuda:archs`
 
-  Select the cuda archs to support. See [cuda_archs specification DSL grammar](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/rules/flags.bzl#L14-L44).
+  Select the CUDA archs to support. See [cuda_archs specification DSL grammar](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/rules/flags.bzl#L14-L44).
 
 - `@rules_cuda//cuda:compiler`
 
-  Select the cuda compiler, available options are `nvcc` or `clang`
+  Select the CUDA compiler; available options are `nvcc` or `clang`.
 
 - `@rules_cuda//cuda:copts`
 
-  Add the copts to all cuda compile actions.
+  Add copts to all CUDA compile actions.
 
 - `@rules_cuda//cuda:host_copts`
 
-  Add the copts to the host compiler.
+  Add copts to the host compiler.
 
 - `@rules_cuda//cuda:runtime`
 
-  Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static` link the static cuda runtime.
+  Set the default cudart to link; for example, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static` links the static CUDA runtime.
 
 - `--features=cuda_device_debug`
 
@@ -134,7 +153,7 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
 ## Examples
 
-Checkout the examples to see if it fits your needs.
+Check out the examples to see if they fit your needs.
 
 See [examples](./examples) for basic usage.
 
@@ -148,11 +167,11 @@ Sometimes the following error occurs:
 cc1plus: fatal error: /tmp/tmpxft_00000002_00000019-2.cpp: No such file or directory
 ```
 
-The problem is caused by nvcc use PID to determine temporary file name, and with `--spawn_strategy linux-sandbox` which is the default strategy on Linux, the PIDs nvcc sees are all very small numbers, say 2~4 due to sandboxing. `linux-sandbox` is not hermetic because [it mounts root into the sandbox](https://docs.bazel.build/versions/main/command-line-reference.html#flag--experimental_use_hermetic_linux_sandbox), thus, `/tmp` is shared between sandboxes, which is causing name conflict under high parallelism. Similar problem has been reported at [nvidia forums](https://forums.developer.nvidia.com/t/avoid-generating-temp-files-in-tmp-while-nvcc-compiling/197657/10).
+The problem is caused by nvcc using PIDs to determine temporary file names, and with `--spawn_strategy linux-sandbox`, which is the default strategy on Linux, the PIDs nvcc sees are all very small numbers (say 2~4) due to sandboxing. `linux-sandbox` is not hermetic because [it mounts root into the sandbox](https://docs.bazel.build/versions/main/command-line-reference.html#flag--experimental_use_hermetic_linux_sandbox), so `/tmp` is shared between sandboxes, which causes name conflicts under high parallelism. A similar problem has been reported on the [NVIDIA forums](https://forums.developer.nvidia.com/t/avoid-generating-temp-files-in-tmp-while-nvcc-compiling/197657/10).
 
 To avoid it:
 
 - Update to Bazel 7 where `--incompatible_sandbox_hermetic_tmp` is enabled by default.
-- Use `--spawn_strategy local` should eliminate the case because it will let nvcc sees the true PIDs.
-- Use `--experimental_use_hermetic_linux_sandbox` should eliminate the case because it will avoid the sharing of `/tmp`.
-- Add `-objtemp` option to the command should reduce the case from happening.
+- Using `--spawn_strategy local` should eliminate the case because it lets nvcc see the true PIDs.
+- Using `--experimental_use_hermetic_linux_sandbox` should eliminate the case because it avoids sharing `/tmp`.
+- Adding the `-objtemp` option should reduce the chance of this happening.
