@@ -113,7 +113,7 @@ def _collect_specs(ctx, attr, redist, the_url):
     return specs
 
 def _get_repo_name(ctx, spec):
-    """Get cannonical repo name when using redistrib_<version>.json file.
+    """Get canonical repo name when using redistrib_<version>.json file.
 
     Args:
         ctx: repository_ctx | module_ctx
