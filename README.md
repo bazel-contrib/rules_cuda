@@ -30,7 +30,7 @@ cuda.toolkit(
 use_repo(cuda, "cuda")
 ```
 
-`rules_cc` provides the C++ toolchain dependency for `rules_cuda`; in Bzlmod the compatibility repository is handled by `rules_cc` itself.
+`rules_cc` provides the C++ toolchain dependency for `rules_cuda`; in Bzlmod, the compatibility repository is handled by `rules_cc` itself.
 
 <details>
 <summary>Traditional WORKSPACE approach</summary>
@@ -112,7 +112,7 @@ In `.bazelrc` file, you can define a shortcut alias for the flag, for example:
 build --flag_alias=cuda_archs=@rules_cuda//cuda:archs
 ```
 
-and then you can use it as following:
+and then you can use it as follows:
 
 ```
 bazel build --cuda_archs=compute_61:compute_61,sm_61
@@ -122,28 +122,28 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
 - `@rules_cuda//cuda:enable`
 
-  Enable or disable all rules_cuda related rules. When disabled, the detected cuda toolchains will also be disabled to avoid potential human error.
+  Enable or disable all rules_cuda related rules. When disabled, the detected CUDA toolchains will also be disabled to avoid potential human error.
   By default, rules_cuda rules are enabled. See `examples/if_cuda` for how to support both cuda-enabled and cuda-free builds.
 
 - `@rules_cuda//cuda:archs`
 
-  Select the cuda archs to support. See [cuda_archs specification DSL grammar](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/rules/flags.bzl#L14-L44).
+  Select the CUDA archs to support. See [cuda_archs specification DSL grammar](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/rules/flags.bzl#L14-L44).
 
 - `@rules_cuda//cuda:compiler`
 
-  Select the cuda compiler, available options are `nvcc` or `clang`
+  Select the CUDA compiler; available options are `nvcc` or `clang`.
 
 - `@rules_cuda//cuda:copts`
 
-  Add the copts to all cuda compile actions.
+  Add copts to all CUDA compile actions.
 
 - `@rules_cuda//cuda:host_copts`
 
-  Add the copts to the host compiler.
+  Add copts to the host compiler.
 
 - `@rules_cuda//cuda:runtime`
 
-  Set the default cudart to link, for example, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static` link the static cuda runtime.
+  Set the default cudart to link; for example, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static` links the static CUDA runtime.
 
 - `--features=cuda_device_debug`
 
@@ -153,7 +153,7 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
 ## Examples
 
-Checkout the examples to see if it fits your needs.
+Check out the examples to see if they fit your needs.
 
 See [examples](./examples) for basic usage.
 
@@ -167,11 +167,11 @@ Sometimes the following error occurs:
 cc1plus: fatal error: /tmp/tmpxft_00000002_00000019-2.cpp: No such file or directory
 ```
 
-The problem is caused by nvcc use PID to determine temporary file name, and with `--spawn_strategy linux-sandbox` which is the default strategy on Linux, the PIDs nvcc sees are all very small numbers, say 2~4 due to sandboxing. `linux-sandbox` is not hermetic because [it mounts root into the sandbox](https://docs.bazel.build/versions/main/command-line-reference.html#flag--experimental_use_hermetic_linux_sandbox), thus, `/tmp` is shared between sandboxes, which is causing name conflict under high parallelism. Similar problem has been reported at [nvidia forums](https://forums.developer.nvidia.com/t/avoid-generating-temp-files-in-tmp-while-nvcc-compiling/197657/10).
+The problem is caused by nvcc using PIDs to determine temporary file names, and with `--spawn_strategy linux-sandbox`, which is the default strategy on Linux, the PIDs nvcc sees are all very small numbers (say 2~4) due to sandboxing. `linux-sandbox` is not hermetic because [it mounts root into the sandbox](https://docs.bazel.build/versions/main/command-line-reference.html#flag--experimental_use_hermetic_linux_sandbox), so `/tmp` is shared between sandboxes, which causes name conflicts under high parallelism. A similar problem has been reported on the [NVIDIA forums](https://forums.developer.nvidia.com/t/avoid-generating-temp-files-in-tmp-while-nvcc-compiling/197657/10).
 
 To avoid it:
 
 - Update to Bazel 7 where `--incompatible_sandbox_hermetic_tmp` is enabled by default.
-- Use `--spawn_strategy local` should eliminate the case because it will let nvcc sees the true PIDs.
-- Use `--experimental_use_hermetic_linux_sandbox` should eliminate the case because it will avoid the sharing of `/tmp`.
-- Add `-objtemp` option to the command should reduce the case from happening.
+- Using `--spawn_strategy local` should eliminate the case because it lets nvcc see the true PIDs.
+- Using `--experimental_use_hermetic_linux_sandbox` should eliminate the case because it avoids sharing `/tmp`.
+- Adding the `-objtemp` option should reduce the chance of this happening.
