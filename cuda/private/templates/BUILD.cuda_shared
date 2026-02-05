@@ -1,5 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")  # @unused
-load("@cuda//:defs.bzl", "additional_header_deps", "if_cuda_toolkit_version_ge", "if_local_cuda_toolkit")  # @unused
+load("@cuda//:defs.bzl", "additional_header_deps", "any_or_first", "if_cuda_toolkit_version_ge", "if_local_cuda_toolkit")  # @unused
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_import", "cc_library")
 load("@rules_cuda//cuda:defs.bzl", "cc_import_versioned_sos", "if_linux", "if_windows")  # @unused
 

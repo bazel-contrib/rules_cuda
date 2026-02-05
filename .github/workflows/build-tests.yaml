@@ -121,9 +121,9 @@ jobs:
       - run: bazelisk shutdown
 
       # run some repo integration tests
-      - run: cd tests/integration && ./test_all.sh ${{ startsWith(matrix.cases.toolchain, 'llvm') && '--no-components' || '' }}
+      - run: cd tests/integration && bash ./test_all.sh ${{ (startsWith(matrix.cases.toolchain, 'llvm') || startsWith(matrix.cases.os, 'windows')) && '--no-components' || '' }}
         if: ${{ matrix.cases.source == 'nvidia' }}
-      - run: cd tests/integration && ./test_all.sh --no-components --no-redist
+      - run: cd tests/integration && bash ./test_all.sh --no-components --no-redist
         if: ${{ matrix.cases.source == 'ubuntu' }}
       - run: cd tests/hermeticity && ./test.sh ${{ (startsWith(matrix.cases.cuda-version, '11') || startsWith(matrix.cases.cuda-version, '12')) && '--allow-non-hermetic' || '' }}
         if: ${{ !startsWith(matrix.cases.os, 'windows') && !startsWith(matrix.cases.toolchain, 'llvm') }} # only run for nvcc on linux
@@ -147,9 +147,9 @@ jobs:
       - run: bazelisk shutdown
 
       # run some repo integration tests
-      - run: cd tests/integration && ./test_all.sh ${{ startsWith(matrix.cases.toolchain, 'llvm') && '--no-components' || '' }}
+      - run: cd tests/integration && bash ./test_all.sh ${{ (startsWith(matrix.cases.toolchain, 'llvm') || startsWith(matrix.cases.os, 'windows')) && '--no-components' || '' }}
         if: ${{ matrix.cases.source == 'nvidia' }}
-      - run: cd tests/integration && ./test_all.sh --no-components --no-redist
+      - run: cd tests/integration && bash ./test_all.sh --no-components --no-redist
         if: ${{ matrix.cases.source == 'ubuntu' }}
 
       # Use Bazel 6

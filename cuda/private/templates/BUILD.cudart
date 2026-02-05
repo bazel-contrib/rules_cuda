@@ -27,14 +27,20 @@ conditional_culibos_a = if_cuda_toolkit_version_ge(
 
 cc_import(
     name = "cudart_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/cudart.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/cudart.lib",
+        "%{component_name}/%{libpath}/cudart.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )
 
 cc_import(
     name = "cudadevrt_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/cudadevrt.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/cudadevrt.lib",
+        "%{component_name}/%{libpath}/cudadevrt.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )
@@ -95,7 +101,10 @@ cc_import(
 
 cc_import(
     name = "cuda_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/cuda.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/cuda.lib",
+        "%{component_name}/%{libpath}/cuda.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )

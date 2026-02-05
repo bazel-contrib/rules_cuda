@@ -5,7 +5,10 @@ cc_import_versioned_sos(
 
 cc_import(
     name = "cufft_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/cufft.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/cufft.lib",
+        "%{component_name}/%{libpath}/cufft.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )
@@ -17,7 +20,10 @@ cc_import_versioned_sos(
 
 cc_import(
     name = "cufftw_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/cufftw.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/cufftw.lib",
+        "%{component_name}/%{libpath}/cufftw.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )
