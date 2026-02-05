@@ -44,8 +44,8 @@ EOF
 pushd "$this_dir/toolchain_root"
     bazel build //... --@rules_cuda//cuda:enable=False
     bazel build //... --@rules_cuda//cuda:enable=True
-    bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=False
-    bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=True
+    bazel build //:optionally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build //:optionally_use_rule --@rules_cuda//cuda:enable=True
     bazel build //:use_library
     bazel build //:use_rule
     bazel clean && bazel shutdown
@@ -66,8 +66,8 @@ pushd "$this_dir/toolchain_none"
     bazel build //... --@rules_cuda//cuda:enable=True
 
     # force build optional targets
-    bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=False
-    ERR=$(bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=True 2>&1 || true)
+    bazel build //:optionally_use_rule --@rules_cuda//cuda:enable=False
+    ERR=$(bazel build //:optionally_use_rule --@rules_cuda//cuda:enable=True 2>&1 || true)
     if ! [[ $ERR == *"didn't satisfy constraint"*"valid_toolchain_is_configured"* ]]; then exit 1; fi
 
     # use library should analyse build successfully (empty cuda_runtime target exists)
@@ -94,8 +94,8 @@ EOF
 pushd "$this_dir/toolchain_rules"
     bazel build //... --@rules_cuda//cuda:enable=False
     bazel build //... --@rules_cuda//cuda:enable=True
-    bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=False
-    bazel build //:optinally_use_rule --@rules_cuda//cuda:enable=True
+    bazel build //:optionally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build //:optionally_use_rule --@rules_cuda//cuda:enable=True
     bazel build //:use_library
     bazel build //:use_rule
     bazel clean && bazel shutdown
@@ -113,8 +113,8 @@ EOF
 pushd "$this_dir/toolchain_components"
     bazel build --enable_workspace //... --@rules_cuda//cuda:enable=False
     bazel build --enable_workspace //... --@rules_cuda//cuda:enable=True
-    bazel build --enable_workspace //:optinally_use_rule --@rules_cuda//cuda:enable=False
-    bazel build --enable_workspace //:optinally_use_rule --@rules_cuda//cuda:enable=True
+    bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=True
     bazel build --enable_workspace //:use_library
     bazel build --enable_workspace //:use_rule
     bazel clean && bazel shutdown
@@ -132,8 +132,8 @@ EOF
 pushd "$this_dir/toolchain_components"
     bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=False
     bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=True
-    bazel build --enable_bzlmod //:optinally_use_rule --@rules_cuda//cuda:enable=False
-    bazel build --enable_bzlmod //:optinally_use_rule --@rules_cuda//cuda:enable=True
+    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True
     bazel build --enable_bzlmod //:use_library
     bazel build --enable_bzlmod //:use_rule
     bazel clean && bazel shutdown
@@ -151,8 +151,8 @@ EOF
 pushd "$this_dir/toolchain_redist_json"
     bazel build --enable_workspace //... --@rules_cuda//cuda:enable=False
     bazel build --enable_workspace //... --@rules_cuda//cuda:enable=True
-    bazel build --enable_workspace //:optinally_use_rule --@rules_cuda//cuda:enable=False
-    bazel build --enable_workspace //:optinally_use_rule --@rules_cuda//cuda:enable=True
+    bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=True
     bazel build --enable_workspace //:use_library
     bazel build --enable_workspace //:use_rule
     bazel clean && bazel shutdown

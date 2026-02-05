@@ -23,7 +23,7 @@ cuda_library(
 )
 
 cc_binary(
-    name = "optinally_use_rule",
+    name = "optionally_use_rule",
     srcs = ["@rules_cuda_examples//if_cuda:main.cpp"],
     defines = [] + select({
         "@rules_cuda//cuda:is_enabled": ["CUDA_ENABLED"],
