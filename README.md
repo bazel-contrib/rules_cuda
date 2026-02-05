@@ -1,10 +1,39 @@
 # CUDA rules for [Bazel](https://bazel.build)
 
-This repository contains [Starlark](https://github.com/bazelbuild/starlark) implementation of CUDA rules in Bazel.
+This repository contains [Starlark](https://github.com/bazelbuild/starlark) implementation of CUDA rules for Bazel.
 
-These rules provide some macros and rules that make it easier to build CUDA with Bazel.
+These rules provide a set of rules and macros that make it easier to build CUDA with Bazel.
 
 ## Getting Started
+
+### Bzlmod
+
+Add the following to your `MODULE.bazel` file and replace the placeholders with actual values.
+
+```starlark
+bazel_dep(name = "rules_cc", version = "{rules_cc_version}")
+bazel_dep(name = "rules_cuda", version = "0.2.5")
+
+# pick a specific version (this is optional and can be skipped)
+archive_override(
+    module_name = "rules_cuda",
+    integrity = "{SRI value}",  # see https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
+    url = "https://github.com/bazel-contrib/rules_cuda/archive/{git_commit_hash}.tar.gz",
+    strip_prefix = "rules_cuda-{git_commit_hash}",
+)
+
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.toolkit(
+    name = "cuda",
+    toolkit_path = "",
+)
+use_repo(cuda, "cuda")
+```
+
+`rules_cc` provides the C++ toolchain dependency for `rules_cuda`; in Bzlmod the compatibility repository is handled by `rules_cc` itself.
+
+<details>
+<summary>Traditional WORKSPACE approach</summary>
 
 ### Traditional WORKSPACE approach
 
@@ -35,40 +64,23 @@ rules_cuda_toolchains(register_toolchains = True)
 
 `rules_cc` needs to be available before loading `rules_cuda`, and `compatibility_proxy_repo()` must be called to populate the compatibility repository that `rules_cc` expects.
 
-**NOTE**: `rules_cuda_toolchains` implicitly calls to `register_detected_cuda_toolchains`, and the use of
-`register_detected_cuda_toolchains` depends on the environment variable `CUDA_PATH`. You must also ensure the
-host compiler is available. On Windows, this means that you will also need to set the environment variable
-`BAZEL_VC` properly.
+**NOTE**: `rules_cuda_toolchains` implicitly calls `register_detected_cuda_toolchains`, and the use of
+`register_detected_cuda_toolchains` depends on the auto-detection of installed CUDA toolkits.
 
-[`detect_cuda_toolkit`](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/repositories.bzl#L28-L58)
-and [`detect_clang`](https://github.com/bazel-contrib/rules_cuda/blob/5633f0c0f7/cuda/private/repositories.bzl#L143-L166)
-determains how the toolchains are detected.
+</details>
 
-### Bzlmod
+### Toolchain Detection
 
-Add the following to your `MODULE.bazel` file and replace the placeholders with actual values.
+For hermetic toolchains, the rules handle toolchain configuration and library downloading automatically.
+See [cuda.redist_json integration test](tests/integration/toolchain_redist_json) for a comprehensible example.
 
-```starlark
-bazel_dep(name = "rules_cc", version = "{rules_cc_version}")
-bazel_dep(name = "rules_cuda", version = "0.2.1")
+For locally installed toolchains,
+[`_detect_local_cuda_toolkit`](https://github.com/bazel-contrib/rules_cuda/blob/ce98e4ae5c/cuda/private/repositories.bzl#L30-L45)
+and [`detect_clang`](https://github.com/bazel-contrib/rules_cuda/blob/ce98e4ae5c/cuda/private/repositories.bzl#L215-L256)
+determines how they are detected.
 
-# pick a specific version (this is optional an can be skipped)
-archive_override(
-    module_name = "rules_cuda",
-    integrity = "{SRI value}",  # see https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity
-    url = "https://github.com/bazel-contrib/rules_cuda/archive/{git_commit_hash}.tar.gz",
-    strip_prefix = "rules_cuda-{git_commit_hash}",
-)
-
-cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
-cuda.toolkit(
-    name = "cuda",
-    toolkit_path = "",
-)
-use_repo(cuda, "cuda")
-```
-
-`rules_cc` provides the C++ toolchain dependency for `rules_cuda`; in Bzlmod the compatibility repository is handled by `rules_cc` itself.
+Either situation depends on cc toolchain availability, so you must also ensure the cc compiler is properly configured.
+On Windows, this means that you will also need to set the environment variable `BAZEL_VC` properly.
 
 ### Rules
 
