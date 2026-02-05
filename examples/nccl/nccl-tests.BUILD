@@ -1,3 +1,4 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 load("@rules_cuda_examples//nccl:nccl-tests.bzl", "nccl_tests_binary")
 
