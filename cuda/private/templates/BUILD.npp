@@ -37,7 +37,10 @@ _NPP_LIBS = {
 [
     cc_import(
         name = name + "_lib",
-        interface_library = "%{component_name}/%{libpath}/x64/{}.lib".format(name),
+        interface_library = any_or_first(
+            "%{component_name}/%{libpath}/x64/{}.lib".format(name),
+            "%{component_name}/%{libpath}/{}.lib".format(name),
+        ),
         system_provided = 1,
         target_compatible_with = ["@platforms//os:windows"],
     )

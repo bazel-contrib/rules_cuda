@@ -5,7 +5,10 @@ cc_import_versioned_sos(
 
 cc_import(
     name = "cusolver_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/cusolver.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/cusolver.lib",
+        "%{component_name}/%{libpath}/cusolver.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )

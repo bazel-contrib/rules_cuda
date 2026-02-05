@@ -33,3 +33,9 @@ def additional_header_deps(component_name):
         ]))
 
     return []
+
+def any_or_first(*paths):
+    exists = native.glob(paths, allow_empty = True)
+    if exists:
+        return exists[0]
+    return paths[0]

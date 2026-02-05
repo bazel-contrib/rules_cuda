@@ -7,7 +7,10 @@ cc_import(
 
 cc_import(
     name = "nvml_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/nvml.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/nvml.lib",
+        "%{component_name}/%{libpath}/nvml.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )

@@ -10,14 +10,20 @@ cc_import_versioned_sos(
 
 cc_import(
     name = "cublas_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/cublas.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/cublas.lib",
+        "%{component_name}/%{libpath}/cublas.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )
 
 cc_import(
     name = "cublasLt_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/cublasLt.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/cublasLt.lib",
+        "%{component_name}/%{libpath}/cublasLt.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )

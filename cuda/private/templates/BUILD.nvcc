@@ -27,7 +27,10 @@ cc_import(
 
 cc_import(
     name = "nvptxcompiler_lib",
-    interface_library = "%{component_name}/%{libpath}/x64/nvptxcompiler_static.lib",
+    interface_library = any_or_first(
+        "%{component_name}/%{libpath}/x64/nvptxcompiler_static.lib",
+        "%{component_name}/%{libpath}/nvptxcompiler_static.lib",
+    ),
     system_provided = 1,
     target_compatible_with = ["@platforms//os:windows"],
 )
