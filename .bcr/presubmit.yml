@@ -1,7 +1,8 @@
 matrix:
   bazel:
-    - 6.x
     - 7.x
+    - 8.x
+    - 9.x
 tasks:
   verify_targets_linux:
     name: Verify build targets
