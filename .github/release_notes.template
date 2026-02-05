@@ -1,4 +1,16 @@
-## `WORKSPACE` code
+## Bzlmod
+```starlark
+bazel_dep(name = "rules_cc", version = "{rules_cc_version}")
+bazel_dep(name = "rules_cuda", version = "{version}")
+
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.toolkit(name = "cuda")
+use_repo(cuda, "cuda")
+```
+
+<details>
+<summary>Legacy WORKSPACE config</summary>
+
 ```starlark
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -22,3 +34,5 @@ load("@rules_cuda//cuda:repositories.bzl", "rules_cuda_dependencies", "rules_cud
 rules_cuda_dependencies()
 rules_cuda_toolchains(register_toolchains = True)
 ```
+
+</details>
