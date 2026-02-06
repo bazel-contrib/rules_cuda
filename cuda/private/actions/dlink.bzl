@@ -158,7 +158,7 @@ def _wrapper_device_link(
             cubins.append(cubin)
             if cuda_toolkit.version_major >= 13:
                 # see https://github.com/tensorflow/tensorflow/pull/99186
-                # TODO: supprt kind=ptx
+                # TODO: support kind=ptx
                 images.append("--image3=kind=elf,sm={},file={}".format(stage2_arch.arch, cubin.path))
             else:
                 images.append("--image=profile={},file={}".format(arch, cubin.path))

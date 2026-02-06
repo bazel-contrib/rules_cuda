@@ -33,7 +33,7 @@ cuda_component(
     version = "12.6.85",
 )
 
-# NOTE: this is only usefull when use clang as cuda compiler driver
+# NOTE: this is only useful when use clang as cuda compiler driver
 cuda_component(
     name = "cuda_curand",
     component_name = "curand",

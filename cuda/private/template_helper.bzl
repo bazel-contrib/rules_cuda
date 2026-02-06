@@ -112,7 +112,7 @@ def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = T
     Args:
         repository_ctx: repository_ctx
         libpath: substitution of %{libpath}
-        components: dict[str, str], the components of CTK to be included, mappeed to the repo names for the components
+        components: dict[str, str], the components of CTK to be included, mapped to the repo names for the components
         is_cuda_repo: See Notes, True for @cuda generation, False for @cuda_<component> generation.
         is_deliverable: See Notes
     """
