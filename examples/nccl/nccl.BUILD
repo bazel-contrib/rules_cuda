@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_import", "cc_library")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library", "cuda_objects")
 load("@rules_cuda_examples//nccl:nccl.bzl", "if_cuda_clang", "if_cuda_nvcc", "nccl_primitive")
 
