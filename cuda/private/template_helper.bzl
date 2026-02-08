@@ -213,7 +213,7 @@ def _generate_toolchain_build(repository_ctx, cuda):
     if cuda.libdevice_label:
         substitutions["# %{libdevice_line}"] = "libdevice = " + repr(cuda.libdevice_label)
 
-    env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
+    env_tmp = repository_ctx.getenv("TMP", repository_ctx.getenv("TEMP"))
     if env_tmp != None:
         substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
     repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
@@ -224,7 +224,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     clang_path_for_subst = ""
     clang_label_for_subst = ""
 
-    compiler_use_cc_toolchain_env = repository_ctx.os.environ.get("CUDA_COMPILER_USE_CC_TOOLCHAIN", "false")
+    compiler_use_cc_toolchain_env = repository_ctx.getenv("CUDA_COMPILER_USE_CC_TOOLCHAIN", "false")
     if compiler_use_cc_toolchain_env == "true":
         compiler_attr_line = "compiler_use_cc_toolchain = True,"
     elif clang_path_or_label != None and (clang_path_or_label.startswith("//") or clang_path_or_label.startswith("@")):
