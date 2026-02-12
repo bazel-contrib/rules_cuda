@@ -2,6 +2,7 @@
 exports_files([
     "%{component_name}/bin/nvcc",
     "%{component_name}/bin/nvlink",
+    "%{component_name}/bin/ptxas",
     "%{component_name}/bin/bin2c",
     "%{component_name}/bin/fatbinary",
     "%{component_name}/bin/crt/link.stub",
@@ -16,6 +17,11 @@ alias(
 alias(
     name = "nvlink",
     actual = "%{component_name}/bin/nvlink",
+)
+
+alias(
+    name = "ptxas",
+    actual = "%{component_name}/bin/ptxas",
 )
 
 alias(

@@ -109,8 +109,23 @@ def _impl(ctx):
         ],
     )
 
-    nvvm_root = paths.dirname(paths.dirname(libdevice_dir)) if libdevice_dir else None
+    nvvm_root = None
+    if libdevice_dir:
+        nvvm_root = paths.dirname(paths.dirname(libdevice_dir))
+        if nvvm_root.endswith("/nvvm"):
+            nvvm_root = paths.dirname(nvvm_root)
     cuda_root = ctx.attr.cuda_toolkit[CudaToolkitInfo].path
+    if (not cuda_root or cuda_root == "cuda-not-found") and ctx.attr.cuda_toolkit[CudaToolkitInfo].nvlink:
+        # For deliverable toolkits, infer CUDA root from nvlink location.
+        cuda_root = paths.dirname(ctx.attr.cuda_toolkit[CudaToolkitInfo].nvlink.dirname)
+
+    if cuda_root:
+        # If cuda_root points at a tool, normalize to the component root.
+        base = paths.basename(cuda_root)
+        if base in ["nvcc", "nvcc.exe", "nvlink", "nvlink.exe", "ptxas", "ptxas.exe", "bin2c", "bin2c.exe", "fatbinary", "fatbinary.exe"]:
+            cuda_root = paths.dirname(cuda_root)
+        if paths.basename(cuda_root) == "bin":
+            cuda_root = paths.dirname(cuda_root)
     cuda_path_feature = feature(
         name = "cuda_path",
         enabled = True,

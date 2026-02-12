@@ -9,11 +9,18 @@ local_path_override(
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
 cuda.redist_json(
-    name = "rules_cuda_redist_json",
+    name = "cuda_12_6_3",
     platforms = [
         "linux-x86_64",
     ],
     version = "12.6.3",
+)
+cuda.redist_json(
+    name = "cuda_11_7_0",
+    platforms = [
+        "linux-x86_64",
+    ],
+    version = "11.7.0",
 )
 cuda.toolkit(name = "cuda")  # automatically populate attrs if redist_json is used
 use_repo(cuda, "cuda")

@@ -1,0 +1,4 @@
+alias(
+    name = "probe",
+    actual = "@cuda//:cuda_runtime",
+)

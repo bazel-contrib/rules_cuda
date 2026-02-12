@@ -191,11 +191,10 @@ def _generate_toolchain_build(repository_ctx, cuda):
         ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
     compiler_files = ["@cuda//:compiler_deps"]
-    if int(cuda.version_major) >= 13:
-        if cuda.cicc_label != None:
-            compiler_files.append(cuda.cicc_label)
-        if cuda.libdevice_label != None:
-            compiler_files.append(cuda.libdevice_label)
+    if cuda.cicc_label != None:
+        compiler_files.append(cuda.cicc_label)
+    if cuda.libdevice_label != None:
+        compiler_files.append(cuda.libdevice_label)
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
 
     substitutions = {

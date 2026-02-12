@@ -98,9 +98,9 @@ jobs:
 
       # Override cuda redist_json rule version for CI
       - run: echo "CUDA_REDIST_VERSION_OVERRIDE=${{ matrix.cases.cuda-version }}" >> $GITHUB_ENV
-        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
+        if: ${{ !startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'nvidia' }}
       - run: echo "CUDA_REDIST_VERSION_OVERRIDE=${{ matrix.cases.cuda-version }}" >> $env:GITHUB_ENV
-        if: ${{ startsWith(matrix.cases.os, 'windows') }}
+        if: ${{ startsWith(matrix.cases.os, 'windows') && matrix.cases.source == 'nvidia' }}
 
       # Use Bazel with version specified in .bazelversion
       - run: echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $GITHUB_ENV

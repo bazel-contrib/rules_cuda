@@ -1,4 +1,4 @@
-module(name = "bzlmod_components")
+module(name = "bzlmod_redist_json_collision")
 
 bazel_dep(name = "rules_cc", version = "0.2.14")
 bazel_dep(name = "rules_cuda", version = "0.0.0")
@@ -9,13 +9,24 @@ local_path_override(
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
 cuda.redist_json(
-    name = "rules_cuda_redist_json",
+    name = "cuda_12_6_3",
+    components = ["cudart"],
     platforms = [
         "linux-x86_64",
     ],
     version = "12.6.3",
 )
-cuda.toolkit(name = "cuda")  # automatically populate attrs if redist_json is used
+cuda.redist_json(
+    name = "cuda_12_6_3_conflict",
+    components = ["cudart"],
+    platforms = [
+        "linux-x86_64",
+    ],
+    # Intentional conflict: effective version is 12.6.3, but specs come from 11.7.0.
+    urls = ["https://developer.download.nvidia.com/compute/cuda/redist/redistrib_11.7.0.json"],
+    version = "12.6.3",
+)
+cuda.toolkit(name = "cuda")
 use_repo(cuda, "cuda")
 
 bazel_dep(name = "rules_cuda_examples", version = "0.0.0")

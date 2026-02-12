@@ -1,11 +1,11 @@
 # map short component name to consumable targets
 REGISTRY = {
     "cudart": ["cudart_all_files", "cudart_license", "cudart_headers", "cuda", "cuda_runtime", "cuda_runtime_static"],
-    "nvcc": ["nvcc_all_files", "nvcc_license", "nvcc_headers", "compiler_root", "compiler_deps", "nvptxcompiler", "nvcc", "nvlink", "bin2c", "fatbinary", "link.stub"],
+    "nvcc": ["nvcc_all_files", "nvcc_license", "nvcc_headers", "compiler_root", "compiler_deps", "nvptxcompiler", "nvcc", "nvlink", "ptxas", "bin2c", "fatbinary", "link.stub"],
     "nvvm": ["nvvm_all_files", "nvvm_license", "nvvm_headers", "cicc", "libdevice", "libdevice.10.bc"],
     "cccl": ["cccl_all_files", "cccl_license", "cccl_headers", "libcudacxx", "cub", "thrust"],
     "crt": ["crt_all_files", "crt_license", "crt_headers", "crt"],
-    "culibos": ["culibos_all_files", "culibos_license", "culibos_headers", "culibos_a"], # culibos_a is not for end users.
+    "culibos": ["culibos_all_files", "culibos_license", "culibos_headers", "culibos_a"],  # culibos_a is not for end users.
     "cublas": ["cublas_all_files", "cublas_license", "cublas_headers", "cublas"],
     "cufft": ["cufft_all_files", "cufft_license", "cufft_headers", "cufft", "cufft_static"],
     "cufile": ["cufile", "cufile_all_files", "cufile_header_files", "cufile_headers", "cufile_license"],

@@ -3,7 +3,7 @@ Core rules for building CUDA projects.
 """
 
 load("//cuda/private:defs.bzl", _requires_cuda = "requires_cuda")
-load("//cuda/private:errors.bzl", _unsupported_cuda_version = "unsupported_cuda_version", _unsupported_cuda_platform = "unsupported_cuda_platform")
+load("//cuda/private:errors.bzl", _unsupported_cuda_platform = "unsupported_cuda_platform", _unsupported_cuda_version = "unsupported_cuda_version")
 load("//cuda/private:macros/cuda_binary.bzl", _cuda_binary = "cuda_binary")
 load("//cuda/private:macros/cuda_test.bzl", _cuda_test = "cuda_test")
 load("//cuda/private:os_helpers.bzl", _cc_import_versioned_sos = "cc_import_versioned_sos", _if_linux = "if_linux", _if_windows = "if_windows")

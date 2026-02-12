@@ -20,4 +20,3 @@ alias(
     name = "libdevice",
     actual = ":libdevice.10.bc",
 )
-

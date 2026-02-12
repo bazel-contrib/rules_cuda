@@ -54,7 +54,8 @@ string_flag(
     config_setting(
         name = "target_platform_is_{}".format(platform.replace("-", "_")),
         flag_values = {":target_platform": platform},
-    ) for platform in SUPPORTED_PLATFORMS
+    )
+    for platform in SUPPORTED_PLATFORMS
 ]
 
 string_flag(
@@ -67,7 +68,8 @@ string_flag(
     config_setting(
         name = "exec_platform_is_{}".format(platform.replace("-", "_")),
         flag_values = {":exec_platform": platform},
-    ) for platform in SUPPORTED_PLATFORMS
+    )
+    for platform in SUPPORTED_PLATFORMS
 ]
 
 # Command line flag to specify the list of CUDA architectures to compile for.

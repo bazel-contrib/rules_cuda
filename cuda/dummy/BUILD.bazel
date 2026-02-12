@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -20,7 +20,10 @@ cc_binary(
     defines = ["TOOLNAME=nvlink"],
 )
 
-exports_files(["link.stub", "libdevice.10.bc"])
+exports_files([
+    "link.stub",
+    "libdevice.10.bc",
+])
 
 cc_binary(
     name = "bin2c",
@@ -34,15 +37,15 @@ cc_binary(
     defines = ["TOOLNAME=fatbinary"],
 )
 
-cc_binary(
-    name = "ptxas",
-    srcs = ["dummy.cpp"],
-    defines = ["TOOLNAME=ptxas"],
-)
-
 # Empty cc_library that provides CcInfo for components not available in this CUDA version.
 cc_library(
     name = "dummy",
     srcs = [],
     hdrs = [],
+)
+
+cc_binary(
+    name = "ptxas",
+    srcs = ["dummy.cpp"],
+    defines = ["TOOLNAME=ptxas"],
 )

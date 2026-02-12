@@ -26,14 +26,21 @@ def _platform_alias_repo_impl(ctx):
 
     build_content.append("[")
     build_content.append("    config_setting(")
-    build_content.append('        name = "version_is_{}".format(version.replace(".", "_")),')
+    build_content.append('        name = "version_is_{}_" + version.replace(".", "_"),'.format(
+        ctx.attr.component_name,
+    ))
     build_content.append('        flag_values = {"@rules_cuda//cuda:version": "{}".format(version)},')
     build_content.append("    )")
     build_content.append("    for version in {}".format(ctx.attr.versions))
     build_content.append("]")
     build_content.append("")
 
-    build_content.append('unsupported_cuda_version(name = "unsupported_cuda_version", component = "{}", available_versions = {})'.format(ctx.attr.component_name, ctx.attr.versions))
+    build_content.append(
+        'unsupported_cuda_version(name = "unsupported_cuda_version", component = "{}", available_versions = {})'.format(
+            ctx.attr.component_name,
+            ctx.attr.versions,
+        ),
+    )
     build_content.append("")
 
     # Build a target for the name of the repo (only if at least one platform is available).
@@ -50,7 +57,12 @@ def _platform_alias_repo_impl(ctx):
 
     # Always create unsupported_cuda_platform target - it's used as the default case
     # in select() when no platform condition matches.
-    build_content.append('unsupported_cuda_platform(name = "unsupported_cuda_platform", component = "{}", available_platforms = {})'.format(ctx.attr.component_name, platforms_available))
+    build_content.append(
+        'unsupported_cuda_platform(name = "unsupported_cuda_platform", component = "{}", available_platforms = {})'.format(
+            ctx.attr.component_name,
+            platforms_available,
+        ),
+    )
     build_content.append("")
 
     # Only generate target aliases if this component is in TARGET_MAPPING.
@@ -76,10 +88,13 @@ def _platform_alias_repo_impl(ctx):
         build_content.append("alias(")
         build_content.append('    name = "{}",'.format(target_name))
         build_content.append("    actual = select({")
+
         # Add conditions for ALL platforms, using dummy for unavailable ones.
         for platform in SUPPORTED_PLATFORMS:
             platform_suffix = platform.replace("-", "_")
-            build_content.append('        "@rules_cuda//cuda:{}_platform_is_{}":'.format(platform_type, platform_suffix))
+            build_content.append(
+                '        "@rules_cuda//cuda:{}_platform_is_{}":'.format(platform_type, platform_suffix),
+            )
             if platform in platforms_available:
                 build_content.append('            ":{}_{}",'.format(platform_suffix, target_name))
             else:
@@ -106,20 +121,38 @@ def _platform_alias_repo_impl(ctx):
             platform_suffix = platform.replace("-", "_")
             repos_dict = platform_repos_map[platform]
             platform_available = platform in platforms_available
+            default_version = ctx.attr.versions[0] if ctx.attr.versions else None
 
             build_content.append("alias(")
             build_content.append('    name = "{}_{}",'.format(platform_suffix, target_name))
             build_content.append("    actual = select({")
 
             for version in ctx.attr.versions:
-                build_content.append('        ":version_is_{}": '.format(version.replace(".", "_")))
+                build_content.append('        ":version_is_{}_{}": '.format(
+                    ctx.attr.component_name,
+                    version.replace(".", "_"),
+                ))
                 if platform_available and version in repos_dict:
                     repo_name = repos_dict[version]
-                    build_content.append('            "@{}//{}",'.format(repo_name, target if target.find(":") != -1 else ":" + target))
+                    build_content.append(
+                        '            "@{}//{}",'.format(
+                            repo_name,
+                            target if target.find(":") != -1 else ":" + target,
+                        ),
+                    )
                 else:
                     # Platform doesn't have this component for this version, use dummy.
                     build_content.append('            "{}",'.format(dummy_target))
-            build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
+            if platform_available and default_version and default_version in repos_dict:
+                repo_name = repos_dict[default_version]
+                build_content.append(
+                    '        "//conditions:default": "@{}//{}",'.format(
+                        repo_name,
+                        target if target.find(":") != -1 else ":" + target,
+                    ),
+                )
+            else:
+                build_content.append('        "//conditions:default": ":unsupported_cuda_version",')
 
             build_content.append("    }),")
             build_content.append('    visibility = ["//visibility:public"],')
@@ -132,10 +165,6 @@ def _platform_alias_repo_impl(ctx):
 platform_alias_repo = repository_rule(
     implementation = _platform_alias_repo_impl,
     attrs = {
-        "repo_name": attr.string(
-            mandatory = True,
-            doc = "Original name of the repository",
-        ),
         "component_name": attr.string(
             mandatory = True,
             doc = "Name of the component",

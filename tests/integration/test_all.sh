@@ -9,6 +9,8 @@ skip_rules=false
 skip_components_workspace=false
 skip_components_bzlmod=false
 skip_redist_json=false
+skip_redist_json_multi=false
+skip_redist_json_collision=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -26,12 +28,23 @@ while [[ $# -gt 0 ]]; do
             skip_components_workspace=true; skip_components_bzlmod=true; shift ;;
         --no-redist)
             skip_redist_json=true; shift ;;
+        --no-redist-multi)
+            skip_redist_json_multi=true; shift ;;
+        --no-redist-collision)
+            skip_redist_json_collision=true; shift ;;
         *)
             echo "Unknown option: $1" >&2; shift ;;
     esac
 done
 
 set -ex
+
+# The CUDA redist archives used here are linux-only; skip on Windows CI.
+if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$(uname -s 2>/dev/null)" =~ MINGW|MSYS|CYGWIN ]]; then
+    skip_redist_json=true
+    skip_redist_json_multi=true
+    skip_redist_json_collision=true
+fi
 
 # toolchain configured by the root module of the user
 if [ "$skip_root" = false ]; then
@@ -48,6 +61,21 @@ pushd "$this_dir/toolchain_root"
     bazel build //:optionally_use_rule --@rules_cuda//cuda:enable=True
     bazel build //:use_library
     bazel build //:use_rule
+    bazel clean && bazel shutdown
+popd
+fi
+
+# conflicting redistrib.json definitions should fail during module extension evaluation
+if [ "$skip_redist_json_collision" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN WITH REDISTRIB.JSON CONFLICT (BZLMOD)
+============================================================
+EOF
+pushd "$this_dir/toolchain_redist_json_collision"
+    ERR=$(CUDA_REDIST_VERSION_OVERRIDE= bazel build --enable_bzlmod //:probe 2>&1 || true)
+    if ! [[ $ERR == *"Conflicting CUDA component definition for cudart on linux-x86_64 at version"* ]]; then exit 1; fi
     bazel clean && bazel shutdown
 popd
 fi
@@ -155,6 +183,31 @@ pushd "$this_dir/toolchain_redist_json"
     bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=True
     bazel build --enable_workspace //:use_library
     bazel build --enable_workspace //:use_rule
+    bazel clean && bazel shutdown
+popd
+fi
+
+# toolchain configured with redistrib.json (multi-version with bzlmod)
+if [ "$skip_redist_json_multi" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN WITH REDISTRIB.JSON (BZLMOD MULTI-VERSION)
+============================================================
+EOF
+pushd "$this_dir/toolchain_redist_json_multi"
+    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=False
+    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=True
+    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False
+    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=12.6.3
+    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=11.7.0
+    bazel build --enable_bzlmod //:use_library
+    bazel build --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=12.6.3
+    bazel build --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=11.7.0
+
+    # Keep the override-only dedupe probe isolated so it cannot pollute later versioned builds.
+    bazel clean && bazel shutdown
+    CUDA_REDIST_VERSION_OVERRIDE=11.7.0 bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False
     bazel clean && bazel shutdown
 popd
 fi
