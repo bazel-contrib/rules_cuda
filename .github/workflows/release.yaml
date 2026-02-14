@@ -9,7 +9,7 @@ on:
       - "v*.*.*"
 
 jobs:
-  build:
+  release:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
@@ -72,3 +72,11 @@ jobs:
           asset_name: rules_cuda-${{ env.RELEASE_VERSION }}.tar.gz
           asset_path: ${{ github.workspace }}/.github/rules_cuda.tar.gz
           asset_content_type: application/gzip
+
+  publish_to_bcr:
+    needs: release
+    uses: ./.github/workflows/publish.yaml
+    with:
+      tag_name: ${{ github.ref_name }}
+    secrets:
+      publish_token: ${{ secrets.BCR_PUBLISH_TOKEN }}
