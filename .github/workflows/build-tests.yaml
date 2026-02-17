@@ -151,19 +151,3 @@ jobs:
         if: ${{ matrix.cases.source == 'nvidia' }}
       - run: cd tests/integration && bash ./test_all.sh --no-components --no-redist
         if: ${{ matrix.cases.source == 'ubuntu' }}
-
-      # Use Bazel 6
-      - run: echo "USE_BAZEL_VERSION=6.4.0" >> $GITHUB_ENV
-        if: ${{ !startsWith(matrix.cases.os, 'windows') }}
-      - run: echo "USE_BAZEL_VERSION=6.4.0" >> $env:GITHUB_ENV
-        if: ${{ startsWith(matrix.cases.os, 'windows') }}
-
-      - run: bazelisk build --jobs=1 @rules_cuda_examples//basic:all
-      - run: bazelisk build --jobs=1 @rules_cuda_examples//rdc:all
-      - run: bazelisk build --jobs=1 @rules_cuda_examples//if_cuda:main
-      - run: bazelisk build --jobs=1 @rules_cuda_examples//if_cuda:main --enable_cuda=False
-      - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //basic:all
-      - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //rdc:all
-      - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //if_cuda:main
-      - run: cd examples && bazelisk build --jobs=1 --enable_bzlmod //if_cuda:main --enable_cuda=False
-      - run: bazelisk shutdown
