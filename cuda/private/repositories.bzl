@@ -29,7 +29,7 @@ def _get_nvcc_version(repository_ctx, nvcc_root):
 def _detect_local_cuda_toolkit(repository_ctx):
     cuda_path = repository_ctx.attr.toolkit_path
     if cuda_path == "":
-        cuda_path = repository_ctx.os.environ.get("CUDA_PATH", None)
+        cuda_path = repository_ctx.getenv("CUDA_PATH")
     if cuda_path == None:
         ptxas_path = repository_ctx.which("ptxas")
         if ptxas_path:
@@ -232,8 +232,8 @@ def detect_clang(repository_ctx):
     """
     bin_ext = ".exe" if _is_windows(repository_ctx) else ""
 
-    clang_path = repository_ctx.os.environ.get("CUDA_CLANG_PATH", None)
-    clang_label = repository_ctx.os.environ.get("CUDA_CLANG_LABEL", None)
+    clang_path = repository_ctx.getenv("CUDA_CLANG_PATH")
+    clang_label = repository_ctx.getenv("CUDA_CLANG_LABEL")
     clang_path_or_label = None
 
     if clang_label != None:
@@ -246,7 +246,7 @@ def detect_clang(repository_ctx):
 
     else:
         # Check BAZEL_LLVM
-        bazel_llvm = repository_ctx.os.environ.get("BAZEL_LLVM", None)
+        bazel_llvm = repository_ctx.getenv("BAZEL_LLVM")
         if bazel_llvm != None and repository_ctx.path(bazel_llvm + "/bin/clang" + bin_ext).exists:
             clang_path_or_label = bazel_llvm + "/bin/clang" + bin_ext
         elif repository_ctx.which("clang") != None:
