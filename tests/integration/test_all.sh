@@ -39,11 +39,12 @@ done
 
 set -ex
 
-# The CUDA redist archives used here are linux-only; skip on Windows CI.
+redist_platform_args=()
 if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$(uname -s 2>/dev/null)" =~ MINGW|MSYS|CYGWIN ]]; then
-    skip_redist_json=true
-    skip_redist_json_multi=true
-    skip_redist_json_collision=true
+    redist_platform_args=(
+        --@rules_cuda//cuda:exec_platform=windows-x86_64
+        --@rules_cuda//cuda:target_platform=windows-x86_64
+    )
 fi
 
 # toolchain configured by the root module of the user
@@ -177,12 +178,12 @@ cat <<- EOF
 ============================================================
 EOF
 pushd "$this_dir/toolchain_redist_json"
-    bazel build --enable_workspace //... --@rules_cuda//cuda:enable=False
-    bazel build --enable_workspace //... --@rules_cuda//cuda:enable=True
-    bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=False
-    bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=True
-    bazel build --enable_workspace //:use_library
-    bazel build --enable_workspace //:use_rule
+    bazel build --enable_workspace //... --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
+    bazel build --enable_workspace //... --@rules_cuda//cuda:enable=True "${redist_platform_args[@]}"
+    bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
+    bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=True "${redist_platform_args[@]}"
+    bazel build --enable_workspace //:use_library "${redist_platform_args[@]}"
+    bazel build --enable_workspace //:use_rule "${redist_platform_args[@]}"
     bazel clean && bazel shutdown
 popd
 fi
@@ -196,18 +197,18 @@ cat <<- EOF
 ============================================================
 EOF
 pushd "$this_dir/toolchain_redist_json_multi"
-    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=False
-    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=True
-    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False
-    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=12.6.3
-    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=11.7.0
-    bazel build --enable_bzlmod //:use_library
-    bazel build --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=12.6.3
-    bazel build --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=11.7.0
+    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
+    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=True "${redist_platform_args[@]}"
+    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
+    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=12.6.3 "${redist_platform_args[@]}"
+    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=11.7.0 "${redist_platform_args[@]}"
+    bazel build --enable_bzlmod //:use_library "${redist_platform_args[@]}"
+    bazel build --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=12.6.3 "${redist_platform_args[@]}"
+    bazel build --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=11.7.0 "${redist_platform_args[@]}"
 
     # Keep the override-only dedupe probe isolated so it cannot pollute later versioned builds.
     bazel clean && bazel shutdown
-    CUDA_REDIST_VERSION_OVERRIDE=11.7.0 bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False
+    CUDA_REDIST_VERSION_OVERRIDE=11.7.0 bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
     bazel clean && bazel shutdown
 popd
 fi

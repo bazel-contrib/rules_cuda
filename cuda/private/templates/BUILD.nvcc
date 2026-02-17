@@ -1,37 +1,58 @@
+nvcc_bin = any_or_first(
+    "%{component_name}/bin/nvcc",
+    "%{component_name}/bin/nvcc.exe",
+)
+nvlink_bin = any_or_first(
+    "%{component_name}/bin/nvlink",
+    "%{component_name}/bin/nvlink.exe",
+)
+ptxas_bin = any_or_first(
+    "%{component_name}/bin/ptxas",
+    "%{component_name}/bin/ptxas.exe",
+)
+bin2c_bin = any_or_first(
+    "%{component_name}/bin/bin2c",
+    "%{component_name}/bin/bin2c.exe",
+)
+fatbinary_bin = any_or_first(
+    "%{component_name}/bin/fatbinary",
+    "%{component_name}/bin/fatbinary.exe",
+)
+
 # Export individual executables as simple target names
 exports_files([
-    "%{component_name}/bin/nvcc",
-    "%{component_name}/bin/nvlink",
-    "%{component_name}/bin/ptxas",
-    "%{component_name}/bin/bin2c",
-    "%{component_name}/bin/fatbinary",
+    nvcc_bin,
+    nvlink_bin,
+    ptxas_bin,
+    bin2c_bin,
+    fatbinary_bin,
     "%{component_name}/bin/crt/link.stub",
 ], visibility = ["//visibility:public"])
 
 # Create aliases with simple names for toolchain compatibility
 alias(
     name = "nvcc",
-    actual = "%{component_name}/bin/nvcc",
+    actual = nvcc_bin,
 )
 
 alias(
     name = "nvlink",
-    actual = "%{component_name}/bin/nvlink",
+    actual = nvlink_bin,
 )
 
 alias(
     name = "ptxas",
-    actual = "%{component_name}/bin/ptxas",
+    actual = ptxas_bin,
 )
 
 alias(
     name = "bin2c",
-    actual = "%{component_name}/bin/bin2c",
+    actual = bin2c_bin,
 )
 
 alias(
     name = "fatbinary",
-    actual = "%{component_name}/bin/fatbinary",
+    actual = fatbinary_bin,
 )
 
 alias(

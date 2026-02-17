@@ -185,6 +185,7 @@ def _impl(module_ctx):
     for component_name in redist_components_mapping.keys():
         # Build dictionaries mapping versions to repo names for each platform.
         x86_64_repos = {ver: versioned_repos[component_name]["linux-x86_64"][ver] for ver in redist_versions if "linux-x86_64" in versioned_repos[component_name] and ver in versioned_repos[component_name]["linux-x86_64"]}
+        windows_x86_64_repos = {ver: versioned_repos[component_name]["windows-x86_64"][ver] for ver in redist_versions if "windows-x86_64" in versioned_repos[component_name] and ver in versioned_repos[component_name]["windows-x86_64"]}
         aarch64_repos = {ver: versioned_repos[component_name]["linux-aarch64"][ver] for ver in redist_versions if "linux-aarch64" in versioned_repos[component_name] and ver in versioned_repos[component_name]["linux-aarch64"]}
         sbsa_repos = {ver: versioned_repos[component_name]["linux-sbsa"][ver] for ver in redist_versions if "linux-sbsa" in versioned_repos[component_name] and ver in versioned_repos[component_name]["linux-sbsa"]}
 
@@ -192,6 +193,7 @@ def _impl(module_ctx):
             name = redist_components_mapping[component_name],
             component_name = component_name,
             linux_x86_64_repos = x86_64_repos,
+            windows_x86_64_repos = windows_x86_64_repos,
             linux_aarch64_repos = aarch64_repos,
             linux_sbsa_repos = sbsa_repos,
             versions = redist_versions,

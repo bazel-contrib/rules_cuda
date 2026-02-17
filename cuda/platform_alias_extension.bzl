@@ -50,6 +50,8 @@ def _platform_alias_repo_impl(ctx):
     platforms_available = []
     if len(ctx.attr.linux_x86_64_repos) > 0:
         platforms_available.append("linux-x86_64")
+    if len(ctx.attr.windows_x86_64_repos) > 0:
+        platforms_available.append("windows-x86_64")
     if len(ctx.attr.linux_sbsa_repos) > 0:
         platforms_available.append("linux-sbsa")
     if len(ctx.attr.linux_aarch64_repos) > 0:
@@ -113,6 +115,7 @@ def _platform_alias_repo_impl(ctx):
 
         platform_repos_map = {
             "linux-x86_64": ctx.attr.linux_x86_64_repos,
+            "windows-x86_64": ctx.attr.windows_x86_64_repos,
             "linux-sbsa": ctx.attr.linux_sbsa_repos,
             "linux-aarch64": ctx.attr.linux_aarch64_repos,
         }
@@ -176,6 +179,10 @@ platform_alias_repo = repository_rule(
         "linux_aarch64_repos": attr.string_dict(
             default = {},
             doc = "Dictionary mapping versions to ARM64/Jetpack repository names",
+        ),
+        "windows_x86_64_repos": attr.string_dict(
+            default = {},
+            doc = "Dictionary mapping versions to Windows x86_64 repository names",
         ),
         "linux_sbsa_repos": attr.string_dict(
             default = {},

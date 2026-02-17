@@ -12,6 +12,7 @@ cuda.redist_json(
     name = "rules_cuda_redist_json",
     platforms = [
         "linux-x86_64",
+        "windows-x86_64",
     ],
     version = "12.6.3",
 )
