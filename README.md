@@ -141,6 +141,12 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
   Add copts to the host compiler.
 
+- `@rules_cuda//cuda:cc_host_compile_flags_to_skip`
+
+  Configure which C++ toolchain host compile flags should be filtered out before forwarding to CUDA host compilation.
+  This defaults to skipping `-c`, and can be repeated, for example:
+  `--@rules_cuda//cuda:cc_host_compile_flags_to_skip=-c --@rules_cuda//cuda:cc_host_compile_flags_to_skip=-fno-canonical-system-headers`.
+
 - `@rules_cuda//cuda:runtime`
 
   Set the default cudart to link; for example, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static` links the static CUDA runtime.
