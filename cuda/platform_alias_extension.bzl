@@ -10,6 +10,24 @@ load("//cuda/private:templates/registry.bzl", "REGISTRY")
 # Use REGISTRY as the source of truth for component targets
 TARGET_MAPPING = REGISTRY
 
+def _platform_repos_attr(platform):
+    return platform.replace("-", "_") + "_repos"
+
+_PLATFORM_REPO_ATTRS = {
+    _platform_repos_attr(_platform): attr.string_dict(
+        default = {},
+        doc = "Dictionary mapping versions to repository names for {}".format(_platform),
+    )
+    for _platform in SUPPORTED_PLATFORMS
+}
+
+def _version_sort_key(version):
+    prefix = version.split("-", 1)[0]
+    parts = prefix.split(".")
+    if all([p.isdigit() for p in parts]):
+        return (1, [int(p) for p in parts], version)
+    return (0, [], version)
+
 def _platform_alias_repo_impl(ctx):
     """Implementation of the platform_alias_repo repository rule.
 
@@ -46,16 +64,13 @@ def _platform_alias_repo_impl(ctx):
     # Build a target for the name of the repo (only if at least one platform is available).
     platform_type = "exec" if ctx.attr.component_name in ["nvcc", "nvvm"] else "target"
 
+    platform_repos_map = {
+        platform: getattr(ctx.attr, _platform_repos_attr(platform))
+        for platform in SUPPORTED_PLATFORMS
+    }
+
     # Check which platforms are available (have at least one version).
-    platforms_available = []
-    if len(ctx.attr.linux_x86_64_repos) > 0:
-        platforms_available.append("linux-x86_64")
-    if len(ctx.attr.windows_x86_64_repos) > 0:
-        platforms_available.append("windows-x86_64")
-    if len(ctx.attr.linux_sbsa_repos) > 0:
-        platforms_available.append("linux-sbsa")
-    if len(ctx.attr.linux_aarch64_repos) > 0:
-        platforms_available.append("linux-aarch64")
+    platforms_available = [platform for platform in SUPPORTED_PLATFORMS if len(platform_repos_map[platform]) > 0]
 
     # Always create unsupported_cuda_platform target - it's used as the default case
     # in select() when no platform condition matches.
@@ -113,18 +128,11 @@ def _platform_alias_repo_impl(ctx):
         # Platforms where it doesn't exist get dummy targets for all versions.
         # This ensures builds on any platform have matching select conditions.
 
-        platform_repos_map = {
-            "linux-x86_64": ctx.attr.linux_x86_64_repos,
-            "windows-x86_64": ctx.attr.windows_x86_64_repos,
-            "linux-sbsa": ctx.attr.linux_sbsa_repos,
-            "linux-aarch64": ctx.attr.linux_aarch64_repos,
-        }
-
         for platform in SUPPORTED_PLATFORMS:
             platform_suffix = platform.replace("-", "_")
             repos_dict = platform_repos_map[platform]
             platform_available = platform in platforms_available
-            default_version = ctx.attr.versions[0] if ctx.attr.versions else None
+            default_version = sorted(ctx.attr.versions, key = _version_sort_key)[-1] if ctx.attr.versions else None
 
             build_content.append("alias(")
             build_content.append('    name = "{}_{}",'.format(platform_suffix, target_name))
@@ -167,30 +175,14 @@ def _platform_alias_repo_impl(ctx):
 
 platform_alias_repo = repository_rule(
     implementation = _platform_alias_repo_impl,
-    attrs = {
+    attrs = dict({
         "component_name": attr.string(
             mandatory = True,
             doc = "Name of the component",
-        ),
-        "linux_x86_64_repos": attr.string_dict(
-            default = {},
-            doc = "Dictionary mapping versions to x86_64 repository names",
-        ),
-        "linux_aarch64_repos": attr.string_dict(
-            default = {},
-            doc = "Dictionary mapping versions to ARM64/Jetpack repository names",
-        ),
-        "windows_x86_64_repos": attr.string_dict(
-            default = {},
-            doc = "Dictionary mapping versions to Windows x86_64 repository names",
-        ),
-        "linux_sbsa_repos": attr.string_dict(
-            default = {},
-            doc = "Dictionary mapping versions to SBSA repository names",
         ),
         "versions": attr.string_list(
             mandatory = True,
             doc = "List of versions to create aliases for",
         ),
-    },
+    }, **_PLATFORM_REPO_ATTRS),
 )

@@ -111,9 +111,9 @@ def _impl(ctx):
 
     nvvm_root = None
     if libdevice_dir:
+        # Clang expects --cuda-path to point at a CTK root containing
+        # bin/, include/, and nvvm/libdevice/libdevice.10.bc.
         nvvm_root = paths.dirname(paths.dirname(libdevice_dir))
-        if nvvm_root.endswith("/nvvm"):
-            nvvm_root = paths.dirname(nvvm_root)
     cuda_root = ctx.attr.cuda_toolkit[CudaToolkitInfo].path
     if (not cuda_root or cuda_root == "cuda-not-found") and ctx.attr.cuda_toolkit[CudaToolkitInfo].nvlink:
         # For deliverable toolkits, infer CUDA root from nvlink location.
