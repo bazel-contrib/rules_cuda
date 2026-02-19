@@ -5,6 +5,7 @@ build --flag_alias=enable_cuda=@rules_cuda//cuda:enable
 build --flag_alias=cuda_archs=@rules_cuda//cuda:archs
 build --flag_alias=cuda_compiler=@rules_cuda//cuda:compiler
 build --flag_alias=cuda_copts=@rules_cuda//cuda:copts
+build --flag_alias=cuda_cc_host_compile_flags_to_skip=@rules_cuda//cuda:cc_host_compile_flags_to_skip
 build --flag_alias=cuda_runtime=@rules_cuda//cuda:runtime
 
 build --enable_cuda=True
