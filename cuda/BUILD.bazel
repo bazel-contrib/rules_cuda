@@ -81,6 +81,11 @@ repeatable_string_flag(
     build_setting_default = "",
 )
 
+repeatable_string_flag(
+    name = "cc_host_compile_flags_to_skip",
+    build_setting_default = "-c",
+)
+
 # Command line flag to specify the CUDA runtime. Use this target as CUDA
 # runtime dependency.
 #

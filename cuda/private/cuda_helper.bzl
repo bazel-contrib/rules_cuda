@@ -292,14 +292,10 @@ def _get_cc_host_compile_flags(ctx):
         variables = variables,
     )
 
-    flags_to_skip = [
-        "-c",
-    ]
+    flags_to_skip = ctx.attr._cc_host_compile_flags_to_skip[BuildSettingInfo].value
 
     if cuda_toolchain.toolchain_identifier == "clang":
-        flags_to_skip.append(
-            "-fno-canonical-system-headers",
-        )
+        flags_to_skip.append("-fno-canonical-system-headers")
 
     flag_prefixes_to_skip = [
         "-std=",
