@@ -32,6 +32,48 @@ use_repo(cuda, "cuda")
 
 `rules_cc` provides the C++ toolchain dependency for `rules_cuda`; in Bzlmod, the compatibility repository is handled by `rules_cc` itself.
 
+#### Multi-version hermetic toolchains (Bzlmod)
+
+To select CUDA versions and platforms at build time, define multiple `cuda.redist_json` entries and a single `cuda.toolkit`.
+Then use `@rules_cuda//cuda:version`, `@rules_cuda//cuda:exec_platform`, and `@rules_cuda//cuda:target_platform` flags.
+If `@rules_cuda//cuda:version` is unset, rules_cuda selects the highest declared redist version.
+
+```starlark
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+
+cuda.redist_json(
+    name = "cuda_13_0_2",
+    version = "13.0.2",
+    platforms = [
+        "linux-x86_64",
+        "linux-sbsa",
+    ],
+)
+cuda.redist_json(
+    name = "cuda_13_0_0",
+    version = "13.0.0",
+    platforms = [
+        "linux-x86_64",
+        "linux-sbsa",
+    ],
+)
+
+cuda.toolkit(name = "cuda")
+use_repo(cuda, "cuda")
+```
+
+Example `.bazelrc` entries:
+
+```
+build --@rules_cuda//cuda:exec_platform=linux-x86_64
+build --@rules_cuda//cuda:target_platform=linux-x86_64
+# Optional: if omitted, the highest declared redist version is used.
+build --@rules_cuda//cuda:version=13.0.0
+```
+
+Note: In Bzlmod, `platforms` is required for `cuda.redist_json` because module extensions don't have access to host OS/arch
+information, so the platforms must be declared explicitly.
+
 <details>
 <summary>Traditional WORKSPACE approach</summary>
 
