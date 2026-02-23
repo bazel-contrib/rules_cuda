@@ -1,0 +1,27 @@
+cicc_bin = any_or_first(
+    "%{component_name}/nvvm/bin/cicc",
+    "%{component_name}/nvvm/bin/cicc.exe",
+)
+
+# Export individual files as simple target names
+exports_files([
+    cicc_bin,
+    "%{component_name}/nvvm/libdevice/libdevice.10.bc",
+], visibility = ["//visibility:public"])
+
+# Create aliases with simple names for toolchain compatibility
+alias(
+    name = "cicc",
+    actual = cicc_bin,
+)
+
+alias(
+    name = "libdevice.10.bc",
+    actual = "%{component_name}/nvvm/libdevice/libdevice.10.bc",
+)
+
+# Alias for generic libdevice name
+alias(
+    name = "libdevice",
+    actual = ":libdevice.10.bc",
+)

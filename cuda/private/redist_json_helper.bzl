@@ -37,9 +37,21 @@ def _get(ctx, attr):
     if len(urls) == 0:
         fail("`urls` or `version` must be specified.")
 
+    # Use the name of the repository or tag to avoid collisions when multiple
+    # redist_json are defined.
+    name = getattr(attr, "name", None)
+    if not name and hasattr(ctx, "name"):
+        name = ctx.name
+
+    # In case name is still not found (unlikely), use a default
+    if not name:
+        name = "default"
+
+    output_filename = "redist_{}.json".format(name)
+
     for url in urls:
         ret = ctx.download(
-            output = "redist.json",
+            output = output_filename,
             integrity = _get_attr_maybe_override(ctx, attr, "integrity"),
             sha256 = _get_attr_maybe_override(ctx, attr, "sha256"),
             url = url,
@@ -51,7 +63,7 @@ def _get(ctx, attr):
     if the_url == None:
         fail("Failed to retrieve the redist json file.")
 
-    return the_url, json.decode(ctx.read("redist.json"))
+    return the_url, json.decode(ctx.read(output_filename))
 
 def _get_redist_version(ctx, attr, redist):
     """Get version string.
@@ -68,7 +80,7 @@ def _get_redist_version(ctx, attr, redist):
 
     return redist_ver
 
-def _collect_specs(ctx, attr, redist, the_url):
+def _collect_specs(ctx, attr, platform, redist, the_url):
     """Convert redistrib_<version>.json content to the specs for instantiating cuda_component repos.
 
     List of specs, aka, list of dicts with cuda_component attrs.
@@ -76,19 +88,12 @@ def _collect_specs(ctx, attr, redist, the_url):
     Args:
         ctx: repository_ctx | module_ctx
         attr: cuda_component repo attr or cuda_redist_json_tag
+        platform: string, the platform for which we are collecting specs
         redist: json object, read from the redistrib_<version>.json file.
         the_url: string, the very unique url from which we get the redistrib_<version>.json file.
     """
 
     specs = []
-    os = None
-    if _is_linux(ctx):
-        os = "linux"
-    elif _is_windows(ctx):
-        os = "windows"
-
-    arch = "x86_64"  # TODO: support cross compiling
-    platform = "{os}-{arch}".format(os = os, arch = arch)
     all_components_on_platform = [k for k, v in FULL_COMPONENT_NAME.items() if v in redist and platform in redist[v]]
     components = attr.components if attr.components else all_components_on_platform
 
@@ -121,10 +126,6 @@ def _get_repo_name(ctx, spec):
     """
 
     repo_name = "cuda_" + spec["component_name"]
-    version = spec.get("version", None)
-    if version != None:
-        repo_name = repo_name + "_v" + version
-
     return repo_name
 
 redist_json_helper = struct(

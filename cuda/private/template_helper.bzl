@@ -28,13 +28,16 @@ def _expand_lctk_cuda(repository_ctx, components):
 def _expand_dctk_cuda(repository_ctx, components):
     tpl_label = Label("//cuda/private:templates/BUILD.dctk_cuda")
 
-    all_files_srcs_line = [comp + "_all_files" for comp in components.keys()]
+    # Filter out components with empty REGISTRY entries
+    valid_components = [comp for comp in components.keys() if len(REGISTRY[comp]) > 0]
+
+    all_files_srcs_line = [comp + "_all_files" for comp in valid_components]
     all_files_srcs_line = "srcs = " + repr(all_files_srcs_line)
 
-    license_srcs_line = [comp + "_license" for comp in components.keys()]
+    license_srcs_line = [comp + "_license" for comp in valid_components]
     license_srcs_line = "srcs = " + repr(license_srcs_line)
 
-    headers_deps_line = [comp + "_headers" for comp in components.keys()]
+    headers_deps_line = [comp + "_headers" for comp in valid_components]
     headers_deps_line = "deps = " + repr(headers_deps_line)
 
     substitutions = {
@@ -188,11 +191,10 @@ def _generate_toolchain_build(repository_ctx, cuda):
         ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
     compiler_files = ["@cuda//:compiler_deps"]
-    if int(cuda.version_major) >= 13:
-        if cuda.cicc_label != None:
-            compiler_files.append(cuda.cicc_label)
-        if cuda.libdevice_label != None:
-            compiler_files.append(cuda.libdevice_label)
+    if cuda.cicc_label != None:
+        compiler_files.append(cuda.cicc_label)
+    if cuda.libdevice_label != None:
+        compiler_files.append(cuda.libdevice_label)
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
 
     substitutions = {

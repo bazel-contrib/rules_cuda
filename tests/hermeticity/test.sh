@@ -29,6 +29,8 @@ hermetic_flags=(\
     --@rules_cuda//cuda:copts=-Xcompiler=-fdebug-prefix-map=$(pwd)=. \
     --@rules_cuda//cuda:copts=-objtemp)
 
+bazel clean
+
 bazel build "${hermetic_flags[@]}" :cuda_test
 build_output1=$(strings ${file})
 

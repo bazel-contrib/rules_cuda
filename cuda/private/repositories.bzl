@@ -13,6 +13,25 @@ def _is_linux(ctx):
 def _is_windows(ctx):
     return ctx.os.name.lower().startswith("windows")
 
+def _detect_platform(ctx):
+    os = None
+    if _is_linux(ctx):
+        os = "linux"
+    elif _is_windows(ctx):
+        os = "windows"
+    else:
+        fail("Unsupported OS '{}' for CUDA redist.".format(ctx.os.name))
+
+    arch = ctx.os.arch
+    if arch in ["x86_64", "amd64"]:
+        arch = "x86_64"
+    elif arch in ["aarch64", "arm64"]:
+        arch = "aarch64"
+    else:
+        fail("Unsupported arch '{}' for CUDA redist.".format(ctx.os.arch))
+
+    return "{}-{}".format(os, arch)
+
 def _get_nvcc_version(repository_ctx, nvcc_root):
     result = repository_ctx.execute([nvcc_root + "/bin/nvcc", "--version"])
     if result.return_code != 0:
@@ -114,20 +133,19 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
 
     nvcc_repo = repository_ctx.attr.components_mapping["nvcc"]
 
-    bin_ext = ".exe" if _is_windows(repository_ctx) else ""
-    nvcc = "{}//:nvcc/bin/nvcc{}".format(nvcc_repo, bin_ext)
-    nvlink = "{}//:nvcc/bin/nvlink{}".format(nvcc_repo, bin_ext)
-    link_stub = "{}//:nvcc/bin/crt/link.stub".format(nvcc_repo)
-    bin2c = "{}//:nvcc/bin/bin2c{}".format(nvcc_repo, bin_ext)
-    fatbinary = "{}//:nvcc/bin/fatbinary{}".format(nvcc_repo, bin_ext)
-    ptxas = "{}//:nvcc/bin/ptxas{}".format(nvcc_repo, bin_ext)
+    nvcc = "{}//:nvcc".format(nvcc_repo)
+    nvlink = "{}//:nvlink".format(nvcc_repo)
+    link_stub = "{}//:link.stub".format(nvcc_repo)
+    bin2c = "{}//:bin2c".format(nvcc_repo)
+    fatbinary = "{}//:fatbinary".format(nvcc_repo)
+    ptxas = "{}//:ptxas".format(nvcc_repo)
 
     cicc = None
     libdevice = None
-    if int(cuda_version_major) >= 13:
+    if "nvvm" in repository_ctx.attr.components_mapping:
         nvvm_repo = repository_ctx.attr.components_mapping["nvvm"]
-        cicc = "{}//:nvvm/nvvm/bin/cicc{}".format(nvvm_repo, bin_ext)  # TODO: can we use @cuda//:cicc?
-        libdevice = "{}//:nvvm/nvvm/libdevice/libdevice.10.bc".format(nvvm_repo)  # TODO: can we use @cuda//:libdevice?
+        cicc = "{}//:cicc".format(nvvm_repo)
+        libdevice = "{}//:libdevice.10.bc".format(nvvm_repo)
 
     return struct(
         path = None,  # scattered components
@@ -464,7 +482,8 @@ def _cuda_redist_json_impl(repository_ctx):
     attr = repository_ctx.attr
     url, json_object = redist_json_helper.get(repository_ctx, attr)
     redist_ver = redist_json_helper.get_redist_version(repository_ctx, attr, json_object)
-    specs = redist_json_helper.collect_specs(repository_ctx, attr, json_object, url)
+    platform = _detect_platform(repository_ctx)
+    specs = redist_json_helper.collect_specs(repository_ctx, attr, platform, json_object, url)
 
     template_helper.generate_redist_bzl(repository_ctx, specs, redist_ver)
     repository_ctx.symlink(Label("//cuda/private:templates/BUILD.redist_json"), "BUILD")
