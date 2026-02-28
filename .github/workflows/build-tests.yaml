@@ -37,7 +37,7 @@ jobs:
               cuda-version: "13.0.2",
               source: "nvidia",
               toolchain: "llvm_host_device", # clang as cuda compiler driver
-              toolchain-version: "22",
+              toolchain-version: "", # FIXME: fix to 22, use nightly for now
             }
           - {
               os: "ubuntu-22.04",
