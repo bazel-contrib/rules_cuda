@@ -42,7 +42,7 @@ jobs:
 
       - run: bazelisk shutdown
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: "${{ matrix.docs.name }}"
           path: ${{ github.workspace }}/docs/site/
@@ -56,7 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           path: ${{ github.workspace }}/docs/generated
       - name: Inspect docs site directory structure
