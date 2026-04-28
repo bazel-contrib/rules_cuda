@@ -55,6 +55,17 @@ def _impl(ctx):
     env_paths, env_includes, _, libdevice_dir = collect_paths(ctx)
     env_entry_include = [env_entry("INCLUDE", path_separator.join(env_includes))] if env_includes else []
 
+    # Clang ships `cuda_wrappers/` headers (e.g. bits/shared_ptr_base.h) that
+    # `#undef __noinline__` around libstdc++ headers, working around the
+    # CUDA `host_defines.h` macro conflict with libstdc++'s use of
+    # `__attribute__((__noinline__))`. They live under the clang resource
+    # directory at `lib/clang/<v>/include/cuda_wrappers/`. Detect that path
+    # from the cc_toolchain's built_in_include_directories.
+    cuda_wrappers_dirs = []
+    for d in env_includes:
+        if "/lib/clang/" in d and d.endswith("/include"):
+            cuda_wrappers_dirs.append(d + "/cuda_wrappers")
+
     clang_compile_env_feature = feature(
         name = "clang_compile_env",
         enabled = True,
@@ -578,8 +589,38 @@ def _impl(ctx):
         cuda_compile_action,
     ]
 
+    cuda_wrappers_include_feature = feature(
+        name = "cuda_wrappers_include",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                # Emit these as `-isystem` (not `-idirafter`) so the wrappers
+                # land ahead of the libstdc++ headers that a hermetic
+                # toolchain injects via `-cxx-isystem`. Clang's include search
+                # merges all system-tier groups in argument order: `-isystem`
+                # (System) precedes `-cxx-isystem` (CXXSystem), which precedes
+                # the `-internal-isystem` cuda_wrappers entry clang's CUDA
+                # driver adds automatically. That automatic entry therefore
+                # sorts *after* the C++ stdlib and never intercepts headers
+                # like bits/shared_ptr_base.h via `#include_next`. Adding the
+                # same dir as `-isystem` here reorders it ahead of the stdlib;
+                # clang dedups the now-redundant `-internal-isystem` copy
+                # (RemoveDuplicates keeps the earlier occurrence), so this is
+                # safe even when the driver also adds it. Note `-idirafter`
+                # would not work: it lands in the `After` group, searched last,
+                # behind the C++ stdlib.
+                flag_groups = [
+                    flag_group(flags = ["-isystem", d])
+                    for d in cuda_wrappers_dirs
+                ],
+            ),
+        ] if cuda_wrappers_dirs else [],
+    )
+
     features = [
         clang_compile_env_feature,
+        cuda_wrappers_include_feature,
         cuda_path_feature,
         supports_compiler_device_link_feature,
         supports_wrapper_device_link_feature,
