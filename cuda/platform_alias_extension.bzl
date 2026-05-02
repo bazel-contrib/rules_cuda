@@ -10,6 +10,29 @@ load("//cuda/private:templates/registry.bzl", "REGISTRY")
 # Use REGISTRY as the source of truth for component targets
 TARGET_MAPPING = REGISTRY
 
+# Mapping from @platforms-constraint config_settings (in @rules_cuda//cuda)
+# to the canonical CUDA platform they should resolve to. Used to build the
+# auto-detection alias for both target and exec components.
+#
+# The constraint check evaluates against the *active configuration's* platform
+# (exec at cfg="exec", target otherwise) — RBE-safe and reuses Bazel's normal
+# platform resolution. linux-sbsa and linux-aarch64 are disambiguated by the
+# :gpu_kind constraint (default :discrete_gpu, override with :on_die_gpu).
+#
+# Adding a new platform to SUPPORTED_PLATFORMS requires three matching changes:
+#   1. A new `is_<platform>` config_setting in //cuda:BUILD.bazel
+#   2. A new constraint_value if the new platform needs disambiguation from an
+#      existing one (see :gpu_kind / :on_die_gpu for the aarch64 case)
+#   3. A new entry in this list mapping the config_setting to the platform name
+# Without all three, the new platform will silently fall through to
+# :unsupported_cuda_platform with no diagnostic.
+_AUTO_FROM_CONSTRAINT = [
+    ("is_linux_x86_64", "linux-x86_64"),
+    ("is_linux_sbsa", "linux-sbsa"),
+    ("is_linux_aarch64", "linux-aarch64"),
+    ("is_windows_x86_64", "windows-x86_64"),
+]
+
 def _platform_repos_attr(platform):
     return platform.replace("-", "_") + "_repos"
 
@@ -27,6 +50,29 @@ def _version_sort_key(version):
     if all([p.isdigit() for p in parts]):
         return (1, [int(p) for p in parts], version)
     return (0, [], version)
+
+def _emit_constraint_select_alias(build_content, alias_name, target_name, platforms_available, dummy_target, visibility):
+    """Emit an alias whose actual is the constraint-based platform select.
+
+    Used directly for target components and as the auto-detection fallback
+    for exec components. Constraint check fires against the active config's
+    platform (exec at cfg="exec", target otherwise) — RBE-safe.
+    """
+    build_content.append("alias(")
+    build_content.append('    name = "{}",'.format(alias_name))
+    build_content.append("    actual = select({")
+    for setting, platform in _AUTO_FROM_CONSTRAINT:
+        platform_suffix = platform.replace("-", "_")
+        build_content.append('        "@rules_cuda//cuda:{}":'.format(setting))
+        if platform in platforms_available:
+            build_content.append('            ":{}_{}",'.format(platform_suffix, target_name))
+        else:
+            build_content.append('            "{}",'.format(dummy_target))
+    build_content.append('        "//conditions:default": ":unsupported_cuda_platform",')
+    build_content.append("    }),")
+    build_content.append('    visibility = ["{}"],'.format(visibility))
+    build_content.append(")")
+    build_content.append("")
 
 def _platform_alias_repo_impl(ctx):
     """Implementation of the platform_alias_repo repository rule.
@@ -102,26 +148,48 @@ def _platform_alias_repo_impl(ctx):
         elif target_name == "libdevice.10.bc":
             dummy_target = "@rules_cuda//cuda/dummy:libdevice.10.bc"
 
-        build_content.append("alias(")
-        build_content.append('    name = "{}",'.format(target_name))
-        build_content.append("    actual = select({")
-
-        # Add conditions for ALL platforms, using dummy for unavailable ones.
-        for platform in SUPPORTED_PLATFORMS:
-            platform_suffix = platform.replace("-", "_")
-            build_content.append(
-                '        "@rules_cuda//cuda:{}_platform_is_{}":'.format(platform_type, platform_suffix),
+        if platform_type == "exec":
+            # Outer alias: explicit --exec_platform flag wins; the default
+            # branch falls through to constraint-based auto-detection in
+            # the private :auto_<name> alias below.
+            build_content.append("alias(")
+            build_content.append('    name = "{}",'.format(target_name))
+            build_content.append("    actual = select({")
+            for platform in SUPPORTED_PLATFORMS:
+                platform_suffix = platform.replace("-", "_")
+                build_content.append(
+                    '        "@rules_cuda//cuda:exec_platform_is_{}":'.format(platform_suffix),
+                )
+                if platform in platforms_available:
+                    build_content.append('            ":{}_{}",'.format(platform_suffix, target_name))
+                else:
+                    build_content.append('            "{}",'.format(dummy_target))
+            build_content.append('        "//conditions:default": ":auto_{}",'.format(target_name))
+            build_content.append("    }),")
+            build_content.append('    visibility = ["//visibility:public"],')
+            build_content.append(")")
+            build_content.append("")
+            # Auto-detection fallback. Private — only the outer flag-select
+            # in this same package needs to reach it.
+            _emit_constraint_select_alias(
+                build_content,
+                "auto_" + target_name,
+                target_name,
+                platforms_available,
+                dummy_target,
+                "//visibility:private",
             )
-            if platform in platforms_available:
-                build_content.append('            ":{}_{}",'.format(platform_suffix, target_name))
-            else:
-                # Platform doesn't have this component, use dummy target.
-                build_content.append('            "{}",'.format(dummy_target))
-        build_content.append('        "//conditions:default": ":unsupported_cuda_platform",')
-        build_content.append("    }),")
-        build_content.append('    visibility = ["//visibility:public"],')
-        build_content.append(")")
-        build_content.append("")
+        else:
+            # Target components: single alias with constraint-based select
+            # inlined. --platforms is the only knob (no flag override layer).
+            _emit_constraint_select_alias(
+                build_content,
+                target_name,
+                target_name,
+                platforms_available,
+                dummy_target,
+                "//visibility:public",
+            )
 
         # Generate platform-specific aliases for ALL platforms.
         # Platforms where the component exists get version-based selection.
