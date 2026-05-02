@@ -169,6 +169,7 @@ def _platform_alias_repo_impl(ctx):
             build_content.append('    visibility = ["//visibility:public"],')
             build_content.append(")")
             build_content.append("")
+
             # Auto-detection fallback. Private — only the outer flag-select
             # in this same package needs to reach it.
             _emit_constraint_select_alias(
