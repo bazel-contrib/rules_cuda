@@ -46,25 +46,26 @@ string_flag(
 )
 
 # NOTE: Functional with platform_alias only.
-string_flag(
-    name = "target_platform",
-    build_setting_default = "linux-x86_64",
-    values = SUPPORTED_PLATFORMS,
-)
-
-[
-    config_setting(
-        name = "target_platform_is_{}".format(platform.replace("-", "_")),
-        flag_values = {":target_platform": platform},
-    )
-    for platform in SUPPORTED_PLATFORMS
-]
-
-# NOTE: Functional with platform_alias only.
+#
+# Default is "" which means "auto-detect from the active exec platform's
+# @platforms//cpu + @platforms//os constraints (with :target_gpu narrowing
+# the aarch64-linux case)". Explicitly setting to one of SUPPORTED_PLATFORMS
+# pins the exec redist regardless of host.
+#
+# Override is needed when the active exec configuration's platform doesn't
+# carry the constraints that auto-detection keys on, or when the single
+# global :target_gpu flag picks the wrong variant for the exec side. Common
+# examples:
+#   - Cross-compile from a Grace/A4X (sbsa) host to a Drive Thor target:
+#     :target_gpu must be on_die for the target, but the exec auto-detects
+#     to linux-aarch64 nvcc instead of linux-sbsa nvcc. Set this flag to
+#     linux-sbsa to override.
+#   - Running nvcc under emulation where the binary you actually want to
+#     invoke doesn't match the platform Bazel sees.
 string_flag(
     name = "exec_platform",
-    build_setting_default = "linux-x86_64",
-    values = SUPPORTED_PLATFORMS,
+    build_setting_default = "",
+    values = [""] + SUPPORTED_PLATFORMS,
 )
 
 [
@@ -74,6 +75,74 @@ string_flag(
     )
     for platform in SUPPORTED_PLATFORMS
 ]
+
+# === Aarch64 redist disambiguation ===
+#
+# linux-sbsa (server-class ARM, discrete GPU on PCIe — Grace, A4X,
+# Graviton+GPU) and linux-aarch64 (NVIDIA's Tegra/Jetson/Drive embedded
+# redist with on-die GPU) share @platforms//cpu:aarch64 + os:linux. Standard
+# Bazel constraints can't tell them apart, so this CUDA-internal flag
+# selects which redist to use when the active configuration's platform is
+# aarch64-linux. The flag is a no-op on x86 and Windows platforms — the
+# outer alias matches those via @platforms constraints alone.
+#
+# Default is :discrete (linux-sbsa) — the safer fallback since the sbsa
+# redist's libraries don't depend on Tegra-specific kernel modules. Tegra
+# / Drive Thor users should set --@rules_cuda//cuda:target_gpu=on_die.
+string_flag(
+    name = "target_gpu",
+    build_setting_default = "discrete",
+    values = [
+        "discrete",
+        "on_die",
+    ],
+)
+
+config_setting(
+    name = "target_gpu_is_discrete",
+    flag_values = {":target_gpu": "discrete"},
+)
+
+config_setting(
+    name = "target_gpu_is_on_die",
+    flag_values = {":target_gpu": "on_die"},
+)
+
+# Platform-detection config_settings keyed on standard @platforms constraints.
+# A config_setting with constraint_values evaluates against the *active
+# configuration's* platform: at exec config that's the exec platform, at
+# target config that's the target platform. Same setting, two uses depending
+# on where it's referenced from.
+#
+# RBE-safe: the constraint check fires against the configuration's platform,
+# not the user's host. An x86 host driving aarch64 remote workers gets the
+# aarch64 match at exec config.
+#
+# linux-sbsa and linux-aarch64 share these constraints; the inner alias
+# (generated per component) routes between them via :target_gpu.
+config_setting(
+    name = "is_linux_x86_64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "is_linux_aarch64_or_sbsa",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+config_setting(
+    name = "is_windows_x86_64",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+)
 
 # Command line flag to specify the list of CUDA architectures to compile for.
 #
