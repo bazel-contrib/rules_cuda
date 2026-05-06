@@ -92,7 +92,10 @@ string_flag(
 string_flag(
     name = "target_gpu",
     build_setting_default = "discrete",
-    values = ["discrete", "on_die"],
+    values = [
+        "discrete",
+        "on_die",
+    ],
 )
 
 config_setting(
