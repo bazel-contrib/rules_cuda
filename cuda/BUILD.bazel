@@ -48,20 +48,20 @@ string_flag(
 # NOTE: Functional with platform_alias only.
 #
 # Default is "" which means "auto-detect from the active exec platform's
-# @platforms//cpu + @platforms//os + :gpu_kind constraints". Explicitly
-# setting to one of SUPPORTED_PLATFORMS pins the exec redist regardless of
-# host.
+# @platforms//cpu + @platforms//os constraints (with :target_gpu narrowing
+# the aarch64-linux case)". Explicitly setting to one of SUPPORTED_PLATFORMS
+# pins the exec redist regardless of host.
 #
 # Override is needed when the active exec configuration's platform doesn't
-# carry the constraints that auto-detection keys on. Common examples:
-#   - An RBE exec pool whose registered platform is missing :gpu_kind, so an
-#     aarch64 pool with on-die GPU resolves to linux-sbsa instead of
-#     linux-aarch64.
+# carry the constraints that auto-detection keys on, or when the single
+# global :target_gpu flag picks the wrong variant for the exec side. Common
+# examples:
+#   - Cross-compile from a Grace/A4X (sbsa) host to a Drive Thor target:
+#     :target_gpu must be on_die for the target, but the exec auto-detects
+#     to linux-aarch64 nvcc instead of linux-sbsa nvcc. Set this flag to
+#     linux-sbsa to override.
 #   - Running nvcc under emulation where the binary you actually want to
 #     invoke doesn't match the platform Bazel sees.
-# Prefer fixing the platform definition (add the constraint, or use a thin
-# wrapper platform with parents=...) over setting this flag — this is an
-# escape hatch.
 string_flag(
     name = "exec_platform",
     build_setting_default = "",
@@ -76,78 +76,36 @@ string_flag(
     for platform in SUPPORTED_PLATFORMS
 ]
 
-# === GPU kind constraint ===
+# === Aarch64 redist disambiguation ===
 #
-# Disambiguates linux-sbsa (server-class ARM, discrete GPU on PCIe — Grace,
-# A4X, Graviton+GPU) from linux-aarch64 (NVIDIA's Tegra/Jetson/Drive embedded
-# redist with on-die GPU). Both have @platforms//cpu:aarch64 + os:linux, so a
-# custom constraint is needed to tell them apart.
+# linux-sbsa (server-class ARM, discrete GPU on PCIe — Grace, A4X,
+# Graviton+GPU) and linux-aarch64 (NVIDIA's Tegra/Jetson/Drive embedded
+# redist with on-die GPU) share @platforms//cpu:aarch64 + os:linux. Standard
+# Bazel constraints can't tell them apart, so this CUDA-internal flag
+# selects which redist to use when the active configuration's platform is
+# aarch64-linux. The flag is a no-op on x86 and Windows platforms — the
+# outer alias matches those via @platforms constraints alone.
 #
-# Default is :discrete_gpu, so platforms that don't explicitly set this
-# (e.g. a vanilla aarch64-Linux platform defined by a downstream consumer)
-# auto-resolve to linux-sbsa — the safer choice since the sbsa redist's
-# libraries don't depend on Tegra-specific kernel modules.
-#
-# Consumers targeting Tegra hardware should either:
-#   - use --platforms=@rules_cuda//cuda:linux_aarch64 (predefined), or
-#   - add "@rules_cuda//cuda:on_die_gpu" to their own platform's
-#     constraint_values.
-constraint_setting(
-    name = "gpu_kind",
-    default_constraint_value = ":discrete_gpu",
+# Default is :discrete (linux-sbsa) — the safer fallback since the sbsa
+# redist's libraries don't depend on Tegra-specific kernel modules. Tegra
+# / Drive Thor users should set --@rules_cuda//cuda:target_gpu=on_die.
+string_flag(
+    name = "target_gpu",
+    build_setting_default = "discrete",
+    values = ["discrete", "on_die"],
 )
 
-constraint_value(
-    name = "discrete_gpu",
-    constraint_setting = ":gpu_kind",
+config_setting(
+    name = "target_gpu_is_discrete",
+    flag_values = {":target_gpu": "discrete"},
 )
 
-constraint_value(
-    name = "on_die_gpu",
-    constraint_setting = ":gpu_kind",
+config_setting(
+    name = "target_gpu_is_on_die",
+    flag_values = {":target_gpu": "on_die"},
 )
 
-# Predefined platforms mirroring NVIDIA's CUDA redist platform names. Use
-# these as --platforms=@rules_cuda//cuda:<name> for fully unambiguous
-# CUDA-aware platform selection. Downstream platforms that already exist
-# (e.g. //:linux_amd64) continue to work; aarch64 platforms without an
-# explicit gpu_kind default to :discrete_gpu and resolve to linux-sbsa.
-platform(
-    name = "linux_x86_64",
-    constraint_values = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
-)
-
-platform(
-    name = "linux_sbsa",
-    constraint_values = [
-        "@platforms//os:linux",
-        "@platforms//cpu:aarch64",
-        ":discrete_gpu",
-    ],
-)
-
-platform(
-    name = "linux_aarch64",
-    constraint_values = [
-        "@platforms//os:linux",
-        "@platforms//cpu:aarch64",
-        ":on_die_gpu",
-    ],
-)
-
-platform(
-    name = "windows_x86_64",
-    constraint_values = [
-        "@platforms//os:windows",
-        "@platforms//cpu:x86_64",
-    ],
-)
-
-# Platform-detection config_settings keyed on standard @platforms constraints
-# plus the rules_cuda :gpu_kind constraint where needed for disambiguation.
+# Platform-detection config_settings keyed on standard @platforms constraints.
 # A config_setting with constraint_values evaluates against the *active
 # configuration's* platform: at exec config that's the exec platform, at
 # target config that's the target platform. Same setting, two uses depending
@@ -156,6 +114,9 @@ platform(
 # RBE-safe: the constraint check fires against the configuration's platform,
 # not the user's host. An x86 host driving aarch64 remote workers gets the
 # aarch64 match at exec config.
+#
+# linux-sbsa and linux-aarch64 share these constraints; the inner alias
+# (generated per component) routes between them via :target_gpu.
 config_setting(
     name = "is_linux_x86_64",
     constraint_values = [
@@ -165,20 +126,10 @@ config_setting(
 )
 
 config_setting(
-    name = "is_linux_sbsa",
+    name = "is_linux_aarch64_or_sbsa",
     constraint_values = [
         "@platforms//os:linux",
         "@platforms//cpu:aarch64",
-        ":discrete_gpu",
-    ],
-)
-
-config_setting(
-    name = "is_linux_aarch64",
-    constraint_values = [
-        "@platforms//os:linux",
-        "@platforms//cpu:aarch64",
-        ":on_die_gpu",
     ],
 )
 
