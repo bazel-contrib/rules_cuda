@@ -48,16 +48,16 @@ string_flag(
 # NOTE: Functional with platform_alias only.
 #
 # Default is "" which means "auto-detect from the active exec platform's
-# @platforms//cpu + @platforms//os constraints (with :target_gpu narrowing
+# @platforms//cpu + @platforms//os constraints (with :aarch64 narrowing
 # the aarch64-linux case)". Explicitly setting to one of SUPPORTED_PLATFORMS
 # pins the exec redist regardless of host.
 #
 # Override is needed when the active exec configuration's platform doesn't
 # carry the constraints that auto-detection keys on, or when the single
-# global :target_gpu flag picks the wrong variant for the exec side. Common
+# global :aarch64 flag picks the wrong variant for the exec side. Common
 # examples:
 #   - Cross-compile from a Grace/A4X (sbsa) host to a Drive Thor target:
-#     :target_gpu must be on_die for the target, but the exec auto-detects
+#     :aarch64 must be aarch64 for the target, but the exec auto-detects
 #     to linux-aarch64 nvcc instead of linux-sbsa nvcc. Set this flag to
 #     linux-sbsa to override.
 #   - Running nvcc under emulation where the binary you actually want to
@@ -86,26 +86,26 @@ string_flag(
 # aarch64-linux. The flag is a no-op on x86 and Windows platforms — the
 # outer alias matches those via @platforms constraints alone.
 #
-# Default is :discrete (linux-sbsa) — the safer fallback since the sbsa
+# Default is sbsa (server-class) — the safer fallback since the sbsa
 # redist's libraries don't depend on Tegra-specific kernel modules. Tegra
-# / Drive Thor users should set --@rules_cuda//cuda:target_gpu=on_die.
+# / Drive Thor users should set --@rules_cuda//cuda:aarch64=aarch64.
 string_flag(
-    name = "target_gpu",
-    build_setting_default = "discrete",
+    name = "aarch64",
+    build_setting_default = "sbsa",
     values = [
-        "discrete",
-        "on_die",
+        "sbsa",
+        "aarch64",
     ],
 )
 
 config_setting(
-    name = "target_gpu_is_discrete",
-    flag_values = {":target_gpu": "discrete"},
+    name = "aarch64_is_sbsa",
+    flag_values = {":aarch64": "sbsa"},
 )
 
 config_setting(
-    name = "target_gpu_is_on_die",
-    flag_values = {":target_gpu": "on_die"},
+    name = "aarch64_is_aarch64",
+    flag_values = {":aarch64": "aarch64"},
 )
 
 # Platform-detection config_settings keyed on standard @platforms constraints.
@@ -119,7 +119,7 @@ config_setting(
 # aarch64 match at exec config.
 #
 # linux-sbsa and linux-aarch64 share these constraints; the inner alias
-# (generated per component) routes between them via :target_gpu.
+# (generated per component) routes between them via :aarch64.
 config_setting(
     name = "is_linux_x86_64",
     constraint_values = [

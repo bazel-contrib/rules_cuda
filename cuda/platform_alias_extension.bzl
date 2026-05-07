@@ -15,7 +15,7 @@ TARGET_MAPPING = REGISTRY
 # platforms unambiguously identified by @platforms//cpu + @platforms//os
 # alone. linux-sbsa and linux-aarch64 share aarch64+linux constraints and
 # are routed via :is_linux_aarch64_or_sbsa to a nested alias keyed on the
-# :target_gpu flag.
+# :aarch64 flag.
 #
 # The constraint check evaluates against the *active configuration's* platform
 # (exec at cfg="exec", target otherwise) — RBE-safe and reuses Bazel's normal
@@ -24,9 +24,9 @@ TARGET_MAPPING = REGISTRY
 # Adding a new platform to SUPPORTED_PLATFORMS requires three matching changes:
 #   1. A new `is_<platform>` config_setting in //cuda:BUILD.bazel
 #   2. If the new platform shares cpu+os with another, a disambiguation
-#      mechanism (see :target_gpu and :is_linux_aarch64_or_sbsa for the
+#      mechanism (see :aarch64 and :is_linux_aarch64_or_sbsa for the
 #      aarch64 case)
-#   3. A new entry in this list (or in _AARCH64_FROM_TARGET_GPU below for
+#   3. A new entry in this list (or in _AARCH64_FROM_FLAG below for
 #      aarch64-only additions)
 # Without all three, the new platform will silently fall through to
 # :unsupported_cuda_platform with no diagnostic.
@@ -35,13 +35,13 @@ _AUTO_FROM_CONSTRAINT = [
     ("is_windows_x86_64", "windows-x86_64"),
 ]
 
-# Mapping from :target_gpu-flag config_settings to the aarch64-linux CUDA
+# Mapping from :aarch64-flag config_settings to the aarch64-linux CUDA
 # platform they resolve to. Drives the inner alias that disambiguates
 # linux-sbsa (server-class ARM, discrete GPU) from linux-aarch64 (Tegra/Drive
 # embedded, on-die GPU).
-_AARCH64_FROM_TARGET_GPU = [
-    ("target_gpu_is_discrete", "linux-sbsa"),
-    ("target_gpu_is_on_die", "linux-aarch64"),
+_AARCH64_FROM_FLAG = [
+    ("aarch64_is_sbsa", "linux-sbsa"),
+    ("aarch64_is_aarch64", "linux-aarch64"),
 ]
 
 def _platform_repos_attr(platform):
@@ -65,14 +65,14 @@ def _version_sort_key(version):
 def _emit_aarch64_inner_alias(build_content, alias_name, target_name, platforms_available, dummy_target):
     """Emit the private inner alias that disambiguates linux-sbsa vs linux-aarch64.
 
-    Keyed on the :target_gpu flag (discrete -> linux-sbsa, on_die ->
+    Keyed on the :aarch64 flag (sbsa -> linux-sbsa, aarch64 ->
     linux-aarch64). Referenced from the outer constraint-based alias when
     the active config's platform is aarch64-linux.
     """
     build_content.append("alias(")
     build_content.append('    name = "{}",'.format(alias_name))
     build_content.append("    actual = select({")
-    for setting, platform in _AARCH64_FROM_TARGET_GPU:
+    for setting, platform in _AARCH64_FROM_FLAG:
         platform_suffix = platform.replace("-", "_")
         build_content.append('        "@rules_cuda//cuda:{}":'.format(setting))
         if platform in platforms_available:
@@ -89,7 +89,7 @@ def _emit_outer_constraint_alias(build_content, alias_name, target_name, platfor
 
     Used directly for target components and as the auto-detection fallback
     for exec components. For aarch64-linux configs, routes to the private
-    :target_gpu-keyed inner alias passed as aarch64_inner_name. Constraint
+    :aarch64-keyed inner alias passed as aarch64_inner_name. Constraint
     check fires against the active config's platform (exec at cfg="exec",
     target otherwise) — RBE-safe.
     """
@@ -231,7 +231,7 @@ def _platform_alias_repo_impl(ctx):
             )
         else:
             # Target components: single outer alias keyed on @platforms
-            # constraints. --platforms is the primary knob; :target_gpu
+            # constraints. --platforms is the primary knob; :aarch64
             # picks the aarch64 variant in the inner alias.
             _emit_outer_constraint_alias(
                 build_content,

@@ -36,8 +36,8 @@ use_repo(cuda, "cuda")
 
 To select CUDA versions and platforms at build time, define multiple `cuda.redist_json` entries and a single `cuda.toolkit`.
 The target CUDA redist is auto-detected from the active target platform's `@platforms//cpu` + `@platforms//os` constraints.
-Set `--platforms` to control it. linux-sbsa and linux-aarch64 share aarch64+linux constraints; the `@rules_cuda//cuda:target_gpu` flag
-disambiguates them (default `discrete` → linux-sbsa, set to `on_die` for Tegra/Jetson/Drive Thor → linux-aarch64).
+Set `--platforms` to control it. linux-sbsa and linux-aarch64 share aarch64+linux constraints; the `@rules_cuda//cuda:aarch64` flag
+disambiguates them (default `sbsa` → linux-sbsa, set to `aarch64` for Tegra/Jetson/Drive Thor → linux-aarch64).
 Use `@rules_cuda//cuda:version` to pick the CUDA version (defaults to the highest declared if unset),
 and `@rules_cuda//cuda:exec_platform` as an escape hatch to override the auto-detected exec redist.
 
@@ -70,7 +70,7 @@ Example `.bazelrc` entries:
 ```
 build --platforms=//:my_x86_platform
 # For Tegra/Drive Thor targets (linux-aarch64 redist):
-# build --platforms=//:my_aarch64_platform --@rules_cuda//cuda:target_gpu=on_die
+# build --platforms=//:my_aarch64_platform --@rules_cuda//cuda:aarch64=aarch64
 # Optional: if omitted, the highest declared redist version is used.
 build --@rules_cuda//cuda:version=13.0.0
 ```
