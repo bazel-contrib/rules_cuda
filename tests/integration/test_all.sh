@@ -41,9 +41,12 @@ set -ex
 
 redist_platform_args=()
 if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$(uname -s 2>/dev/null)" =~ MINGW|MSYS|CYGWIN ]]; then
+    # Target redist is auto-detected from the Windows host platform's
+    # @platforms//os:windows + @platforms//cpu:x86_64 constraints. exec_platform
+    # is set defensively to guarantee the windows-x86_64 nvcc redist regardless
+    # of how the exec configuration's platform is declared.
     redist_platform_args=(
         --@rules_cuda//cuda:exec_platform=windows-x86_64
-        --@rules_cuda//cuda:target_platform=windows-x86_64
     )
 fi
 
