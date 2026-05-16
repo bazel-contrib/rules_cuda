@@ -399,6 +399,24 @@ def _impl(ctx):
         ],
     )
 
+    host_defines_feature = feature(
+        name = "host_defines",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [
+                    ACTION_NAMES.cuda_compile,
+                ],
+                flag_groups = [
+                    flag_group(
+                        flags = ["-D%{host_defines}"],
+                        iterate_over = "host_defines",
+                    ),
+                ],
+            ),
+        ],
+    )
+
     random_seed_feature = feature(
         name = "random_seed",
         enabled = True,
@@ -569,6 +587,7 @@ def _impl(ctx):
         random_seed_feature,
         per_object_debug_info_feature,
         defines_feature,
+        host_defines_feature,
         includes_feature,
         include_paths_feature,
         external_include_paths_feature,
