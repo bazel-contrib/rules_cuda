@@ -297,10 +297,13 @@ def _get_cc_host_compile_flags(ctx):
     extra = ["-fno-canonical-system-headers"] if cuda_toolchain.toolchain_identifier == "clang" else []
     flags_to_skip = list(base) + extra
 
-    flag_prefixes_to_skip = [
-        "-std=",
-        "--sysroot=",
-    ]
+    # For clang (the cuda compiler is the same clang as the host compiler),
+    # keep `-std=` so the C++ standard configured by the cc_toolchain (e.g.
+    # `-std=c++20`) reaches the cuda_compile action. nvcc has its own `-std=`
+    # handling, so strip it there to avoid double-passing.
+    flag_prefixes_to_skip = ["--sysroot="]
+    if cuda_toolchain.toolchain_identifier != "clang":
+        flag_prefixes_to_skip.append("-std=")
 
     flags_with_value_to_skip = [
         "--sysroot",
