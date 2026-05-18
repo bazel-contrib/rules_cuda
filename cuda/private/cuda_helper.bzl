@@ -6,6 +6,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", CC_ACTION_NAMES = "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/common:cc_helper.bzl", "cc_helper")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:artifact_categories.bzl", "ARTIFACT_CATEGORIES")
@@ -364,8 +365,12 @@ def _create_common(ctx):
     transitive_linking_contexts = [merged_cc_info.linking_context]
 
     # gather compile info
+    # Bazel's native cc_library injects BAZEL_CURRENT_REPOSITORY as a
+    # private define so `@bazel_tools//tools/cpp/runfiles` (and rules_cc's
+    # equivalent) can find the right runfiles tree. Mirror that for
+    # cuda_library so consumers depending on runfiles compile cleanly.
     defines = []
-    local_defines = [i for i in attr.local_defines]
+    local_defines = [i for i in attr.local_defines] + cc_helper.get_local_defines_for_runfiles_lookup(ctx, ctx.attr.deps)
     compile_flags = attr._default_cuda_copts[BuildSettingInfo].value + [o for o in attr.copts if _check_opts(o)]
     link_flags = []
     if hasattr(attr, "linkopts"):
