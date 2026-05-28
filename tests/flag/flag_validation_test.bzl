@@ -105,11 +105,13 @@ config_settings_compute61_sm61 = {_rules_cuda_target("cuda:archs"): "compute_61,
 config_settings_sm90a = {_rules_cuda_target("cuda:archs"): "sm_90a"}
 config_settings_sm90a_sm90 = {_rules_cuda_target("cuda:archs"): "sm_90a,sm_90"}
 config_settings_sm100_sm100a = {_rules_cuda_target("cuda:archs"): "sm_100;sm_100a"}  # NOTE: two specs
+config_settings_sm110_sm110a_lto110f = {_rules_cuda_target("cuda:archs"): "compute_110:sm_110,sm_110a,lto_110f"}
 
 cuda_library_sm61_flag_test = _create_cuda_library_flag_test(config_settings_sm61)
 cuda_library_sm90a_flag_test = _create_cuda_library_flag_test(config_settings_sm90a)
 cuda_library_sm90a_sm90_flag_test = _create_cuda_library_flag_test(config_settings_sm90a_sm90)
 cuda_library_sm100_sm100a_flag_test = _create_cuda_library_flag_test(config_settings_sm100_sm100a)
+cuda_library_sm110_sm110a_lto110f_flag_test = _create_cuda_library_flag_test(config_settings_sm110_sm110a_lto110f)
 cuda_library_compute60_flag_test = _create_cuda_library_flag_test(config_settings_compute60)
 cuda_library_compute60_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute60_sm61)
 cuda_library_compute61_sm61_flag_test = _create_cuda_library_flag_test(config_settings_compute61_sm61)

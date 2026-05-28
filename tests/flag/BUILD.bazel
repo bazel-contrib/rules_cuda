@@ -16,6 +16,7 @@ load(
     "cuda_library_platform_no_sysroot_flag_test",
     "cuda_library_platform_sysroot_flag_test",
     "cuda_library_sm100_sm100a_flag_test",
+    "cuda_library_sm110_sm110a_lto110f_flag_test",
     "cuda_library_sm61_flag_test",
     "cuda_library_sm90a_flag_test",
     "cuda_library_sm90a_sm90_flag_test",
@@ -362,6 +363,17 @@ cuda_library_sm100_sm100a_flag_test(
     contain_flags = [
         "-gencode arch=compute_100,code=sm_100",
         "-gencode arch=compute_100a,code=sm_100a",
+    ],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+cuda_library_sm110_sm110a_lto110f_flag_test(
+    name = "cuda_library_sm110_sm110a_lto110f_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-gencode arch=compute_110,code=sm_110",
+        "-gencode arch=compute_110,code=sm_110a",
+        "-gencode arch=compute_110,code=lto_110f",
     ],
     target_under_test = "@rules_cuda_examples//basic:kernel",
 )
