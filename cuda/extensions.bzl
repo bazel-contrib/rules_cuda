@@ -125,6 +125,8 @@ def _register_redist_components(module_ctx, attr, component_entries):
     redist_ver = redist_json_helper.get_redist_version(module_ctx, attr, json_object)
 
     for platform in attr.platforms:
+        if platform not in SUPPORTED_PLATFORMS:
+            fail("platform {} not supported. Supported platforms: [{}]".format(platform, ", ".join(SUPPORTED_PLATFORMS)))
         component_specs = redist_json_helper.collect_specs(module_ctx, attr, platform, json_object, url)
         for spec in component_specs:
             repo_name = redist_json_helper.get_repo_name(module_ctx, spec)
