@@ -655,7 +655,7 @@ cuda_toolchain_config = rule(
     doc = """This rule provides the predefined cuda toolchain configuration for NVCC with non MSVC as host compiler.""",
     implementation = _impl,
     attrs = {
-        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], doc = "A target that provides a `CudaToolkitInfo`."),
+        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], cfg = "exec", doc = "A target that provides a `CudaToolkitInfo`."),
         "toolchain_identifier": attr.string(values = ["nvcc"], mandatory = True),
         "nvcc_version_major": attr.int(doc = "The CUDA Toolkit major version, e.g, 11 for 11.6"),
         "nvcc_version_minor": attr.int(doc = "The CUDA Toolkit minor version, e.g, 6 for 11.6"),
