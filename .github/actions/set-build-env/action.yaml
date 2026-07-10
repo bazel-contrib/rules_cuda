@@ -83,7 +83,7 @@ runs:
       # Pin the MSVC toolset instead of letting Bazel auto-detect the newest VS
       # on the runner. The windows-2025 image now ships VS 2026 / MSVC 14.51,
       # which nvcc's frontend cannot parse (STL static_assert failures) for the
-      # CUDA versions under test. MSVC 14.40 (VS 17.10) is within CUDA 12.6/13.0's
-      # supported host-compiler range, and works for 11.5.2 via the
-      # -allow-unsupported-compiler flag already set in the build config.
-      run: .github/actions/Set-VSEnv.ps1 -Version 2022 -ToolsetVersion 14.40
+      # CUDA versions under test. Select an installed VS 2022 14.4x toolset
+      # instead; if none are present, fail with diagnostics rather than falling
+      # back to an unsupported newer compiler.
+      run: .github/actions/Set-VSEnv.ps1 -Version 2022 -ToolsetVersion '14.44,14.43,14.42,14.41,14.40'

@@ -5,12 +5,15 @@ param (
     [parameter(Mandatory = $false)]
     [ValidateSet("all", "x86", "x64")][String]$Arch = "x64",
 
-    # Pin a specific MSVC toolset (major.minor, e.g. "14.40"). CUDA toolkits lag
-    # behind the newest MSVC, so we must not let Bazel auto-detect the latest VS
-    # on the runner (e.g. VS 2026 / MSVC 14.51 on the windows-2025 image, which
-    # nvcc's frontend cannot parse). Empty = use the VS default toolset.
+    # Pin a specific MSVC toolset prefix, or an ordered comma-separated list of
+    # prefixes (major.minor, e.g. "14.44,14.43,14.42,14.41,14.40"). CUDA
+    # toolkits lag behind the newest MSVC, so we must not let Bazel auto-detect
+    # the latest VS on the runner (e.g. VS 2026 / MSVC 14.51 on the windows-2025
+    # image, which nvcc's frontend cannot parse). Defaults to VS 2022 14.4x
+    # candidates; pass "" to opt out and use the VS default toolset (not
+    # recommended in CI).
     [parameter(Mandatory = $false)]
-    [string]$ToolsetVersion = ""
+    [string]$ToolsetVersion = "14.44,14.43,14.42,14.41,14.40"
 )
 
 $ErrorActionPreference = "Stop"
@@ -22,6 +25,15 @@ $toolset_component = @{
     "14.42" = "Microsoft.VisualStudio.Component.VC.14.42.17.12.x86.x64"
     "14.43" = "Microsoft.VisualStudio.Component.VC.14.43.17.13.x86.x64"
     "14.44" = "Microsoft.VisualStudio.Component.VC.14.44.17.14.x86.x64"
+}
+
+function Get-InstalledMsvcToolsets {
+    [CmdletBinding()]
+    param([string]$InstallPath)
+
+    $msvc_dir = Join-Path $InstallPath "VC\Tools\MSVC"
+    Get-ChildItem $msvc_dir -Directory -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending
 }
 
 function Set-EnvFromCmdSet {
@@ -56,23 +68,51 @@ if ($null -eq $install_path) {
 }
 
 # Ensure the pinned toolset is installed; CI images may only ship the newest.
+$selected_toolset = ""
 if ($ToolsetVersion) {
-    $msvc_dir = Join-Path $install_path "VC\Tools\MSVC"
-    $have = Get-ChildItem $msvc_dir -Directory -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name.StartsWith("$ToolsetVersion.") }
-    if (-not $have) {
-        $component = $toolset_component[$ToolsetVersion]
+    $requested_toolsets = $ToolsetVersion.Split(",") |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { $_ }
+
+    $installed_toolsets = @(Get-InstalledMsvcToolsets -InstallPath $install_path)
+    foreach ($candidate in $requested_toolsets) {
+        $match = $installed_toolsets |
+            Where-Object { $_.Name.StartsWith("$candidate.") } |
+            Select-Object -First 1
+        if ($match) {
+            $selected_toolset = $candidate
+            break
+        }
+    }
+
+    # If exactly one toolset was requested, try to install it. For candidate
+    # lists, fail with diagnostics instead of guessing which version to install.
+    if (-not $selected_toolset -and $requested_toolsets.Count -eq 1) {
+        $component = $toolset_component[$requested_toolsets[0]]
         if (-not $component) {
-            Write-Host -ForegroundColor Red "No known VS component id for MSVC toolset $ToolsetVersion; add it to `$toolset_component."
+            Write-Host -ForegroundColor Red "No known VS component id for MSVC toolset $($requested_toolsets[0]); add it to `$toolset_component."
             exit 1
         }
-        Write-Host "MSVC toolset $ToolsetVersion not found; installing $component ..."
+        Write-Host "MSVC toolset $($requested_toolsets[0]) not found; installing $component ..."
         $installer = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\setup.exe'
         & $installer modify --installPath "$install_path" --add $component --quiet --norestart --nocache --wait
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host -ForegroundColor Red "Failed to install MSVC toolset $ToolsetVersion (exit $LASTEXITCODE)."
+        if ($LASTEXITCODE -notin @(0, 3010)) {
+            Write-Host -ForegroundColor Red "Failed to install MSVC toolset $($requested_toolsets[0]) (exit $LASTEXITCODE)."
             exit 1
         }
+        $installed_toolsets = @(Get-InstalledMsvcToolsets -InstallPath $install_path)
+        $match = $installed_toolsets |
+            Where-Object { $_.Name.StartsWith("$($requested_toolsets[0]).") } |
+            Select-Object -First 1
+        if ($match) {
+            $selected_toolset = $requested_toolsets[0]
+        }
+    }
+
+    if (-not $selected_toolset) {
+        $available = if ($installed_toolsets) { ($installed_toolsets.Name -join ", ") } else { "<none>" }
+        Write-Host -ForegroundColor Red "None of the requested MSVC toolsets were found: $($requested_toolsets -join ', '). Available toolsets: $available"
+        exit 1
     }
 }
 
@@ -82,12 +122,12 @@ $vc_script = switch ($Arch) {
     "x86" { 'VC\Auxiliary\Build\vcvars32.bat' }
 }
 $path = Join-Path $install_path $vc_script
-$vcvars_arg = if ($ToolsetVersion) { " -vcvars_ver=$ToolsetVersion" } else { "" }
+$vcvars_arg = if ($selected_toolset) { " -vcvars_ver=$selected_toolset" } else { "" }
 
 C:/Windows/System32/cmd.exe /c "`"$path`"$vcvars_arg & set" | Set-EnvFromCmdSet
 
-if ($ToolsetVersion -and (-not $env:VCToolsVersion -or -not $env:VCToolsVersion.StartsWith("$ToolsetVersion."))) {
-    Write-Host -ForegroundColor Red "Requested MSVC toolset $ToolsetVersion but vcvars selected '$env:VCToolsVersion'."
+if ($selected_toolset -and (-not $env:VCToolsVersion -or -not $env:VCToolsVersion.StartsWith("$selected_toolset."))) {
+    Write-Host -ForegroundColor Red "Requested MSVC toolset $selected_toolset but vcvars selected '$env:VCToolsVersion'."
     exit 1
 }
 
