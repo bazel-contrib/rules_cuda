@@ -89,6 +89,7 @@ jobs:
         if: ${{ startsWith(matrix.cases.os, 'windows') }}
         run: |
           echo "build --@rules_cuda//cuda:copts=-D=_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH" >> $HOME/.bazelrc
+          echo "build --@rules_cuda//cuda:copts=-Xcompiler=/D_ENABLE_EXTENDED_ALIGNED_STORAGE" >> $HOME/.bazelrc
 
       - name: Bazel build config for CI debugging
         run: echo "build --verbose_failures" >> $HOME/.bazelrc
