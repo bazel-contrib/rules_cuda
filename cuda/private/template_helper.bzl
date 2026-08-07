@@ -195,7 +195,6 @@ def _generate_toolchain_build(repository_ctx, cuda):
         compiler_files.append(cuda.cicc_label)
     if cuda.libdevice_label != None:
         compiler_files.append(cuda.libdevice_label)
-    compiler_files.extend(cuda.device_runtime_static_libs_labels)
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
     device_runtime_static_libs_line = "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","
 
@@ -265,7 +264,6 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
             compiler_files.extend([
                 "@cuda//:nvvm_all_files",
             ])
-    compiler_files.extend(cuda.device_runtime_static_libs_labels)
     path_data_line = "path_data = " + repr(path_data) + ","
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
     device_runtime_static_libs_line = "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","

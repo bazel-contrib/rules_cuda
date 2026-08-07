@@ -57,6 +57,9 @@ cc_library(
     ] + if_linux([
         ":cudart_so",
     ]) + if_windows([
+        # Keep Windows dynamic-runtime behavior unchanged; Linux RDC archives are
+        # provided explicitly through the CUDA toolchain to avoid bloated .so links.
+        ":cudadevrt_lib",
         ":cudart_lib",
     ]),
     # FIXME:
