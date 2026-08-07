@@ -9,8 +9,8 @@ cc_library(
     target_compatible_with = ["@platforms//os:linux"],
 )
 
-# NOTE: before CUDA 13.0, culibos ships in cudart. Keep the target declared for
-# CUDA 13.0+ so multi-version alias repos can expose a stable cudart target set.
+# Multi-version alias repos expose one target set for all CUDA versions. CUDA
+# 13.0+ ships culibos in its own component, so this cudart target is empty there.
 cc_library(
     name = "culibos_a",
     srcs = if_cuda_toolkit_version_ge(
@@ -55,8 +55,7 @@ cc_library(
     ] + if_linux([
         ":cudart_so",
     ]) + if_windows([
-        # Keep Windows dynamic-runtime behavior unchanged; Linux RDC archives are
-        # provided explicitly through the CUDA toolchain to avoid bloated .so links.
+        # CUDA's Windows runtime link interface includes cudadevrt.lib.
         ":cudadevrt_lib",
         ":cudart_lib",
     ]),
