@@ -9,19 +9,17 @@ cc_library(
     target_compatible_with = ["@platforms//os:linux"],
 )
 
-# NOTE: for cuda toolkit older than 13.0, culibos_a is defined here, BUILD.culibos otherwise.
-[
-    cc_library(
-        name = "culibos_a",
-        srcs = ["%{component_name}/%{libpath}/libculibos.a"],
-        target_compatible_with = ["@platforms//os:linux"],
-    )
-    for name in if_cuda_toolkit_version_ge(
+# NOTE: before CUDA 13.0, culibos ships in cudart. Keep the target declared for
+# CUDA 13.0+ so multi-version alias repos can expose a stable cudart target set.
+cc_library(
+    name = "culibos_a",
+    srcs = if_cuda_toolkit_version_ge(
         (13, 0),
         [],
-        ["culibos"],
-    )
-]
+        ["%{component_name}/%{libpath}/libculibos.a"],
+    ),
+    target_compatible_with = ["@platforms//os:linux"],
+)
 
 cc_import(
     name = "cudart_lib",
