@@ -1,7 +1,6 @@
 #include "kernel.h"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
 
 #define CUDA_CHECK(expr)                                                \
   do {                                                                  \

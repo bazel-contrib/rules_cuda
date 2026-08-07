@@ -9,27 +9,17 @@ cc_library(
     target_compatible_with = ["@platforms//os:linux"],
 )
 
-# Local CUDA 13.0+ emits this target from BUILD.culibos in the same package.
-# Redist cudart packages keep an empty target so alias repos have one target set.
-[
-    cc_library(
-        name = "culibos_a",
-        srcs = if_cuda_toolkit_version_ge(
-            (13, 0),
-            [],
-            ["%{component_name}/%{libpath}/libculibos.a"],
-        ),
-        target_compatible_with = ["@platforms//os:linux"],
-    )
-    for name in if_cuda_toolkit_version_ge(
+# Multi-version alias repos expose one target set for all CUDA versions. CUDA
+# 13.0+ ships culibos in its own component, so this cudart target is empty there.
+cc_library(
+    name = "culibos_a",
+    srcs = if_cuda_toolkit_version_ge(
         (13, 0),
-        if_local_cuda_toolkit(
-            [],
-            ["culibos"],
-        ),
-        ["culibos"],
-    )
-]
+        [],
+        ["%{component_name}/%{libpath}/libculibos.a"],
+    ),
+    target_compatible_with = ["@platforms//os:linux"],
+)
 
 cc_import(
     name = "cudart_lib",
