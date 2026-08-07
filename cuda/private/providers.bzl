@@ -113,6 +113,7 @@ CudaToolkitInfo = provider(
         "cicc": "File to the cicc executable",
         "ptxas": "File to the ptxas executable",
         "libdevice": "File to the libdevice LLVM bitcode library (libdevice.10.bc)",
+        "device_runtime_static_libs": "A depset of static libraries needed for RDC device link and final host link.",
     },
 )
 

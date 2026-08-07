@@ -6,7 +6,26 @@ load("//cuda/private:actions/dlink.bzl", "device_link")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:providers.bzl", "CudaInfo")
 load("//cuda/private:rules/common.bzl", "ALLOW_CUDA_HDRS", "ALLOW_CUDA_SRCS")
-load("//cuda/private:toolchain.bzl", "find_cuda_toolchain", "use_cuda_toolchain")
+load("//cuda/private:toolchain.bzl", "find_cuda_toolchain", "find_cuda_toolkit", "use_cuda_toolchain")
+
+def _create_device_runtime_linking_context(ctx, cc_toolchain, feature_configuration, device_runtime_static_libs):
+    libraries = [
+        cc_common.create_library_to_link(
+            actions = ctx.actions,
+            cc_toolchain = cc_toolchain,
+            feature_configuration = feature_configuration,
+            static_library = static_lib,
+        )
+        for static_lib in device_runtime_static_libs.to_list()
+    ]
+    if not libraries:
+        return None
+
+    linker_input = cc_common.create_linker_input(
+        owner = ctx.label,
+        libraries = depset(libraries),
+    )
+    return cc_common.create_linking_context(linker_inputs = depset([linker_input]))
 
 def _cuda_library_impl(ctx):
     """cuda_library is a rule that perform device link.
@@ -99,6 +118,17 @@ def _cuda_library_impl(ctx):
         requested_features = ctx.features,
         unsupported_features = ctx.disabled_features,
     )
+    linking_contexts = list(common.transitive_linking_contexts)
+    if use_rdc:
+        device_runtime_linking_context = _create_device_runtime_linking_context(
+            ctx,
+            cc_toolchain,
+            cc_feature_config,
+            find_cuda_toolkit(ctx).device_runtime_static_libs,
+        )
+        if device_runtime_linking_context != None:
+            linking_contexts.append(device_runtime_linking_context)
+
     linking_ctx, linking_outputs = cc_common.create_linking_context_from_compilation_outputs(
         name = ctx.attr.name,
         actions = ctx.actions,
@@ -107,7 +137,7 @@ def _cuda_library_impl(ctx):
         compilation_outputs = cc_common.create_compilation_outputs(objects = archive_content, pic_objects = pic_archive_content),
         user_link_flags = common.host_link_flags,
         alwayslink = attr.alwayslink,
-        linking_contexts = common.transitive_linking_contexts,
+        linking_contexts = linking_contexts,
         disallow_dynamic_library = True,
     )
 

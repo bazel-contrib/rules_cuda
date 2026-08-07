@@ -9,20 +9,16 @@ cc_library(
     target_compatible_with = ["@platforms//os:linux"],
 )
 
-# NOTE: for cuda toolkit older than 13.0, culibos_a is defined here, BUILD.culibos otherwise.
-[
-    cc_library(
-        name = "culibos_a",
-        srcs = ["%{component_name}/%{libpath}/libculibos.a"],
-        target_compatible_with = ["@platforms//os:linux"],
-    )
-    for name in if_cuda_toolkit_version_ge((13,0), [], ["culibos"])
-]
-
-conditional_culibos_a = if_cuda_toolkit_version_ge(
-  (13,0),
-  if_local_cuda_toolkit([":culibos_a"], ["@cuda//:culibos_a"]),
-  [":culibos_a"],
+# Multi-version alias repos expose one target set for all CUDA versions. CUDA
+# 13.0+ ships culibos in its own component, so this cudart target is empty there.
+cc_library(
+    name = "culibos_a",
+    srcs = if_cuda_toolkit_version_ge(
+        (13, 0),
+        [],
+        ["%{component_name}/%{libpath}/libculibos.a"],
+    ),
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 cc_import(
@@ -57,11 +53,9 @@ cc_library(
     deps = additional_header_deps("cudart") + [
         ":%{component_name}_headers",
     ] + if_linux([
-        # devrt is required for jit linking when rdc is enabled
-        ":cudadevrt_a",
         ":cudart_so",
-    ] + conditional_culibos_a) + if_windows([
-        # devrt is required for jit linking when rdc is enabled
+    ]) + if_windows([
+        # CUDA's Windows runtime link interface includes cudadevrt.lib.
         ":cudadevrt_lib",
         ":cudart_lib",
     ]),
