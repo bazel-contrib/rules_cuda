@@ -80,4 +80,6 @@ runs:
     - name: Set Visual Studio Environment (Windows)
       if: ${{ startsWith(inputs.os, 'windows') }}
       shell: pwsh
-      run: .github/actions/Set-VSEnv.ps1 2019
+      run: |
+        $vsVersion = if ("${{ inputs.cuda-version }}".StartsWith("11")) { 2019 } else { 2022 }
+        .github/actions/Set-VSEnv.ps1 $vsVersion

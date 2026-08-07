@@ -38,8 +38,7 @@ $vs_env = @{
 }
 
 if ( $null -eq $vs_env.install_path) {
-    Write-Host -ForegroundColor Red "Visual Studio $Version is not installed."
-    return
+    throw "Visual Studio $Version is not installed."
 }
 
 $path = Join-Path $vs_env.install_path $vs_env.$Arch
