@@ -80,4 +80,12 @@ runs:
     - name: Set Visual Studio Environment (Windows)
       if: ${{ startsWith(inputs.os, 'windows') }}
       shell: pwsh
-      run: .github/actions/Set-VSEnv.ps1 2019
+      # windows-2025: VS 2026 default toolset is MSVC 14.51 (unsupported by nvcc).
+      # Pin the side-by-side 14.44 toolset and persist BAZEL_VC* via GITHUB_ENV.
+      # windows-2022: VS 2022 already defaults to a 14.4x toolset nvcc accepts.
+      run: |
+        if ("${{ inputs.os }}" -like "windows-2025*") {
+          .github/actions/Set-VSEnv.ps1 2026 -ToolsetVersion 14.44
+        } else {
+          .github/actions/Set-VSEnv.ps1 2022
+        }
