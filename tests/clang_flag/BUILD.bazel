@@ -102,7 +102,10 @@ clang_cuda_library_flag_test(
         "-fcuda-rdc",
     ],
     not_contain_flags = ["-Xcompiler"],
-    output_name = "kernel.rdc.o",
+    output_name = select({
+        "@platforms//os:windows": "kernel.rdc.obj",
+        "//conditions:default": "kernel.rdc.o",
+    }),
     target_under_test = ":examples_basic_kernel_with_flags",
 )
 
@@ -117,7 +120,10 @@ clang_cuda_library_flag_test(
         "-G",
         "-Xcompiler",
     ],
-    output_name = "examples_basic_kernel_with_flags.rdc.o",
+    output_name = select({
+        "@platforms//os:windows": "examples_basic_kernel_with_flags.rdc.obj",
+        "//conditions:default": "examples_basic_kernel_with_flags.rdc.o",
+    }),
     target_under_test = ":examples_basic_kernel_with_flags",
 )
 
