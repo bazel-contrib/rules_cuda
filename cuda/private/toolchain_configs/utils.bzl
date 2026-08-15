@@ -65,8 +65,10 @@ def collect_paths(ctx):
     if ctx.configuration.default_shell_env.get("PATH"):
         env_paths.extend(ctx.configuration.default_shell_env.get("PATH").split(path_separator))
 
-    is_windows = "windows" in ctx.var["TARGET_CPU"]
-    if is_windows:
+    # Host PATH for tool execution (not target platform). Prefer path
+    # separator over the legacy TARGET_CPU make variable, which Bazel 9+ no
+    # longer sets to values like x64_windows for all configurations.
+    if ctx.configuration.host_path_separator == ";":
         env_paths.append("C:/Windows/system32")
 
     env_paths = _unique(_non_empty(env_paths))

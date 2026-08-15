@@ -24,7 +24,13 @@ all_link_actions = [
 ]
 
 def _impl(ctx):
-    is_windows = "windows" in ctx.var["TARGET_CPU"]
+    # Prefer platform constraints over the legacy TARGET_CPU make variable.
+    # Bazel 9+ no longer sets TARGET_CPU to values like x64_windows for all
+    # configurations, which would otherwise mis-detect Windows and emit .o
+    # instead of .obj for object artifacts.
+    is_windows = ctx.target_platform_has_constraint(
+        ctx.attr._windows_constraint[platform_common.ConstraintValueInfo],
+    )
 
     obj_ext = ".obj" if is_windows else ".o"
     artifact_name_patterns = [
@@ -669,6 +675,7 @@ cuda_toolchain_config = rule(
         "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], cfg = "exec", doc = "A target that provides a `CudaToolkitInfo`."),
         "toolchain_identifier": attr.string(values = ["clang"], mandatory = True),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
+        "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     },
     provides = [CudaToolchainConfigInfo],
     toolchains = use_cpp_toolchain(),
