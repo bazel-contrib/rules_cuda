@@ -369,7 +369,7 @@ def _impl(ctx):
                     ACTION_NAMES.cuda_compile,
                 ],
                 flag_groups = [
-                    flag_group(flags = ["-fPIC"], expand_if_available = "use_pic"),
+                    flag_group(flags = ["-fPIC"], expand_if_true = "use_pic"),
                 ],
             ),
         ],

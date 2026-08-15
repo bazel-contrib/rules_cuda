@@ -1,0 +1,290 @@
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+load(
+    ":flag_validation_test.bzl",
+    "clang_cuda_library_c_dbg_flag_test",
+    "clang_cuda_library_c_fastbuild_flag_test",
+    "clang_cuda_library_c_opt_flag_test",
+    "clang_cuda_library_compute60_flag_test",
+    "clang_cuda_library_compute60_sm61_flag_test",
+    "clang_cuda_library_external_include_paths_flag_test",
+    "clang_cuda_library_flag_test",
+    "clang_cuda_library_platform_no_sysroot_but_copt_flag_test",
+    "clang_cuda_library_platform_no_sysroot_flag_test",
+    "clang_cuda_library_platform_sysroot_flag_test",
+    "clang_cuda_library_sm100_sm100a_flag_test",
+    "clang_cuda_library_sm110_sm110a_sm110f_flag_test",
+    "clang_cuda_library_sm61_flag_test",
+    "clang_cuda_library_sm90a_flag_test",
+    "clang_cuda_library_sm90a_sm90_flag_test",
+    "clang_cuda_library_use_copts_flag_test",
+    "clang_cuda_library_use_cxxopts_flag_test",
+    "clang_cuda_library_use_linkopts_flag_test",
+)
+
+clang_cuda_library_flag_test(
+    name = "cuda_library_common_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-x cu",
+        "--no-offload-new-driver",
+        "-c",
+        "-o",
+    ],
+    not_contain_flags = ["-ccbin"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_c_dbg_flag_test(
+    name = "cuda_library_c_dbg_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-g"],
+    not_contain_flags = [
+        "-g0",
+        "-DNDEBUG",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_c_fastbuild_flag_test(
+    name = "cuda_library_c_fastbuild_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = [
+        "-g",
+        "-g0",
+        "-O2",
+        "-DNDEBUG",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_c_opt_flag_test(
+    name = "cuda_library_c_opt_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-g0",
+        "-O2",
+        "-DNDEBUG",
+    ],
+    not_contain_flags = ["-g"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_flag_test(
+    name = "cuda_library_default_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = [
+        "--cuda-gpu-arch=sm_61",
+        "-gencode",
+    ],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+cuda_library(
+    name = "examples_basic_kernel_with_flags",
+    srcs = ["@rules_cuda_examples//basic:kernel.cu"],
+    hdrs = ["@rules_cuda_examples//basic:kernel.h"],
+    archs = ["sm_61"],
+    copts = ["-G"],
+    host_copts = ["-O1"],
+    rdc = 1,
+    tags = ["manual"],
+)
+
+clang_cuda_library_flag_test(
+    name = "cuda_library_copts_and_host_copts_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-G",
+        "-O1",
+        "-fcuda-rdc",
+    ],
+    not_contain_flags = ["-Xcompiler"],
+    output_name = "kernel.rdc.o",
+    target_under_test = ":examples_basic_kernel_with_flags",
+)
+
+clang_cuda_library_flag_test(
+    name = "cuda_library_dlink_host_copts_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-x c++",
+        "-O1",
+    ],
+    not_contain_flags = [
+        "-G",
+        "-Xcompiler",
+    ],
+    output_name = "examples_basic_kernel_with_flags.rdc.o",
+    target_under_test = ":examples_basic_kernel_with_flags",
+)
+
+clang_cuda_library_flag_test(
+    name = "cuda_library_nonpic_compile_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = ["-fPIC"],
+    output_name = "kernel.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_flag_test(
+    name = "cuda_library_pic_compile_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-fPIC"],
+    not_contain_flags = ["-Xcompiler -fPIC"],
+    output_name = "kernel.pic.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_sm61_flag_test(
+    name = "cuda_library_sm61_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["--cuda-gpu-arch=sm_61"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_compute60_flag_test(
+    name = "cuda_library_compute60_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["--cuda-gpu-arch=sm_60"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_compute60_sm61_flag_test(
+    name = "cuda_library_compute60_sm61_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "--cuda-gpu-arch=sm_60",
+        "--cuda-gpu-arch=sm_61",
+    ],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_sm90a_flag_test(
+    name = "cuda_library_sm90a_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["--cuda-gpu-arch=sm_90a"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_sm90a_sm90_flag_test(
+    name = "cuda_library_sm90a_sm90_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "--cuda-gpu-arch=sm_90",
+        "--cuda-gpu-arch=sm_90a",
+    ],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_sm100_sm100a_flag_test(
+    name = "cuda_library_sm100_sm100a_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "--cuda-gpu-arch=sm_100",
+        "--cuda-gpu-arch=sm_100a",
+    ],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_sm110_sm110a_sm110f_flag_test(
+    name = "cuda_library_sm110_sm110a_sm110f_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "--cuda-gpu-arch=sm_110",
+        "--cuda-gpu-arch=sm_110a",
+        "--cuda-gpu-arch=sm_110f",
+    ],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+cuda_library(
+    name = "cuda_library_sm100_sm100a_per_target_sm_90_kernel",
+    srcs = ["@rules_cuda_examples//basic:kernel.cu"],
+    hdrs = ["@rules_cuda_examples//basic:kernel.h"],
+    archs = ["compute_80:sm_90"],
+    tags = ["manual"],
+)
+
+clang_cuda_library_sm100_sm100a_flag_test(
+    name = "cuda_library_sm100_sm100a_per_target_sm_90_kernel_arch_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["--cuda-gpu-arch=sm_90"],
+    not_contain_flags = [
+        "--cuda-gpu-arch=sm_100",
+        "--cuda-gpu-arch=sm_100a",
+    ],
+    target_under_test = ":cuda_library_sm100_sm100a_per_target_sm_90_kernel",
+)
+
+cuda_library(
+    name = "cpp_opts_test_lib",
+    srcs = ["@rules_cuda_examples//basic:kernel.cu"],
+    tags = ["manual"],
+)
+
+clang_cuda_library_use_copts_flag_test(
+    name = "cuda_library_use_copts_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-Wall"],
+    not_contain_flags = ["-Xcompiler"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+clang_cuda_library_use_cxxopts_flag_test(
+    name = "cuda_library_use_cxxopts_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-std=c++17"],
+    not_contain_flags = ["-Xcompiler"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+clang_cuda_library_use_linkopts_flag_test(
+    name = "cuda_library_use_linkopts_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-Wl,--verbose"],
+    not_contain_flags = ["-Xlinker"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+clang_cuda_library_external_include_paths_flag_test(
+    name = "cuda_library_external_include_paths_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-isystem"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+clang_cuda_library_platform_no_sysroot_flag_test(
+    name = "cuda_library_no_sysroot_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = ["--sysroot=/sysroot/from/toolchain"],
+    output_name = "kernel.pic.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_platform_no_sysroot_but_copt_flag_test(
+    name = "cuda_library_sysroot_from_copt_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["--sysroot=/sysroot/from/copt"],
+    output_name = "kernel.pic.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+clang_cuda_library_platform_sysroot_flag_test(
+    name = "cuda_library_sysroot_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["--sysroot=/sysroot/from/toolchain"],
+    output_name = "kernel.pic.o",
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "@rules_cuda_examples//basic:kernel",
+)

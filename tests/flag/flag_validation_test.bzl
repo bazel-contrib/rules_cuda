@@ -81,6 +81,11 @@ def _create_cuda_library_flag_test(*config_settings):
         },
     )
 
+# Public factory used by compiler-specific flag test packages. Keeping the
+# assertion implementation here makes the nvcc and clang suites validate flags
+# with identical matching semantics.
+create_cuda_library_flag_test = _create_cuda_library_flag_test
+
 cuda_library_flag_test = _create_cuda_library_flag_test({})
 
 config_settings_dbg = {"//command_line_option:compilation_mode": "dbg"}
