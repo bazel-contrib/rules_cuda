@@ -52,3 +52,30 @@ toolchain(
     toolchain_type = "@rules_cuda//cuda:toolchain_type",
     visibility = ["//visibility:public"],
 )
+
+# Names also registered by MODULE.bazel for hermetic multi-platform CTK.
+alias(
+    name = "nvcc-linux-toolchain",
+    actual = ":nvcc-local-toolchain",
+    visibility = ["//visibility:public"],
+)
+
+# Never selected on a pure local-Linux CTK (impossible OS pair).
+toolchain(
+    name = "nvcc-windows-toolchain",
+    exec_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//os:linux",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
+        "@platforms//os:linux",
+    ],
+    target_settings = [
+        "@rules_cuda//cuda:is_enabled",
+        "@rules_cuda//cuda:compiler_is_nvcc",
+    ],
+    toolchain = ":nvcc-local",
+    toolchain_type = "@rules_cuda//cuda:toolchain_type",
+    visibility = ["//visibility:public"],
+)

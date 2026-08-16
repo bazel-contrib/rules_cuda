@@ -233,7 +233,9 @@ if [[ "$skip_3" == false ]]; then
             "cuda_nvcc_linux_x86_64" \
             "linux_sbsa" \
             "case3_required_a" \
-            --extra_toolchains="${AARCH64_CC_TC}"
+            --extra_toolchains="${AARCH64_CC_TC}" \
+            --extra_execution_platforms="${PLATFORMS_PKG}:linux_x86_64" \
+            --host_platform="${PLATFORMS_PKG}:linux_x86_64"
         pushd "${this_dir}/toolchain_redist_cross_win_lx64_exec_lsbsa_tgt" >/dev/null
         bazel shutdown || true
         popd >/dev/null
@@ -254,7 +256,9 @@ if [[ "$skip_4" == false ]]; then
             "linux-sbsa" \
             "cuda_nvcc_linux_sbsa" \
             "linux_x86_64" \
-            "case4"
+            "case4" \
+            --extra_execution_platforms="${PLATFORMS_PKG}:linux_x86_64" \
+            --host_platform="${PLATFORMS_PKG}:linux_x86_64"
         pushd "${this_dir}/toolchain_redist_cross_win_lsbsa_exec_lx64_tgt" >/dev/null
         bazel shutdown || true
         popd >/dev/null
