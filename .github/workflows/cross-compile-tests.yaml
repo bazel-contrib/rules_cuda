@@ -21,7 +21,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-22.04, cuda-version: "12.6.3" }
           - { os: ubuntu-24.04, cuda-version: "12.6.3" }
     env:
       CUDA_REDIST_VERSION_OVERRIDE: ${{ matrix.cuda-version }}

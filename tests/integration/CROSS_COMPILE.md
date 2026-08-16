@@ -83,7 +83,7 @@ Workflow: [`.github/workflows/cross-compile-tests.yaml`](../../.github/workflows
 
 | Job | Runs | Notes |
 |-----|------|--------|
-| **linux** | Ubuntu 22.04 / 24.04 | apt cross-gcc + qemu-user; `test_cross_all.sh --no-windows` (case 1 + REQUIRED-B) |
+| **linux** | Ubuntu 24.04 | apt cross-gcc + qemu-user; `test_cross_all.sh --no-windows` (case 1 + REQUIRED-B) |
 | **windows** | windows-2025 | REQUIRED-A when repository variable `CROSS_REMOTE_BAZEL_FLAGS` is set (Linux `remote_executor`); otherwise skips cleanly |
 
 `workflow_dispatch` is enabled for manual runs.
