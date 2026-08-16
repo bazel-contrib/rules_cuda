@@ -1,0 +1,18 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+
+# REQUIRED-A: windows-x86_64 host, linux-x86_64 exec, linux-sbsa target.
+# Requires a Linux remote executor (e.g. RE worker in qemu-system-x86_64 + hostfwd).
+
+cc_library(
+    name = "use_library",
+    tags = ["manual"],
+    deps = ["@cuda//:cuda_runtime"],
+)
+
+cuda_library(
+    name = "use_rule",
+    srcs = ["@rules_cuda_examples//basic:kernel.cu"],
+    hdrs = ["@rules_cuda_examples//basic:kernel.h"],
+    tags = ["manual"],
+)
