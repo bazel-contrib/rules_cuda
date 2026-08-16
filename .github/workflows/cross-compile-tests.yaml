@@ -1,0 +1,113 @@
+# redist_json exec/target cross-compile integration tests.
+# See tests/integration/CROSS_COMPILE.md
+name: Test Cross Compile
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # REQUIRED-B (+ optional Linux case 1): Linux x64 host.
+  #   B: linux-x86_64 host, linux-sbsa exec (qemu-user), linux-x86_64 target
+  #   1: linux-x86_64 host, linux-x86_64 exec, linux-sbsa target
+  linux:
+    name: "Cross (Linux host, CUDA ${{ matrix.cuda-version }})"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, cuda-version: "12.6.3" }
+          - { os: ubuntu-24.04, cuda-version: "12.6.3" }
+    env:
+      CUDA_REDIST_VERSION_OVERRIDE: ${{ matrix.cuda-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: bazelbuild/setup-bazelisk@v3
+      - name: Mount bazel cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/bazel
+          key: bazel-cross-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}-${{ hashFiles('.bazelversion') }}
+
+      - name: Use .bazelversion
+        run: echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $GITHUB_ENV
+
+      - name: Install cross-compile deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            g++-aarch64-linux-gnu \
+            gcc-aarch64-linux-gnu \
+            binutils-aarch64-linux-gnu \
+            qemu-user-static \
+            binfmt-support \
+            file \
+            binutils
+          # Guest aarch64 loader so binfmt can run sbsa nvcc (REQUIRED-B).
+          sudo ln -sfn /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1
+          if [[ -d /usr/aarch64-linux-gnu/lib ]]; then
+            if [[ -d /lib/aarch64-linux-gnu && ! -L /lib/aarch64-linux-gnu ]]; then
+              sudo rm -rf /lib/aarch64-linux-gnu
+            fi
+            sudo ln -sfn /usr/aarch64-linux-gnu/lib /lib/aarch64-linux-gnu
+          fi
+          update-binfmts --display qemu-aarch64 || true
+
+      - name: Run Linux host cross tests
+        run: cd tests/integration && bash ./test_cross_all.sh --no-windows
+
+      - run: bazelisk shutdown
+
+  # REQUIRED-A: windows-x86_64 host, linux-x86_64 exec, linux-sbsa target.
+  # Needs a Linux remote executor (e.g. NativeLink / qemu guest + hostfwd).
+  # Enabled only when CROSS_REMOTE_BAZEL_FLAGS (or repository variable) is set;
+  # otherwise the job records a skip and succeeds so default PR CI stays green.
+  windows:
+    name: "Cross (Windows host / Linux exec)"
+    runs-on: windows-2025
+    timeout-minutes: 90
+    env:
+      CUDA_REDIST_VERSION_OVERRIDE: "12.6.3"
+      # Optional: set as a repository variable or secret-backed env to enable
+      # REQUIRED-A, e.g. --remote_executor=grpc://127.0.0.1:1985
+      CROSS_REMOTE_BAZEL_FLAGS: ${{ vars.CROSS_REMOTE_BAZEL_FLAGS }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: bazelbuild/setup-bazelisk@v3
+
+      - name: Use .bazelversion
+        shell: pwsh
+        run: echo "USE_BAZEL_VERSION=$((Get-Content .bazelversion -Raw).Trim())" >> $env:GITHUB_ENV
+
+      - name: Setup build environment
+        uses: ./.github/actions/set-build-env
+        with:
+          os: windows-2025
+          cuda-version: "12.6.3"
+          source: nvidia
+
+      - name: Run Windows host cross tests (REQUIRED-A when remote is configured)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CROSS_REMOTE_BAZEL_FLAGS:-}" ]]; then
+            echo "CROSS_REMOTE_BAZEL_FLAGS is unset; REQUIRED-A is skipped."
+            echo "Set repository variable CROSS_REMOTE_BAZEL_FLAGS to a Linux"
+            echo "remote_executor (see tests/integration/rbe/README.md) to enable."
+            # Still invoke the driver so skip messaging is exercised.
+            cd tests/integration && bash ./test_cross_all.sh --required-only --no-linux
+            exit 0
+          fi
+          cd tests/integration && bash ./test_cross_all.sh --required-only --no-linux
+
+      - name: Bazel shutdown
+        if: always()
+        shell: bash
+        run: bazelisk shutdown || true

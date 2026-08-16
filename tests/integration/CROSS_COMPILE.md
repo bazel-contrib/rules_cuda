@@ -79,7 +79,11 @@ Without `CROSS_REMOTE_BAZEL_FLAGS`, Windows cases are **skipped** (not failed).
 
 ## CI
 
-Ubuntu nvidia/nvcc jobs install apt cross/qemu packages and run
-`test_cross_all.sh --no-windows` (optional case 1 + REQUIRED-B).
+Workflow: [`.github/workflows/cross-compile-tests.yaml`](../../.github/workflows/cross-compile-tests.yaml)
 
-Windows PR CI does not run REQUIRED-A unless a remote executor is configured.
+| Job | Runs | Notes |
+|-----|------|--------|
+| **linux** | Ubuntu 22.04 / 24.04 | apt cross-gcc + qemu-user; `test_cross_all.sh --no-windows` (case 1 + REQUIRED-B) |
+| **windows** | windows-2025 | REQUIRED-A when repository variable `CROSS_REMOTE_BAZEL_FLAGS` is set (Linux `remote_executor`); otherwise skips cleanly |
+
+`workflow_dispatch` is enabled for manual runs.
