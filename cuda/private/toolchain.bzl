@@ -170,18 +170,9 @@ def register_detected_cuda_toolchains():
     """Helper to register the automatically detected CUDA toolchain(s).
 
 User can setup their own toolchain if needed and ignore the detected ones by not calling this macro.
-
-Hermetic/deliverable toolkits also expose platform-specific nvcc toolchains
-(`nvcc-linux-toolchain`, `nvcc-windows-toolchain`) so a client host OS can
-resolve CUDA for a different target/exec platform (cross / RBE).
 """
     native.register_toolchains(
         "@cuda//toolchain:nvcc-local-toolchain",
-        # Present for hermetic/deliverable CTK; absent labels are ignored by Bazel
-        # only if registered via optional patterns — register both explicitly and
-        # keep local CTK templates providing nvcc-local-toolchain alone.
-        "@cuda//toolchain:nvcc-linux-toolchain",
-        "@cuda//toolchain:nvcc-windows-toolchain",
         "@cuda//toolchain/clang:clang-local-toolchain",
         "@cuda//toolchain/disabled:disabled-local-toolchain",
     )

@@ -28,9 +28,9 @@ Shared platforms / aarch64 C++ toolchain:
 ### REQUIRED-A (case 3)
 
 - **Windows** Bazel client (true Windows host).
-- Exec tools are **linux-x86_64** — cannot spawn locally; need a **Linux RE worker**.
-- Preferred worker: **qemu-system-x86_64** guest + hostfwd (WSL not required). See [`rbe/README.md`](rbe/README.md).
-- Target is **linux-sbsa** (aarch64 objects via cross gcc on the worker).
+- Exec tools are **linux-x86_64** — run via a **Linux RE worker in WSL** (NativeLink).
+- Target is **linux-sbsa** (aarch64 objects via cross gcc on the WSL worker).
+- qemu-user inside WSL is only needed when exec arch disagrees (optional case 4).
 
 ## Driver
 
@@ -67,15 +67,21 @@ Local helpers (optional): `install_and_drive_cross.sh`, `drive_cross_wsl.sh`.
 
 ## Windows host (REQUIRED-A + optional case 4)
 
-1. Start Linux RE worker in qemu (see [`rbe/README.md`](rbe/README.md)).
-2. Point Bazel at it and run:
+Preferred path: **WSL as the Linux exec environment** (NativeLink RE).
 
 ```powershell
-$env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985"
-bash tests/integration/test_cross_all.sh --required-only
+# One-shot driver (starts WSL worker + runs REQUIRED-A):
+pwsh tests/integration/drive_cross_windows.ps1
+
+# Or step by step:
+pwsh tests/integration/rbe/start_wsl_worker.ps1
+$env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985 --remote_default_exec_properties=OSFamily=Linux"
+bash tests/integration/test_cross_all.sh --required-only --no-linux
 ```
 
-Without `CROSS_REMOTE_BAZEL_FLAGS`, Windows cases are **skipped** (not failed).
+Without `CROSS_REMOTE_BAZEL_FLAGS`, REQUIRED-A **fails** (no silent skip).
+
+Optional: qemu-system guest instead of WSL — see [`rbe/README.md`](rbe/README.md).
 
 ## CI
 
@@ -84,6 +90,14 @@ Workflow: [`.github/workflows/cross-compile-tests.yaml`](../../.github/workflows
 | Job | Runs | Notes |
 |-----|------|--------|
 | **linux** | Ubuntu 24.04 | apt cross-gcc + qemu-user; `test_cross_all.sh --no-windows` (case 1 + REQUIRED-B) |
-| **windows** | windows-2025 | REQUIRED-A when repository variable `CROSS_REMOTE_BAZEL_FLAGS` is set (Linux `remote_executor`); otherwise skips cleanly |
+| **windows** | windows-2025 | WSL Ubuntu + NativeLink RE; `drive_cross_windows.ps1` (REQUIRED-A) |
 
 `workflow_dispatch` is enabled for manual runs.
+
+## Toolchain note
+
+Hermetic (deliverable) toolkits generate both `nvcc-linux-toolchain` and
+`nvcc-windows-toolchain`, but only `nvcc-local-toolchain` (host alias) is
+registered by default. Windows-host cross cases pass
+`--extra_toolchains=@cuda//toolchain:nvcc-linux-toolchain`. Local install
+templates are unchanged.

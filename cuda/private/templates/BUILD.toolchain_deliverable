@@ -1,7 +1,8 @@
 # Hermetic/deliverable CUDA toolchains for multi-platform redist.
-# Registers both Linux and Windows nvcc toolchains so a client host OS does not
-# constrain which --platforms / exec platforms can resolve (e.g. Windows host
-# targeting linux-sbsa with Linux remote execution).
+#
+# Emits both Linux and Windows nvcc toolchains. MODULE.bazel only registers
+# nvcc-local-toolchain (host alias). Cross builds that need the non-host OS
+# toolchain pass e.g. --extra_toolchains=@cuda//toolchain:nvcc-linux-toolchain.
 
 load(
     "@rules_cuda//cuda:defs.bzl",

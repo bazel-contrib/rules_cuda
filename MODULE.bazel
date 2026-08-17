@@ -17,9 +17,6 @@ use_repo(cuda, "cuda")
 
 register_toolchains(
     "@cuda//toolchain:nvcc-local-toolchain",
-    # Hermetic multi-platform redist (see BUILD.toolchain_deliverable).
-    "@cuda//toolchain:nvcc-linux-toolchain",
-    "@cuda//toolchain:nvcc-windows-toolchain",
     "@cuda//toolchain/clang:clang-local-toolchain",
     "@cuda//toolchain/disabled:disabled-local-toolchain",
 )

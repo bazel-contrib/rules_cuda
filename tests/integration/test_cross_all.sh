@@ -13,7 +13,8 @@
 # Env:
 #   CROSS_REMOTE_BAZEL_FLAGS  Required for Windows cases (3–4), e.g.
 #     --remote_executor=grpc://127.0.0.1:1985
-#     (Linux RE worker, often qemu-system-x86_64 guest + hostfwd; WSL not required)
+#     Preferred Linux RE worker: WSL (see rbe/start_wsl_worker.ps1).
+#     Optional: qemu-system-x86_64 guest + hostfwd (rbe/start_qemu_worker.ps1).
 #   CUDA_REDIST_VERSION_OVERRIDE  Optional CUDA redist version pin.
 #
 # Flags:
@@ -64,6 +65,9 @@ remote_flags=( ${CROSS_REMOTE_BAZEL_FLAGS:-} )
 
 PLATFORMS_PKG="@rules_cuda//tests/integration/platforms"
 AARCH64_CC_TC="${PLATFORMS_PKG}:aarch64_linux_cc_toolchain"
+# Hermetic deliverable toolkits expose this target; MODULE only registers the
+# host alias (nvcc-local-toolchain). Windows host + Linux exec needs it explicitly.
+NVCC_LINUX_TC="@cuda//toolchain:nvcc-linux-toolchain"
 
 assert_redist_platforms() {
     local expect_exec_plat="$1"
@@ -219,14 +223,16 @@ fi
 # --- REQUIRED-A (case 3): Windows host + Linux x64 exec + sbsa target ---
 if [[ "$skip_3" == false ]]; then
     if [[ "$is_windows" != true ]]; then
-        echo "SKIP REQUIRED-A (case 3): requires windows-x86_64 host (use Windows bazelisk + CROSS_REMOTE_BAZEL_FLAGS)"
+        echo "SKIP REQUIRED-A (case 3): requires windows-x86_64 host (use Windows bazelisk + WSL RE)"
     elif [[ ${#remote_flags[@]} -eq 0 ]]; then
-        echo "SKIP REQUIRED-A (case 3): set CROSS_REMOTE_BAZEL_FLAGS to a Linux RE endpoint"
-        echo "  e.g. start tests/integration/rbe/start_qemu_worker (hostfwd :1985) then:"
-        echo "  CROSS_REMOTE_BAZEL_FLAGS='--remote_executor=grpc://127.0.0.1:1985' $0 --required-only"
+        echo "FAIL REQUIRED-A (case 3): CROSS_REMOTE_BAZEL_FLAGS is unset" >&2
+        echo "  Start a Linux RE worker in WSL, then re-run:" >&2
+        echo "    pwsh tests/integration/rbe/start_wsl_worker.ps1" >&2
+        echo "    CROSS_REMOTE_BAZEL_FLAGS='--remote_executor=grpc://127.0.0.1:1985' $0 --required-only --no-linux" >&2
+        exit 1
     else
         run_case \
-            "REQUIRED-A: windows x64 host / linux x64 exec / linux-sbsa target" \
+            "REQUIRED-A: windows x64 host / linux x64 exec (WSL RE) / linux-sbsa target" \
             "toolchain_redist_cross_win_lx64_exec_lsbsa_tgt" \
             "${PLATFORMS_PKG}:linux_sbsa" \
             "linux-x86_64" \
@@ -234,6 +240,7 @@ if [[ "$skip_3" == false ]]; then
             "linux_sbsa" \
             "case3_required_a" \
             --extra_toolchains="${AARCH64_CC_TC}" \
+            --extra_toolchains="${NVCC_LINUX_TC}" \
             --extra_execution_platforms="${PLATFORMS_PKG}:linux_x86_64" \
             --host_platform="${PLATFORMS_PKG}:linux_x86_64"
         pushd "${this_dir}/toolchain_redist_cross_win_lx64_exec_lsbsa_tgt" >/dev/null
@@ -247,16 +254,17 @@ if [[ "$skip_4" == false ]]; then
     if [[ "$is_windows" != true ]]; then
         echo "SKIP case 4 (optional): requires windows-x86_64 host"
     elif [[ ${#remote_flags[@]} -eq 0 ]]; then
-        echo "SKIP case 4 (optional): set CROSS_REMOTE_BAZEL_FLAGS (aarch64-capable Linux RE)"
+        echo "SKIP case 4 (optional): set CROSS_REMOTE_BAZEL_FLAGS (WSL RE with qemu-user for sbsa exec)"
     else
         run_case \
-            "optional: windows x64 host / linux-sbsa exec / linux x64 target" \
+            "optional: windows x64 host / linux-sbsa exec (WSL+qemu) / linux x64 target" \
             "toolchain_redist_cross_win_lsbsa_exec_lx64_tgt" \
             "${PLATFORMS_PKG}:linux_x86_64" \
             "linux-sbsa" \
             "cuda_nvcc_linux_sbsa" \
             "linux_x86_64" \
             "case4" \
+            --extra_toolchains="${NVCC_LINUX_TC}" \
             --extra_execution_platforms="${PLATFORMS_PKG}:linux_x86_64" \
             --host_platform="${PLATFORMS_PKG}:linux_x86_64"
         pushd "${this_dir}/toolchain_redist_cross_win_lsbsa_exec_lx64_tgt" >/dev/null

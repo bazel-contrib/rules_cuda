@@ -63,19 +63,15 @@ jobs:
 
       - run: bazelisk shutdown
 
-  # REQUIRED-A: windows-x86_64 host, linux-x86_64 exec, linux-sbsa target.
-  # Needs a Linux remote executor (e.g. NativeLink / qemu guest + hostfwd).
-  # Enabled only when CROSS_REMOTE_BAZEL_FLAGS (or repository variable) is set;
-  # otherwise the job records a skip and succeeds so default PR CI stays green.
+  # REQUIRED-A: windows-x86_64 host, linux-x86_64 exec (WSL RE), linux-sbsa target.
+  # Linux tools run in WSL via NativeLink remote execution (not a skip stub).
   windows:
-    name: "Cross (Windows host / Linux exec)"
+    name: "Cross (Windows host / WSL Linux exec)"
     runs-on: windows-2025
-    timeout-minutes: 90
+    timeout-minutes: 120
     env:
       CUDA_REDIST_VERSION_OVERRIDE: "12.6.3"
-      # Optional: set as a repository variable or secret-backed env to enable
-      # REQUIRED-A, e.g. --remote_executor=grpc://127.0.0.1:1985
-      CROSS_REMOTE_BAZEL_FLAGS: ${{ vars.CROSS_REMOTE_BAZEL_FLAGS }}
+      RBE_PORT: "1985"
     steps:
       - uses: actions/checkout@v6
 
@@ -92,19 +88,23 @@ jobs:
           cuda-version: "12.6.3"
           source: nvidia
 
-      - name: Run Windows host cross tests (REQUIRED-A when remote is configured)
-        shell: bash
+      - name: Setup WSL Ubuntu
+        uses: Vampire/setup-wsl@v7
+        with:
+          distribution: Ubuntu-24.04
+          update: true
+          additional-packages: ca-certificates curl
+
+      - name: Start WSL Linux RE worker + run REQUIRED-A
+        shell: pwsh
         run: |
-          set -euo pipefail
-          if [[ -z "${CROSS_REMOTE_BAZEL_FLAGS:-}" ]]; then
-            echo "CROSS_REMOTE_BAZEL_FLAGS is unset; REQUIRED-A is skipped."
-            echo "Set repository variable CROSS_REMOTE_BAZEL_FLAGS to a Linux"
-            echo "remote_executor (see tests/integration/rbe/README.md) to enable."
-            # Still invoke the driver so skip messaging is exercised.
-            cd tests/integration && bash ./test_cross_all.sh --required-only --no-linux
-            exit 0
-          fi
-          cd tests/integration && bash ./test_cross_all.sh --required-only --no-linux
+          $ErrorActionPreference = "Stop"
+          $bash = "C:\Program Files\Git\bin\bash.exe"
+          if (-not (Test-Path $bash)) { throw "Git bash not found at $bash" }
+          $env:BAZEL_SH = $bash
+          $env:WSL_DISTRO = "Ubuntu-24.04"
+          $env:RBE_PORT = "1985"
+          & .\tests\integration\drive_cross_windows.ps1
 
       - name: Bazel shutdown
         if: always()
