@@ -11,12 +11,12 @@ Shared platforms / aarch64 C++ toolchain:
 
 ## Matrix (keep all four)
 
-| Case | CI | Directory | Host | Exec | Target |
-|------|----|-----------|------|------|--------|
-| **2** | primary | `toolchain_redist_cross_lsbsa_exec_lx64_tgt` | linux-x86_64 | linux-sbsa | linux-x86_64 |
-| **3** | primary | `toolchain_redist_cross_win_lx64_exec_lsbsa_tgt` | windows-x86_64 | linux-x86_64 | linux-sbsa |
-| 1 | extra | `toolchain_redist_cross_lx64_exec_lsbsa_tgt` | linux-x86_64 | linux-x86_64 | linux-sbsa |
-| 4 | extra | `toolchain_redist_cross_win_lsbsa_exec_lx64_tgt` | windows-x86_64 | linux-sbsa | linux-x86_64 |
+| Case  | CI      | Directory                                        | Host           | Exec         | Target       |
+| ----- | ------- | ------------------------------------------------ | -------------- | ------------ | ------------ |
+| **2** | primary | `toolchain_redist_cross_lsbsa_exec_lx64_tgt`     | linux-x86_64   | linux-sbsa   | linux-x86_64 |
+| **3** | primary | `toolchain_redist_cross_win_lx64_exec_lsbsa_tgt` | windows-x86_64 | linux-x86_64 | linux-sbsa   |
+| 1     | extra   | `toolchain_redist_cross_lx64_exec_lsbsa_tgt`     | linux-x86_64   | linux-x86_64 | linux-sbsa   |
+| 4     | extra   | `toolchain_redist_cross_win_lsbsa_exec_lx64_tgt` | windows-x86_64 | linux-sbsa   | linux-x86_64 |
 
 ### Case 2 — Linux host, sbsa exec via qemu-user
 
@@ -54,11 +54,13 @@ a **qemu-system** guest (see [`rbe/README.md`](rbe/README.md)).
 │  --extra_toolchains=@cuda//toolchain:nvcc-linux-toolchain        │
 │  --remote_executor=grpc://127.0.0.1:1985                         │
 │       │                                                          │
-│       │  TCP 127.0.0.1:1985  (WSL2 localhost relay / hostfwd)    │
+│       │  grpc :1985                                              │
+│       │    preferred: 127.0.0.1 with WSL networkingMode=mirrored │
+│       │    fallback:  WSL eth IPv4 under default NAT             │
 │       v                                                          │
 │  ┌─ Linux x86_64 RE worker ───────────────────────────────────┐  │
 │  │                                                            │  │
-│  │  path A (preferred): WSL2 Ubuntu                           │  │
+│  │  path A (preferred): WSL2 Ubuntu (host/mirrored network)   │  │
 │  │    NativeLink listens 0.0.0.0:1985 (API) + :1986 (worker)  │  │
 │  │    exec tools = linux-x86_64 nvcc  (native, no qemu-user)  │  │
 │  │    target C++ = aarch64-linux-gnu-g++ → linux-sbsa objs    │  │
@@ -69,17 +71,20 @@ a **qemu-system** guest (see [`rbe/README.md`](rbe/README.md)).
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-Network wiring (case 3):
+Network wiring (case 3, WSL path):
 
 ```text
-  Windows Bazel                    Linux RE (WSL or qemu-system guest)
-  ─────────────                    ──────────────────────────────────
-       │  grpc :1985 (CAS / AC / Execution)
-       ├──────────────────────────► NativeLink public  0.0.0.0:1985
-       │                                   │
-       │                                   │ worker_api 127.0.0.1:1986
-       │                                   v
-       │                            local worker (runs actions)
+  Windows Bazel                 WSL2 (networkingMode=mirrored)
+  ─────────────                 ──────────────────────────────
+       │  grpc 127.0.0.1:1985
+       ├──────────────────────► NativeLink public  0.0.0.0:1985
+       │                               │
+       │                               │ worker_api 127.0.0.1:1986
+       │                               v
+       │                        local worker (runs actions)
+
+  If mirrored is unavailable, the driver falls back to the WSL NAT IPv4
+  (hostname -I) instead of 127.0.0.1.
 ```
 
 ### Case 1 — Linux host, same-arch exec, sbsa target
@@ -155,9 +160,9 @@ Optional qemu-system guest instead of WSL: [`rbe/README.md`](rbe/README.md).
 
 Workflow: [`.github/workflows/cross-compile-tests.yaml`](../../.github/workflows/cross-compile-tests.yaml)
 
-| Job | Runs | Nesting |
-|-----|------|---------|
-| **linux** | Ubuntu 24.04 | host Linux → case 2 uses qemu-user on the same machine |
+| Job         | Runs         | Nesting                                                                  |
+| ----------- | ------------ | ------------------------------------------------------------------------ |
+| **linux**   | Ubuntu 24.04 | host Linux → case 2 uses qemu-user on the same machine                   |
 | **windows** | windows-2025 | host Windows → case 3 RE into WSL NativeLink (`drive_cross_windows.ps1`) |
 
 `workflow_dispatch` is enabled for manual runs.

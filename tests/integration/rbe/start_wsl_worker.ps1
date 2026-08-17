@@ -1,7 +1,7 @@
 # Start NativeLink under WSL for Windows-host cross (cases 3–4).
 #
-#   Windows bazelisk  --remote_executor=grpc://127.0.0.1:<port>
-#         │  localhost TCP
+#   Windows bazelisk  --remote_executor=grpc://<host>:<port>
+#         │  host network (mirrored) or WSL eth IP (NAT fallback)
 #         v
 #   WSL Ubuntu (linux-x86_64)
 #     NativeLink :1985 (public) / :1986 (worker)
@@ -9,7 +9,7 @@
 #
 # Usage:
 #   .\tests\integration\rbe\start_wsl_worker.ps1
-#   $env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985"
+#   # sets $env:CROSS_REMOTE_BAZEL_FLAGS and $env:CROSS_REMOTE_HOST
 #   bash tests/integration/test_cross_all.sh --required-only --no-linux
 
 $ErrorActionPreference = "Stop"
@@ -17,6 +17,8 @@ $ErrorActionPreference = "Stop"
 $Port = if ($env:RBE_PORT) { [int]$env:RBE_PORT } else { 1985 }
 $Distro = if ($env:WSL_DISTRO) { $env:WSL_DISTRO } else { $null }
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
+# Keep logs inside WSL so Windows TEMP / short-path mapping cannot break them.
+$WslLog = "/tmp/rules_cuda_rbe/nativelink.log"
 
 function Invoke-Wsl {
     param(
@@ -36,19 +38,70 @@ function Invoke-WslBash {
     Invoke-Wsl -ArgumentList @("-e", "bash", "-lc", $Command)
 }
 
+function Test-TcpPort {
+    param(
+        [Parameter(Mandatory = $true)][string]$HostName,
+        [Parameter(Mandatory = $true)][int]$PortNumber,
+        [int]$TimeoutMs = 1000
+    )
+    try {
+        $client = New-Object System.Net.Sockets.TcpClient
+        $iar = $client.BeginConnect($HostName, $PortNumber, $null, $null)
+        $ok = $iar.AsyncWaitHandle.WaitOne($TimeoutMs, $false)
+        if ($ok -and $client.Connected) {
+            $client.Close()
+            return $true
+        }
+        $client.Close()
+    } catch {
+        # not ready
+    }
+    return $false
+}
+
+function Enable-WslHostNetworking {
+    # Mirrored mode shares the host network stack so Windows localhost reaches
+    # listeners inside WSL (default WSL2 NAT does not). Requires modern WSL.
+    $wslConfig = Join-Path $env:USERPROFILE ".wslconfig"
+    $desired = @"
+[wsl2]
+networkingMode=mirrored
+dnsTunneling=true
+autoProxy=true
+"@
+    $existing = if (Test-Path $wslConfig) { Get-Content -Raw $wslConfig } else { "" }
+    if ($existing -notmatch 'networkingMode\s*=\s*mirrored') {
+        Write-Host "Writing $wslConfig (networkingMode=mirrored)"
+        Set-Content -Path $wslConfig -Value $desired -Encoding ascii
+        Write-Host "Restarting WSL to apply host networking..."
+        & wsl --shutdown
+        Start-Sleep -Seconds 3
+    } else {
+        Write-Host "WSL host networking already configured ($wslConfig)"
+    }
+}
+
+function Get-WslIpv4 {
+    # First non-loopback IPv4 from the distro (used when localhost is not shared).
+    $raw = Invoke-WslBash "hostname -I 2>/dev/null || ip -4 -o addr show scope global | awk '{print `$4}' | cut -d/ -f1"
+    $ips = @($raw -split '\s+' | Where-Object { $_ -match '^\d+\.\d+\.\d+\.\d+$' -and $_ -notmatch '^127\.' })
+    if ($ips.Count -gt 0) { return $ips[0] }
+    return $null
+}
+
+Enable-WslHostNetworking
+
+# Touch the distro so it is running after a possible shutdown.
+Invoke-WslBash "true"
+
 $WslRepo = (Invoke-Wsl -ArgumentList @("-e", "wslpath", "-a", $RepoRoot) | Select-Object -Last 1).ToString().Trim()
 $SetupDeps = "$WslRepo/tests/integration/rbe/setup_wsl_cross_deps.sh"
 $Bootstrap = "$WslRepo/tests/integration/rbe/bootstrap_nativelink_linux.sh"
-$LogDir = if ($env:RBE_LOG_DIR) { $env:RBE_LOG_DIR } else { Join-Path $env:TEMP "rules_cuda_rbe" }
-New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
-$WorkerLog = Join-Path $LogDir "nativelink-wsl.log"
-$WslLog = (Invoke-Wsl -ArgumentList @("-e", "wslpath", "-a", $WorkerLog) | Select-Object -Last 1).ToString().Trim()
 
 Write-Host "WSL NativeLink worker (cases 3–4)"
 Write-Host "  repo (Windows) = $RepoRoot"
 Write-Host "  repo (WSL)     = $WslRepo"
-Write-Host "  remote_executor= grpc://127.0.0.1:$Port"
-Write-Host "  worker log     = $WorkerLog"
+Write-Host "  worker log     = $WslLog (inside WSL)"
 
 # Ensure LF line endings (Windows checkouts may be CRLF).
 Invoke-WslBash "sed -i 's/\r`$//' '$SetupDeps' '$Bootstrap' && chmod +x '$SetupDeps' '$Bootstrap'"
@@ -57,7 +110,6 @@ Write-Host "Installing WSL cross-compile deps..."
 Invoke-WslBash "bash '$SetupDeps'"
 
 # Stop any previous worker on this port (best effort).
-# Avoid `pkill -f nativelink` — it can match the shell wrapper cmdline.
 try {
     Invoke-WslBash "fuser -k ${Port}/tcp >/dev/null 2>&1 || true; fuser -k 1986/tcp >/dev/null 2>&1 || true; sleep 1"
 } catch {
@@ -65,41 +117,51 @@ try {
 }
 
 Write-Host "Starting NativeLink in WSL (background)..."
-# Capture only the pid line; ignore fstab noise from wsl.exe.
-$startCmd = "export RBE_PORT=$Port; nohup bash '$Bootstrap' >'$WslLog' 2>&1 & echo `$!"
+$startCmd = "mkdir -p /tmp/rules_cuda_rbe; export RBE_PORT=$Port; nohup bash '$Bootstrap' >'$WslLog' 2>&1 & echo `$!"
 $pidText = (Invoke-WslBash $startCmd | Select-Object -Last 1).ToString().Trim()
 Write-Host "  nativelink pid (WSL) = $pidText"
 
-# Wait until the public port accepts TCP from Windows.
+$wslIp = Get-WslIpv4
+Write-Host "  WSL IPv4           = $wslIp"
+
+# Probe localhost first (mirrored / host network), then the WSL NAT address.
+$candidates = @("127.0.0.1")
+if ($wslIp) { $candidates += $wslIp }
+
+$readyHost = $null
 $deadline = (Get-Date).AddMinutes(2)
-$ready = $false
-while ((Get-Date) -lt $deadline) {
+while ((Get-Date) -lt $deadline -and -not $readyHost) {
+    # Confirm the process is still alive / log has "Ready".
     try {
-        $client = New-Object System.Net.Sockets.TcpClient
-        $iar = $client.BeginConnect("127.0.0.1", $Port, $null, $null)
-        $ok = $iar.AsyncWaitHandle.WaitOne(1000, $false)
-        if ($ok -and $client.Connected) {
-            $ready = $true
-            $client.Close()
-            break
+        $logTail = (Invoke-WslBash "tail -n 5 '$WslLog' 2>/dev/null || true" | Out-String)
+        if ($logTail -match 'Ready, listening') {
+            foreach ($h in $candidates) {
+                if (Test-TcpPort -HostName $h -PortNumber $Port -TimeoutMs 800) {
+                    $readyHost = $h
+                    break
+                }
+            }
         }
-        $client.Close()
     } catch {
         # retry
     }
-    Start-Sleep -Seconds 1
+    if (-not $readyHost) { Start-Sleep -Seconds 1 }
 }
 
-if (-not $ready) {
-    Write-Host "Worker did not open 127.0.0.1:$Port in time. Log tail:"
-    if (Test-Path $WorkerLog) {
-        Get-Content $WorkerLog -Tail 80
-    } else {
-        try { Invoke-WslBash "tail -n 80 '$WslLog' || true" } catch { }
-    }
-    throw "WSL NativeLink worker not reachable on 127.0.0.1:$Port"
+if (-not $readyHost) {
+    Write-Host "Worker not reachable from Windows. Log tail:"
+    try { Invoke-WslBash "tail -n 80 '$WslLog' || true" } catch { }
+    Write-Host "Candidates tried: $($candidates -join ', ')"
+    throw "WSL NativeLink worker not reachable on port $Port"
 }
 
-Write-Host "WSL RE worker is up on grpc://127.0.0.1:$Port"
-Write-Host "Set CROSS_REMOTE_BAZEL_FLAGS before test_cross_all.sh:"
-Write-Host "  `$env:CROSS_REMOTE_BAZEL_FLAGS = '--remote_executor=grpc://127.0.0.1:$Port --remote_default_exec_properties=OSFamily=Linux'"
+$endpoint = "grpc://${readyHost}:$Port"
+$env:CROSS_REMOTE_HOST = $readyHost
+$env:CROSS_REMOTE_BAZEL_FLAGS = @(
+    "--remote_executor=$endpoint",
+    "--remote_default_exec_properties=OSFamily=Linux",
+    "--remote_timeout=600"
+) -join " "
+
+Write-Host "WSL RE worker is up on $endpoint (via $(if ($readyHost -eq '127.0.0.1') { 'host/mirrored network' } else { 'WSL NAT IP' }))"
+Write-Host "CROSS_REMOTE_BAZEL_FLAGS=$env:CROSS_REMOTE_BAZEL_FLAGS"

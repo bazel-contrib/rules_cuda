@@ -5,12 +5,16 @@ remote-execution (RE) worker. Two nestings are supported.
 
 ## Nesting A — NativeLink under WSL (preferred)
 
+Uses **WSL host networking** (`networkingMode=mirrored` in `%USERPROFILE%\.wslconfig`)
+so Windows `127.0.0.1:1985` reaches NativeLink inside the distro. If mirrored is
+unavailable, `start_wsl_worker.ps1` falls back to the WSL NAT IPv4.
+
 ```text
 ┌─ Windows host ──────────────────────────────────────────────────┐
 │  bazelisk  --remote_executor=grpc://127.0.0.1:1985              │
+│       │      (or grpc://<wsl-eth-ip>:1985 on NAT fallback)      │
 │       │                                                         │
-│       │  localhost TCP :1985                                    │
-│       │  (WSL2 mirrored networking / localhost relay)           │
+│       │  host network (mirrored)  — shares host NIC/ports       │
 │       v                                                         │
 │  ┌─ WSL2 distro (Ubuntu, linux-x86_64) ──────────────────────┐  │
 │  │                                                           │  │
@@ -82,19 +86,19 @@ Guest checklist:
 
 ## Which cases use this RE layer?
 
-| Case | Host | Exec | Target | Worker notes |
-|------|------|------|--------|--------------|
-| 3 | Windows | linux-x86_64 | linux-sbsa | WSL-native tools (no qemu-user) |
-| 4 | Windows | linux-sbsa | linux-x86_64 | qemu-user inside WSL/guest for sbsa tools |
-| 2 | Linux | linux-sbsa | linux-x86_64 | **no RE** — qemu-user on the Linux host |
+| Case | Host    | Exec         | Target       | Worker notes                              |
+| ---- | ------- | ------------ | ------------ | ----------------------------------------- |
+| 3    | Windows | linux-x86_64 | linux-sbsa   | WSL-native tools (no qemu-user)           |
+| 4    | Windows | linux-sbsa   | linux-x86_64 | qemu-user inside WSL/guest for sbsa tools |
+| 2    | Linux   | linux-sbsa   | linux-x86_64 | **no RE** — qemu-user on the Linux host   |
 
 ## Network checklist
 
-| Check | Expect |
-|-------|--------|
+| Check         | Expect                                        |
+| ------------- | --------------------------------------------- |
 | Worker listen | `0.0.0.0:1985` (public), `:1986` (worker API) |
-| Windows probe | `Test-NetConnection 127.0.0.1 -Port 1985` |
-| Bazel flag | `--remote_executor=grpc://127.0.0.1:1985` |
+| Windows probe | `Test-NetConnection 127.0.0.1 -Port 1985`     |
+| Bazel flag    | `--remote_executor=grpc://127.0.0.1:1985`     |
 
 If the port is closed, Bazel fails scheduling Linux actions — fix WSL/qemu
 before debugging rules_cuda.

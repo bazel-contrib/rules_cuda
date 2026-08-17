@@ -1,9 +1,10 @@
 # Drive case 3 on a Windows host with Linux exec via WSL-native NativeLink.
 #
-#   ┌─ Windows bazelisk ──grpc://127.0.0.1:1985──► ┌─ WSL Ubuntu ─────────┐
-#   │  host = windows-x86_64                       │  NativeLink RE        │
-#   │  target = linux-sbsa                         │  exec = linux-x86_64  │
-#   └──────────────────────────────────────────────┴───────────────────────┘
+#   ┌─ Windows bazelisk ──grpc://<host>:1985──► ┌─ WSL Ubuntu ─────────┐
+#   │  host = windows-x86_64                    │  NativeLink RE       │
+#   │  target = linux-sbsa                      │  exec = linux-x86_64 │
+#   └───────────────────────────────────────────┴──────────────────────┘
+# host = 127.0.0.1 with WSL mirrored networking, else WSL eth IPv4.
 
 $ErrorActionPreference = "Stop"
 
@@ -48,11 +49,9 @@ Write-Host "  root=$RepoRoot cuda=$CudaVersion port=$Port"
 
 & (Join-Path $RepoRoot "tests\integration\rbe\start_wsl_worker.ps1")
 
-$env:CROSS_REMOTE_BAZEL_FLAGS = @(
-    "--remote_executor=grpc://127.0.0.1:$Port",
-    "--remote_default_exec_properties=OSFamily=Linux",
-    "--remote_timeout=600"
-) -join " "
+if (-not $env:CROSS_REMOTE_BAZEL_FLAGS) {
+    throw "start_wsl_worker.ps1 did not set CROSS_REMOTE_BAZEL_FLAGS"
+}
 Write-Host "CROSS_REMOTE_BAZEL_FLAGS=$env:CROSS_REMOTE_BAZEL_FLAGS"
 
 $driverWin = Join-Path $RepoRoot "tests\integration\test_cross_all.sh"
