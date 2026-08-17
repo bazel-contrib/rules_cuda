@@ -65,6 +65,8 @@ def _compiler_device_link(
     )
     host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
     cuda_compiler = cuda_toolchain.compiler_executable
+    cuda_toolkit = find_cuda_toolkit(ctx)
+    device_runtime_static_libs = cuda_toolkit.device_runtime_static_libs
 
     artifact_category_name = cuda_helper.get_artifact_category_from_action(ACTION_NAMES.device_link, pic, rdc)
     basename = ctx.attr.name + "_dlink"
@@ -91,12 +93,13 @@ def _compiler_device_link(
     args = actions.args()
     args.add_all(cmd)
     args.add_all(objects)
+    args.add_all(device_runtime_static_libs)
 
     actions.run(
         executable = cuda_compiler,
         arguments = [args],
         outputs = [obj_file],
-        inputs = depset(transitive = [objects, cc_toolchain.all_files, cuda_toolchain.all_files]),
+        inputs = depset(transitive = [objects, device_runtime_static_libs, cc_toolchain.all_files, cuda_toolchain.all_files]),
         env = env,
         mnemonic = "CudaDeviceLink",
         progress_message = "Device linking %{output}",
@@ -117,6 +120,7 @@ def _wrapper_device_link(
         fail("device link is only meaningful on building relocatable device code")
 
     cuda_toolkit = find_cuda_toolkit(ctx)
+    device_runtime_static_libs = cuda_toolkit.device_runtime_static_libs
 
     actions = ctx.actions
     pic_suffix = "_pic" if pic else ""
@@ -128,6 +132,7 @@ def _wrapper_device_link(
     images = []
     obj_args = actions.args()
     obj_args.add_all(objects)
+    obj_args.add_all(device_runtime_static_libs)
     if len(common.cuda_archs_info.arch_specs) == 0:
         fail('cuda toolchain "' + cuda_toolchain.name + '" is configured to enable feature supports_wrapper_device_link,' +
              " at least one cuda arch must be specified.")
@@ -145,7 +150,7 @@ def _wrapper_device_link(
             cubin = ctx.actions.declare_file("_dlink{suffix}/{0}/{0}_{1}.cubin".format(ctx.attr.name, arch, suffix = pic_suffix))
             ctx.actions.run(
                 outputs = [register_h, cubin],
-                inputs = objects,
+                inputs = depset(transitive = [objects, device_runtime_static_libs]),
                 executable = cuda_toolkit.nvlink,
                 arguments = [
                     "--arch=" + arch,
