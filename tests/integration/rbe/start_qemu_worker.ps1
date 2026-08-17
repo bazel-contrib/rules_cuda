@@ -1,20 +1,19 @@
-# Start (or print how to start) a Linux RE worker reachable from Windows Bazel.
+# Start (or print how to start) NativeLink under qemu-system for cases 3–4.
 #
-# Preferred shape for REQUIRED-A:
+# Alternate nesting (WSL-native is preferred — see start_wsl_worker.ps1):
 #   Windows bazelisk  --remote_executor=grpc://127.0.0.1:1985
 #         |
-#         | hostfwd TCP
+#         | hostfwd TCP 127.0.0.1:1985 -> guest:1985
 #         v
-#   qemu-system-x86_64 Linux guest running NativeLink (or any RE API worker)
+#   qemu-system-x86_64 Linux guest running NativeLink
 #
-# This script does NOT require WSL. It needs qemu-system-x86_64 on PATH (or
-# QEMU_SYSTEM) and a bootable Linux disk image (QEMU_DISK).
+# Needs qemu-system-x86_64 on PATH (or QEMU_SYSTEM) and QEMU_DISK.
 #
 # Minimal usage:
 #   $env:QEMU_DISK = "C:\path\to\linux.qcow2"
 #   .\start_qemu_worker.ps1
 #   $env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985"
-#   bash tests/integration/test_cross_all.sh --required-only
+#   bash tests/integration/test_cross_all.sh --required-only --no-linux
 
 $ErrorActionPreference = "Stop"
 $Port = if ($env:RBE_PORT) { [int]$env:RBE_PORT } else { 1985 }
@@ -23,7 +22,7 @@ $Disk = $env:QEMU_DISK
 $Mem = if ($env:QEMU_MEM) { $env:QEMU_MEM } else { "4G" }
 $Cpus = if ($env:QEMU_CPUS) { $env:QEMU_CPUS } else { "4" }
 
-Write-Host "REQUIRED-A remote worker launcher"
+Write-Host "qemu-system NativeLink worker launcher (cases 3–4)"
 Write-Host "  remote_executor = grpc://127.0.0.1:$Port"
 Write-Host "  qemu            = $Qemu"
 Write-Host "  disk            = $Disk"

@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
 # Full-build redist_json cross-compile integration tests (bzlmod only).
 #
-# Keep all four combinations. Two are required (must stay green when runnable):
+# Keep all four host/exec/target combinations (see CROSS_COMPILE.md diagrams):
 #
-#   REQUIRED-A (case 3): windows host, linux-x86_64 exec, linux-sbsa target
-#   REQUIRED-B (case 2): linux-x86_64 host, linux-sbsa exec, linux-x86_64 target
-#
-# Optional extras:
-#   case 1: linux-x86_64 host, linux-x86_64 exec, linux-sbsa target
-#   case 4: windows host, linux-sbsa exec, linux-x86_64 target
+#   case 2 (primary): linux host / linux-sbsa exec (qemu-user) / linux-x86_64 tgt
+#   case 3 (primary): windows host / linux-x86_64 exec (WSL or qemu-system RE) /
+#                     linux-sbsa target
+#   case 1 (extra):   linux host / linux-x86_64 exec / linux-sbsa target
+#   case 4 (extra):   windows host / linux-sbsa exec (RE + qemu-user) /
+#                     linux-x86_64 target
 #
 # Env:
 #   CROSS_REMOTE_BAZEL_FLAGS  Required for Windows cases (3–4), e.g.
 #     --remote_executor=grpc://127.0.0.1:1985
-#     Preferred Linux RE worker: WSL (see rbe/start_wsl_worker.ps1).
-#     Optional: qemu-system-x86_64 guest + hostfwd (rbe/start_qemu_worker.ps1).
+#     Preferred: NativeLink under WSL (rbe/start_wsl_worker.ps1).
+#     Optional: NativeLink under qemu-system + hostfwd (rbe/start_qemu_worker.ps1).
 #   CUDA_REDIST_VERSION_OVERRIDE  Optional CUDA redist version pin.
 #
 # Flags:
 #   --no-1 .. --no-4   skip individual cases
 #   --no-linux / --no-windows
-#   --required-only    run only REQUIRED-A and REQUIRED-B (cases 3 and 2)
+#   --required-only    run only primary cases 2 and 3
 
 set -euo pipefail
 
@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
         --no-linux) skip_1=true; skip_2=true; shift ;;
         --no-windows) skip_3=true; skip_4=true; shift ;;
         --required-only)
-            # REQUIRED-B=case2, REQUIRED-A=case3
+            # Primary cases only: case 2 (Linux+qemu-user) + case 3 (Windows+RE)
             skip_1=true
             skip_4=true
             shift
@@ -176,24 +176,24 @@ if [[ "$skip_1" == false ]]; then
     fi
 fi
 
-# --- REQUIRED-B (case 2) ---
+# --- Case 2: Linux host + qemu-user sbsa exec + x64 target ---
 if [[ "$skip_2" == false ]]; then
     if [[ "$is_windows" == true ]]; then
-        echo "SKIP REQUIRED-B (case 2): requires linux-x86_64 host"
+        echo "SKIP case 2: requires linux-x86_64 host (qemu-user nesting)"
     else
         if ! command -v qemu-aarch64-static >/dev/null 2>&1 && \
            ! command -v qemu-aarch64 >/dev/null 2>&1 && \
            ! [[ -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]]; then
-            echo "WARN: qemu-aarch64 / binfmt not detected; REQUIRED-B may fail" >&2
+            echo "WARN: qemu-aarch64 / binfmt not detected; case 2 may fail" >&2
         fi
         run_case \
-            "REQUIRED-B: linux x64 host / linux-sbsa exec / linux x64 target" \
+            "case 2: linux x64 host / linux-sbsa exec (qemu-user) / linux x64 target" \
             "toolchain_redist_cross_lsbsa_exec_lx64_tgt" \
             "${PLATFORMS_PKG}:linux_x86_64" \
             "linux-sbsa" \
             "cuda_nvcc_linux_sbsa" \
             "linux_x86_64" \
-            "case2_required_b"
+            "case2"
 
         pushd "${this_dir}/toolchain_redist_cross_lsbsa_exec_lx64_tgt" >/dev/null
         local_flags=(
@@ -214,31 +214,31 @@ if [[ "$skip_2" == false ]]; then
         out=$("${smoke_bin}")
         echo "${out}"
         grep -q rules_cuda_cross_smoke_ok <<<"${out}"
-        echo "ASSERT OK (REQUIRED-B smoke run)"
+        echo "ASSERT OK (case 2 smoke run)"
         bazel shutdown || true
         popd >/dev/null
     fi
 fi
 
-# --- REQUIRED-A (case 3): Windows host + Linux x64 exec + sbsa target ---
+# --- Case 3: Windows host + Linux x64 exec (RE) + sbsa target ---
 if [[ "$skip_3" == false ]]; then
     if [[ "$is_windows" != true ]]; then
-        echo "SKIP REQUIRED-A (case 3): requires windows-x86_64 host (use Windows bazelisk + WSL RE)"
+        echo "SKIP case 3: requires windows-x86_64 host (WSL or qemu-system RE worker)"
     elif [[ ${#remote_flags[@]} -eq 0 ]]; then
-        echo "FAIL REQUIRED-A (case 3): CROSS_REMOTE_BAZEL_FLAGS is unset" >&2
-        echo "  Start a Linux RE worker in WSL, then re-run:" >&2
+        echo "FAIL case 3: CROSS_REMOTE_BAZEL_FLAGS is unset" >&2
+        echo "  Start NativeLink under WSL, then re-run:" >&2
         echo "    pwsh tests/integration/rbe/start_wsl_worker.ps1" >&2
         echo "    CROSS_REMOTE_BAZEL_FLAGS='--remote_executor=grpc://127.0.0.1:1985' $0 --required-only --no-linux" >&2
         exit 1
     else
         run_case \
-            "REQUIRED-A: windows x64 host / linux x64 exec (WSL RE) / linux-sbsa target" \
+            "case 3: windows x64 host / linux x64 exec (RE) / linux-sbsa target" \
             "toolchain_redist_cross_win_lx64_exec_lsbsa_tgt" \
             "${PLATFORMS_PKG}:linux_sbsa" \
             "linux-x86_64" \
             "cuda_nvcc_linux_x86_64" \
             "linux_sbsa" \
-            "case3_required_a" \
+            "case3" \
             --extra_toolchains="${AARCH64_CC_TC}" \
             --extra_toolchains="${NVCC_LINUX_TC}" \
             --extra_execution_platforms="${PLATFORMS_PKG}:linux_x86_64" \
@@ -249,15 +249,15 @@ if [[ "$skip_3" == false ]]; then
     fi
 fi
 
-# --- Optional case 4 ---
+# --- Case 4: Windows host + sbsa exec (RE + qemu-user) + x64 target ---
 if [[ "$skip_4" == false ]]; then
     if [[ "$is_windows" != true ]]; then
-        echo "SKIP case 4 (optional): requires windows-x86_64 host"
+        echo "SKIP case 4: requires windows-x86_64 host"
     elif [[ ${#remote_flags[@]} -eq 0 ]]; then
-        echo "SKIP case 4 (optional): set CROSS_REMOTE_BAZEL_FLAGS (WSL RE with qemu-user for sbsa exec)"
+        echo "SKIP case 4: set CROSS_REMOTE_BAZEL_FLAGS (WSL/qemu-system RE + qemu-user for sbsa exec)"
     else
         run_case \
-            "optional: windows x64 host / linux-sbsa exec (WSL+qemu) / linux x64 target" \
+            "case 4: windows x64 host / linux-sbsa exec (RE+qemu-user) / linux x64 target" \
             "toolchain_redist_cross_win_lsbsa_exec_lx64_tgt" \
             "${PLATFORMS_PKG}:linux_x86_64" \
             "linux-sbsa" \

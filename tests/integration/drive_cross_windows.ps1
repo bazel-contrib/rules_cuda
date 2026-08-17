@@ -1,10 +1,9 @@
-# Drive REQUIRED-A on a Windows host with Linux exec via WSL.
+# Drive case 3 on a Windows host with Linux exec via WSL-native NativeLink.
 #
-#   Windows bazelisk (host)
-#     --remote_executor -> WSL NativeLink (linux-x86_64 exec)
-#     --platforms=linux_sbsa (target)
-#
-# qemu-user inside WSL is only needed when exec tools are aarch (optional case 4).
+#   ┌─ Windows bazelisk ──grpc://127.0.0.1:1985──► ┌─ WSL Ubuntu ─────────┐
+#   │  host = windows-x86_64                       │  NativeLink RE        │
+#   │  target = linux-sbsa                         │  exec = linux-x86_64  │
+#   └──────────────────────────────────────────────┴───────────────────────┘
 
 $ErrorActionPreference = "Stop"
 
@@ -44,7 +43,7 @@ if (-not $env:BAZEL_SH) {
     throw "BAZEL_SH / Git bash not found (needed to run test_cross_all.sh on Windows)"
 }
 
-Write-Host "=== drive_cross_windows.ps1 ==="
+Write-Host "=== drive_cross_windows.ps1 (case 3: Windows host / WSL RE) ==="
 Write-Host "  root=$RepoRoot cuda=$CudaVersion port=$Port"
 
 & (Join-Path $RepoRoot "tests\integration\rbe\start_wsl_worker.ps1")
@@ -74,4 +73,4 @@ try {
     Pop-Location
 }
 
-Write-Host "=== REQUIRED-A finished ==="
+Write-Host "=== case 3 finished ==="

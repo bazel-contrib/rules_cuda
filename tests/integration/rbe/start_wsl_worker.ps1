@@ -1,14 +1,11 @@
-# Start a Linux remote-execution worker inside WSL for REQUIRED-A.
+# Start NativeLink under WSL for Windows-host cross (cases 3–4).
 #
-# Shape:
 #   Windows bazelisk  --remote_executor=grpc://127.0.0.1:<port>
-#         |
-#         | localhost (WSL2 mirrored / localhost relay)
+#         │  localhost TCP
 #         v
-#   WSL Ubuntu  (linux-x86_64 exec)
-#     NativeLink RE worker
-#     g++-aarch64-linux-gnu for linux-sbsa target
-#     qemu-user only if exec arch needs it (not for REQUIRED-A x64 exec)
+#   WSL Ubuntu (linux-x86_64)
+#     NativeLink :1985 (public) / :1986 (worker)
+#     case 3: x64 nvcc native; case 4: sbsa nvcc via qemu-user
 #
 # Usage:
 #   .\tests\integration\rbe\start_wsl_worker.ps1
@@ -47,7 +44,7 @@ New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 $WorkerLog = Join-Path $LogDir "nativelink-wsl.log"
 $WslLog = (Invoke-Wsl -ArgumentList @("-e", "wslpath", "-a", $WorkerLog) | Select-Object -Last 1).ToString().Trim()
 
-Write-Host "REQUIRED-A WSL worker"
+Write-Host "WSL NativeLink worker (cases 3–4)"
 Write-Host "  repo (Windows) = $RepoRoot"
 Write-Host "  repo (WSL)     = $WslRepo"
 Write-Host "  remote_executor= grpc://127.0.0.1:$Port"

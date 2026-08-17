@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  # REQUIRED-B (+ optional Linux case 1): Linux x64 host.
-  #   B: linux-x86_64 host, linux-sbsa exec (qemu-user), linux-x86_64 target
-  #   1: linux-x86_64 host, linux-x86_64 exec, linux-sbsa target
+  # Linux host nesting:
+  #   case 2: host Linux x64 → qemu-user runs linux-sbsa exec tools → x64 target
+  #   case 1: host Linux x64 → native x64 exec → sbsa target (cross-gcc)
   linux:
     name: "Cross (Linux host, CUDA ${{ matrix.cuda-version }})"
     runs-on: ${{ matrix.os }}
@@ -48,7 +48,7 @@ jobs:
             binfmt-support \
             file \
             binutils
-          # Guest aarch64 loader so binfmt can run sbsa nvcc (REQUIRED-B).
+          # Guest aarch64 loader so binfmt can run sbsa nvcc (case 2).
           sudo ln -sfn /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1
           if [[ -d /usr/aarch64-linux-gnu/lib ]]; then
             if [[ -d /lib/aarch64-linux-gnu && ! -L /lib/aarch64-linux-gnu ]]; then
@@ -63,8 +63,9 @@ jobs:
 
       - run: bazelisk shutdown
 
-  # REQUIRED-A: windows-x86_64 host, linux-x86_64 exec (WSL RE), linux-sbsa target.
-  # Linux tools run in WSL via NativeLink remote execution (not a skip stub).
+  # Windows host nesting (case 3):
+  #   Windows bazelisk --remote_executor→ WSL NativeLink (linux-x86_64 exec)
+  #   → aarch64 cross-gcc for linux-sbsa target. See CROSS_COMPILE.md diagrams.
   windows:
     name: "Cross (Windows host / WSL Linux exec)"
     runs-on: windows-2025
@@ -95,7 +96,7 @@ jobs:
           update: true
           additional-packages: ca-certificates curl
 
-      - name: Start WSL Linux RE worker + run REQUIRED-A
+      - name: Start WSL NativeLink + run case 3
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"

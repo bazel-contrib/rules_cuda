@@ -1,7 +1,7 @@
 """Case 3: windows-x86_64 host, linux-x86_64 exec, linux-sbsa target.
 
-Requires a Linux remote executor for full builds (exec tools are Linux ELFs).
-Preferred worker: WSL + NativeLink (see tests/integration/rbe/start_wsl_worker.ps1).
+Linux exec tools need a RE worker (WSL-native NativeLink preferred; qemu-system
+guest optional). See tests/integration/CROSS_COMPILE.md and rbe/README.md.
 """
 
 module(name = "toolchain_redist_cross_win_lx64_exec_lsbsa_tgt")

@@ -1,9 +1,8 @@
-// Example placeholder for a single-node RE worker in the qemu guest.
-// NativeLink config schema changes across releases — prefer the sample
-// config shipped with the NativeLink version you install in the guest,
-// and ensure the public endpoint binds 0.0.0.0:1985 for hostfwd.
+// Placeholder notes for NativeLink under qemu-system (alternate to WSL).
+// Prefer the checked-in basic_cas.json5 + bootstrap_nativelink_linux.sh.
+// Public endpoint must bind 0.0.0.0:1985 for QEMU hostfwd from Windows.
 //
-// Guest checklist for REQUIRED-A:
+// Guest checklist (cases 3–4):
 //   - RE worker listening on 0.0.0.0:1985
 //   - g++-aarch64-linux-gnu on PATH
 //   - ca-certificates + network for CUDA redist download

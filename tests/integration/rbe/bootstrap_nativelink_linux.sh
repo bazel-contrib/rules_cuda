@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Download NativeLink (linux musl) and start a single-node RE endpoint on :1985.
-# Intended to run inside WSL or any Linux (CI worker / qemu guest).
+# Runs inside the Linux nest: WSL (preferred) or a qemu-system guest.
 set -euo pipefail
 
 PORT="${RBE_PORT:-1985}"

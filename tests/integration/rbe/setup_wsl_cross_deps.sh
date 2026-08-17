@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Install packages needed for REQUIRED-A Linux exec inside WSL.
-# - aarch64 cross-gcc: linux-sbsa target objects
-# - qemu-user: only required when exec tools are aarch (optional case 4)
+# Install packages needed for Linux RE inside WSL (Windows-host cases 3–4).
+# - aarch64 cross-gcc: linux-sbsa target objects (case 3)
+# - qemu-user: sbsa exec tools when arch disagrees (case 4)
 set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive

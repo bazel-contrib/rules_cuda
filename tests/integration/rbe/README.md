@@ -1,38 +1,42 @@
-# Linux remote execution for REQUIRED-A (Windows host)
+# Linux remote execution for Windows-host cross (cases 3–4)
 
-## Goal
+Windows cannot exec Linux CUDA tools. Case 3/4 send actions to a Linux
+remote-execution (RE) worker. Two nestings are supported.
+
+## Nesting A — NativeLink under WSL (preferred)
 
 ```text
-Windows Bazel  (host)
-    --remote_executor=grpc://127.0.0.1:1985
-            |
-            |  localhost
-            v
-WSL Ubuntu (preferred)  — or qemu-system-x86_64 guest
-    RE worker (NativeLink)
-    linux-x86_64 nvcc (exec)
-    aarch64-linux-gnu-g++ (target cross)
-    qemu-user only if exec arch is aarch (optional case 4)
+┌─ Windows host ──────────────────────────────────────────────────┐
+│  bazelisk  --remote_executor=grpc://127.0.0.1:1985              │
+│       │                                                         │
+│       │  localhost TCP :1985                                    │
+│       │  (WSL2 mirrored networking / localhost relay)           │
+│       v                                                         │
+│  ┌─ WSL2 distro (Ubuntu, linux-x86_64) ──────────────────────┐  │
+│  │                                                           │  │
+│  │  NativeLink                                               │  │
+│  │    public API   0.0.0.0:1985  ◄── Windows Bazel           │  │
+│  │    worker API   0.0.0.0:1986  (internal)                  │  │
+│  │         │                                                 │  │
+│  │         v                                                 │  │
+│  │    local worker runs actions:                             │  │
+│  │      case 3: linux-x86_64 nvcc (native)                   │  │
+│  │              aarch64-linux-gnu-g++ → linux-sbsa objects   │  │
+│  │      case 4: linux-sbsa nvcc under qemu-user (binfmt)     │  │
+│  │              host-arch link for linux-x86_64 target       │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
 ```
-
-## REQUIRED cases
-
-| ID | Host | Exec | Target | Local driver |
-|----|------|------|--------|--------------|
-| **A** | Windows | linux-x86_64 | linux-sbsa | WSL RE + `test_cross_all.sh` case 3 |
-| **B** | Linux x64 | linux-sbsa | linux-x86_64 | qemu-user on the Linux host (no system qemu) |
-
-## Preferred: WSL worker
 
 ```powershell
 pwsh tests/integration/rbe/start_wsl_worker.ps1
-# or the full driver:
+# or full case-3 driver:
 pwsh tests/integration/drive_cross_windows.ps1
 ```
 
 `start_wsl_worker.ps1`:
 
-1. Installs `g++-aarch64-linux-gnu` (+ qemu-user for optional aarch exec) in WSL
+1. Installs `g++-aarch64-linux-gnu` (+ qemu-user for case 4) in WSL
 2. Downloads NativeLink musl binary
 3. Starts `basic_cas.json5` on `0.0.0.0:1985`
 4. Waits until Windows can open `127.0.0.1:1985`
@@ -44,7 +48,24 @@ $env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985 --remot
 bash tests/integration/test_cross_all.sh --required-only --no-linux
 ```
 
-## Alternative: qemu-system guest
+## Nesting B — NativeLink under qemu-system (optional)
+
+Same RE protocol; Linux is a full VM instead of WSL.
+
+```text
+┌─ Windows host ──────────────────────────────────────────────────┐
+│  bazelisk  --remote_executor=grpc://127.0.0.1:1985              │
+│       │                                                         │
+│       │  QEMU user-net hostfwd                                  │
+│       │  hostfwd=tcp:127.0.0.1:1985-:1985                       │
+│       v                                                         │
+│  ┌─ qemu-system-x86_64 ──────────────────────────────────────┐  │
+│  │  Linux guest                                              │  │
+│  │    NativeLink  0.0.0.0:1985 / :1986                       │  │
+│  │    same tool layout as WSL nesting                        │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ```powershell
 $env:QEMU_DISK = "D:\vms\rules-cuda-rbe.qcow2"
@@ -59,12 +80,21 @@ Guest checklist:
 3. `g++-aarch64-linux-gnu` for sbsa target compiles
 4. Network for CUDA redist download
 
+## Which cases use this RE layer?
+
+| Case | Host | Exec | Target | Worker notes |
+|------|------|------|--------|--------------|
+| 3 | Windows | linux-x86_64 | linux-sbsa | WSL-native tools (no qemu-user) |
+| 4 | Windows | linux-sbsa | linux-x86_64 | qemu-user inside WSL/guest for sbsa tools |
+| 2 | Linux | linux-sbsa | linux-x86_64 | **no RE** — qemu-user on the Linux host |
+
 ## Network checklist
 
 | Check | Expect |
 |-------|--------|
-| WSL / guest listen | `0.0.0.0:1985` |
+| Worker listen | `0.0.0.0:1985` (public), `:1986` (worker API) |
 | Windows probe | `Test-NetConnection 127.0.0.1 -Port 1985` |
 | Bazel flag | `--remote_executor=grpc://127.0.0.1:1985` |
 
-If the port is closed, Bazel will fail scheduling Linux actions — fix WSL/qemu before debugging rules_cuda.
+If the port is closed, Bazel fails scheduling Linux actions — fix WSL/qemu
+before debugging rules_cuda.

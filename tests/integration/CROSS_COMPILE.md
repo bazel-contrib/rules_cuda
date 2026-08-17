@@ -11,33 +11,101 @@ Shared platforms / aarch64 C++ toolchain:
 
 ## Matrix (keep all four)
 
-| Case | Priority | Directory | Host | Exec | Target |
-|------|----------|-----------|------|------|--------|
-| **2 / B** | **REQUIRED** | `toolchain_redist_cross_lsbsa_exec_lx64_tgt` | linux-x86_64 | linux-sbsa | linux-x86_64 |
-| **3 / A** | **REQUIRED** | `toolchain_redist_cross_win_lx64_exec_lsbsa_tgt` | windows-x86_64 | linux-x86_64 | linux-sbsa |
-| 1 | optional | `toolchain_redist_cross_lx64_exec_lsbsa_tgt` | linux-x86_64 | linux-x86_64 | linux-sbsa |
-| 4 | optional | `toolchain_redist_cross_win_lsbsa_exec_lx64_tgt` | windows-x86_64 | linux-sbsa | linux-x86_64 |
+| Case | CI | Directory | Host | Exec | Target |
+|------|----|-----------|------|------|--------|
+| **2** | primary | `toolchain_redist_cross_lsbsa_exec_lx64_tgt` | linux-x86_64 | linux-sbsa | linux-x86_64 |
+| **3** | primary | `toolchain_redist_cross_win_lx64_exec_lsbsa_tgt` | windows-x86_64 | linux-x86_64 | linux-sbsa |
+| 1 | extra | `toolchain_redist_cross_lx64_exec_lsbsa_tgt` | linux-x86_64 | linux-x86_64 | linux-sbsa |
+| 4 | extra | `toolchain_redist_cross_win_lsbsa_exec_lx64_tgt` | windows-x86_64 | linux-sbsa | linux-x86_64 |
 
-### REQUIRED-B (case 2)
+### Case 2 — Linux host, sbsa exec via qemu-user
 
-- Linux x64 Bazel client.
-- Exec tools are **linux-sbsa** (run under **qemu-user-static** / binfmt on the same machine).
-- Target is **linux-x86_64** — intermediate aarch is only the tool env.
-- Builds `//:use_rule`, asserts redists, checks object Machine is **X86-64**, builds and **runs** `//:smoke` (no CUDA device).
+Same machine: Bazel and tools share one Linux kernel. When exec tools are
+aarch64 ELFs, the kernel runs them through **qemu-user** (binfmt).
 
-### REQUIRED-A (case 3)
+```text
+┌─ Linux x86_64 (Bazel client = host) ─────────────────────────────┐
+│  --platforms=linux_x86_64          (target artifacts)            │
+│  --@rules_cuda//cuda:exec_platform=linux-sbsa                    │
+│                                                                  │
+│  spawn linux-sbsa nvcc / cicc / …                                │
+│       │                                                          │
+│       │  binfmt → qemu-user-static (same host, no network)       │
+│       v                                                          │
+│  ┌─ qemu-user (user-mode) ────────────────────────────────────┐  │
+│  │  aarch64 ELF toolchain (linux-sbsa redist)                 │  │
+│  │  writes x86_64 objects / links //:smoke                    │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│  run //:smoke natively on x86_64                                 │
+└──────────────────────────────────────────────────────────────────┘
+```
 
-- **Windows** Bazel client (true Windows host).
-- Exec tools are **linux-x86_64** — run via a **Linux RE worker in WSL** (NativeLink).
-- Target is **linux-sbsa** (aarch64 objects via cross gcc on the WSL worker).
-- qemu-user inside WSL is only needed when exec arch disagrees (optional case 4).
+### Case 3 — Windows host, Linux exec via RE (WSL preferred)
+
+Bazel runs on Windows. Linux tools cannot exec locally, so actions go to a
+**Linux remote-execution worker**. Preferred worker: **NativeLink inside WSL**
+(native x86_64 Linux — no qemu for case 3 exec). Alternate: NativeLink inside
+a **qemu-system** guest (see [`rbe/README.md`](rbe/README.md)).
+
+```text
+┌─ Windows x86_64 (Bazel client = host) ───────────────────────────┐
+│  --platforms=linux_sbsa            (target artifacts)            │
+│  --@rules_cuda//cuda:exec_platform=linux-x86_64                  │
+│  --extra_toolchains=@cuda//toolchain:nvcc-linux-toolchain        │
+│  --remote_executor=grpc://127.0.0.1:1985                         │
+│       │                                                          │
+│       │  TCP 127.0.0.1:1985  (WSL2 localhost relay / hostfwd)    │
+│       v                                                          │
+│  ┌─ Linux x86_64 RE worker ───────────────────────────────────┐  │
+│  │                                                            │  │
+│  │  path A (preferred): WSL2 Ubuntu                           │  │
+│  │    NativeLink listens 0.0.0.0:1985 (API) + :1986 (worker)  │  │
+│  │    exec tools = linux-x86_64 nvcc  (native, no qemu-user)  │  │
+│  │    target C++ = aarch64-linux-gnu-g++ → linux-sbsa objs    │  │
+│  │                                                            │  │
+│  │  path B (optional): qemu-system-x86_64 guest               │  │
+│  │    same NativeLink + tool layout; port via QEMU hostfwd    │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+Network wiring (case 3):
+
+```text
+  Windows Bazel                    Linux RE (WSL or qemu-system guest)
+  ─────────────                    ──────────────────────────────────
+       │  grpc :1985 (CAS / AC / Execution)
+       ├──────────────────────────► NativeLink public  0.0.0.0:1985
+       │                                   │
+       │                                   │ worker_api 127.0.0.1:1986
+       │                                   v
+       │                            local worker (runs actions)
+```
+
+### Case 1 — Linux host, same-arch exec, sbsa target
+
+No qemu for tools: exec is linux-x86_64. Cross-gcc produces aarch64 objects.
+
+### Case 4 — Windows host, sbsa exec (needs qemu-user on the Linux worker)
+
+Same RE shape as case 3, but exec tools are linux-sbsa. On an x86_64 WSL/guest,
+those tools run under **qemu-user** inside the Linux worker.
+
+```text
+┌─ Windows Bazel ──grpc:1985──► ┌─ WSL / qemu-system (x86_64 Linux) ──┐
+│                               │  NativeLink                          │
+│                               │    spawn sbsa nvcc                   │
+│                               │      └─ qemu-user (aarch64 ELF)      │
+│                               │  target = linux-x86_64               │
+└───────────────────────────────┴──────────────────────────────────────┘
+```
 
 ## Driver
 
 ```bash
 cd tests/integration
 bash ./test_cross_all.sh                 # all applicable cases
-bash ./test_cross_all.sh --required-only # REQUIRED-A + REQUIRED-B only
+bash ./test_cross_all.sh --required-only # cases 2 + 3 only
 # --no-1 --no-2 --no-3 --no-4 --no-linux --no-windows
 ```
 
@@ -47,30 +115,30 @@ Each case:
    `--platforms=…` and `--@rules_cuda//cuda:exec_platform=…`
 2. aquery/cquery asserts exec vs target redist platform segments
 3. On Linux cases, `readelf`/`file` checks artifact Machine
-4. REQUIRED-B also builds and runs `//:smoke`
+4. Case 2 also builds and runs `//:smoke`
 
-## Linux host (cases 1 + REQUIRED-B)
+## Linux host (cases 1 + 2)
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y g++-aarch64-linux-gnu qemu-user-static
-# map aarch64 guest loader so binfmt can run sbsa nvcc (REQUIRED-B):
+# map aarch64 guest loader so binfmt can run sbsa nvcc (case 2):
 sudo ln -sfn /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1
 sudo ln -sfn /usr/aarch64-linux-gnu/lib /lib/aarch64-linux-gnu
 
 bash ./test_cross_all.sh --no-windows
-# or only REQUIRED-B:
+# or only case 2:
 bash ./test_cross_all.sh --required-only --no-windows
 ```
 
 Local helpers (optional): `install_and_drive_cross.sh`, `drive_cross_wsl.sh`.
 
-## Windows host (REQUIRED-A + optional case 4)
+## Windows host (cases 3 + 4)
 
-Preferred path: **WSL as the Linux exec environment** (NativeLink RE).
+Preferred: **WSL-native NativeLink** (diagram under case 3).
 
 ```powershell
-# One-shot driver (starts WSL worker + runs REQUIRED-A):
+# One-shot: start WSL worker + run case 3
 pwsh tests/integration/drive_cross_windows.ps1
 
 # Or step by step:
@@ -79,18 +147,18 @@ $env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985 --remot
 bash tests/integration/test_cross_all.sh --required-only --no-linux
 ```
 
-Without `CROSS_REMOTE_BAZEL_FLAGS`, REQUIRED-A **fails** (no silent skip).
+Without `CROSS_REMOTE_BAZEL_FLAGS`, case 3 **fails** (no silent skip).
 
-Optional: qemu-system guest instead of WSL — see [`rbe/README.md`](rbe/README.md).
+Optional qemu-system guest instead of WSL: [`rbe/README.md`](rbe/README.md).
 
 ## CI
 
 Workflow: [`.github/workflows/cross-compile-tests.yaml`](../../.github/workflows/cross-compile-tests.yaml)
 
-| Job | Runs | Notes |
-|-----|------|--------|
-| **linux** | Ubuntu 24.04 | apt cross-gcc + qemu-user; `test_cross_all.sh --no-windows` (case 1 + REQUIRED-B) |
-| **windows** | windows-2025 | WSL Ubuntu + NativeLink RE; `drive_cross_windows.ps1` (REQUIRED-A) |
+| Job | Runs | Nesting |
+|-----|------|---------|
+| **linux** | Ubuntu 24.04 | host Linux → case 2 uses qemu-user on the same machine |
+| **windows** | windows-2025 | host Windows → case 3 RE into WSL NativeLink (`drive_cross_windows.ps1`) |
 
 `workflow_dispatch` is enabled for manual runs.
 
