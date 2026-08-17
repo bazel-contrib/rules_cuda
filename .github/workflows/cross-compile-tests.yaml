@@ -89,37 +89,25 @@ jobs:
           cuda-version: "12.6.3"
           source: nvidia
 
-      # Share the Windows host network with WSL so 127.0.0.1:<port> reaches
-      # NativeLink inside the distro (default WSL2 NAT does not).
-      - name: Enable WSL host networking (mirrored)
-        shell: pwsh
-        run: |
-          $cfg = Join-Path $env:USERPROFILE ".wslconfig"
-          $lines = @(
-            "[wsl2]",
-            "networkingMode=mirrored",
-            "dnsTunneling=true",
-            "autoProxy=true"
-          )
-          Set-Content -Path $cfg -Value $lines -Encoding ascii
-          Write-Host "Wrote $cfg"
-          Get-Content $cfg
-
+      # Keep default WSL2 NAT (working DNS). start_wsl_worker.ps1 maps
+      # 127.0.0.1:RBE_PORT -> WSL eth IP via netsh portproxy (mirrored mode
+      # breaks DNS on GH Actions: Temporary failure resolving archive.ubuntu.com).
       - name: Setup WSL Ubuntu
         uses: Vampire/setup-wsl@v7
         with:
           distribution: Ubuntu-24.04
           update: true
-          additional-packages: ca-certificates curl
-
-      # Apply .wslconfig (networkingMode) after the distro exists.
-      - name: Restart WSL to apply mirrored networking
-        shell: pwsh
-        run: |
-          wsl --shutdown
-          Start-Sleep -Seconds 3
-          wsl -d Ubuntu-24.04 -e true
-          wsl -d Ubuntu-24.04 -e bash -lc "ip -br a || true; cat /etc/resolv.conf || true"
+          additional-packages: >-
+            ca-certificates
+            curl
+            g++-aarch64-linux-gnu
+            gcc-aarch64-linux-gnu
+            binutils-aarch64-linux-gnu
+            qemu-user-static
+            binfmt-support
+            file
+            binutils
+            psmisc
 
       - name: Start WSL NativeLink + run case 3
         shell: pwsh

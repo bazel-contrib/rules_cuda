@@ -5,18 +5,24 @@ remote-execution (RE) worker. Two nestings are supported.
 
 ## Nesting A — NativeLink under WSL (preferred)
 
-Uses **WSL host networking** (`networkingMode=mirrored` in `%USERPROFILE%\.wslconfig`)
-so Windows `127.0.0.1:1985` reaches NativeLink inside the distro. If mirrored is
-unavailable, `start_wsl_worker.ps1` falls back to the WSL NAT IPv4.
+Keep **default WSL2 NAT** so DNS inside the distro works (apt/curl/GitHub).
+Windows reaches NativeLink via `netsh interface portproxy`:
+
+```text
+127.0.0.1:1985  →  <wsl-eth-ip>:1985
+```
+
+Avoid `networkingMode=mirrored` on GitHub Actions: it often breaks WSL DNS
+(`Temporary failure resolving 'archive.ubuntu.com'`).
 
 ```text
 ┌─ Windows host ──────────────────────────────────────────────────┐
 │  bazelisk  --remote_executor=grpc://127.0.0.1:1985              │
-│       │      (or grpc://<wsl-eth-ip>:1985 on NAT fallback)      │
+│       │      (fallback: grpc://<wsl-eth-ip>:1985)               │
 │       │                                                         │
-│       │  host network (mirrored)  — shares host NIC/ports       │
+│       │  netsh portproxy (loopback → WSL NAT IP)                │
 │       v                                                         │
-│  ┌─ WSL2 distro (Ubuntu, linux-x86_64) ──────────────────────┐  │
+│  ┌─ WSL2 distro (Ubuntu, linux-x86_64, default NAT) ─────────┐  │
 │  │                                                           │  │
 │  │  NativeLink                                               │  │
 │  │    public API   0.0.0.0:1985  ◄── Windows Bazel           │  │
@@ -40,10 +46,11 @@ pwsh tests/integration/drive_cross_windows.ps1
 
 `start_wsl_worker.ps1`:
 
-1. Installs `g++-aarch64-linux-gnu` (+ qemu-user for case 4) in WSL
+1. Installs `g++-aarch64-linux-gnu` (+ qemu-user for case 4) in WSL if missing
 2. Downloads NativeLink musl binary
 3. Starts `basic_cas.json5` on `0.0.0.0:1985`
-4. Waits until Windows can open `127.0.0.1:1985`
+4. Adds `netsh portproxy` `127.0.0.1:1985` → WSL eth IP
+5. Probes localhost then WSL IP; sets `CROSS_REMOTE_BAZEL_FLAGS`
 
 Then:
 

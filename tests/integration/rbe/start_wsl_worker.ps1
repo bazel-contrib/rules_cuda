@@ -1,11 +1,12 @@
 # Start NativeLink under WSL for Windows-host cross (cases 3–4).
 #
-#   Windows bazelisk  --remote_executor=grpc://<host>:<port>
-#         │  host network (mirrored) or WSL eth IP (NAT fallback)
-#         v
-#   WSL Ubuntu (linux-x86_64)
-#     NativeLink :1985 (public) / :1986 (worker)
-#     case 3: x64 nvcc native; case 4: sbsa nvcc via qemu-user
+# Default WSL2 NAT keeps working DNS inside the distro. Windows reaches the
+# worker via:
+#   1) netsh portproxy 127.0.0.1:<port> -> <wsl-ip>:<port>  (preferred)
+#   2) direct grpc://<wsl-ip>:<port>                       (fallback)
+#
+# Do not force networkingMode=mirrored here: on GitHub Actions runners that
+# mode often breaks WSL DNS (cannot resolve archive.ubuntu.com).
 #
 # Usage:
 #   .\tests\integration\rbe\start_wsl_worker.ps1
@@ -17,7 +18,6 @@ $ErrorActionPreference = "Stop"
 $Port = if ($env:RBE_PORT) { [int]$env:RBE_PORT } else { 1985 }
 $Distro = if ($env:WSL_DISTRO) { $env:WSL_DISTRO } else { $null }
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
-# Keep logs inside WSL so Windows TEMP / short-path mapping cannot break them.
 $WslLog = "/tmp/rules_cuda_rbe/nativelink.log"
 
 function Invoke-Wsl {
@@ -59,39 +59,38 @@ function Test-TcpPort {
     return $false
 }
 
-function Enable-WslHostNetworking {
-    # Mirrored mode shares the host network stack so Windows localhost reaches
-    # listeners inside WSL (default WSL2 NAT does not). Requires modern WSL.
-    $wslConfig = Join-Path $env:USERPROFILE ".wslconfig"
-    $desired = @"
-[wsl2]
-networkingMode=mirrored
-dnsTunneling=true
-autoProxy=true
-"@
-    $existing = if (Test-Path $wslConfig) { Get-Content -Raw $wslConfig } else { "" }
-    if ($existing -notmatch 'networkingMode\s*=\s*mirrored') {
-        Write-Host "Writing $wslConfig (networkingMode=mirrored)"
-        Set-Content -Path $wslConfig -Value $desired -Encoding ascii
-        Write-Host "Restarting WSL to apply host networking..."
-        & wsl --shutdown
-        Start-Sleep -Seconds 3
-    } else {
-        Write-Host "WSL host networking already configured ($wslConfig)"
-    }
-}
-
 function Get-WslIpv4 {
-    # First non-loopback IPv4 from the distro (used when localhost is not shared).
     $raw = Invoke-WslBash "hostname -I 2>/dev/null || ip -4 -o addr show scope global | awk '{print `$4}' | cut -d/ -f1"
     $ips = @($raw -split '\s+' | Where-Object { $_ -match '^\d+\.\d+\.\d+\.\d+$' -and $_ -notmatch '^127\.' })
     if ($ips.Count -gt 0) { return $ips[0] }
     return $null
 }
 
-Enable-WslHostNetworking
+function Enable-LocalhostPortProxy {
+    param(
+        [Parameter(Mandatory = $true)][string]$ConnectAddress,
+        [Parameter(Mandatory = $true)][int]$PortNumber
+    )
+    # Map Windows loopback -> WSL NAT address so Bazel can use 127.0.0.1
+    # without WSL mirrored networking (which breaks DNS on some runners).
+    Write-Host "Configuring portproxy 127.0.0.1:$PortNumber -> ${ConnectAddress}:$PortNumber"
+    & netsh interface portproxy delete v4tov4 listenaddress=127.0.0.1 listenport=$PortNumber 2>$null | Out-Null
+    & netsh interface portproxy add v4tov4 `
+        listenaddress=127.0.0.1 listenport=$PortNumber `
+        connectaddress=$ConnectAddress connectport=$PortNumber
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "WARN: netsh portproxy add failed (exit $LASTEXITCODE); will use WSL IP directly"
+        return $false
+    }
+    # Allow inbound on the listen port (no-op if rule exists / insufficient rights).
+    & netsh advfirewall firewall delete rule name="rules_cuda WSL RE $PortNumber" 2>$null | Out-Null
+    & netsh advfirewall firewall add rule `
+        name="rules_cuda WSL RE $PortNumber" `
+        dir=in action=allow protocol=TCP localport=$PortNumber 2>$null | Out-Null
+    return $true
+}
 
-# Touch the distro so it is running after a possible shutdown.
+# Ensure distro is up.
 Invoke-WslBash "true"
 
 $WslRepo = (Invoke-Wsl -ArgumentList @("-e", "wslpath", "-a", $RepoRoot) | Select-Object -Last 1).ToString().Trim()
@@ -102,6 +101,13 @@ Write-Host "WSL NativeLink worker (cases 3–4)"
 Write-Host "  repo (Windows) = $RepoRoot"
 Write-Host "  repo (WSL)     = $WslRepo"
 Write-Host "  worker log     = $WslLog (inside WSL)"
+
+# Sanity: DNS must work inside WSL for apt/curl (mirrored mode often breaks this).
+try {
+    Invoke-WslBash "getent hosts archive.ubuntu.com >/dev/null 2>&1 || getent hosts github.com >/dev/null 2>&1 || (echo 'WARN: WSL DNS probe failed' >&2; cat /etc/resolv.conf || true)"
+} catch {
+    Write-Host "WARN: WSL DNS probe threw; continuing"
+}
 
 # Ensure LF line endings (Windows checkouts may be CRLF).
 Invoke-WslBash "sed -i 's/\r`$//' '$SetupDeps' '$Bootstrap' && chmod +x '$SetupDeps' '$Bootstrap'"
@@ -123,24 +129,33 @@ Write-Host "  nativelink pid (WSL) = $pidText"
 
 $wslIp = Get-WslIpv4
 Write-Host "  WSL IPv4           = $wslIp"
+if (-not $wslIp) {
+    try { Invoke-WslBash "ip -br a || true; tail -n 40 '$WslLog' || true" } catch { }
+    throw "Could not determine WSL IPv4 address"
+}
 
-# Probe localhost first (mirrored / host network), then the WSL NAT address.
-$candidates = @("127.0.0.1")
-if ($wslIp) { $candidates += $wslIp }
+$portproxyOk = Enable-LocalhostPortProxy -ConnectAddress $wslIp -PortNumber $Port
+
+# Probe localhost (via portproxy) first, then the WSL NAT address.
+$candidates = @()
+if ($portproxyOk) { $candidates += "127.0.0.1" }
+$candidates += $wslIp
 
 $readyHost = $null
 $deadline = (Get-Date).AddMinutes(2)
 while ((Get-Date) -lt $deadline -and -not $readyHost) {
-    # Confirm the process is still alive / log has "Ready".
     try {
-        $logTail = (Invoke-WslBash "tail -n 5 '$WslLog' 2>/dev/null || true" | Out-String)
-        if ($logTail -match 'Ready, listening') {
+        $logTail = (Invoke-WslBash "tail -n 8 '$WslLog' 2>/dev/null || true" | Out-String)
+        if ($logTail -match 'Ready, listening|listening on') {
             foreach ($h in $candidates) {
                 if (Test-TcpPort -HostName $h -PortNumber $Port -TimeoutMs 800) {
                     $readyHost = $h
                     break
                 }
             }
+        } elseif ($logTail -match 'error|Error|panic|failed') {
+            Write-Host "NativeLink log may indicate failure:"
+            Write-Host $logTail
         }
     } catch {
         # retry
@@ -152,6 +167,7 @@ if (-not $readyHost) {
     Write-Host "Worker not reachable from Windows. Log tail:"
     try { Invoke-WslBash "tail -n 80 '$WslLog' || true" } catch { }
     Write-Host "Candidates tried: $($candidates -join ', ')"
+    try { & netsh interface portproxy show all } catch { }
     throw "WSL NativeLink worker not reachable on port $Port"
 }
 
@@ -163,5 +179,6 @@ $env:CROSS_REMOTE_BAZEL_FLAGS = @(
     "--remote_timeout=600"
 ) -join " "
 
-Write-Host "WSL RE worker is up on $endpoint (via $(if ($readyHost -eq '127.0.0.1') { 'host/mirrored network' } else { 'WSL NAT IP' }))"
+$via = if ($readyHost -eq "127.0.0.1") { "localhost portproxy -> $wslIp" } else { "WSL NAT IP" }
+Write-Host "WSL RE worker is up on $endpoint (via $via)"
 Write-Host "CROSS_REMOTE_BAZEL_FLAGS=$env:CROSS_REMOTE_BAZEL_FLAGS"

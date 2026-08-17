@@ -55,12 +55,12 @@ a **qemu-system** guest (see [`rbe/README.md`](rbe/README.md)).
 │  --remote_executor=grpc://127.0.0.1:1985                         │
 │       │                                                          │
 │       │  grpc :1985                                              │
-│       │    preferred: 127.0.0.1 with WSL networkingMode=mirrored │
-│       │    fallback:  WSL eth IPv4 under default NAT             │
+│       │    preferred: 127.0.0.1 via netsh portproxy → WSL IP     │
+│       │    fallback:  grpc://<wsl-eth-ip>:1985                   │
 │       v                                                          │
 │  ┌─ Linux x86_64 RE worker ───────────────────────────────────┐  │
 │  │                                                            │  │
-│  │  path A (preferred): WSL2 Ubuntu (host/mirrored network)   │  │
+│  │  path A (preferred): WSL2 Ubuntu (default NAT + portproxy) │  │
 │  │    NativeLink listens 0.0.0.0:1985 (API) + :1986 (worker)  │  │
 │  │    exec tools = linux-x86_64 nvcc  (native, no qemu-user)  │  │
 │  │    target C++ = aarch64-linux-gnu-g++ → linux-sbsa objs    │  │
@@ -74,17 +74,22 @@ a **qemu-system** guest (see [`rbe/README.md`](rbe/README.md)).
 Network wiring (case 3, WSL path):
 
 ```text
-  Windows Bazel                 WSL2 (networkingMode=mirrored)
-  ─────────────                 ──────────────────────────────
+  Windows Bazel                 WSL2 (default NAT — keep working DNS)
+  ─────────────                 ─────────────────────────────────────
        │  grpc 127.0.0.1:1985
+       │       │
+       │       │  netsh interface portproxy
+       │       │  127.0.0.1:1985 → <wsl-ip>:1985
+       │       v
        ├──────────────────────► NativeLink public  0.0.0.0:1985
        │                               │
-       │                               │ worker_api 127.0.0.1:1986
+       │                               │ worker_api :1986
        │                               v
        │                        local worker (runs actions)
 
-  If mirrored is unavailable, the driver falls back to the WSL NAT IPv4
-  (hostname -I) instead of 127.0.0.1.
+  Do not use networkingMode=mirrored on GH Actions: it often breaks WSL DNS
+  (Temporary failure resolving archive.ubuntu.com). portproxy keeps a
+  localhost endpoint without corrupting the distro network.
 ```
 
 ### Case 1 — Linux host, same-arch exec, sbsa target
