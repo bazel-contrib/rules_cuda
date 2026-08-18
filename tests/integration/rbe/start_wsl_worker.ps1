@@ -8,6 +8,11 @@
 # Do not force networkingMode=mirrored here: on GitHub Actions runners that
 # mode often breaks WSL DNS (cannot resolve archive.ubuntu.com).
 #
+# Also: do not start NativeLink with `wsl bash -lc 'nohup ... &'`. When that
+# short-lived shell exits, WSL may shut the distro down, kill the worker, and
+# wipe /tmp (log disappears; port never opens). Keep a sleep-infinity session
+# and launch NativeLink via Start-Process so Windows owns the lifetime.
+#
 # Usage:
 #   .\tests\integration\rbe\start_wsl_worker.ps1
 #   # sets $env:CROSS_REMOTE_BAZEL_FLAGS and $env:CROSS_REMOTE_HOST
@@ -18,16 +23,21 @@ $ErrorActionPreference = "Stop"
 $Port = if ($env:RBE_PORT) { [int]$env:RBE_PORT } else { 1985 }
 $Distro = if ($env:WSL_DISTRO) { $env:WSL_DISTRO } else { $null }
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
-$WslLog = "/tmp/rules_cuda_rbe/nativelink.log"
+# Durable path inside WSL (survives /tmp wipe if the distro restarts).
+$WslLog = '$HOME/.cache/rules_cuda-rbe/nativelink.log'
+
+function Get-WslPrefix {
+    $prefix = @()
+    if ($Distro) { $prefix += @("-d", $Distro) }
+    return $prefix
+}
 
 function Invoke-Wsl {
     param(
         [Parameter(Mandatory = $true)]
         [string[]]$ArgumentList
     )
-    $prefix = @()
-    if ($Distro) { $prefix += @("-d", $Distro) }
-    & wsl (@($prefix) + $ArgumentList)
+    & wsl (@(Get-WslPrefix) + $ArgumentList)
     if ($LASTEXITCODE -ne 0) {
         throw "wsl failed ($LASTEXITCODE): $($ArgumentList -join ' ')"
     }
@@ -96,6 +106,7 @@ Invoke-WslBash "true"
 $WslRepo = (Invoke-Wsl -ArgumentList @("-e", "wslpath", "-a", $RepoRoot) | Select-Object -Last 1).ToString().Trim()
 $SetupDeps = "$WslRepo/tests/integration/rbe/setup_wsl_cross_deps.sh"
 $Bootstrap = "$WslRepo/tests/integration/rbe/bootstrap_nativelink_linux.sh"
+$WorkerRun = "$WslRepo/tests/integration/rbe/run_nativelink_worker.sh"
 
 Write-Host "WSL NativeLink worker (cases 3–4)"
 Write-Host "  repo (Windows) = $RepoRoot"
@@ -110,7 +121,7 @@ try {
 }
 
 # Ensure LF line endings (Windows checkouts may be CRLF).
-Invoke-WslBash "sed -i 's/\r`$//' '$SetupDeps' '$Bootstrap' && chmod +x '$SetupDeps' '$Bootstrap'"
+Invoke-WslBash "sed -i 's/\r`$//' '$SetupDeps' '$Bootstrap' '$WorkerRun' && chmod +x '$SetupDeps' '$Bootstrap' '$WorkerRun'"
 
 Write-Host "Installing WSL cross-compile deps..."
 Invoke-WslBash "bash '$SetupDeps'"
@@ -122,15 +133,28 @@ try {
     # ignore cleanup failures
 }
 
-Write-Host "Starting NativeLink in WSL (background)..."
-$startCmd = "mkdir -p /tmp/rules_cuda_rbe; export RBE_PORT=$Port; nohup bash '$Bootstrap' >'$WslLog' 2>&1 & echo `$!"
-$pidText = (Invoke-WslBash $startCmd | Select-Object -Last 1).ToString().Trim()
-Write-Host "  nativelink pid (WSL) = $pidText"
+# Hold the distro open: a short-lived `wsl ... nohup &` session exiting can
+# shut WSL down and kill the worker (CI symptom: missing log + closed port).
+Write-Host "Starting WSL keep-alive (sleep infinity)..."
+$keeperArgStr = if ($Distro) { "-d $Distro -e sleep infinity" } else { "-e sleep infinity" }
+$script:WslKeeperProc = Start-Process -FilePath "wsl.exe" -ArgumentList $keeperArgStr -PassThru -WindowStyle Hidden
+Start-Sleep -Seconds 2
+
+Write-Host "Starting NativeLink in WSL (Windows-owned process)..."
+# Pass a simple -lc string; the worker script owns logging + exec.
+$nlArgStr = if ($Distro) {
+    "-d $Distro -e bash -lc `"export RBE_PORT=$Port; exec bash '$WorkerRun'`""
+} else {
+    "-e bash -lc `"export RBE_PORT=$Port; exec bash '$WorkerRun'`""
+}
+$script:WslNativeLinkProc = Start-Process -FilePath "wsl.exe" -ArgumentList $nlArgStr -PassThru -WindowStyle Hidden
+Write-Host "  wsl keeper pid (Windows)     = $($script:WslKeeperProc.Id)"
+Write-Host "  wsl nativelink pid (Windows) = $($script:WslNativeLinkProc.Id)"
 
 $wslIp = Get-WslIpv4
-Write-Host "  WSL IPv4           = $wslIp"
+Write-Host "  WSL IPv4                     = $wslIp"
 if (-not $wslIp) {
-    try { Invoke-WslBash "ip -br a || true; tail -n 40 '$WslLog' || true" } catch { }
+    try { Invoke-WslBash "ip -br a || true; tail -n 40 $WslLog || true" } catch { }
     throw "Could not determine WSL IPv4 address"
 }
 
@@ -142,11 +166,18 @@ if ($portproxyOk) { $candidates += "127.0.0.1" }
 $candidates += $wslIp
 
 $readyHost = $null
-$deadline = (Get-Date).AddMinutes(2)
+# First launch may download the NativeLink musl tarball.
+$deadline = (Get-Date).AddMinutes(4)
 while ((Get-Date) -lt $deadline -and -not $readyHost) {
+    $script:WslNativeLinkProc.Refresh()
+    if ($script:WslNativeLinkProc.HasExited) {
+        Write-Host "NativeLink WSL process exited early (code $($script:WslNativeLinkProc.ExitCode)). Log tail:"
+        try { Invoke-WslBash "tail -n 80 $WslLog || true; ls -la `$HOME/.cache/rules_cuda-rbe || true" } catch { }
+        throw "WSL NativeLink process exited before becoming ready"
+    }
     try {
-        $logTail = (Invoke-WslBash "tail -n 8 '$WslLog' 2>/dev/null || true" | Out-String)
-        if ($logTail -match 'Ready, listening|listening on') {
+        $logTail = (Invoke-WslBash "tail -n 12 $WslLog 2>/dev/null || true" | Out-String)
+        if ($logTail -match 'Ready, listening|listening on|Starting nativelink') {
             foreach ($h in $candidates) {
                 if (Test-TcpPort -HostName $h -PortNumber $Port -TimeoutMs 800) {
                     $readyHost = $h
@@ -157,16 +188,28 @@ while ((Get-Date) -lt $deadline -and -not $readyHost) {
             Write-Host "NativeLink log may indicate failure:"
             Write-Host $logTail
         }
+        # Also probe TCP even before a ready log line (download still in progress).
+        if (-not $readyHost) {
+            foreach ($h in $candidates) {
+                if (Test-TcpPort -HostName $h -PortNumber $Port -TimeoutMs 400) {
+                    $readyHost = $h
+                    break
+                }
+            }
+        }
     } catch {
         # retry
     }
-    if (-not $readyHost) { Start-Sleep -Seconds 1 }
+    if (-not $readyHost) { Start-Sleep -Seconds 2 }
 }
 
 if (-not $readyHost) {
-    Write-Host "Worker not reachable from Windows. Log tail:"
-    try { Invoke-WslBash "tail -n 80 '$WslLog' || true" } catch { }
+    Write-Host "Worker not reachable from Windows. Diagnostics:"
+    try {
+        Invoke-WslBash "echo '--- log ---'; tail -n 80 $WslLog || echo '(no log)'; echo '--- listen ---'; ss -ltnp 2>/dev/null || netstat -ltnp 2>/dev/null || true; echo '--- procs ---'; ps -ef | grep -E '[n]ativelink|[b]ootstrap_nativelink' || true"
+    } catch { }
     Write-Host "Candidates tried: $($candidates -join ', ')"
+    Write-Host "NativeLink process HasExited=$($script:WslNativeLinkProc.HasExited) ExitCode=$($script:WslNativeLinkProc.ExitCode)"
     try { & netsh interface portproxy show all } catch { }
     throw "WSL NativeLink worker not reachable on port $Port"
 }

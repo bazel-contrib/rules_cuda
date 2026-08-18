@@ -47,8 +47,8 @@ pwsh tests/integration/drive_cross_windows.ps1
 `start_wsl_worker.ps1`:
 
 1. Installs `g++-aarch64-linux-gnu` (+ qemu-user for case 4) in WSL if missing
-2. Downloads NativeLink musl binary
-3. Starts `basic_cas.json5` on `0.0.0.0:1985`
+2. Holds the distro open with `sleep infinity` (avoids WSL shutting down after a short `wsl` invocation and killing a background worker)
+3. Starts NativeLink via a Windows-owned `wsl.exe` process (`basic_cas.json5` on `0.0.0.0:1985`)
 4. Adds `netsh portproxy` `127.0.0.1:1985` → WSL eth IP
 5. Probes localhost then WSL IP; sets `CROSS_REMOTE_BAZEL_FLAGS`
 

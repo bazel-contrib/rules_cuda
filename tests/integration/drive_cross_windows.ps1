@@ -4,7 +4,7 @@
 #   │  host = windows-x86_64                    │  NativeLink RE       │
 #   │  target = linux-sbsa                      │  exec = linux-x86_64 │
 #   └───────────────────────────────────────────┴──────────────────────┘
-# host = 127.0.0.1 with WSL mirrored networking, else WSL eth IPv4.
+# Endpoint is 127.0.0.1 via netsh portproxy (default WSL NAT), else WSL eth IPv4.
 
 $ErrorActionPreference = "Stop"
 
