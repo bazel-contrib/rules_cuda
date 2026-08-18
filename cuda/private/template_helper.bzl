@@ -186,10 +186,18 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
     repository_ctx.template("redist.bzl", tpl_label, substitutions = substitutions, executable = False)
 
 def _generate_toolchain_build(repository_ctx, cuda):
-    tpl_label = Label(
-        "//cuda/private:templates/BUILD.toolchain_" +
-        ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
-    )
+    # Hermetic/deliverable toolkits (no single local install path) register both
+    # Linux and Windows nvcc toolchains so the client host OS does not prevent
+    # resolving a CUDA toolchain for a different target/exec platform (e.g.
+    # Windows Bazel client + Linux remote exec + linux-sbsa target).
+    is_deliverable = cuda.path == None
+    if is_deliverable:
+        tpl_label = Label("//cuda/private:templates/BUILD.toolchain_deliverable")
+    else:
+        tpl_label = Label(
+            "//cuda/private:templates/BUILD.toolchain_" +
+            ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
+        )
     compiler_files = ["@cuda//:compiler_deps"]
     if cuda.cicc_label != None:
         compiler_files.append(cuda.cicc_label)
@@ -209,6 +217,10 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
         "%{ptxas_label}": cuda.ptxas_label,
+        # Host-default alias for register_detected_cuda_toolchains().
+        "%{nvcc_local_actual}": "nvcc-linux-toolchain" if _is_linux(repository_ctx) else "nvcc-windows-toolchain",
+        # msvc template needs a tmp path; deliverable Windows config does too.
+        "%{env_tmp}": "C:/Windows/Temp",
     }
     if cuda.cicc_label:
         substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)

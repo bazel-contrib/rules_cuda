@@ -1,0 +1,17 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+
+# Optional: linux-x86_64 host, linux-x86_64 exec, linux-sbsa target (classic cross).
+
+cc_library(
+    name = "use_library",
+    tags = ["manual"],
+    deps = ["@cuda//:cuda_runtime"],
+)
+
+cuda_library(
+    name = "use_rule",
+    srcs = ["@rules_cuda_examples//basic:kernel.cu"],
+    hdrs = ["@rules_cuda_examples//basic:kernel.h"],
+    tags = ["manual"],
+)

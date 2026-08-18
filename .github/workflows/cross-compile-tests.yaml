@@ -1,0 +1,126 @@
+# redist_json exec/target cross-compile integration tests.
+# See tests/integration/CROSS_COMPILE.md
+name: Test Cross Compile
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # Linux host nesting:
+  #   case 2: host Linux x64 → qemu-user runs linux-sbsa exec tools → x64 target
+  #   case 1: host Linux x64 → native x64 exec → sbsa target (cross-gcc)
+  linux:
+    name: "Cross (Linux host, CUDA ${{ matrix.cuda-version }})"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, cuda-version: "12.6.3" }
+    env:
+      CUDA_REDIST_VERSION_OVERRIDE: ${{ matrix.cuda-version }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: bazelbuild/setup-bazelisk@v3
+      - name: Mount bazel cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/bazel
+          key: bazel-cross-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}-${{ hashFiles('.bazelversion') }}
+
+      - name: Use .bazelversion
+        run: echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $GITHUB_ENV
+
+      - name: Install cross-compile deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            g++-aarch64-linux-gnu \
+            gcc-aarch64-linux-gnu \
+            binutils-aarch64-linux-gnu \
+            qemu-user-static \
+            binfmt-support \
+            file \
+            binutils
+          # Guest aarch64 loader so binfmt can run sbsa nvcc (case 2).
+          sudo ln -sfn /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1
+          if [[ -d /usr/aarch64-linux-gnu/lib ]]; then
+            if [[ -d /lib/aarch64-linux-gnu && ! -L /lib/aarch64-linux-gnu ]]; then
+              sudo rm -rf /lib/aarch64-linux-gnu
+            fi
+            sudo ln -sfn /usr/aarch64-linux-gnu/lib /lib/aarch64-linux-gnu
+          fi
+          update-binfmts --display qemu-aarch64 || true
+
+      - name: Run Linux host cross tests
+        run: cd tests/integration && bash ./test_cross_all.sh --no-windows
+
+      - run: bazelisk shutdown
+
+  # Windows host nesting (case 3):
+  #   Windows bazelisk --remote_executor→ WSL NativeLink (linux-x86_64 exec)
+  #   → aarch64 cross-gcc for linux-sbsa target. See CROSS_COMPILE.md diagrams.
+  windows:
+    name: "Cross (Windows host / WSL Linux exec)"
+    runs-on: windows-2025
+    timeout-minutes: 120
+    env:
+      CUDA_REDIST_VERSION_OVERRIDE: "12.6.3"
+      RBE_PORT: "1985"
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: bazelbuild/setup-bazelisk@v3
+
+      - name: Use .bazelversion
+        shell: pwsh
+        run: echo "USE_BAZEL_VERSION=$((Get-Content .bazelversion -Raw).Trim())" >> $env:GITHUB_ENV
+
+      - name: Setup build environment
+        uses: ./.github/actions/set-build-env
+        with:
+          os: windows-2025
+          cuda-version: "12.6.3"
+          source: nvidia
+
+      # Keep default WSL2 NAT (working DNS). start_wsl_worker.ps1 maps
+      # 127.0.0.1:RBE_PORT -> WSL eth IP via netsh portproxy (mirrored mode
+      # breaks DNS on GH Actions: Temporary failure resolving archive.ubuntu.com).
+      - name: Setup WSL Ubuntu
+        uses: Vampire/setup-wsl@v7
+        with:
+          distribution: Ubuntu-24.04
+          update: true
+          additional-packages: >-
+            ca-certificates
+            curl
+            g++-aarch64-linux-gnu
+            gcc-aarch64-linux-gnu
+            binutils-aarch64-linux-gnu
+            qemu-user-static
+            binfmt-support
+            file
+            binutils
+            psmisc
+
+      - name: Start WSL NativeLink + run case 3
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $bash = "C:\Program Files\Git\bin\bash.exe"
+          if (-not (Test-Path $bash)) { throw "Git bash not found at $bash" }
+          $env:BAZEL_SH = $bash
+          $env:WSL_DISTRO = "Ubuntu-24.04"
+          $env:RBE_PORT = "1985"
+          & .\tests\integration\drive_cross_windows.ps1
+
+      - name: Bazel shutdown
+        if: always()
+        shell: bash
+        run: bazelisk shutdown || true

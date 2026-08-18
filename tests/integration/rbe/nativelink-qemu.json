@@ -1,0 +1,12 @@
+// Placeholder notes for NativeLink under qemu-system (alternate to WSL).
+// Prefer the checked-in basic_cas.json5 + bootstrap_nativelink_linux.sh.
+// Public endpoint must bind 0.0.0.0:1985 for QEMU hostfwd from Windows.
+//
+// Guest checklist (cases 3–4):
+//   - RE worker listening on 0.0.0.0:1985
+//   - g++-aarch64-linux-gnu on PATH
+//   - ca-certificates + network for CUDA redist download
+//   - platform property OSFamily=Linux (or accept any)
+//
+// This file is documentation-only; it is not loaded by tests automatically.
+{}
