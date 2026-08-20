@@ -1,0 +1,18 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+
+write_file(
+    name = "kernel",
+    out = "kernel.cu",
+    content = ["__global__ void noop() {}"],
+)
+
+# Built once per declared CUDA version. The flags nvcc is invoked with are gated on the
+# toolchain's reported version, so building this against the version whose nvcc lacks a
+# gated flag is what catches the toolchain reporting a different version than it runs.
+cuda_library(
+    name = "kernel_lib",
+    srcs = [":kernel"],
+    tags = ["manual"],
+    deps = ["@cuda//:cuda_runtime"],
+)

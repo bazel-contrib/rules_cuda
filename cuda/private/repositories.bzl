@@ -349,6 +349,12 @@ cuda_toolkit = repository_rule(
         "nvcc_version": attr.string(
             doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
         ),
+        "toolkit_versions": attr.string_list(
+            doc = "All cuda toolkit versions reachable through the component aliases, i.e. every " +
+                  "version declared with `cuda.redist_json`. When more than one is present, the " +
+                  "generated toolchain selects among them on @rules_cuda//cuda:version instead of " +
+                  "hardcoding `version`.",
+        ),
     },
     configure = True,
     local = True,

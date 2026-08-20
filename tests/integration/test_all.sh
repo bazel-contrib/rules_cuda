@@ -11,6 +11,7 @@ skip_components_bzlmod=false
 skip_redist_json=false
 skip_redist_json_multi=false
 skip_redist_json_collision=false
+skip_redist_json_version_gate=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -32,6 +33,8 @@ while [[ $# -gt 0 ]]; do
             skip_redist_json_multi=true; shift ;;
         --no-redist-collision)
             skip_redist_json_collision=true; shift ;;
+        --no-redist-version-gate)
+            skip_redist_json_version_gate=true; shift ;;
         *)
             echo "Unknown option: $1" >&2; shift ;;
     esac
@@ -212,6 +215,35 @@ pushd "$this_dir/toolchain_redist_json_multi"
     # Keep the override-only dedupe probe isolated so it cannot pollute later versioned builds.
     bazel clean && bazel shutdown
     CUDA_REDIST_VERSION_OVERRIDE=11.7.0 bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
+    bazel clean && bazel shutdown
+popd
+fi
+
+# Compiling against the LOWER of two declared versions, where the two straddle a
+# version-gated nvcc flag. The toolchain used to report the maximum declared version
+# regardless of which nvcc the component aliases resolved to, so a 12.x compile was
+# handed a 12.9+-only flag and nvcc rejected it.
+#
+# Two things are pinned rather than inherited from the environment, because both would
+# otherwise stop this testing what it is here to test:
+#
+#   - CUDA_REDIST_VERSION_OVERRIDE is unset. CI exports it for the whole script, and it
+#     rewrites the version of EVERY redist_json, collapsing both declarations onto one
+#     version.
+#   - The compiler is pinned to nvcc. The flag under test is an nvcc flag, and clang
+#     brings its own version coupling: it targets a PTX ISA its own release chose, which
+#     the older toolkit's ptxas then rejects ("Unsupported .version 8.8").
+if [ "$skip_redist_json_version_gate" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN WITH REDISTRIB.JSON (BZLMOD VERSION GATE)
+============================================================
+EOF
+pushd "$this_dir/toolchain_redist_json_version_gate"
+    version_gate_args=(--@rules_cuda//cuda:compiler=nvcc "${redist_platform_args[@]}")
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:kernel_lib --@rules_cuda//cuda:version=12.9.1 "${version_gate_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:kernel_lib --@rules_cuda//cuda:version=12.8.1 "${version_gate_args[@]}"
     bazel clean && bazel shutdown
 popd
 fi
