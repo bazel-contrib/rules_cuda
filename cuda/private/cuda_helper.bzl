@@ -282,7 +282,7 @@ def _get_cc_host_compile_flags(ctx):
     variables = cc_common.create_compile_variables(
         cc_toolchain = cc_toolchain,
         feature_configuration = feature_configuration,
-        user_compile_flags = [],
+        user_compile_flags = user_flags,
         source_file = dummy_src,
         output_file = dummy_out,
     )
