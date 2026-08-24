@@ -149,10 +149,19 @@ def _expand_dctk_cuda(repository_ctx, components):
     }
     return _expand_template(repository_ctx, tpl_label, substitutions = substitutions)
 
+# Components whose own fragment declares `<component>_headers`, so BUILD.dctk_comp must
+# not: both fragments land in one BUILD file, and only one may declare a given target.
+# cccl does, because CUDA 13 moved its headers into an `include/cccl/` subdirectory and
+# only its fragment knows to follow that.
+_COMPONENTS_DECLARING_OWN_HEADERS = ["cccl"]
+
 def _expand_dctk_component(repository_ctx, component):
     tpl_label = Label("//cuda/private:templates/BUILD.dctk_comp")
     substitutions = {
         "%{component_name}": component,
+        "%{dctk_comp_generic_headers}": repr(
+            [] if component in _COMPONENTS_DECLARING_OWN_HEADERS else [None],
+        ),
     }
     return _expand_template(repository_ctx, tpl_label, substitutions = substitutions)
 
