@@ -35,6 +35,7 @@ cuda_component_tag = tag_class(attrs = {
               "If all downloads fail, the rule will fail.",
     ),
     "version": attr.string(doc = "A unique version number for component."),
+    "toolkit_version": attr.string(doc = "CUDA Toolkit release containing this component."),
 })
 
 cuda_redist_json_tag = tag_class(attrs = {
@@ -134,6 +135,7 @@ def _register_redist_components(module_ctx, attr, component_entries):
             component_attr = {key: value for key, value in spec.items()}
             component_repo_name = repo_name + "_" + platform.replace("-", "_") + "_" + redist_ver.replace(".", "_")
             component_attr["name"] = component_repo_name
+            component_attr["toolkit_version"] = redist_ver
 
             dedupe_key = (spec["component_name"], platform, redist_ver)
             existing_entry = component_entries.get(dedupe_key)
@@ -250,7 +252,49 @@ def _impl(module_ctx):
         if components_mapping != None:
             sorted_redist_versions = sorted(redist_versions, key = _version_sort_key)
 
-            # Always use the maximum version so the toolkit includes all components.
+            # Generate a static implementation repository for each toolkit version. Each
+            # repository receives component aliases fixed to that version, so load-time
+            # BUILD decisions and compiler-file ownership cannot leak from another CUDA.
+            toolchain_repositories = {}
+            for redist_version in sorted_redist_versions:
+                exact_components_mapping = {}
+                version_label = redist_version.replace(".", "_").replace("-", "_")
+                for component_name in redist_components_mapping.keys():
+                    component_platforms = [
+                        platform
+                        for platform in SUPPORTED_PLATFORMS
+                        if platform in versioned_repos[component_name] and redist_version in versioned_repos[component_name][platform]
+                    ]
+                    if not component_platforms:
+                        continue
+
+                    if len(component_platforms) == 1:
+                        exact_components_mapping[component_name] = "@" + versioned_repos[component_name][component_platforms[0]][redist_version]
+                    else:
+                        alias_name = "{}_{}_toolchain_{}".format(toolkit.name, component_name, version_label)
+                        platform_repo_kwargs = {}
+                        for platform in SUPPORTED_PLATFORMS:
+                            repos = {}
+                            if platform in versioned_repos[component_name] and redist_version in versioned_repos[component_name][platform]:
+                                repos[redist_version] = versioned_repos[component_name][platform][redist_version]
+                            platform_repo_kwargs[_platform_repos_attr(platform)] = repos
+                        platform_alias_repo(
+                            name = alias_name,
+                            component_name = component_name,
+                            versions = [redist_version],
+                            **platform_repo_kwargs
+                        )
+                        exact_components_mapping[component_name] = "@" + alias_name
+
+                toolchain_repo_name = "{}_toolchain_{}".format(toolkit.name, version_label)
+                cuda_toolkit(
+                    name = toolchain_repo_name,
+                    components_mapping = exact_components_mapping,
+                    version = redist_version,
+                )
+                toolchain_repositories[redist_version] = "@" + toolchain_repo_name
+
+            # Always use the maximum version so the public toolkit facade includes all components.
             # Components that don't exist in older versions will fall back to dummy.
             toolkit_version = sorted_redist_versions[-1]
 
@@ -263,6 +307,7 @@ def _impl(module_ctx):
                 components_mapping = components_mapping,
                 version = toolkit_version,
                 toolkit_versions = sorted_redist_versions,
+                toolchain_repositories = toolchain_repositories,
             )
         else:
             cuda_toolkit(**_module_tag_to_dict(toolkit))
