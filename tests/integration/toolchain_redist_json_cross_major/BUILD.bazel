@@ -1,0 +1,15 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+
+write_file(
+    name = "kernel",
+    out = "kernel.cu",
+    content = ["__global__ void noop() {}"],
+)
+
+cuda_library(
+    name = "kernel_lib",
+    srcs = [":kernel"],
+    tags = ["manual"],
+    deps = ["@cuda//:cuda_runtime"],
+)
