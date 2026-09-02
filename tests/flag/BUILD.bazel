@@ -1,4 +1,5 @@
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+load(":compile_output_test.bzl", "cuda_compile_output_directory_test")
 load(
     ":flag_validation_test.bzl",
     "cuda_library_c_dbg_flag_test",
@@ -34,6 +35,11 @@ num_actions_test(
     target_under_test = "@rules_cuda_examples//basic:kernel",
     # 2 compiling, 2 lib, non-pic and pic respectively
     # num_actions = 4,
+)
+
+cuda_compile_output_directory_test(
+    name = "cuda_library_compile_output_directory_test",
+    target_under_test = "@rules_cuda_examples//basic:kernel",
 )
 
 cuda_library_flag_test(
@@ -227,6 +233,11 @@ cuda_library(
     host_copts = ["-O1"],
     rdc = 1,
     tags = ["manual"],
+)
+
+cuda_compile_output_directory_test(
+    name = "cuda_library_rdc_compile_output_directory_test",
+    target_under_test = "examples_basic_kernel_with_flags",
 )
 
 cuda_library_flag_test(
