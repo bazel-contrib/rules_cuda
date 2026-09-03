@@ -16,9 +16,7 @@ cuda.toolkit(
 use_repo(cuda, "cuda")
 
 register_toolchains(
-    "@cuda//toolchain:nvcc-local-toolchain",
-    "@cuda//toolchain/clang:clang-local-toolchain",
-    "@cuda//toolchain/disabled:disabled-local-toolchain",
+    "@cuda//toolchain/...",
 )
 
 bazel_dep(name = "rules_cuda_examples", dev_dependency = True)

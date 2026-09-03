@@ -159,9 +159,11 @@ def _expand_dctk_component(repository_ctx, component):
 def _component_owns_cuda_repo_alias(component, target, components):
     if target == "culibos_a" and "culibos" in components:
         return component == "culibos"
+    if target in ["cicc", "libdevice", "libdevice.10.bc"] and "nvvm" in components:
+        return component == "nvvm"
     return True
 
-def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable):
+def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable, defs_label):
     # stitch template fragment
     fragments = [
         Label("//cuda/private:templates/BUILD.cuda_shared"),
@@ -178,6 +180,8 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
         comp = components.keys()[0]
         fragments.append(_expand_dctk_component(repository_ctx, comp))
         fragments.append(Label("//cuda/private:templates/BUILD.{}".format(comp)))
+        if comp == "nvcc":
+            fragments.append(Label("//cuda/private:templates/BUILD.nvcc_nvvm_embedded"))
     else:
         fail("unreachable")
 
@@ -208,11 +212,12 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
 
     substitutions = {
         "%{component_name}": "cuda" if is_cuda_repo else components.keys()[0],
+        "%{defs_label}": defs_label,
         "%{libpath}": libpath,
     }
     repository_ctx.template("BUILD", template_path, substitutions = substitutions, executable = False)
 
-def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = True, is_deliverable = False):
+def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = True, is_deliverable = False, defs_label = "//:defs.bzl"):
     """Generate `@cuda//BUILD` or `@cuda_<component>//BUILD`
 
     Notes:
@@ -237,7 +242,7 @@ def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = T
                 if c not in REGISTRY:
                     fail("{} is not a valid component")
 
-    _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable)
+    _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable, defs_label)
 
 def _generate_defs_bzl(repository_ctx, version_major, version_minor, is_local_ctk):
     tpl_label = Label("//cuda/private:templates/defs.bzl.tpl")
@@ -268,6 +273,7 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
         strip_prefix = {strip_prefix},
         urls = {urls},
         version = "{version}",
+        toolkit_version = "{toolkit_version}",
     )"""
 
     for spec in component_specs:
@@ -282,6 +288,7 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
                 strip_prefix = repr(spec["strip_prefix"]),
                 urls = repr(spec["urls"]),
                 version = spec["version"],
+                toolkit_version = redist_version,
             ),
         )
         mapping[spec["component_name"]] = "@" + repo_name
@@ -299,7 +306,7 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "//cuda/private:templates/BUILD.toolchain_" +
         ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
     )
-    compiler_files = ["@cuda//:compiler_deps"]
+    compiler_files = ["//:compiler_deps"]
     if cuda.cicc_label != None:
         compiler_files.append(cuda.cicc_label)
     if cuda.libdevice_label != None:
@@ -375,20 +382,20 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     cuda_path_for_subst = ""
     path_data = None
     if cuda.path:  # local installation
-        compiler_files.append("@cuda//:compiler_deps")
+        compiler_files.append("//:compiler_deps")
         cuda_path_for_subst = _to_forward_slash(cuda.path)
     else:  # scattered components
-        cuda_path_for_subst = "$(location @cuda//:compiler_root)"
-        path_data = ["@cuda//:compiler_root"]
+        cuda_path_for_subst = "$(location //:compiler_root)"
+        path_data = ["//:compiler_root"]
         compiler_files.extend([
-            "@cuda//:nvcc_all_files",
-            "@cuda//:cccl_all_files",
-            "@cuda//:cudart_all_files",
-            "@cuda//:curand_all_files",
+            "//:nvcc_all_files",
+            "//:cccl_all_files",
+            "//:cudart_all_files",
+            "//:curand_all_files",
         ])
         if int(cuda.version_major) >= 13:
             compiler_files.extend([
-                "@cuda//:nvvm_all_files",
+                "//:nvvm_all_files",
             ])
     path_data_line = "path_data = " + repr(path_data) + ","
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
@@ -434,10 +441,93 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         executable = False,
     )
 
+def _toolchain_declaration(name, implementation, compiler_setting, version_setting, exec_constraints = []):
+    lines = [
+        "toolchain(",
+        '    name = "{}",'.format(name),
+    ]
+    if exec_constraints:
+        lines.extend([
+            "    exec_compatible_with = {},".format(repr(exec_constraints)),
+            "    target_compatible_with = {},".format(repr(exec_constraints)),
+        ])
+    lines.extend([
+        "    target_settings = [",
+        '        "@rules_cuda//cuda:is_enabled",',
+        '        "{}",'.format(compiler_setting),
+        '        ":{}",'.format(version_setting),
+        "    ],",
+        '    toolchain = "{}",'.format(implementation),
+        '    toolchain_type = "@rules_cuda//cuda:toolchain_type",',
+        '    visibility = ["//visibility:public"],',
+        ")",
+    ])
+    return "\n".join(lines)
+
+def _generate_toolchain_facade(repository_ctx):
+    versions = sorted(repository_ctx.attr.toolchain_repositories.keys())
+    default_version = repository_ctx.attr.version
+    os_constraint = "@platforms//os:windows" if _is_windows(repository_ctx) else "@platforms//os:linux"
+
+    nvcc = []
+    clang = []
+    for version in versions:
+        label = _version_label(version)
+        setting = "toolkit_version_is_{}".format(label)
+        definition = [
+            "config_setting(",
+            '    name = "{}",'.format(setting),
+            '    flag_values = {{"@rules_cuda//cuda:version": "{}"}},'.format(version),
+            ")",
+        ]
+        nvcc.extend(definition)
+        clang.extend(definition)
+        repo = repository_ctx.attr.toolchain_repositories[version]
+        nvcc.append(_toolchain_declaration(
+            "nvcc-{}-toolchain".format(label),
+            repo + "//toolchain:nvcc-local",
+            "@rules_cuda//cuda:compiler_is_nvcc",
+            setting,
+            [os_constraint],
+        ))
+        clang.append(_toolchain_declaration(
+            "clang-{}-toolchain".format(label),
+            repo + "//toolchain/clang:clang-local",
+            "@rules_cuda//cuda:compiler_is_clang",
+            setting,
+        ))
+
+    default_setting = [
+        "config_setting(",
+        '    name = "toolkit_version_is_default",',
+        '    flag_values = {"@rules_cuda//cuda:version": ""},',
+        ")",
+    ]
+    nvcc.extend(default_setting)
+    clang.extend(default_setting)
+    default_repo = repository_ctx.attr.toolchain_repositories[default_version]
+    nvcc.append(_toolchain_declaration(
+        "nvcc-local-toolchain",
+        default_repo + "//toolchain:nvcc-local",
+        "@rules_cuda//cuda:compiler_is_nvcc",
+        "toolkit_version_is_default",
+        [os_constraint],
+    ))
+    clang.append(_toolchain_declaration(
+        "clang-local-toolchain",
+        default_repo + "//toolchain/clang:clang-local",
+        "@rules_cuda//cuda:compiler_is_clang",
+        "toolkit_version_is_default",
+    ))
+
+    repository_ctx.file("toolchain/BUILD", "\n\n".join(nvcc) + "\n")
+    repository_ctx.file("toolchain/clang/BUILD", "\n\n".join(clang) + "\n")
+
 template_helper = struct(
     generate_build = _generate_build,
     generate_defs_bzl = _generate_defs_bzl,
     generate_redist_bzl = _generate_redist_bzl,
     generate_toolchain_build = _generate_toolchain_build,
     generate_toolchain_clang_build = _generate_toolchain_clang_build,
+    generate_toolchain_facade = _generate_toolchain_facade,
 )
