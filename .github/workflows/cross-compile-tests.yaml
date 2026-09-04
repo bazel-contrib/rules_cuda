@@ -30,7 +30,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/bazel
-          key: bazel-cross-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}-${{ hashFiles('.bazelversion') }}
+          key: bazel-cross-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}-${{ hashFiles('.bazelversion', 'cuda/private/template_helper.bzl', 'cuda/private/templates/BUILD.toolchain_deliverable', 'tests/integration/toolchain_redist_cross_*/MODULE.bazel') }}
 
       - name: Use .bazelversion
         run: echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $GITHUB_ENV
