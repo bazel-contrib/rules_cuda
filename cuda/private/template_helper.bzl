@@ -156,6 +156,19 @@ def _expand_dctk_component(repository_ctx, component):
     }
     return _expand_template(repository_ctx, tpl_label, substitutions = substitutions)
 
+def _device_runtime_static_libs_line(cuda):
+    by_os = cuda.device_runtime_static_libs_by_os
+    if by_os == None:
+        return "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","
+
+    return "\n".join([
+        "device_runtime_static_libs = select({",
+        '    "@platforms//os:linux": {},'.format(repr(by_os["linux"])),
+        '    "@platforms//os:windows": {},'.format(repr(by_os["windows"])),
+        '    "//conditions:default": [],',
+        "}),",
+    ])
+
 def _component_owns_cuda_repo_alias(component, target, components):
     if target == "culibos_a" and "culibos" in components:
         return component == "culibos"
@@ -313,7 +326,7 @@ def _generate_toolchain_build(repository_ctx, cuda):
     if cuda.libdevice_label != None:
         compiler_files.append(cuda.libdevice_label)
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
-    device_runtime_static_libs_line = "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","
+    device_runtime_static_libs_line = _device_runtime_static_libs_line(cuda)
 
     select_versions = _versions_to_select_on(repository_ctx.attr.toolkit_versions)
     substitutions = {
@@ -404,7 +417,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
             ])
     path_data_line = "path_data = " + repr(path_data) + ","
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
-    device_runtime_static_libs_line = "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","
+    device_runtime_static_libs_line = _device_runtime_static_libs_line(cuda)
 
     select_versions = _versions_to_select_on(repository_ctx.attr.toolkit_versions)
     substitutions = {
