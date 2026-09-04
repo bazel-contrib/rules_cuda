@@ -12,6 +12,8 @@ load(
     "cuda_toolkit_info",
 )
 
+# %{toolkit_version_config_settings}
+
 cuda_toolkit_info(
     name = "cuda-toolkit",
     bin2c = "%{bin2c_label}",
@@ -20,9 +22,10 @@ cuda_toolkit_info(
     nvlink = "%{nvlink_label}",
     # %{cicc_line},
     # %{libdevice_line},
+    # %{device_runtime_static_libs_line}
     path = "%{cuda_path}",
     ptxas = "%{ptxas_label}",
-    version = "%{cuda_version}",
+    # %{cuda_version_line}
 )
 
 # --- Linux exec/target (gcc-style nvcc config) ---
@@ -30,8 +33,8 @@ cuda_toolkit_info(
 cuda_toolchain_config_nvcc(
     name = "nvcc-linux-config",
     cuda_toolkit = ":cuda-toolkit",
-    nvcc_version_major = int("%{nvcc_version_major}"),
-    nvcc_version_minor = int("%{nvcc_version_minor}"),
+    # %{nvcc_version_major_line}
+    # %{nvcc_version_minor_line}
     toolchain_identifier = "nvcc",
 )
 
@@ -65,8 +68,8 @@ cuda_toolchain_config_nvcc_msvc(
     name = "nvcc-windows-config",
     cuda_toolkit = ":cuda-toolkit",
     msvc_env_tmp = "%{env_tmp}",
-    nvcc_version_major = int("%{nvcc_version_major}"),
-    nvcc_version_minor = int("%{nvcc_version_minor}"),
+    # %{nvcc_version_major_line}
+    # %{nvcc_version_minor_line}
     toolchain_identifier = "nvcc",
 )
 
