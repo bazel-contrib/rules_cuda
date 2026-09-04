@@ -1,7 +1,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 
-# Optional: linux-x86_64 host, linux-x86_64 exec, linux-sbsa target (classic cross).
+# linux-x86_64 execution platform, linux-sbsa target platform.
 
 cc_library(
     name = "use_library",

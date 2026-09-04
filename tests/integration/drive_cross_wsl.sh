@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Drive Linux host cross-compile cases 1 and 2 under WSL (no root required).
-# Case 1: x64 exec tools, aarch64 target objects (cross-gcc).
-# Case 2: aarch64 exec tools under qemu-user, x64 target objects.
+# x64 exec tools produce aarch64 target objects with cross-gcc.
+# aarch64 exec tools run under qemu-user and produce x64 target objects.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

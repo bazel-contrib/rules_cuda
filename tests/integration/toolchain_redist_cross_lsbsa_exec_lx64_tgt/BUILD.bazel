@@ -1,8 +1,8 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 
-# Case 2: linux-x86_64 host, linux-sbsa exec (qemu-user/binfmt), linux-x86_64 target.
-# Target is host-arch so the smoke binary can be executed on the client (no GPU).
+# linux-sbsa execution platform, linux-x86_64 target platform.
+# A Linux x86_64 host runs the aarch64 tools through qemu-user/binfmt.
 
 cc_library(
     name = "use_library",

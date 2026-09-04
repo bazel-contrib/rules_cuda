@@ -93,7 +93,7 @@ register_binfmt() {
   " 2>/dev/null; then
     log "binfmt register attempt finished"
   else
-    log "binfmt register failed (expected without root) — case 2 will use explicit qemu wrapper path if needed"
+    log "binfmt registration failed without root; the driver will use an explicit qemu wrapper if needed"
     return 1
   fi
 }

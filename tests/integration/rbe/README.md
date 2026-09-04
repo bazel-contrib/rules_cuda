@@ -1,9 +1,9 @@
-# Linux remote execution for Windows-host cross (cases 3–4)
+# Linux remote execution from Windows
 
-Windows cannot exec Linux CUDA tools. Case 3/4 send actions to a Linux
-remote-execution (RE) worker. Two nestings are supported.
+Windows cannot run Linux CUDA tools, so Bazel sends those actions to a Linux
+remote-execution worker.
 
-## Nesting A — NativeLink under WSL (preferred)
+## NativeLink under WSL
 
 Keep **default WSL2 NAT** so DNS inside the distro works (apt/curl/GitHub).
 Windows reaches NativeLink via `netsh interface portproxy`:
@@ -18,7 +18,6 @@ Avoid `networkingMode=mirrored` on GitHub Actions: it often breaks WSL DNS
 ```text
 ┌─ Windows host ──────────────────────────────────────────────────┐
 │  bazelisk  --remote_executor=grpc://127.0.0.1:1985              │
-│       │      (fallback: grpc://<wsl-eth-ip>:1985)               │
 │       │                                                         │
 │       │  netsh portproxy (loopback → WSL NAT IP)                │
 │       v                                                         │
@@ -30,23 +29,22 @@ Avoid `networkingMode=mirrored` on GitHub Actions: it often breaks WSL DNS
 │  │         │                                                 │  │
 │  │         v                                                 │  │
 │  │    local worker runs actions:                             │  │
-│  │      case 3: linux-x86_64 nvcc (native)                   │  │
-│  │              aarch64-linux-gnu-g++ → linux-sbsa objects   │  │
-│  │      case 4: linux-sbsa nvcc under qemu-user (binfmt)     │  │
-│  │              host-arch link for linux-x86_64 target       │  │
+│  │      linux-x86_64 nvcc directly                           │  │
+│  │      linux-sbsa nvcc through qemu-user                    │  │
+│  │      aarch64-linux-gnu-g++ for linux-sbsa targets         │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ```powershell
 pwsh tests/integration/rbe/start_wsl_worker.ps1
-# or full case-3 driver:
+# or start the worker and run the tests:
 pwsh tests/integration/drive_cross_windows.ps1
 ```
 
 `start_wsl_worker.ps1`:
 
-1. Installs `g++-aarch64-linux-gnu` (+ qemu-user for case 4) in WSL if missing
+1. Installs `g++-aarch64-linux-gnu` and qemu-user in WSL if missing
 2. Holds the distro open with `sleep infinity` (avoids WSL shutting down after a short `wsl` invocation and killing a background worker)
 3. Starts NativeLink via a Windows-owned `wsl.exe` process (`basic_cas.json5` on `0.0.0.0:1985`)
 4. Adds `netsh portproxy` `127.0.0.1:1985` → WSL eth IP
@@ -56,10 +54,10 @@ Then:
 
 ```powershell
 $env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985 --remote_default_exec_properties=OSFamily=Linux"
-bash tests/integration/test_cross_all.sh --required-only --no-linux
+bash tests/integration/test_cross_all.sh
 ```
 
-## Nesting B — NativeLink under qemu-system (optional)
+## NativeLink under qemu-system
 
 Same RE protocol; Linux is a full VM instead of WSL.
 
@@ -91,13 +89,12 @@ Guest checklist:
 3. `g++-aarch64-linux-gnu` for sbsa target compiles
 4. Network for CUDA redist download
 
-## Which cases use this RE layer?
+## Execution paths
 
-| Case | Host    | Exec         | Target       | Worker notes                              |
-| ---- | ------- | ------------ | ------------ | ----------------------------------------- |
-| 3    | Windows | linux-x86_64 | linux-sbsa   | WSL-native tools (no qemu-user)           |
-| 4    | Windows | linux-sbsa   | linux-x86_64 | qemu-user inside WSL/guest for sbsa tools |
-| 2    | Linux   | linux-sbsa   | linux-x86_64 | **no RE** — qemu-user on the Linux host   |
+| Host    | Exec         | Target       | Worker notes                            |
+| ------- | ------------ | ------------ | --------------------------------------- |
+| Windows | linux-x86_64 | linux-sbsa   | x86_64 tools run directly in WSL        |
+| Windows | linux-sbsa   | linux-x86_64 | qemu-user runs the aarch64 tools in WSL |
 
 ## Network checklist
 

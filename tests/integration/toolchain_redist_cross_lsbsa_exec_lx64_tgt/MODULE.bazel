@@ -1,4 +1,4 @@
-"""Case 2: linux-x86_64 host, linux-sbsa exec, linux-x86_64 target."""
+"""linux-sbsa execution platform, linux-x86_64 target platform."""
 
 module(name = "toolchain_redist_cross_lsbsa_exec_lx64_tgt")
 

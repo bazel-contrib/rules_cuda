@@ -1,4 +1,4 @@
-# Drive case 3 on a Windows host with Linux exec via WSL-native NativeLink.
+# Run the Linux exec/target combinations from a Windows Bazel client.
 #
 #   ┌─ Windows bazelisk ──grpc://<host>:1985──► ┌─ WSL Ubuntu ─────────┐
 #   │  host = windows-x86_64                    │  NativeLink RE       │
@@ -44,7 +44,7 @@ if (-not $env:BAZEL_SH) {
     throw "BAZEL_SH / Git bash not found (needed to run test_cross_all.sh on Windows)"
 }
 
-Write-Host "=== drive_cross_windows.ps1 (case 3: Windows host / WSL RE) ==="
+Write-Host "=== Windows host / WSL remote execution ==="
 Write-Host "  root=$RepoRoot cuda=$CudaVersion port=$Port"
 
 & (Join-Path $RepoRoot "tests\integration\rbe\start_wsl_worker.ps1")
@@ -64,7 +64,7 @@ if ($driverBash -match '^([A-Za-z]):/') {
 
 Push-Location (Join-Path $RepoRoot "tests\integration")
 try {
-    & $env:BAZEL_SH ./test_cross_all.sh --required-only --no-linux
+    & $env:BAZEL_SH ./test_cross_all.sh
     if ($LASTEXITCODE -ne 0) {
         throw "test_cross_all.sh failed with exit $LASTEXITCODE"
     }
@@ -72,4 +72,4 @@ try {
     Pop-Location
 }
 
-Write-Host "=== case 3 finished ==="
+Write-Host "=== cross-compilation tests finished ==="

@@ -1,9 +1,9 @@
-# Start NativeLink under WSL for Windows-host cross (cases 3–4).
+# Start NativeLink under WSL for a Windows-host cross-compilation test.
 #
 # Default WSL2 NAT keeps working DNS inside the distro. Windows reaches the
 # worker via:
-#   1) netsh portproxy 127.0.0.1:<port> -> <wsl-ip>:<port>  (preferred)
-#   2) direct grpc://<wsl-ip>:<port>                       (fallback)
+#   1) netsh portproxy 127.0.0.1:<port> -> <wsl-ip>:<port>
+#   2) direct grpc://<wsl-ip>:<port> if portproxy is unavailable
 #
 # Do not force networkingMode=mirrored here: on GitHub Actions runners that
 # mode often breaks WSL DNS (cannot resolve archive.ubuntu.com).
@@ -16,7 +16,7 @@
 # Usage:
 #   .\tests\integration\rbe\start_wsl_worker.ps1
 #   # sets $env:CROSS_REMOTE_BAZEL_FLAGS and $env:CROSS_REMOTE_HOST
-#   bash tests/integration/test_cross_all.sh --required-only --no-linux
+#   bash tests/integration/test_cross_all.sh
 
 $ErrorActionPreference = "Stop"
 
@@ -108,7 +108,7 @@ $SetupDeps = "$WslRepo/tests/integration/rbe/setup_wsl_cross_deps.sh"
 $Bootstrap = "$WslRepo/tests/integration/rbe/bootstrap_nativelink_linux.sh"
 $WorkerRun = "$WslRepo/tests/integration/rbe/run_nativelink_worker.sh"
 
-Write-Host "WSL NativeLink worker (cases 3–4)"
+Write-Host "WSL NativeLink worker"
 Write-Host "  repo (Windows) = $RepoRoot"
 Write-Host "  repo (WSL)     = $WslRepo"
 Write-Host "  worker log     = $WslLog (inside WSL)"

@@ -10,9 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Linux host nesting:
-  #   case 2: host Linux x64 → qemu-user runs linux-sbsa exec tools → x64 target
-  #   case 1: host Linux x64 → native x64 exec → sbsa target (cross-gcc)
+  # Linux runs x86_64 tools directly and aarch64 tools through qemu-user.
   linux:
     name: "Cross (Linux host, CUDA ${{ matrix.cuda-version }})"
     runs-on: ${{ matrix.os }}
@@ -48,24 +46,23 @@ jobs:
             binfmt-support \
             file \
             binutils
-          # Guest aarch64 loader so binfmt can run sbsa nvcc (case 2).
+          # Guest aarch64 loader so binfmt can run sbsa nvcc.
           sudo ln -sfn /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1
           if [[ -d /usr/aarch64-linux-gnu/lib ]]; then
-            if [[ -d /lib/aarch64-linux-gnu && ! -L /lib/aarch64-linux-gnu ]]; then
-              sudo rm -rf /lib/aarch64-linux-gnu
+            if [[ -e /lib/aarch64-linux-gnu && ! -L /lib/aarch64-linux-gnu ]]; then
+              sudo cp -asn /usr/aarch64-linux-gnu/lib/. /lib/aarch64-linux-gnu/
+            else
+              sudo ln -sfn /usr/aarch64-linux-gnu/lib /lib/aarch64-linux-gnu
             fi
-            sudo ln -sfn /usr/aarch64-linux-gnu/lib /lib/aarch64-linux-gnu
           fi
           update-binfmts --display qemu-aarch64 || true
 
       - name: Run Linux host cross tests
-        run: cd tests/integration && bash ./test_cross_all.sh --no-windows
+        run: cd tests/integration && bash ./test_cross_all.sh
 
       - run: bazelisk shutdown
 
-  # Windows host nesting (case 3):
-  #   Windows bazelisk --remote_executor→ WSL NativeLink (linux-x86_64 exec)
-  #   → aarch64 cross-gcc for linux-sbsa target. See CROSS_COMPILE.md diagrams.
+  # Windows sends Linux actions to NativeLink in WSL.
   windows:
     name: "Cross (Windows host / WSL Linux exec)"
     runs-on: windows-2025
@@ -109,7 +106,7 @@ jobs:
             binutils
             psmisc
 
-      - name: Start WSL NativeLink + run case 3
+      - name: Start WSL NativeLink and run cross tests
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"

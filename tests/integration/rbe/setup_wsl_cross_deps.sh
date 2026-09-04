@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Install packages needed for Linux RE inside WSL (Windows-host cases 3–4).
-# - aarch64 cross-gcc: linux-sbsa target objects (case 3)
-# - qemu-user: sbsa exec tools when arch disagrees (case 4)
+# Install packages needed for Linux remote execution inside WSL.
+# - aarch64 cross-gcc builds linux-sbsa target objects
+# - qemu-user runs linux-sbsa execution tools on the x86_64 worker
 #
 # Idempotent: skips apt when tools are already present (CI may install them
 # via Vampire/setup-wsl additional-packages under a working network).
@@ -61,10 +61,11 @@ fi
 if [[ -e /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 ]]; then
   sudo ln -sfn /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1 || true
   if [[ -d /usr/aarch64-linux-gnu/lib ]]; then
-    if [[ -d /lib/aarch64-linux-gnu && ! -L /lib/aarch64-linux-gnu ]]; then
-      sudo rm -rf /lib/aarch64-linux-gnu
+    if [[ -e /lib/aarch64-linux-gnu && ! -L /lib/aarch64-linux-gnu ]]; then
+      sudo cp -asn /usr/aarch64-linux-gnu/lib/. /lib/aarch64-linux-gnu/ || true
+    else
+      sudo ln -sfn /usr/aarch64-linux-gnu/lib /lib/aarch64-linux-gnu || true
     fi
-    sudo ln -sfn /usr/aarch64-linux-gnu/lib /lib/aarch64-linux-gnu || true
   fi
 fi
 

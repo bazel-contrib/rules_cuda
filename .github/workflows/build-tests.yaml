@@ -128,8 +128,6 @@ jobs:
       - run: cd tests/hermeticity && ./test.sh ${{ (startsWith(matrix.cases.cuda-version, '11') || startsWith(matrix.cases.cuda-version, '12')) && '--allow-non-hermetic' || '' }}
         if: ${{ !startsWith(matrix.cases.os, 'windows') && !startsWith(matrix.cases.toolchain, 'llvm') }} # only run for nvcc on linux
 
-      # Cross-compile integration lives in cross-compile-tests.yaml
-
       # Use Bazel 7
       - run: echo "USE_BAZEL_VERSION=7.5.0" >> $GITHUB_ENV
         if: ${{ !startsWith(matrix.cases.os, 'windows') }}

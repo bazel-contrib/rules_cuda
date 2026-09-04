@@ -1,6 +1,6 @@
 # Start (or print how to start) NativeLink under qemu-system for cases 3–4.
 #
-# Alternate nesting (WSL-native is preferred — see start_wsl_worker.ps1):
+# qemu-system setup (see start_wsl_worker.ps1 for the WSL setup):
 #   Windows bazelisk  --remote_executor=grpc://127.0.0.1:1985
 #         |
 #         | hostfwd TCP 127.0.0.1:1985 -> guest:1985
@@ -13,7 +13,7 @@
 #   $env:QEMU_DISK = "C:\path\to\linux.qcow2"
 #   .\start_qemu_worker.ps1
 #   $env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985"
-#   bash tests/integration/test_cross_all.sh --required-only --no-linux
+#   bash tests/integration/test_cross_all.sh
 
 $ErrorActionPreference = "Stop"
 $Port = if ($env:RBE_PORT) { [int]$env:RBE_PORT } else { 1985 }
@@ -44,7 +44,7 @@ Example once the image is ready:
 
 Then from the repo (Git bash or pwsh calling bash):
   `$env:CROSS_REMOTE_BAZEL_FLAGS = '--remote_executor=grpc://127.0.0.1:$Port'
-  bash tests/integration/test_cross_all.sh --required-only
+  bash tests/integration/test_cross_all.sh
 
 "@
     exit 2

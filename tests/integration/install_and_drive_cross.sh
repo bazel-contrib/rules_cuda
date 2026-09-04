@@ -45,7 +45,7 @@ if [[ -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]]; then
   log "binfmt qemu-aarch64: registered"
   head -n 5 /proc/sys/fs/binfmt_misc/qemu-aarch64 || true
 else
-  log "WARN: binfmt qemu-aarch64 not visible; case 2 may need wrappers"
+  log "WARN: binfmt qemu-aarch64 not visible; aarch64 tools may need wrappers"
 fi
 
 # Guest aarch64 ELFs request /lib/ld-linux-aarch64.so.1 and libs under
@@ -56,11 +56,11 @@ if [[ -n "${LD_SRC}" ]]; then
   sudo_run mkdir -p /lib
   sudo_run ln -sfn "${LD_SRC}" /lib/ld-linux-aarch64.so.1
   if [[ -d /usr/aarch64-linux-gnu/lib ]]; then
-    # Replace mistaken nested dirs from prior attempts
-    if [[ -d /lib/aarch64-linux-gnu && ! -L /lib/aarch64-linux-gnu ]]; then
-      sudo_run rm -rf /lib/aarch64-linux-gnu
+    if [[ -e /lib/aarch64-linux-gnu && ! -L /lib/aarch64-linux-gnu ]]; then
+      sudo_run cp -asn /usr/aarch64-linux-gnu/lib/. /lib/aarch64-linux-gnu/
+    else
+      sudo_run ln -sfn /usr/aarch64-linux-gnu/lib /lib/aarch64-linux-gnu
     fi
-    sudo_run ln -sfn /usr/aarch64-linux-gnu/lib /lib/aarch64-linux-gnu
   fi
   log "mapped aarch64 guest loader: /lib/ld-linux-aarch64.so.1 -> ${LD_SRC}"
 fi

@@ -1,5 +1,5 @@
 // Single-node NativeLink config for local Linux RE.
-// Nesting: under WSL (preferred) or under qemu-system; Windows Bazel dials
+// Runs under WSL or qemu-system; Windows Bazel connects to
 // grpc://127.0.0.1:1985 (localhost relay / QEMU hostfwd).
 // Schema matches TraceMachina/nativelink v1.6.x basic_cas example.
 {
