@@ -248,10 +248,22 @@ def _impl(module_ctx):
 
     for _, toolkit in registrations.items():
         if components_mapping != None:
+            sorted_redist_versions = sorted(redist_versions, key = _version_sort_key)
+
             # Always use the maximum version so the toolkit includes all components.
             # Components that don't exist in older versions will fall back to dummy.
-            toolkit_version = sorted(redist_versions, key = _version_sort_key)[-1]
-            cuda_toolkit(name = toolkit.name, components_mapping = components_mapping, version = toolkit_version)
+            toolkit_version = sorted_redist_versions[-1]
+
+            # All declared versions are passed along so that the generated toolchain can
+            # select the version matching @rules_cuda//cuda:version. Without it the
+            # toolchain would report `toolkit_version` regardless of which nvcc the
+            # component aliases actually resolve to.
+            cuda_toolkit(
+                name = toolkit.name,
+                components_mapping = components_mapping,
+                version = toolkit_version,
+                toolkit_versions = sorted_redist_versions,
+            )
         else:
             cuda_toolkit(**_module_tag_to_dict(toolkit))
 

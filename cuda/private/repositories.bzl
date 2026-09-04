@@ -45,6 +45,12 @@ def _get_nvcc_version(repository_ctx, nvcc_root):
             return version[:2]
     return [-1, -1]
 
+def _find_local_cuda_file_label(repository_ctx, cuda_path, relative_paths):
+    for relative_path in relative_paths:
+        if repository_ctx.path(cuda_path + "/" + relative_path).exists:
+            return str(Label("@cuda//:cuda/{}".format(relative_path)))
+    return None
+
 def _detect_local_cuda_toolkit(repository_ctx):
     cuda_path = repository_ctx.attr.toolkit_path
     if cuda_path == "":
@@ -73,6 +79,7 @@ def _detect_local_cuda_toolkit(repository_ctx):
     bin2c = "@rules_cuda//cuda/dummy:bin2c"
     fatbinary = "@rules_cuda//cuda/dummy:fatbinary"
     ptxas = "@rules_cuda//cuda/dummy:ptxas"
+    device_runtime_static_libs_labels = []
     if cuda_path != None:
         if repository_ctx.path(cuda_path + "/bin/nvcc" + bin_ext).exists:
             nvcc = str(Label("@cuda//:cuda/bin/nvcc{}".format(bin_ext)))
@@ -86,6 +93,20 @@ def _detect_local_cuda_toolkit(repository_ctx):
             fatbinary = str(Label("@cuda//:cuda/bin/fatbinary{}".format(bin_ext)))
         if repository_ctx.path(cuda_path + "/bin/ptxas" + bin_ext).exists:
             ptxas = str(Label("@cuda//:cuda/bin/ptxas{}".format(bin_ext)))
+        if _is_windows(repository_ctx):
+            cudadevrt = _find_local_cuda_file_label(repository_ctx, cuda_path, [
+                "lib/x64/cudadevrt.lib",
+                "lib/cudadevrt.lib",
+            ])
+            if cudadevrt:
+                device_runtime_static_libs_labels.append(cudadevrt)
+        elif _is_linux(repository_ctx):
+            for lib_label in [
+                _find_local_cuda_file_label(repository_ctx, cuda_path, ["lib64/libcudadevrt.a"]),
+                _find_local_cuda_file_label(repository_ctx, cuda_path, ["lib64/libculibos.a"]),
+            ]:
+                if lib_label:
+                    device_runtime_static_libs_labels.append(lib_label)
 
     nvcc_version_major = -1
     nvcc_version_minor = -1
@@ -109,6 +130,7 @@ def _detect_local_cuda_toolkit(repository_ctx):
         ptxas_label = ptxas,
         cicc_label = None,  # local CTK do not need this
         libdevice_label = None,  # local CTK do not need this
+        device_runtime_static_libs_labels = device_runtime_static_libs_labels,
     )
 
 def _detect_deliverable_cuda_toolkit(repository_ctx):
@@ -139,6 +161,19 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     bin2c = "{}//:bin2c".format(nvcc_repo)
     fatbinary = "{}//:fatbinary".format(nvcc_repo)
     ptxas = "{}//:ptxas".format(nvcc_repo)
+    device_runtime_static_libs_labels = []
+
+    cudart_repo = repository_ctx.attr.components_mapping["cudart"]
+    if _is_windows(repository_ctx):
+        device_runtime_static_libs_labels.append("{}//:cudadevrt_lib".format(cudart_repo))
+    else:
+        device_runtime_static_libs_labels.append("{}//:cudadevrt_a".format(cudart_repo))
+        if int(cuda_version_major) >= 13:
+            culibos_repo = repository_ctx.attr.components_mapping.get("culibos")
+            if culibos_repo:
+                device_runtime_static_libs_labels.append("{}//:culibos_a".format(culibos_repo))
+        else:
+            device_runtime_static_libs_labels.append("{}//:culibos_a".format(cudart_repo))
 
     cicc = None
     libdevice = None
@@ -161,6 +196,7 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
         ptxas_label = ptxas,
         cicc_label = cicc,
         libdevice_label = libdevice,
+        device_runtime_static_libs_labels = device_runtime_static_libs_labels,
     )
 
 def detect_cuda_toolkit(repository_ctx):
@@ -312,6 +348,12 @@ cuda_toolkit = repository_rule(
         "version": attr.string(doc = "cuda toolkit version. Required for deliverable toolkit only."),
         "nvcc_version": attr.string(
             doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
+        ),
+        "toolkit_versions": attr.string_list(
+            doc = "All cuda toolkit versions reachable through the component aliases, i.e. every " +
+                  "version declared with `cuda.redist_json`. When more than one is present, the " +
+                  "generated toolchain selects among them on @rules_cuda//cuda:version instead of " +
+                  "hardcoding `version`.",
         ),
     },
     configure = True,

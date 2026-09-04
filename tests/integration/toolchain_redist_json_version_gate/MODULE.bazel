@@ -1,0 +1,37 @@
+module(name = "bzlmod_redist_json_version_gate")
+
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_cc", version = "0.2.14")
+bazel_dep(name = "rules_cuda", version = "0.0.0")
+local_path_override(
+    module_name = "rules_cuda",
+    path = "../../..",
+)
+
+# Two versions straddling a version-gated nvcc flag, so that building against the LOWER
+# one proves the toolchain reports the version whose nvcc actually runs. 12.9 is where
+# `--frandom-seed` appears (see nvcc_fixed_random_seed in cuda/private/toolchain_configs),
+# so 12.9.1 has it and 12.8.1 does not.
+#
+# Both are CUDA 12, deliberately: the pair only has to straddle the flag gate, and staying
+# on one major keeps the components identical between them, so this tests the version the
+# toolchain reports and nothing else.
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.redist_json(
+    name = "cuda_12_9_1",
+    platforms = [
+        "linux-x86_64",
+        "windows-x86_64",
+    ],
+    version = "12.9.1",
+)
+cuda.redist_json(
+    name = "cuda_12_8_1",
+    platforms = [
+        "linux-x86_64",
+        "windows-x86_64",
+    ],
+    version = "12.8.1",
+)
+cuda.toolkit(name = "cuda")
+use_repo(cuda, "cuda")

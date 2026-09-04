@@ -7,18 +7,21 @@ load(
     cuda_toolchain_config = "cuda_toolchain_config_clang",
 )
 
+# %{toolkit_version_config_settings}
+
 cuda_toolkit_info(
     name = "cuda-toolkit",
     bin2c = "%{bin2c_label}",
     fatbinary = "%{fatbinary_label}",
     link_stub = "%{link_stub_label}",
     nvlink = "%{nvlink_label}",
-    ptxas = "%{ptxas_label}",
     # %{cicc_line},
     # %{libdevice_line},
+    # %{device_runtime_static_libs_line}
     path = "%{cuda_path}",
+    ptxas = "%{ptxas_label}",
     # %{path_data_line}
-    version = "%{cuda_version}",
+    # %{cuda_version_line}
 )
 
 cuda_toolchain_config(

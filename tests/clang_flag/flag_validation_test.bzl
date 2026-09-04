@@ -39,20 +39,35 @@ clang_cuda_library_sm110_sm110a_sm110f_flag_test = create_cuda_library_flag_test
 
 config_settings_use_copts = {
     "//command_line_option:features": ["cuda_host_use_copts"],
-    "//command_line_option:copt": ["-Wall"],
+    "//command_line_option:copt": ["-DRULES_CUDA_TEST_COPT_PROBE"],
 }
 config_settings_use_cxxopts = {
     "//command_line_option:features": ["cuda_host_use_cxxopts"],
-    "//command_line_option:cxxopt": ["-std=c++17"],
+    "//command_line_option:cxxopt": ["-DRULES_CUDA_TEST_CXXOPT_PROBE"],
 }
 config_settings_use_linkopts = {
     "//command_line_option:features": ["cuda_host_use_linkopts"],
-    "//command_line_option:linkopt": ["-Wl,--verbose"],
+    "//command_line_option:linkopt": ["-DRULES_CUDA_TEST_LINKOPT_PROBE"],
+}
+config_settings_copts_without_feature = {
+    "//command_line_option:features": ["-cuda_host_use_copts"],
+    "//command_line_option:copt": ["-DRULES_CUDA_TEST_COPT_PROBE"],
+}
+config_settings_cxxopts_without_feature = {
+    "//command_line_option:features": ["-cuda_host_use_cxxopts"],
+    "//command_line_option:cxxopt": ["-DRULES_CUDA_TEST_CXXOPT_PROBE"],
+}
+config_settings_linkopts_without_feature = {
+    "//command_line_option:features": ["-cuda_host_use_linkopts"],
+    "//command_line_option:linkopt": ["-DRULES_CUDA_TEST_LINKOPT_PROBE"],
 }
 
 clang_cuda_library_use_copts_flag_test = create_cuda_library_flag_test(config_settings_clang, config_settings_use_copts)
 clang_cuda_library_use_cxxopts_flag_test = create_cuda_library_flag_test(config_settings_clang, config_settings_use_cxxopts)
 clang_cuda_library_use_linkopts_flag_test = create_cuda_library_flag_test(config_settings_clang, config_settings_use_linkopts)
+clang_cuda_library_copts_without_feature_flag_test = create_cuda_library_flag_test(config_settings_clang, config_settings_copts_without_feature)
+clang_cuda_library_cxxopts_without_feature_flag_test = create_cuda_library_flag_test(config_settings_clang, config_settings_cxxopts_without_feature)
+clang_cuda_library_linkopts_without_feature_flag_test = create_cuda_library_flag_test(config_settings_clang, config_settings_linkopts_without_feature)
 
 config_settings_external_include_paths = {
     "//command_line_option:features": ["external_include_paths"],

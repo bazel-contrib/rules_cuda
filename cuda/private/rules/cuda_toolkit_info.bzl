@@ -3,6 +3,10 @@ load("//cuda/private:providers.bzl", "CudaToolkitInfo")
 def _impl(ctx):
     version_major, version_minor = ctx.attr.version.split(".")[:2]
     expanded_path = ctx.expand_location(ctx.attr.path, ctx.attr.path_data)
+    device_runtime_static_libs = depset(transitive = [
+        target[DefaultInfo].files
+        for target in ctx.attr.device_runtime_static_libs
+    ])
 
     return CudaToolkitInfo(
         path = expanded_path,
@@ -15,6 +19,7 @@ def _impl(ctx):
         ptxas = ctx.file.ptxas,
         cicc = ctx.file.cicc,
         libdevice = ctx.file.libdevice,
+        device_runtime_static_libs = device_runtime_static_libs,
     )
 
 cuda_toolkit_info = rule(
@@ -31,6 +36,7 @@ cuda_toolkit_info = rule(
         "ptxas": attr.label(allow_single_file = True, doc = "The ptxas executable."),
         "cicc": attr.label(default = None, allow_single_file = True, doc = "The cicc executable."),
         "libdevice": attr.label(default = None, allow_single_file = True, doc = "The libdevice LLVM bitcode library."),
+        "device_runtime_static_libs": attr.label_list(allow_files = True, doc = "Static libraries needed for RDC device link and final host link."),
     },
     provides = [CudaToolkitInfo],
 )
