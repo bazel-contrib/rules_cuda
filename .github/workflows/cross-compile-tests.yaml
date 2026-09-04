@@ -97,7 +97,9 @@ jobs:
           additional-packages: >-
             ca-certificates
             curl
+            g++
             g++-aarch64-linux-gnu
+            gcc
             gcc-aarch64-linux-gnu
             binutils-aarch64-linux-gnu
             qemu-user-static

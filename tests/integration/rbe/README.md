@@ -44,7 +44,7 @@ pwsh tests/integration/drive_cross_windows.ps1
 
 `start_wsl_worker.ps1`:
 
-1. Installs `g++-aarch64-linux-gnu` and qemu-user in WSL if missing
+1. Installs native GCC, `g++-aarch64-linux-gnu`, and qemu-user in WSL if missing
 2. Holds the distro open with `sleep infinity` (avoids WSL shutting down after a short `wsl` invocation and killing a background worker)
 3. Starts NativeLink via a Windows-owned `wsl.exe` process (`basic_cas.json5` on `0.0.0.0:1985`)
 4. Adds `netsh portproxy` `127.0.0.1:1985` → WSL eth IP
@@ -86,7 +86,7 @@ Guest checklist:
 
 1. Linux x86_64 disk with network
 2. RE worker listening on `0.0.0.0:1985` (`bootstrap_nativelink_linux.sh`)
-3. `g++-aarch64-linux-gnu` for sbsa target compiles
+3. Native GCC for x86_64 targets and `g++-aarch64-linux-gnu` for sbsa targets
 4. Network for CUDA redist download
 
 ## Execution paths

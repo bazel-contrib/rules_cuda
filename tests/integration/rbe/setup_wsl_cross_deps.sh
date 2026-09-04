@@ -10,7 +10,7 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 need_install=false
-for cmd in aarch64-linux-gnu-g++ curl; do
+for cmd in aarch64-linux-gnu-g++ curl gcc; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     need_install=true
     break
@@ -45,6 +45,8 @@ if [[ "$need_install" == true ]]; then
   sudo apt-get install -y --no-install-recommends \
     g++-aarch64-linux-gnu \
     gcc-aarch64-linux-gnu \
+    g++ \
+    gcc \
     binutils-aarch64-linux-gnu \
     qemu-user-static \
     binfmt-support \
@@ -72,5 +74,6 @@ fi
 echo "WSL host arch: $(uname -m)"
 command -v aarch64-linux-gnu-g++
 command -v curl
+command -v gcc
 command -v qemu-aarch64-static || command -v qemu-aarch64 || true
 update-binfmts --display qemu-aarch64 2>/dev/null || true
