@@ -40,8 +40,8 @@ def _impl(ctx):
         ),
     ]
 
-    path_separator = ctx.configuration.host_path_separator
-    env_paths, env_includes, cicc_dir, libdevice_dir = collect_paths(ctx)
+    path_separator = ";"
+    env_paths, env_includes, cicc_dir, libdevice_dir = collect_paths(ctx, path_separator)
     env_entry_include = [env_entry("INCLUDE", path_separator.join(env_includes))] if env_includes else []
 
     env_sets_nvcc_profile = []
