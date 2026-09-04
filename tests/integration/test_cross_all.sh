@@ -158,6 +158,7 @@ EOF
 remote_toolchain_flags=()
 if [[ ${#remote_flags[@]} -gt 0 ]]; then
     remote_toolchain_flags=(
+        --action_env=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         --extra_toolchains="${NVCC_LINUX_TC}"
         --extra_toolchains="${X86_64_LINUX_CC_TC}"
         --extra_execution_platforms="${PLATFORMS_PKG}:linux_x86_64"

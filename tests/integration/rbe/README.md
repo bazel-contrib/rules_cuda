@@ -53,7 +53,7 @@ pwsh tests/integration/drive_cross_windows.ps1
 Then:
 
 ```powershell
-$env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985 --remote_default_exec_properties=OSFamily=Linux"
+$env:CROSS_REMOTE_BAZEL_FLAGS = "--remote_executor=grpc://127.0.0.1:1985 --remote_default_exec_properties=OSFamily=Linux --action_env=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 bash tests/integration/test_cross_all.sh
 ```
 
