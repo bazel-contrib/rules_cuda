@@ -57,6 +57,7 @@ fi
 
 PLATFORMS_PKG="@rules_cuda//tests/integration/platforms"
 AARCH64_CC_TC="${PLATFORMS_PKG}:aarch64_linux_cc_toolchain"
+X86_64_LINUX_CC_TC="${PLATFORMS_PKG}:x86_64_linux_cc_toolchain"
 # Hermetic deliverable toolkits expose this target; MODULE only registers the
 # host alias (nvcc-local-toolchain). A non-Linux host needs the Linux toolchain
 # registered explicitly for remote execution.
@@ -158,6 +159,7 @@ remote_toolchain_flags=()
 if [[ ${#remote_flags[@]} -gt 0 ]]; then
     remote_toolchain_flags=(
         --extra_toolchains="${NVCC_LINUX_TC}"
+        --extra_toolchains="${X86_64_LINUX_CC_TC}"
         --extra_execution_platforms="${PLATFORMS_PKG}:linux_x86_64"
         --host_platform="${PLATFORMS_PKG}:linux_x86_64"
     )

@@ -1,4 +1,8 @@
-load(":aarch64_linux_cc_toolchain.bzl", "register_aarch64_linux_cc_toolchain")
+load(
+    ":aarch64_linux_cc_toolchain.bzl",
+    "register_aarch64_linux_cc_toolchain",
+    "register_x86_64_linux_cc_toolchain",
+)
 
 package(default_visibility = ["//visibility:public"])
 
@@ -23,3 +27,5 @@ platform(
 )
 
 register_aarch64_linux_cc_toolchain()
+
+register_x86_64_linux_cc_toolchain()
