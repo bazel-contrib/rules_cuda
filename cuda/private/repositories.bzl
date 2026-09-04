@@ -131,6 +131,7 @@ def _detect_local_cuda_toolkit(repository_ctx):
         cicc_label = None,  # local CTK do not need this
         libdevice_label = None,  # local CTK do not need this
         device_runtime_static_libs_labels = device_runtime_static_libs_labels,
+        device_runtime_static_libs_by_os = None,
     )
 
 def _detect_deliverable_cuda_toolkit(repository_ctx):
@@ -161,19 +162,22 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     bin2c = "{}//:bin2c".format(nvcc_repo)
     fatbinary = "{}//:fatbinary".format(nvcc_repo)
     ptxas = "{}//:ptxas".format(nvcc_repo)
-    device_runtime_static_libs_labels = []
-
     cudart_repo = repository_ctx.attr.components_mapping["cudart"]
-    if _is_windows(repository_ctx):
-        device_runtime_static_libs_labels.append("{}//:cudadevrt_lib".format(cudart_repo))
+    device_runtime_static_libs_by_os = {
+        "linux": ["{}//:cudadevrt_a".format(cudart_repo)],
+        "windows": ["{}//:cudadevrt_lib".format(cudart_repo)],
+    }
+    if int(cuda_version_major) >= 13:
+        culibos_repo = repository_ctx.attr.components_mapping.get("culibos")
+        if culibos_repo:
+            device_runtime_static_libs_by_os["linux"].append("{}//:culibos_a".format(culibos_repo))
     else:
-        device_runtime_static_libs_labels.append("{}//:cudadevrt_a".format(cudart_repo))
-        if int(cuda_version_major) >= 13:
-            culibos_repo = repository_ctx.attr.components_mapping.get("culibos")
-            if culibos_repo:
-                device_runtime_static_libs_labels.append("{}//:culibos_a".format(culibos_repo))
-        else:
-            device_runtime_static_libs_labels.append("{}//:culibos_a".format(cudart_repo))
+        device_runtime_static_libs_by_os["linux"].append("{}//:culibos_a".format(cudart_repo))
+
+    # Keep a host-specific value for templates that do not support a target-OS
+    # select. The nvcc deliverable template uses the complete mapping below.
+    host_os = "windows" if _is_windows(repository_ctx) else "linux"
+    device_runtime_static_libs_labels = device_runtime_static_libs_by_os[host_os]
 
     cicc = None
     libdevice = None
@@ -197,6 +201,7 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
         cicc_label = cicc,
         libdevice_label = libdevice,
         device_runtime_static_libs_labels = device_runtime_static_libs_labels,
+        device_runtime_static_libs_by_os = device_runtime_static_libs_by_os,
     )
 
 def detect_cuda_toolkit(repository_ctx):

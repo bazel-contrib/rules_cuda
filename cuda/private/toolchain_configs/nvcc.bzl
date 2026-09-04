@@ -39,8 +39,8 @@ def _impl(ctx):
         ),
     ]
 
-    path_separator = ctx.configuration.host_path_separator
-    env_paths, _, cicc_dir, libdevice_dir = collect_paths(ctx)
+    path_separator = ":"
+    env_paths, _, cicc_dir, libdevice_dir = collect_paths(ctx, path_separator)
 
     env_sets_nvcc_profile = []
     if nvcc_version_ge(ctx, 13, 0):

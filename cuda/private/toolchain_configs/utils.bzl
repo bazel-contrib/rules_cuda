@@ -20,7 +20,7 @@ def _unique(list):
             unique_list.append(elem)
     return unique_list
 
-def collect_paths(ctx):
+def collect_paths(ctx, path_separator = None):
     cc_toolchain = find_cpp_toolchain(ctx)
     cc_feature_configuration = cc_common.configure_features(
         ctx = ctx,
@@ -45,7 +45,8 @@ def collect_paths(ctx):
     cicc_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc else None
     libdevice_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice else None
 
-    path_separator = ctx.configuration.host_path_separator
+    if path_separator == None:
+        path_separator = ctx.configuration.host_path_separator
     env_paths = [paths.dirname(host_compiler)]
 
     if libdevice_dir:
@@ -68,7 +69,7 @@ def collect_paths(ctx):
     # Host PATH for tool execution (not target platform). Prefer path
     # separator over the legacy TARGET_CPU make variable, which Bazel 9+ no
     # longer sets to values like x64_windows for all configurations.
-    if ctx.configuration.host_path_separator == ";":
+    if path_separator == ";":
         env_paths.append("C:/Windows/system32")
 
     env_paths = _unique(_non_empty(env_paths))
