@@ -20,9 +20,9 @@ bazel_features_deps()
 
 http_archive(
     name = "rules_cc",
-    sha256 = "458b658277ba51b4730ea7a2020efdf1c6dcadf7d30de72e37f4308277fa8c01",
-    strip_prefix = "rules_cc-0.2.16",
-    url = "https://github.com/bazelbuild/rules_cc/releases/download/0.2.16/rules_cc-0.2.16.tar.gz",
+    sha256 = "81c10a95a5c22d838276ee90d712635d6042419fdfca5ef88328226b6321e53b",
+    strip_prefix = "rules_cc-0.2.22",
+    url = "https://github.com/bazelbuild/rules_cc/releases/download/0.2.22/rules_cc-0.2.22.tar.gz",
 )
 
 load("@rules_cc//cc:extensions.bzl", "compatibility_proxy_repo")
