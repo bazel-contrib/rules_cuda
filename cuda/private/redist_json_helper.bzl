@@ -10,7 +10,7 @@ def _get_attr_maybe_override(ctx, attr, name):
     # NOTE: these overrides are mainly for CI testing purpose.
     # CUDA_REDIST_INTEGRITY_OVERRIDE, CUDA_REDIST_SHA256_OVERRIDE and CUDA_REDIST_VERSION_OVERRIDE are supported
     value = getattr(attr, name, None)
-    override = ctx.os.environ.get("CUDA_REDIST_" + name.upper() + "_OVERRIDE", None)
+    override = ctx.getenv("CUDA_REDIST_" + name.upper() + "_OVERRIDE")
     if override:
         print("WARNING: Override CUDA redist_json `{}` {} with {} from env.".format(name, value, override))  # buildifier: disable=print
         value = override
