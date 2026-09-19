@@ -161,19 +161,6 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     bin2c = "{}//:bin2c".format(nvcc_repo)
     fatbinary = "{}//:fatbinary".format(nvcc_repo)
     ptxas = "{}//:ptxas".format(nvcc_repo)
-    device_runtime_static_libs_labels = []
-
-    cudart_repo = repository_ctx.attr.components_mapping["cudart"]
-    if _is_windows(repository_ctx):
-        device_runtime_static_libs_labels.append("{}//:cudadevrt_lib".format(cudart_repo))
-    else:
-        device_runtime_static_libs_labels.append("{}//:cudadevrt_a".format(cudart_repo))
-        if int(cuda_version_major) >= 13:
-            culibos_repo = repository_ctx.attr.components_mapping.get("culibos")
-            if culibos_repo:
-                device_runtime_static_libs_labels.append("{}//:culibos_a".format(culibos_repo))
-        else:
-            device_runtime_static_libs_labels.append("{}//:culibos_a".format(cudart_repo))
 
     cicc = None
     libdevice = None
@@ -196,7 +183,7 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
         ptxas_label = ptxas,
         cicc_label = cicc,
         libdevice_label = libdevice,
-        device_runtime_static_libs_labels = device_runtime_static_libs_labels,
+        device_runtime_static_libs_labels = ["@cuda//:cuda_device_runtime_static_libs"],
     )
 
 def detect_cuda_toolkit(repository_ctx):

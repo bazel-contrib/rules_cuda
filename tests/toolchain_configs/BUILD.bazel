@@ -1,0 +1,94 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_cc//cc:defs.bzl", "cc_import", "cc_library")
+load("//cuda:defs.bzl", "cuda_toolchain_config_nvcc", "cuda_toolchain_config_nvcc_msvc", "cuda_toolkit_info")
+load(":environment_test.bzl", "environment_test", "runtime_libraries_test")
+
+# Analysis-only archive fixtures; no compiler or GPU is needed by these tests.
+[
+    write_file(
+        name = "write_" + name,
+        out = name,
+        content = [],
+    )
+    for name in [
+        "libcudadevrt.a",
+        "cudadevrt.lib",
+        "libculibos.a",
+    ]
+]
+
+cc_library(
+    name = "linux_runtime",
+    srcs = [":libcudadevrt.a"],
+)
+
+cc_import(
+    name = "windows_runtime",
+    interface_library = ":cudadevrt.lib",
+    system_provided = True,
+)
+
+cuda_toolkit_info(
+    name = "toolkit",
+    bin2c = "//cuda/dummy:bin2c",
+    device_runtime_static_libs = [
+        ":linux_runtime",
+        ":windows_runtime",
+        ":libculibos.a",
+    ],
+    fatbinary = "//cuda/dummy:fatbinary",
+    link_stub = "//cuda/dummy:link.stub",
+    nvlink = "//cuda/dummy:nvlink",
+    path = "C:/CUDA",
+    ptxas = "//cuda/dummy:ptxas",
+    version = "12.6",
+)
+
+runtime_libraries_test(
+    name = "runtime_libraries_test",
+    toolkit = ":toolkit",
+)
+
+[
+    cuda_toolchain_config_nvcc(
+        name = "nvcc_" + execution_os,
+        cuda_toolkit = ":toolkit",
+        exec_path_separator = separator,
+        toolchain_identifier = "nvcc",
+    )
+    for execution_os, separator in {
+        "linux": ":",
+        "windows": ";",
+    }.items()
+]
+
+[
+    cuda_toolchain_config_nvcc_msvc(
+        name = "nvcc_msvc_" + execution_os,
+        cuda_toolkit = ":toolkit",
+        exec_path_separator = separator,
+        msvc_env_tmp = "C:/Temp",
+        toolchain_identifier = "nvcc",
+    )
+    for execution_os, separator in {
+        "linux": ":",
+        "windows": ";",
+    }.items()
+]
+
+# In particular, the non-MSVC config must accept Windows execution (e.g. Clang).
+[
+    environment_test(
+        name = compiler + "_" + execution_os + "_test",
+        config = ":" + compiler + "_" + execution_os,
+        separator = separator,
+    )
+    for compiler in [
+        "nvcc",
+        "nvcc_msvc",
+    ]
+    for execution_os, separator in {
+        "linux": ":",
+        "windows": ";",
+    }.items()
+]

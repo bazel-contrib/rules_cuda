@@ -295,10 +295,6 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
     repository_ctx.template("redist.bzl", tpl_label, substitutions = substitutions, executable = False)
 
 def _generate_toolchain_build(repository_ctx, cuda):
-    tpl_label = Label(
-        "//cuda/private:templates/BUILD.toolchain_" +
-        ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
-    )
     compiler_files = ["@cuda//:compiler_deps"]
     if cuda.cicc_label != None:
         compiler_files.append(cuda.cicc_label)
@@ -336,6 +332,7 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
         "%{ptxas_label}": cuda.ptxas_label,
+        "%{env_tmp}": "C:/Windows/Temp",
     }
     if cuda.cicc_label:
         substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
@@ -346,7 +343,39 @@ def _generate_toolchain_build(repository_ctx, cuda):
     env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
     if env_tmp != None:
         substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
-    repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
+    if cuda.path != None:
+        tpl_label = Label(
+            "//cuda/private:templates/BUILD.toolchain_" +
+            ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
+        )
+        repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
+        return
+
+    # Redist toolkits can execute on either OS. Reuse the dedicated templates
+    # in separate packages and preserve the existing labels through aliases.
+    aliases = {"cuda-toolkit": "//toolchain/nvcc:cuda-toolkit"}
+    for os, compiler in [("linux", "nvcc"), ("windows", "nvcc_msvc")]:
+        repository_ctx.template(
+            "toolchain/{}/BUILD".format(compiler),
+            Label("//cuda/private:templates/BUILD.toolchain_" + compiler),
+            substitutions = substitutions,
+            executable = False,
+        )
+        for suffix in ["", "-config", "-toolchain"]:
+            aliases["nvcc-" + os + suffix] = "//toolchain/{}:nvcc-local{}".format(compiler, suffix)
+    aliases["nvcc-local-toolchain"] = ":nvcc-linux-toolchain" if _is_linux(repository_ctx) else ":nvcc-windows-toolchain"
+    repository_ctx.file(
+        "toolchain/BUILD",
+        content = "\n\n".join([
+            "alias(name = {}, actual = {}, visibility = [{}])".format(
+                repr(name),
+                repr(actual),
+                repr("//visibility:public" if name.endswith("-toolchain") else "//visibility:private"),
+            )
+            for name, actual in aliases.items()
+        ]) + "\n",
+        executable = False,
+    )
 
 def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     tpl_label = Label("//cuda/private:templates/BUILD.toolchain_clang")

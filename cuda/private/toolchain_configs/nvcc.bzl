@@ -12,7 +12,7 @@ load(
     "flag_group",
     "flag_set",
 )
-load("//cuda/private:toolchain_configs/utils.bzl", "collect_paths", "nvcc_version_ge")
+load("//cuda/private:toolchain_configs/utils.bzl", "collect_paths", "exec_path_separator", "nvcc_version_ge")
 
 def _impl(ctx):
     artifact_name_patterns = [
@@ -39,8 +39,8 @@ def _impl(ctx):
         ),
     ]
 
-    path_separator = ctx.configuration.host_path_separator
-    env_paths, _, cicc_dir, libdevice_dir = collect_paths(ctx)
+    path_separator = exec_path_separator(ctx)
+    env_paths, _, cicc_dir, libdevice_dir = collect_paths(ctx, path_separator)
 
     env_sets_nvcc_profile = []
     if nvcc_version_ge(ctx, 13, 0):
@@ -250,6 +250,7 @@ def _impl(ctx):
             flag_set(
                 actions = [
                     ACTION_NAMES.cuda_compile,
+                    ACTION_NAMES.device_link,
                 ],
                 flag_groups = [
                     flag_group(
@@ -655,7 +656,8 @@ cuda_toolchain_config = rule(
     doc = """This rule provides the predefined cuda toolchain configuration for NVCC with non MSVC as host compiler.""",
     implementation = _impl,
     attrs = {
-        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], cfg = "exec", doc = "A target that provides a `CudaToolkitInfo`."),
+        "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], doc = "A target that provides a `CudaToolkitInfo`."),
+        "exec_path_separator": attr.string(values = ["", ":", ";"], doc = "PATH separator on the execution platform. Empty defaults to the Bazel client's separator for local execution."),
         "toolchain_identifier": attr.string(values = ["nvcc"], mandatory = True),
         "nvcc_version_major": attr.int(doc = "The CUDA Toolkit major version, e.g, 11 for 11.6"),
         "nvcc_version_minor": attr.int(doc = "The CUDA Toolkit minor version, e.g, 6 for 11.6"),
