@@ -1,4 +1,4 @@
-# This becomes the BUILD file for @cuda//toolchain/ under Linux.
+# Used for local Linux toolkits and @cuda//toolchain/nvcc for redistributables.
 
 load(
     "@rules_cuda//cuda:defs.bzl",
@@ -6,6 +6,8 @@ load(
     "cuda_toolkit_info",
     cuda_toolchain_config = "cuda_toolchain_config_nvcc",
 )
+
+package(default_visibility = ["//toolchain:__pkg__"])
 
 # %{toolkit_version_config_settings}
 

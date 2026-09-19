@@ -10,7 +10,6 @@
 - `BUILD.toolchain_clang`: For Clang device compilation toolchain.
 - `BUILD.toolchain_nvcc`: For NVCC device compilation toolchain.
 - `BUILD.toolchain_nvcc_msvc`: For NVCC device compilation with MSVC as host compiler.
-- `BUILD.toolchain_deliverable`: Registers both Linux and Windows NVCC toolchains for redistributable toolkits, allowing cross-platform execution independently of the client OS.
 - Otherwise, each `BUILD.*` corresponds to a component in CUDA Toolkit.
 
 ## Repository organization
@@ -38,6 +37,11 @@ If the repo is `cuda`, we additionally generate toolchain config as follows
     └── disabled/        # the fallback toolchain
         └── BUILD        #
 ```
+
+Redistributable toolkits expand the dedicated NVCC and MSVC templates into
+`toolchain/nvcc/BUILD` and `toolchain/nvcc_msvc/BUILD`. Their `toolchain/BUILD`
+contains aliases preserving the Linux, Windows, and host-default registration
+labels, so execution can use a different OS from the Bazel client.
 
 ## How are component repositories and `@cuda` connected?
 
