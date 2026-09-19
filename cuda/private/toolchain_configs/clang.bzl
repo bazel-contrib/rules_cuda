@@ -14,7 +14,7 @@ load(
     "flag_set",
     "with_feature_set",
 )
-load("//cuda/private:toolchain_configs/utils.bzl", "collect_paths")
+load("//cuda/private:toolchain_configs/utils.bzl", "collect_paths", "exec_path_separator")
 
 all_compile_actions = [
     ACTION_NAMES.cuda_compile,
@@ -57,8 +57,8 @@ def _impl(ctx):
         ),
     ]
 
-    path_separator = ctx.configuration.host_path_separator
-    env_paths, env_includes, _, libdevice_dir = collect_paths(ctx)
+    path_separator = exec_path_separator(ctx)
+    env_paths, env_includes, _, libdevice_dir = collect_paths(ctx, path_separator)
     env_entry_include = [env_entry("INCLUDE", path_separator.join(env_includes))] if env_includes else []
 
     # Clang ships `cuda_wrappers/` headers (e.g. bits/shared_ptr_base.h) that
@@ -673,6 +673,7 @@ cuda_toolchain_config = rule(
     implementation = _impl,
     attrs = {
         "cuda_toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo], doc = "A target that provides a `CudaToolkitInfo`."),
+        "exec_path_separator": attr.string(values = ["", ":", ";"], doc = "PATH separator on the execution platform. Empty defaults to the Bazel client's separator for local execution."),
         "toolchain_identifier": attr.string(values = ["clang"], mandatory = True),
         "_cc_toolchain": attr.label(default = "@bazel_tools//tools/cpp:current_cc_toolchain"),  # legacy behaviour
         "_windows_constraint": attr.label(default = "@platforms//os:windows"),

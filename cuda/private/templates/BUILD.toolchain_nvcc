@@ -1,10 +1,11 @@
-# This becomes the BUILD file for @cuda//toolchain/ under Linux.
+# This becomes the BUILD file for @cuda//toolchain/ for local and redist toolkits.
 
 load(
     "@rules_cuda//cuda:defs.bzl",
     "cuda_toolchain",
+    "cuda_toolchain_config_nvcc",
+    "cuda_toolchain_config_nvcc_msvc",
     "cuda_toolkit_info",
-    cuda_toolchain_config = "cuda_toolchain_config_nvcc",
 )
 
 # %{toolkit_version_config_settings}
@@ -23,12 +24,31 @@ cuda_toolkit_info(
     # %{cuda_version_line}
 )
 
-cuda_toolchain_config(
-    name = "nvcc-local-config",
+cuda_toolchain_config_nvcc(
+    name = "nvcc-linux-config",
     cuda_toolkit = ":cuda-toolkit",
+    exec_path_separator = ":",
     # %{nvcc_version_major_line}
     # %{nvcc_version_minor_line}
     toolchain_identifier = "nvcc",
+)
+
+cuda_toolchain_config_nvcc_msvc(
+    name = "nvcc-windows-config",
+    cuda_toolkit = ":cuda-toolkit",
+    exec_path_separator = ";",
+    msvc_env_tmp = "%{env_tmp}",
+    # %{nvcc_version_major_line}
+    # %{nvcc_version_minor_line}
+    toolchain_identifier = "nvcc",
+)
+
+alias(
+    name = "nvcc-local-config",
+    actual = select({
+        "@platforms//os:windows": ":nvcc-windows-config",
+        "//conditions:default": ":nvcc-linux-config",
+    }),
 )
 
 cuda_toolchain(
@@ -38,19 +58,33 @@ cuda_toolchain(
     toolchain_config = ":nvcc-local-config",
 )
 
-toolchain(
+[
+    toolchain(
+        name = "nvcc-{}-toolchain".format(os),
+        exec_compatible_with = constraints,
+        target_compatible_with = constraints,
+        target_settings = [
+            "@rules_cuda//cuda:is_enabled",
+            "@rules_cuda//cuda:compiler_is_nvcc",
+        ],
+        toolchain = ":nvcc-local",
+        toolchain_type = "@rules_cuda//cuda:toolchain_type",
+        visibility = ["//visibility:public"],
+    )
+    for os, constraints in {
+        "linux": ["@platforms//os:linux"],
+        "windows": [
+            "@platforms//os:windows",
+            "@platforms//cpu:x86_64",
+        ],
+    }.items()
+    if os in "%{nvcc_platforms}".split(",")
+]
+
+# Registration is unconfigured, so retain the detected host's default alias.
+# Redist toolkits also expose the other OS for explicit remote registration.
+alias(
     name = "nvcc-local-toolchain",
-    exec_compatible_with = [
-        "@platforms//os:linux",
-    ],
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
-    target_settings = [
-        "@rules_cuda//cuda:is_enabled",
-        "@rules_cuda//cuda:compiler_is_nvcc",
-    ],
-    toolchain = ":nvcc-local",
-    toolchain_type = "@rules_cuda//cuda:toolchain_type",
+    actual = ":%{nvcc_local_actual}",
     visibility = ["//visibility:public"],
 )

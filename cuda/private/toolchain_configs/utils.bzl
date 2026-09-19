@@ -20,7 +20,11 @@ def _unique(list):
             unique_list.append(elem)
     return unique_list
 
-def collect_paths(ctx, path_separator = None):
+def exec_path_separator(ctx):
+    """Return the configured execution separator, defaulting to local execution."""
+    return ctx.attr.exec_path_separator or ctx.configuration.host_path_separator
+
+def collect_paths(ctx, path_separator):
     cc_toolchain = find_cpp_toolchain(ctx)
     cc_feature_configuration = cc_common.configure_features(
         ctx = ctx,
@@ -45,8 +49,6 @@ def collect_paths(ctx, path_separator = None):
     cicc_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].cicc else None
     libdevice_dir = ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice.dirname if ctx.attr.cuda_toolkit[CudaToolkitInfo].libdevice else None
 
-    if path_separator == None:
-        path_separator = ctx.configuration.host_path_separator
     env_paths = [paths.dirname(host_compiler)]
 
     if libdevice_dir:
@@ -66,9 +68,7 @@ def collect_paths(ctx, path_separator = None):
     if ctx.configuration.default_shell_env.get("PATH"):
         env_paths.extend(ctx.configuration.default_shell_env.get("PATH").split(path_separator))
 
-    # Host PATH for tool execution (not target platform). Prefer path
-    # separator over the legacy TARGET_CPU make variable, which Bazel 9+ no
-    # longer sets to values like x64_windows for all configurations.
+    # The execution OS determines PATH syntax, independently of the host compiler.
     if path_separator == ";":
         env_paths.append("C:/Windows/system32")
 
