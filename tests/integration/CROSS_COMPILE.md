@@ -154,14 +154,6 @@ For each direction, the driver:
    `aquery` and `cquery`.
 3. Checks the output architecture on a local Linux host.
 
-## WSL distribution
-
-The CI worker uses Ubuntu rather than Alpine. NVIDIA's Linux CUDA
-redistributables are linked against glibc, while Alpine uses musl. Adding a
-glibc compatibility environment and a separate aarch64 GNU cross-toolchain to
-Alpine would make the worker more complicated and remove much of the image-size
-advantage.
-
 ## CI
 
 Workflow: [`.github/workflows/cross-compile-tests.yaml`](../../.github/workflows/cross-compile-tests.yaml)
@@ -170,8 +162,6 @@ Workflow: [`.github/workflows/cross-compile-tests.yaml`](../../.github/workflows
 | --------- | ------------ | ----------------------------------------- |
 | `linux`   | Ubuntu 24.04 | local Linux; qemu-user for aarch64 tools  |
 | `windows` | windows-2025 | Linux actions in a WSL2 NativeLink worker |
-
-The workflow can also be started manually with `workflow_dispatch`.
 
 ## Toolchain registration
 
