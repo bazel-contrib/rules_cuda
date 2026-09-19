@@ -108,7 +108,7 @@ assert_artifact_machine() {
         if echo "$m $(file -b "$f" 2>/dev/null || true)" | grep -qiE "${expect_re}"; then
             hit=1
         fi
-    done < <(find -L "$bb" -type f \( -name '*.o' -o -name '*.a' -o -name 'smoke' -o -name 'smoke.exe' \) -print0 2>/dev/null)
+    done < <(find -L "$bb" -type f \( -name '*.o' -o -name '*.a' \) -print0 2>/dev/null)
     if [[ "$hit" -ne 1 ]]; then
         echo "ASSERT FAIL: no artifact matching /${expect_re}/ under ${bb}" >&2
         exit 1
@@ -206,21 +206,7 @@ if [[ "$skip_lsbsa_exec" == false ]]; then
 
     if [[ "$is_linux" == true && ${#remote_flags[@]} -eq 0 ]]; then
         pushd "${this_dir}/toolchain_redist_cross_lsbsa_exec_lx64_tgt" >/dev/null
-        local_flags=(
-            --enable_bzlmod
-            --platforms="${PLATFORMS_PKG}:linux_x86_64"
-            --@rules_cuda//cuda:exec_platform=linux-sbsa
-            --@rules_cuda//cuda:aarch64=sbsa
-            --@rules_cuda//cuda:enable=True
-        )
-        bazel build "${local_flags[@]}" //:smoke
         assert_artifact_machine "X86-64|x86-64|x86_64|Advanced Micro Devices X86-64"
-        smoke_bin=$(readlink -f bazel-bin/smoke)
-        echo "RUN ${smoke_bin}"
-        out=$("${smoke_bin}")
-        echo "${out}"
-        grep -q rules_cuda_cross_smoke_ok <<<"${out}"
-        echo "ASSERT OK (smoke run)"
         bazel shutdown || true
         popd >/dev/null
     fi

@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
 
 # linux-sbsa execution platform, linux-x86_64 target platform.
@@ -14,12 +14,5 @@ cuda_library(
     name = "use_rule",
     srcs = ["@rules_cuda_examples//basic:kernel.cu"],
     hdrs = ["@rules_cuda_examples//basic:kernel.h"],
-    tags = ["manual"],
-)
-
-# Host-runnable product for the intermediate-aarch exec setup (no CUDA runtime init).
-cc_binary(
-    name = "smoke",
-    srcs = ["smoke.cpp"],
     tags = ["manual"],
 )

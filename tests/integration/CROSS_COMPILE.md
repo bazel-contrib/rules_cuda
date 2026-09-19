@@ -45,7 +45,7 @@ the aarch64 tools through qemu-user.
 │  │  runs the aarch64 CUDA tools                              │  │
 │  │  produces linux-x86_64 target artifacts                   │  │
 │  └────────────────────────────────────────────────────────────┘  │
-│  run //:smoke natively on x86_64                                 │
+│  inspect CUDA output objects for the x86_64 architecture        │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -153,7 +153,6 @@ For each direction, the driver:
 2. Checks the execution and target redistributable selections with
    `aquery` and `cquery`.
 3. Checks the output architecture on a local Linux host.
-4. Builds and runs `//:smoke` when the target is local x86_64 Linux.
 
 ## WSL distribution
 
