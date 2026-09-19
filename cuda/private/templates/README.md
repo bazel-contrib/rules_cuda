@@ -8,7 +8,9 @@
 - `BUILD.cuda_disabled`: For creating a dummy local configuration.
 - `BUILD.toolchain_disabled`: For creating a dummy local toolchain.
 - `BUILD.toolchain_clang`: For Clang device compilation toolchain.
-- `BUILD.toolchain_nvcc`: For local and redistributable NVCC toolchains, with MSVC and non-MSVC host compiler configurations.
+- `BUILD.toolchain_nvcc`: For NVCC device compilation toolchain.
+- `BUILD.toolchain_nvcc_msvc`: For NVCC device compilation with MSVC as host compiler.
+- `BUILD.toolchain_deliverable`: Registers both Linux and Windows NVCC toolchains for redistributable toolkits, allowing cross-platform execution independently of the client OS.
 - Otherwise, each `BUILD.*` corresponds to a component in CUDA Toolkit.
 
 ## Repository organization

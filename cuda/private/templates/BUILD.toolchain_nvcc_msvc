@@ -1,10 +1,10 @@
-# This becomes the BUILD file for @cuda//toolchain/ under Linux.
+# This becomes the BUILD file for @cuda//toolchain/ under Windows.
 
 load(
     "@rules_cuda//cuda:defs.bzl",
     "cuda_toolchain",
     "cuda_toolkit_info",
-    cuda_toolchain_config = "cuda_toolchain_config_nvcc",
+    cuda_toolchain_config = "cuda_toolchain_config_nvcc_msvc",
 )
 
 # %{toolkit_version_config_settings}
@@ -26,7 +26,8 @@ cuda_toolkit_info(
 cuda_toolchain_config(
     name = "nvcc-local-config",
     cuda_toolkit = ":cuda-toolkit",
-    exec_path_separator = ":",
+    exec_path_separator = ";",
+    msvc_env_tmp = "%{env_tmp}",
     # %{nvcc_version_major_line}
     # %{nvcc_version_minor_line}
     toolchain_identifier = "nvcc",
@@ -42,10 +43,12 @@ cuda_toolchain(
 toolchain(
     name = "nvcc-local-toolchain",
     exec_compatible_with = [
-        "@platforms//os:linux",
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
     ],
     target_compatible_with = [
-        "@platforms//os:linux",
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
     ],
     target_settings = [
         "@rules_cuda//cuda:is_enabled",
