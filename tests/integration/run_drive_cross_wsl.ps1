@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$winRoot = "C:\Users\cloud\workspaces\rules_cuda"
+$winRoot = (Resolve-Path (Join-Path $PSScriptRoot "../..")).Path
 $wslRoot = (wsl -e wslpath -a $winRoot).Trim()
 $script = "$wslRoot/tests/integration/drive_cross_wsl.sh"
 $log = "/tmp/rules_cuda_cross/drive.log"
