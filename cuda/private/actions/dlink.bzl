@@ -87,6 +87,9 @@ def _compiler_device_link(
         cpp_copts = common.cpp_copts,
         cpp_cxxopts = common.cpp_cxxopts,
         use_pic = pic,
+        include_paths = common.includes,
+        quote_include_paths = common.quote_includes,
+        system_include_paths = common.system_includes,
     )
     cmd = cuda_helper.get_command_line(cuda_feature_config, ACTION_NAMES.device_link, var)
     env = cuda_helper.get_environment_variables(cuda_feature_config, ACTION_NAMES.device_link, var)
@@ -99,7 +102,7 @@ def _compiler_device_link(
         executable = cuda_compiler,
         arguments = [args],
         outputs = [obj_file],
-        inputs = depset(transitive = [objects, device_runtime_static_libs, cc_toolchain.all_files, cuda_toolchain.all_files]),
+        inputs = depset(transitive = [objects, common.headers, device_runtime_static_libs, cc_toolchain.all_files, cuda_toolchain.all_files]),
         env = env,
         mnemonic = "CudaDeviceLink",
         progress_message = "Device linking %{output}",

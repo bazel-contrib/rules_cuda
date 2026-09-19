@@ -14,5 +14,6 @@ cuda_library(
     name = "use_rule",
     srcs = ["@rules_cuda_examples//basic:kernel.cu"],
     hdrs = ["@rules_cuda_examples//basic:kernel.h"],
+    rdc = True,
     tags = ["manual"],
 )

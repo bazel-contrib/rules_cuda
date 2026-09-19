@@ -149,7 +149,7 @@ bash ./test_cross_all.sh --no-lsbsa-exec
 
 For each direction, the driver:
 
-1. Builds `//:use_library` and `//:use_rule`.
+1. Builds `//:use_library` and `//:use_rule`, including RDC device linking.
 2. Checks the execution and target redistributable selections with
    `aquery` and `cquery`.
 3. Checks the output architecture on a local Linux host.
