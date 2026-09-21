@@ -1,4 +1,4 @@
-# Used for local Windows toolkits and @cuda//toolchain/nvcc_msvc for redistributables.
+# NVCC with an MSVC host compiler, which requires Windows execution.
 
 load(
     "@rules_cuda//cuda:defs.bzl",
@@ -28,7 +28,7 @@ cuda_toolkit_info(
 cuda_toolchain_config(
     name = "nvcc-local-config",
     cuda_toolkit = ":cuda-toolkit",
-    exec_path_separator = ";",
+    exec_path_separator = ";",  # MSVC executes only on Windows.
     msvc_env_tmp = "%{env_tmp}",
     # %{nvcc_version_major_line}
     # %{nvcc_version_minor_line}

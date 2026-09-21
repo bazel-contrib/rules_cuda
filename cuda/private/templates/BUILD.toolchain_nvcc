@@ -1,4 +1,4 @@
-# Used for local Linux toolkits and @cuda//toolchain/nvcc for redistributables.
+# NVCC with a non-MSVC host compiler, configured here for Linux execution.
 
 load(
     "@rules_cuda//cuda:defs.bzl",
@@ -28,7 +28,7 @@ cuda_toolkit_info(
 cuda_toolchain_config(
     name = "nvcc-local-config",
     cuda_toolkit = ":cuda-toolkit",
-    exec_path_separator = ":",
+    exec_path_separator = ":",  # This template uses non-Windows execution.
     # %{nvcc_version_major_line}
     # %{nvcc_version_minor_line}
     toolchain_identifier = "nvcc",
