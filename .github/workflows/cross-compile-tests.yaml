@@ -20,6 +20,7 @@ jobs:
       matrix:
         include:
           - { os: ubuntu-24.04, cuda-version: "12.6.3" }
+          - { os: ubuntu-24.04, cuda-version: "13.0.2" }
     env:
       CUDA_REDIST_VERSION_OVERRIDE: ${{ matrix.cuda-version }}
     steps:
@@ -30,7 +31,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/bazel
-          key: bazel-cross-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}-${{ hashFiles('.bazelversion', 'cuda/private/template_helper.bzl', 'cuda/private/templates/BUILD.toolchain_nvcc', 'cuda/private/templates/BUILD.toolchain_nvcc_msvc', 'tests/integration/toolchain_redist_cross_*/MODULE.bazel') }}
+          key: bazel-cross-${{ matrix.os }}-cuda-${{ matrix.cuda-version }}
 
       - name: Use .bazelversion
         run: echo "USE_BAZEL_VERSION=$(cat .bazelversion)" >> $GITHUB_ENV
@@ -64,11 +65,15 @@ jobs:
 
   # Windows sends Linux actions to NativeLink in WSL.
   windows:
-    name: "Cross (Windows host / WSL Linux exec)"
+    name: "Cross (Windows host / WSL Linux exec, CUDA ${{ matrix.cuda-version }})"
     runs-on: windows-2025
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        cuda-version: ["12.6.3", "13.0.2"]
     env:
-      CUDA_REDIST_VERSION_OVERRIDE: "12.6.3"
+      CUDA_REDIST_VERSION_OVERRIDE: ${{ matrix.cuda-version }}
       RBE_PORT: "1985"
     steps:
       - uses: actions/checkout@v6
@@ -83,7 +88,7 @@ jobs:
         uses: ./.github/actions/set-build-env
         with:
           os: windows-2025
-          cuda-version: "12.6.3"
+          cuda-version: ${{ matrix.cuda-version }}
           source: nvidia
 
       # Keep default WSL2 NAT (working DNS). start_wsl_worker.ps1 maps
