@@ -332,7 +332,7 @@ def _generate_toolchain_build(repository_ctx, cuda):
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
         "%{ptxas_label}": cuda.ptxas_label,
-        "%{env_tmp}": "C:/Windows/Temp",
+        "%{env_tmp}": _to_forward_slash(repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", ""))),
     }
     if cuda.cicc_label:
         substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
@@ -340,19 +340,21 @@ def _generate_toolchain_build(repository_ctx, cuda):
         substitutions["# %{libdevice_line}"] = "libdevice = " + repr(cuda.libdevice_label)
     _substitute_version_config_settings(substitutions, select_versions)
 
-    env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
-    if env_tmp != None:
-        substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
     if cuda.path != None:
-        tpl_label = Label(
-            "//cuda/private:templates/BUILD.toolchain_" +
-            ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
-        )
-        repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
-        return
+        _generate_local_toolchain_build(repository_ctx, substitutions)
+    else:
+        _generate_redist_toolchain_build(repository_ctx, substitutions)
 
-    # Redist toolkits can execute on either OS. Reuse the dedicated templates
-    # in separate packages and preserve the existing labels through aliases.
+def _generate_local_toolchain_build(repository_ctx, substitutions):
+    tpl_label = Label(
+        "//cuda/private:templates/BUILD.toolchain_" +
+        ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
+    )
+    repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
+
+def _generate_redist_toolchain_build(repository_ctx, substitutions):
+    # Generate toolchain/nvcc and toolchain/nvcc_msvc packages, with aliases
+    # in toolchain/BUILD preserving the Linux, Windows, and host-default labels.
     aliases = {"cuda-toolkit": "//toolchain/nvcc:cuda-toolkit"}
     for os, compiler in [("linux", "nvcc"), ("windows", "nvcc_msvc")]:
         repository_ctx.template(
