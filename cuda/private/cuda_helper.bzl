@@ -586,10 +586,10 @@ def _create_device_link_variables(
         user_link_flags = [],
         cpp_copts = [],
         cpp_cxxopts = [],
-        use_pic = False,
         include_paths = [],
         quote_include_paths = [],
-        system_include_paths = []):
+        system_include_paths = [],
+        use_pic = False):
     """Returns variables used for `device_link` actions.
 
     Args:
@@ -604,10 +604,10 @@ def _create_device_link_variables(
         user_link_flags: flags for device linking.
         cpp_copts: use the `copts` fields from C++ configuration fragment for CUDA host compilation, guarded with feature `cuda_host_use_copts`
         cpp_cxxopts: use the `cxxopts` fields from C++ configuration fragment for CUDA host compilation, guarded with feature `cuda_host_use_cxxopts`
-        use_pic: whether to compile for position independent code.
         include_paths: Include paths used when compiling the device-link stub.
         quote_include_paths: Quote include paths used by the device-link stub.
         system_include_paths: System include paths used by the device-link stub.
+        use_pic: whether to compile for position independent code.
     """
     arch_specs = cuda_archs_info.arch_specs
 
