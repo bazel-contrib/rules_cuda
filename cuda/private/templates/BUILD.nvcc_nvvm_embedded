@@ -1,0 +1,27 @@
+nvcc_cicc_bin = any_or_first(
+    "%{component_name}/nvvm/bin/cicc",
+    "%{component_name}/nvvm/bin/cicc.exe",
+)
+
+alias(
+    name = "cicc",
+    actual = if_cuda_toolkit_version_ge(
+        (13, 0),
+        "@rules_cuda//cuda/dummy:cicc",
+        nvcc_cicc_bin,
+    ),
+)
+
+alias(
+    name = "libdevice.10.bc",
+    actual = if_cuda_toolkit_version_ge(
+        (13, 0),
+        "@rules_cuda//cuda/dummy:libdevice.10.bc",
+        "%{component_name}/nvvm/libdevice/libdevice.10.bc",
+    ),
+)
+
+alias(
+    name = "libdevice",
+    actual = ":libdevice.10.bc",
+)
