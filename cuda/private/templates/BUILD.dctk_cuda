@@ -14,3 +14,17 @@ cc_library(
     name = "%{component_name}_headers",
     # %{dctk_cuda_headers_deps_line},
 )
+
+# Resolve runtime libraries in the target configuration. Component aliases
+# select their version and architecture, including culibos's CUDA 13 move.
+cc_library(
+    name = "cuda_device_runtime_static_libs",
+    deps = select({
+        "@platforms//os:linux": [
+            ":cudadevrt_a",
+            ":culibos_a",
+        ],
+        "@platforms//os:windows": [":cudadevrt_lib"],
+        "//conditions:default": [],
+    }),
+)

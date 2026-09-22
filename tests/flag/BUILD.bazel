@@ -247,6 +247,7 @@ cuda_library_flag_test(
     action_mnemonic = "CudaDeviceLink",
     contain_flags = [
         "-Xcompiler -O1",
+        "-I",
     ],
     not_contain_flags = [
         "-G",
