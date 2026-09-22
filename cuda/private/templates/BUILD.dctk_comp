@@ -21,8 +21,13 @@ filegroup(
     visibility = ["//visibility:private"],
 )
 
-cc_library(
-    name = "%{component_name}_headers",
-    hdrs = [":%{component_name}_header_files"],
-    includes = ["%{component_name}/include"],
-)
+# Suppressed for components whose own fragment declares this target instead, since both
+# fragments land in one BUILD file and only one may declare it. See template_helper.bzl.
+[
+    cc_library(
+        name = "%{component_name}_headers",
+        hdrs = [":%{component_name}_header_files"],
+        includes = ["%{component_name}/include"],
+    )
+    for _ in %{dctk_comp_generic_headers}
+]

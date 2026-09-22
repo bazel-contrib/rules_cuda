@@ -55,3 +55,27 @@ cc_library(
     ),
     deps = [":cub"],
 )
+
+# The version-aware `cccl_headers`, replacing the generic one from BUILD.dctk_comp, which
+# always points at `include/`. CUDA 13 moved the CCCL headers into `include/cccl/`, so the
+# generic path resolves `<cccl/thrust/...>` rather than `<thrust/...>`.
+#
+# Deliverable repos only: there, the generic target is suppressed for this component (see
+# template_helper.bzl) and this one takes its place. A local toolkit expands this fragment
+# into @cuda itself, where `%{component_name}` is "cuda" and BUILD.lctk_cuda already owns
+# `cuda_headers`.
+[
+    cc_library(
+        name = "%{component_name}_headers",
+        hdrs = glob(
+            ["%{component_name}/include/**"],
+            allow_empty = True,
+        ),
+        includes = if_cuda_toolkit_version_ge(
+            (13, 0),
+            ["%{component_name}/include/cccl"],
+            ["%{component_name}/include"],
+        ),
+    )
+    for _ in if_local_cuda_toolkit([], [None])
+]
