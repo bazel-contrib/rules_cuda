@@ -298,15 +298,11 @@ def _impl(module_ctx):
             # Components that don't exist in older versions will fall back to dummy.
             toolkit_version = sorted_redist_versions[-1]
 
-            # All declared versions are passed along so that the generated toolchain can
-            # select the version matching @rules_cuda//cuda:version. Without it the
-            # toolchain would report `toolkit_version` regardless of which nvcc the
-            # component aliases actually resolve to.
+            # The facade selects a fixed implementation on @rules_cuda//cuda:version.
             cuda_toolkit(
                 name = toolkit.name,
                 components_mapping = components_mapping,
                 version = toolkit_version,
-                toolkit_versions = sorted_redist_versions,
                 toolchain_repositories = toolchain_repositories,
             )
         else:
