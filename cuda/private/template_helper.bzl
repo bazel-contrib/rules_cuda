@@ -498,7 +498,7 @@ def _toolchain_declaration(name, implementation, compiler_setting, version_setti
 def _generate_toolchain_facade(repository_ctx):
     versions = sorted(repository_ctx.attr.toolchain_repositories.keys())
     default_version = repository_ctx.attr.version
-    os_constraint = "@platforms//os:windows" if _is_windows(repository_ctx) else "@platforms//os:linux"
+    host_os = "linux" if _is_linux(repository_ctx) else "windows"
 
     nvcc = []
     clang = []
@@ -514,13 +514,7 @@ def _generate_toolchain_facade(repository_ctx):
         nvcc.extend(definition)
         clang.extend(definition)
         repo = repository_ctx.attr.toolchain_repositories[version]
-        nvcc.append(_toolchain_declaration(
-            "nvcc-{}-toolchain".format(label),
-            repo + "//toolchain:nvcc-local",
-            "@rules_cuda//cuda:compiler_is_nvcc",
-            setting,
-            [os_constraint],
-        ))
+        nvcc.extend(_nvcc_toolchain_declarations(repo, setting, host_os, label))
         clang.append(_toolchain_declaration(
             "clang-{}-toolchain".format(label),
             repo + "//toolchain/clang:clang-local",
@@ -537,13 +531,7 @@ def _generate_toolchain_facade(repository_ctx):
     nvcc.extend(default_setting)
     clang.extend(default_setting)
     default_repo = repository_ctx.attr.toolchain_repositories[default_version]
-    nvcc.append(_toolchain_declaration(
-        "nvcc-local-toolchain",
-        default_repo + "//toolchain:nvcc-local",
-        "@rules_cuda//cuda:compiler_is_nvcc",
-        "toolkit_version_is_default",
-        [os_constraint],
-    ))
+    nvcc.extend(_nvcc_toolchain_declarations(default_repo, "toolkit_version_is_default", host_os))
     clang.append(_toolchain_declaration(
         "clang-local-toolchain",
         default_repo + "//toolchain/clang:clang-local",
@@ -553,6 +541,29 @@ def _generate_toolchain_facade(repository_ctx):
 
     repository_ctx.file("toolchain/BUILD", "\n\n".join(nvcc) + "\n")
     repository_ctx.file("toolchain/clang/BUILD", "\n\n".join(clang) + "\n")
+
+def _nvcc_toolchain_declarations(repo, setting, host_os, version_label = ""):
+    suffix = "-" + version_label if version_label else ""
+    declarations = []
+    for os in ["linux", "windows"]:
+        constraints = ["@platforms//os:" + os]
+        if os == "windows":
+            constraints.append("@platforms//cpu:x86_64")
+        declarations.append(_toolchain_declaration(
+            "nvcc-{}{}-toolchain".format(os, suffix),
+            repo + "//toolchain:nvcc-" + os,
+            "@rules_cuda//cuda:compiler_is_nvcc",
+            setting,
+            constraints,
+        ))
+    declarations.append(
+        'alias(name = "nvcc-{}-toolchain", actual = ":nvcc-{}{}-toolchain", visibility = ["//visibility:public"])'.format(
+            version_label or "local",
+            host_os,
+            suffix,
+        ),
+    )
+    return declarations
 
 template_helper = struct(
     generate_build = _generate_build,

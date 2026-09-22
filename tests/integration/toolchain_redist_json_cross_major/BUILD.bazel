@@ -10,6 +10,7 @@ write_file(
 cuda_library(
     name = "kernel_lib",
     srcs = [":kernel"],
+    rdc = True,
     tags = ["manual"],
     deps = ["@cuda//:cuda_runtime"],
 )
