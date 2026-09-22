@@ -82,22 +82,38 @@ pushd "$this_dir/toolchain_redist_json_cross_major"
         --@rules_cuda//cuda:version=13.0.1 "${redist_platform_args[@]}")
     if ! [[ $cccl_13 == *'/cccl/include/cccl"'* ]]; then exit 1; fi
 
-    default_toolchain=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel query \
-        '@cuda//toolchain:nvcc-local-toolchain' --enable_bzlmod --output=build)
-    if ! [[ $default_toolchain == *'cuda_toolchain_13_0_1//toolchain:nvcc-local'* ]]; then exit 1; fi
-    cuda_12_toolchain=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel query \
-        '@cuda//toolchain:nvcc-12_8_1-toolchain' --enable_bzlmod --output=build)
-    if ! [[ $cuda_12_toolchain == *'cuda_toolchain_12_8_1//toolchain:nvcc-local'* ]]; then exit 1; fi
+    # Both execution OSes must remain available, independently of the client OS.
+    for exec_os in linux windows; do
+        for version in 12_8_1 13_0_1; do
+            versioned_toolchain=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel query \
+                "@cuda//toolchain:nvcc-${exec_os}-${version}-toolchain" --enable_bzlmod --output=build)
+            if ! [[ $versioned_toolchain == *"cuda_toolchain_${version}//toolchain:nvcc-${exec_os}"* ]]; then exit 1; fi
+        done
+        default_toolchain=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel query \
+            "@cuda//toolchain:nvcc-${exec_os}-toolchain" --enable_bzlmod --output=build)
+        if ! [[ $default_toolchain == *"cuda_toolchain_13_0_1//toolchain:nvcc-${exec_os}"* ]]; then exit 1; fi
+    done
+    host_os=linux
+    if [[ ${#redist_platform_args[@]} -gt 0 ]]; then host_os=windows; fi
+    for version in local 12_8_1 13_0_1; do
+        suffix="-${version}"
+        if [[ $version == local ]]; then suffix=; fi
+        host_toolchain=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel query \
+            "@cuda//toolchain:nvcc-${version}-toolchain" --enable_bzlmod --output=build)
+        if ! [[ $host_toolchain == *"//toolchain:nvcc-${host_os}${suffix}-toolchain"* ]]; then exit 1; fi
+    done
 
-    cross_major_args=(--enable_bzlmod --@rules_cuda//cuda:compiler=nvcc "${redist_platform_args[@]}")
+    cross_major_args=(--enable_bzlmod --@rules_cuda//cuda:archs=sm_80 "${redist_platform_args[@]}")
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib \
-        --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}"
+        --@rules_cuda//cuda:compiler=nvcc --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib \
-        --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}"
-    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib --nobuild --enable_bzlmod \
-        --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=12.8.1 "${redist_platform_args[@]}"
-    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib --nobuild --enable_bzlmod \
-        --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=13.0.1 "${redist_platform_args[@]}"
+        --@rules_cuda//cuda:compiler=nvcc --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib \
+        --@rules_cuda//cuda:compiler=nvcc --@rules_cuda//cuda:version= "${cross_major_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib --nobuild \
+        --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib --nobuild \
+        --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}"
     bazel clean && bazel shutdown
 popd
 fi
