@@ -38,7 +38,7 @@ http_archive(
         "-p1",
     ],
     patches = ["@rules_cuda_examples//nccl:nccl-tests-clang.patch"],
-    sha256 = "946adb84f63aec66aea7aab9739d41df81c24f783e85fba6328ba243cfc057e0",
-    strip_prefix = "nccl-tests-1a5f551ffd6e3271982b03a9d5653a3f6ba545fa",
-    urls = ["https://github.com/nvidia/nccl-tests/archive/1a5f551ffd6e3271982b03a9d5653a3f6ba545fa.tar.gz"],
+    sha256 = "50e660d755be93b909c27959e7cb18e7765c30ec8075b994ef358f48dd8d4f1f",
+    strip_prefix = "nccl-tests-a3d4589e8f32f8363c334c52eedad75b44ed8b2d",
+    urls = ["https://github.com/nvidia/nccl-tests/archive/a3d4589e8f32f8363c334c52eedad75b44ed8b2d.tar.gz"],
 )
