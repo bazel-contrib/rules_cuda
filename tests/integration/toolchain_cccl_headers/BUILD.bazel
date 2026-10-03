@@ -1,0 +1,26 @@
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+
+# thrust refuses to compile below C++17 ("Thrust requires at least C++17"), and some CI
+# hosts default to an older standard. This is nvcc's own `-std`, not `-Xcompiler`, so that
+# it governs the device dialect as well as the host pass -- passing only a host flag leaves
+# nvcc compiling the CCCL headers as C++14.
+_COPTS = ["-std=c++17"]
+
+# Through the cccl component's own headers target.
+cuda_library(
+    name = "via_cccl_headers",
+    srcs = ["kernel.cu"],
+    copts = _COPTS,
+    tags = ["manual"],
+    deps = ["@cuda//:cccl_headers"],
+)
+
+# And through the aggregate that wraps every component's headers, which is how most
+# consumers reach them.
+cuda_library(
+    name = "via_cuda_headers",
+    srcs = ["kernel.cu"],
+    copts = _COPTS,
+    tags = ["manual"],
+    deps = ["@cuda//:cuda_headers"],
+)

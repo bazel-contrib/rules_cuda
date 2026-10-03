@@ -1,0 +1,25 @@
+module(name = "bzlmod_cccl_headers")
+
+bazel_dep(name = "rules_cc", version = "0.2.14")
+bazel_dep(name = "rules_cuda", version = "0.0.0")
+local_path_override(
+    module_name = "rules_cuda",
+    path = "../../..",
+)
+
+# ONE version, deliberately: CI overrides it via CUDA_REDIST_VERSION_OVERRIDE, so this case
+# runs against whichever CUDA the job installed and covers both header layouts across the
+# matrix. Declaring two versions here would instead exercise the multi-version toolkit,
+# where `if_cuda_toolkit_version_ge` reads the maximum declared version rather than the
+# selected one -- a separate problem, and not what this is testing.
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.redist_json(
+    name = "cuda_redist",
+    platforms = [
+        "linux-x86_64",
+        "windows-x86_64",
+    ],
+    version = "13.0.2",
+)
+cuda.toolkit(name = "cuda")
+use_repo(cuda, "cuda")
