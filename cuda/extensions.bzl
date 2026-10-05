@@ -265,10 +265,9 @@ def _impl(module_ctx):
                         for platform in SUPPORTED_PLATFORMS
                         if platform in versioned_repos[component_name] and redist_version in versioned_repos[component_name][platform]
                     ]
-                    if not component_platforms:
+                    if len(component_platforms) == 0:
                         continue
-
-                    if len(component_platforms) == 1:
+                    elif len(component_platforms) == 1:
                         exact_components_mapping[component_name] = "@" + versioned_repos[component_name][component_platforms[0]][redist_version]
                     else:
                         alias_name = "{}_{}_toolchain_{}".format(toolkit.name, component_name, version_label)
