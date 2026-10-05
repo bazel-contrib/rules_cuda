@@ -170,6 +170,10 @@ def register_detected_cuda_toolchains():
     """Helper to register the automatically detected CUDA toolchain(s).
 
 User can setup their own toolchain if needed and ignore the detected ones by not calling this macro.
+
+Recursive registration only includes toolchain rules. Bazel filters out the
+implementation rules, config_settings, and aliases in these packages; explicitly
+registering a non-toolchain target instead would be an error.
 """
     native.register_toolchains(
         "@cuda//toolchain/...",
