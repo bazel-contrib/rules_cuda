@@ -64,7 +64,7 @@ def _component_owns_cuda_repo_alias(component, target, components):
         return component == "nvvm"
     return True
 
-def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable, defs_label):
+def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable):
     # stitch template fragment
     fragments = [
         Label("//cuda/private:templates/BUILD.cuda_shared"),
@@ -87,6 +87,9 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
         fail("unreachable")
 
     template_content = []
+    if not is_cuda_repo or not is_deliverable:
+        # Only components and local toolkits evaluate version-dependent fragments.
+        template_content.append('load("//:defs.bzl", "additional_header_deps", "any_or_first", "if_cuda_toolkit_version_ge", "if_local_cuda_toolkit")')
     for frag in fragments:
         if type(frag) == type(""):
             template_content.append(frag)
@@ -113,12 +116,11 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
 
     substitutions = {
         "%{component_name}": "cuda" if is_cuda_repo else components.keys()[0],
-        "%{defs_label}": defs_label,
         "%{libpath}": libpath,
     }
     repository_ctx.template("BUILD", template_path, substitutions = substitutions, executable = False)
 
-def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = True, is_deliverable = False, defs_label = "//:defs.bzl"):
+def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = True, is_deliverable = False):
     """Generate `@cuda//BUILD` or `@cuda_<component>//BUILD`
 
     Notes:
@@ -143,7 +145,7 @@ def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = T
                 if c not in REGISTRY:
                     fail("{} is not a valid component")
 
-    _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable, defs_label)
+    _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable)
 
 def _generate_defs_bzl(repository_ctx, version_major, version_minor, is_local_ctk):
     tpl_label = Label("//cuda/private:templates/defs.bzl.tpl")

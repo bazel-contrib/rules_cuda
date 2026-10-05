@@ -211,7 +211,7 @@ def detect_cuda_toolkit(repository_ctx):
         return _detect_local_cuda_toolkit(repository_ctx)
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
-    """Generate `@cuda//BUILD` and `@cuda//defs.bzl` and `@cuda//toolchain/BUILD`
+    """Generate toolkit BUILD files, version helpers, and toolchain declarations.
 
     Args:
         repository_ctx: repository_ctx
@@ -250,14 +250,12 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
             is_deliverable = True,
         )
 
-    # Generate @cuda//defs.bzl
-    template_helper.generate_defs_bzl(repository_ctx, cuda.version_major, cuda.version_minor, is_local_ctk == True)
-
     # Generate toolchain implementations, or the stable @cuda facade that points at
     # independently generated implementations for each configured toolkit version.
     if repository_ctx.attr.toolchain_repositories:
         template_helper.generate_toolchain_facade(repository_ctx)
     else:
+        template_helper.generate_defs_bzl(repository_ctx, cuda.version_major, cuda.version_minor, is_local_ctk == True)
         template_helper.generate_toolchain_build(repository_ctx, cuda)
 
 def detect_clang(repository_ctx):
@@ -438,13 +436,11 @@ def _cuda_component_impl(repository_ctx):
     _patch_nvvm(repository_ctx, component_name)
 
     toolkit_version = repository_ctx.attr.toolkit_version or repository_ctx.attr.version
-    defs_label = "//:defs.bzl" if toolkit_version else "@cuda//:defs.bzl"
 
     template_helper.generate_build(
         repository_ctx,
         libpath = "lib",
         components = {component_name: repository_ctx.name},
-        defs_label = defs_label,
         is_cuda_repo = False,
         is_deliverable = True,
     )
@@ -454,6 +450,11 @@ def _cuda_component_impl(repository_ctx):
         if len(version_parts) < 2:
             fail("toolkit_version must contain at least a major and minor version")
         template_helper.generate_defs_bzl(repository_ctx, version_parts[0], version_parts[1], False)
+    else:
+        # Manual components without version metadata inherit the toolkit's helpers.
+        # Versioned components must keep their own helpers to avoid using the
+        # public facade's maximum version for load-time BUILD decisions.
+        repository_ctx.symlink(Label("@cuda//:defs.bzl"), "defs.bzl")
 
     desc_name = repository_ctx.attr.descriptive_name or repository_ctx.attr.component_name
     repository_ctx.file(
