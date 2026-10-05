@@ -16,6 +16,7 @@ cuda.toolkit(
 use_repo(cuda, "cuda")
 
 register_toolchains(
+    # Recursive registration filters out non-toolchain rules and aliases.
     "@cuda//toolchain/...",
 )
 
