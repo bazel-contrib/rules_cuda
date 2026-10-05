@@ -3,21 +3,32 @@ cicc_bin = any_or_first(
     "%{component_name}/nvvm/bin/cicc.exe",
 )
 
+# CUDA 13 moved these files out of the nvcc archive into the nvvm component.
+# Keep the aliases in nvcc repos for compatibility with the component registry.
+nvvm_is_dummy = "%{component_name}" == "nvcc" and if_cuda_toolkit_version_ge(
+    (13, 0),
+    True,
+    False,
+)
+
 # Export individual files as simple target names
-exports_files([
-    cicc_bin,
-    "%{component_name}/nvvm/libdevice/libdevice.10.bc",
-], visibility = ["//visibility:public"])
+exports_files(
+    [
+        cicc_bin,
+        "%{component_name}/nvvm/libdevice/libdevice.10.bc",
+    ] if not nvvm_is_dummy else [],
+    visibility = ["//visibility:public"],
+)
 
 # Create aliases with simple names for toolchain compatibility
 alias(
     name = "cicc",
-    actual = cicc_bin,
+    actual = "@rules_cuda//cuda/dummy:cicc" if nvvm_is_dummy else cicc_bin,
 )
 
 alias(
     name = "libdevice.10.bc",
-    actual = "%{component_name}/nvvm/libdevice/libdevice.10.bc",
+    actual = "@rules_cuda//cuda/dummy:libdevice.10.bc" if nvvm_is_dummy else "%{component_name}/nvvm/libdevice/libdevice.10.bc",
 )
 
 # Alias for generic libdevice name
