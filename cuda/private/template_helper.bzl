@@ -82,7 +82,7 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
         fragments.append(_expand_dctk_component(repository_ctx, comp))
         fragments.append(Label("//cuda/private:templates/BUILD.{}".format(comp)))
         if comp == "nvcc":
-            fragments.append(Label("//cuda/private:templates/BUILD.nvcc_nvvm_embedded"))
+            fragments.append(Label("//cuda/private:templates/BUILD.nvvm"))
     else:
         fail("unreachable")
 
