@@ -108,6 +108,12 @@ pushd "$this_dir/toolchain_none"
     # use library should analyse build successfully (empty cuda_runtime target exists)
     bazel build //:use_library
 
+    # every @cuda target loads, so query works through select() branches that name them
+    bazel query 'deps(//:optionally_use_library)'
+    bazel build //:optionally_use_library --@rules_cuda//cuda:enable=False
+    ERR=$(bazel build //:optionally_use_library --@rules_cuda//cuda:enable=True 2>&1 || true)
+    if ! [[ $ERR =~ "is incompatible" ]]; then exit 1; fi
+
     # use rule analyses correctly but fails during compilation because cuda toolkit doesn't exist
     ERR=$(bazel build //:use_rule 2>&1 || true)
     # nvcc toolchain fails with "nvcc of cuda toolkit does not exist", clang toolchain fails with "cannot find CUDA installation"
