@@ -7,6 +7,18 @@ cc_library(
     deps = ["@cuda//:cuda_runtime"],
 )
 
+cc_library(
+    name = "optionally_use_library",
+    tags = ["manual"],
+    deps = select({
+        "@rules_cuda//cuda:is_enabled": [
+            "@cuda//:cuda_headers",
+            "@cuda//:cuda_runtime_static",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
 cuda_library(
     name = "use_rule",
     srcs = ["@rules_cuda_examples//basic:kernel.cu"],

@@ -239,6 +239,42 @@ def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = T
 
     _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable)
 
+# Targets a generated `@cuda` repo defines besides the REGISTRY ones.
+_CUDA_REPO_TARGETS = ["cuda_all_files", "cuda_device_runtime_static_libs", "cuda_headers", "cuda_license"]
+
+def _generate_disabled_build(repository_ctx):
+    """Generate `@cuda//BUILD` when no CUDA Toolkit is found
+
+    Besides the targets the disabled toolchain needs, it declares an incompatible
+    placeholder for every other target an enabled `@cuda` exposes, so `select()`
+    branches naming them still load in `bazel query`.
+
+    Args:
+        repository_ctx: repository_ctx
+    """
+    content = repository_ctx.read(Label("//cuda/private:templates/BUILD.cuda_disabled"))
+    names = {name: None for name in _CUDA_REPO_TARGETS}
+    for targets in REGISTRY.values():
+        for name in targets:
+            names[name] = None
+    placeholders = sorted([name for name in names if 'name = "{}"'.format(name) not in content])
+    lines = [
+        content,
+        "# Placeholders for the targets an enabled @cuda repo exposes.",
+        "[",
+        "    filegroup(",
+        "        name = name,",
+        "        srcs = [],",
+        "        target_compatible_with = [\"@platforms//:incompatible\"],",
+        "    )",
+        "    for name in [",
+    ] + ['        "{}",'.format(name) for name in placeholders] + [
+        "    ]",
+        "]",
+        "",
+    ]
+    repository_ctx.file("BUILD", content = "\n".join(lines), executable = False)
+
 def _generate_defs_bzl(repository_ctx, version_major, version_minor, is_local_ctk):
     tpl_label = Label("//cuda/private:templates/defs.bzl.tpl")
     substitutions = {
@@ -467,6 +503,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
 
 template_helper = struct(
     generate_build = _generate_build,
+    generate_disabled_build = _generate_disabled_build,
     generate_defs_bzl = _generate_defs_bzl,
     generate_redist_bzl = _generate_redist_bzl,
     generate_toolchain_build = _generate_toolchain_build,
