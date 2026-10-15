@@ -9,8 +9,6 @@ load(
 
 package(default_visibility = ["//toolchain:__pkg__"])
 
-# %{toolkit_version_config_settings}
-
 cuda_toolkit_info(
     name = "cuda-toolkit",
     bin2c = "%{bin2c_label}",
@@ -22,7 +20,7 @@ cuda_toolkit_info(
     # %{device_runtime_static_libs_line}
     path = "%{cuda_path}",
     ptxas = "%{ptxas_label}",
-    # %{cuda_version_line}
+    version = "%{cuda_version}",
 )
 
 cuda_toolchain_config(

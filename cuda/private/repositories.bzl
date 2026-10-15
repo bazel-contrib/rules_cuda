@@ -164,7 +164,10 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
 
     cicc = None
     libdevice = None
-    if "nvvm" in repository_ctx.attr.components_mapping:
+    if int(cuda_version_major) < 13:
+        cicc = "{}//:cicc".format(nvcc_repo)
+        libdevice = "{}//:libdevice.10.bc".format(nvcc_repo)
+    elif "nvvm" in repository_ctx.attr.components_mapping:
         nvvm_repo = repository_ctx.attr.components_mapping["nvvm"]
         cicc = "{}//:cicc".format(nvvm_repo)
         libdevice = "{}//:libdevice.10.bc".format(nvvm_repo)
@@ -208,7 +211,7 @@ def detect_cuda_toolkit(repository_ctx):
         return _detect_local_cuda_toolkit(repository_ctx)
 
 def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
-    """Generate `@cuda//BUILD` and `@cuda//defs.bzl` and `@cuda//toolchain/BUILD`
+    """Generate toolkit BUILD files, version helpers, and toolchain declarations.
 
     Args:
         repository_ctx: repository_ctx
@@ -247,11 +250,13 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
             is_deliverable = True,
         )
 
-    # Generate @cuda//defs.bzl
-    template_helper.generate_defs_bzl(repository_ctx, cuda.version_major, cuda.version_minor, is_local_ctk == True)
-
-    # Generate @cuda//toolchain/BUILD
-    template_helper.generate_toolchain_build(repository_ctx, cuda)
+    # Generate toolchain implementations, or the stable @cuda facade that points at
+    # independently generated implementations for each configured toolkit version.
+    if repository_ctx.attr.toolchain_repositories:
+        template_helper.generate_toolchain_facade(repository_ctx)
+    else:
+        template_helper.generate_defs_bzl(repository_ctx, cuda.version_major, cuda.version_minor, is_local_ctk == True)
+        template_helper.generate_toolchain_build(repository_ctx, cuda)
 
 def detect_clang(repository_ctx):
     """Detect local clang installation.
@@ -309,8 +314,9 @@ def config_clang(repository_ctx, cuda, clang_path_or_label):
     if len(repository_ctx.attr.components_mapping) != 0:
         is_local_ctk = False
 
-    # Generate @cuda//toolchain/clang/BUILD
-    template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label)
+    # The versioned facade generated above includes its own clang declarations.
+    if not repository_ctx.attr.toolchain_repositories:
+        template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label)
 
 def config_disabled(repository_ctx):
     repository_ctx.symlink(Label("//cuda/private:templates/BUILD.toolchain_disabled"), "toolchain/disabled/BUILD")
@@ -336,11 +342,8 @@ cuda_toolkit = repository_rule(
         "nvcc_version": attr.string(
             doc = "nvcc version. Required for deliverable toolkit only. Fallback to version if omitted.",
         ),
-        "toolkit_versions": attr.string_list(
-            doc = "All cuda toolkit versions reachable through the component aliases, i.e. every " +
-                  "version declared with `cuda.redist_json`. When more than one is present, the " +
-                  "generated toolchain selects among them on @rules_cuda//cuda:version instead of " +
-                  "hardcoding `version`.",
+        "toolchain_repositories": attr.string_dict(
+            doc = "Internal mapping from exact CUDA versions to repositories containing their toolchain implementations.",
         ),
     },
     configure = True,
@@ -432,6 +435,8 @@ def _cuda_component_impl(repository_ctx):
     _patch_nvcc_profile_post(repository_ctx, patch_nvcc_profile)
     _patch_nvvm(repository_ctx, component_name)
 
+    toolkit_version = repository_ctx.attr.toolkit_version or repository_ctx.attr.version
+
     template_helper.generate_build(
         repository_ctx,
         libpath = "lib",
@@ -439,6 +444,17 @@ def _cuda_component_impl(repository_ctx):
         is_cuda_repo = False,
         is_deliverable = True,
     )
+
+    if toolkit_version:
+        version_parts = toolkit_version.split(".")
+        if len(version_parts) < 2:
+            fail("toolkit_version must contain at least a major and minor version")
+        template_helper.generate_defs_bzl(repository_ctx, version_parts[0], version_parts[1], False)
+    else:
+        # Manual components without version metadata inherit the toolkit's helpers.
+        # Versioned components must keep their own helpers to avoid using the
+        # public facade's maximum version for load-time BUILD decisions.
+        repository_ctx.symlink(Label("@cuda//:defs.bzl"), "defs.bzl")
 
     desc_name = repository_ctx.attr.descriptive_name or repository_ctx.attr.component_name
     repository_ctx.file(
@@ -496,6 +512,9 @@ cuda_component = repository_rule(
                   "If all downloads fail, the rule will fail.",
         ),
         "version": attr.string(doc = "A unique version number for component. Store in version.json file"),
+        "toolkit_version": attr.string(
+            doc = "CUDA Toolkit release containing this component. Used for version-gated BUILD evaluation.",
+        ),
     },
 )
 

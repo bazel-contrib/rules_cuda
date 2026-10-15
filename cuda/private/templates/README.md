@@ -14,6 +14,11 @@
 
 ## Repository organization
 
+For Bzlmod redistribution toolkits, see the
+[versioned repository hierarchy](../../../docs/mkdocs/developer/toolchain_repositories.md).
+The public `@cuda` facade exposes aliases and toolchain declarations without its
+own version helpers; those belong to the component and implementation repositories.
+
 We organize the generated repo as follows, for both `cuda` and `cuda_<component_repo_name>`
 
 ```

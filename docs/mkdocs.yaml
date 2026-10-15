@@ -14,6 +14,13 @@ theme:
 extra_css:
   - stylesheets/extra.css
 
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
 extra:
   version:
     # we are not actually using mike
@@ -26,5 +33,6 @@ nav:
       - Using the rules: user/user_docs.md
       - Configure the toolchain: user/toolchain_config_docs.md
   - Developer:
+      - Toolchain Repositories: developer/toolchain_repositories.md
       - Providers: developer/providers_docs.md
       - Rule Authoring: developer/developer_docs.md

@@ -58,9 +58,8 @@ fi
 PLATFORMS_PKG="@rules_cuda//tests/integration/platforms"
 AARCH64_CC_TC="${PLATFORMS_PKG}:aarch64_linux_cc_toolchain"
 X86_64_LINUX_CC_TC="${PLATFORMS_PKG}:x86_64_linux_cc_toolchain"
-# Hermetic deliverable toolkits expose this target; MODULE only registers the
-# host alias (nvcc-local-toolchain). A non-Linux host needs the Linux toolchain
-# registered explicitly for remote execution.
+# Select the Linux declaration explicitly for remote execution,
+# independently of the Bazel client's OS.
 NVCC_LINUX_TC="@cuda//toolchain:nvcc-linux-toolchain"
 
 assert_redist_platforms() {
