@@ -1,6 +1,13 @@
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("//cuda/private:cuda_helper.bzl", "cuda_helper")
 load("//cuda/private:providers.bzl", "CudaArchsInfo")
+
+def runtime_label_flag(name, build_setting_default):
+    """Declare the runtime flag with exec propagation where Bazel supports it."""
+
+    scope = {"scope": "universal"} if bazel_features.rules.label_build_setting_has_scope else {}
+    native.label_flag(name = name, build_setting_default = build_setting_default, **scope)
 
 def _cuda_archs_flag_impl(ctx):
     specs_str = ctx.build_setting_value
