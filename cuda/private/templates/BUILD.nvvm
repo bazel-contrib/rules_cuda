@@ -3,7 +3,7 @@ cicc_bin = any_or_first(
     "%{component_name}/nvvm/bin/cicc.exe",
 )
 
-# CUDA 13 moved these files out of the nvcc archive into the nvvm component.
+# CUDA 13 moved cicc and libdevice from the nvcc archive to the nvvm component.
 # Keep the aliases in nvcc repos for compatibility with the component registry.
 nvvm_is_dummy = "%{component_name}" == "nvcc" and if_cuda_toolkit_version_ge(
     (13, 0),

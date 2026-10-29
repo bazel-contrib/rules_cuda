@@ -56,8 +56,7 @@ if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$(uname -s 2>/dev/null)" =~ MINGW|MSYS
     )
 fi
 
-# Component BUILD files are evaluated in the component repository's own CUDA
-# version context. In particular, CCCL moved its public include root in CUDA 13.
+# Check each release's CCCL include path across the CUDA 12/13 layout change.
 if [ "$skip_redist_json_cross_major" = false ]; then
 cat <<- EOF
 
@@ -277,10 +276,8 @@ pushd "$this_dir/toolchain_redist_json_multi"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=True "${redist_platform_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
-    # Explicit versions are analysis-only: the CI host compiler can be outside an
-    # older toolkit's support window or emit PTX newer than that toolkit accepts.
-    # Analysis still exercises exact toolchain resolution without coupling this
-    # test to the host compiler/toolkit compatibility window.
+    # Use analysis-only checks for older releases: CI's compiler may be unsupported
+    # or emit PTX those toolkits cannot consume.
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --nobuild --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=12.6.3 "${redist_platform_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --nobuild --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=11.7.0 "${redist_platform_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:use_library "${redist_platform_args[@]}"

@@ -252,9 +252,8 @@ def _impl(module_ctx):
         if components_mapping != None:
             sorted_redist_versions = sorted(redist_versions, key = _version_sort_key)
 
-            # Generate a static implementation repository for each toolkit version. Each
-            # repository receives component aliases fixed to that version, so load-time
-            # BUILD decisions and compiler-file ownership cannot leak from another CUDA.
+            # Keep BUILD-time version checks and compiler inputs in the same release
+            # by generating one implementation repository per toolkit version.
             toolchain_repositories = {}
             for redist_version in sorted_redist_versions:
                 exact_components_mapping = {}
@@ -293,11 +292,10 @@ def _impl(module_ctx):
                 )
                 toolchain_repositories[redist_version] = "@" + toolchain_repo_name
 
-            # Always use the maximum version so the public toolkit facade includes all components.
-            # Components that don't exist in older versions will fall back to dummy.
+            # Use the highest declared release as the facade's default.
             toolkit_version = sorted_redist_versions[-1]
 
-            # The facade selects a fixed implementation on @rules_cuda//cuda:version.
+            # The facade selects an implementation using @rules_cuda//cuda:version.
             cuda_toolkit(
                 name = toolkit.name,
                 components_mapping = components_mapping,

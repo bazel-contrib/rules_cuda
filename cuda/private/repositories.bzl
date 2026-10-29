@@ -250,8 +250,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
             is_deliverable = True,
         )
 
-    # Generate toolchain implementations, or the stable @cuda facade that points at
-    # independently generated implementations for each configured toolkit version.
+    # Generate either a version-selecting facade or a concrete implementation.
     if repository_ctx.attr.toolchain_repositories:
         template_helper.generate_toolchain_facade(repository_ctx)
     else:
@@ -314,7 +313,7 @@ def config_clang(repository_ctx, cuda, clang_path_or_label):
     if len(repository_ctx.attr.components_mapping) != 0:
         is_local_ctk = False
 
-    # The versioned facade generated above includes its own clang declarations.
+    # The facade already declares its Clang toolchains.
     if not repository_ctx.attr.toolchain_repositories:
         template_helper.generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label)
 
@@ -452,8 +451,6 @@ def _cuda_component_impl(repository_ctx):
         template_helper.generate_defs_bzl(repository_ctx, version_parts[0], version_parts[1], False)
     else:
         # Manual components without version metadata inherit the toolkit's helpers.
-        # Versioned components must keep their own helpers to avoid using the
-        # public facade's maximum version for load-time BUILD decisions.
         repository_ctx.symlink(Label("@cuda//:defs.bzl"), "defs.bzl")
 
     desc_name = repository_ctx.attr.descriptive_name or repository_ctx.attr.component_name
