@@ -170,9 +170,10 @@ def register_detected_cuda_toolchains():
     """Helper to register the automatically detected CUDA toolchain(s).
 
 User can setup their own toolchain if needed and ignore the detected ones by not calling this macro.
+
+Recursive registration includes only toolchain rules, skipping implementations,
+config_settings, and aliases. Explicit labels must resolve to toolchain declarations.
 """
     native.register_toolchains(
-        "@cuda//toolchain:nvcc-local-toolchain",
-        "@cuda//toolchain/clang:clang-local-toolchain",
-        "@cuda//toolchain/disabled:disabled-local-toolchain",
+        "@cuda//toolchain/...",
     )
