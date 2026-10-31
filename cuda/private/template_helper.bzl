@@ -21,105 +21,6 @@ def _expand_template(repository_ctx, tpl_label, substitutions):
 def _version_label(version):
     return version.replace(".", "_").replace("-", "_")
 
-def _major_minor(version):
-    """Split a version into its (major, minor) pair, or None if it has neither.
-
-    Args:
-        version: A version string such as "12.8.1" or "11.5.1-1ubuntu1".
-
-    Returns:
-        A (major, minor) tuple of strings, or None if `version` is not of that shape.
-    """
-    parts = version.split("-", 1)[0].split(".")
-    if len(parts) < 2 or not parts[0].isdigit() or not parts[1].isdigit():
-        return None
-    return (parts[0], parts[1])
-
-def _versions_to_select_on(toolkit_versions):
-    """The versions a toolchain attribute can be selected on.
-
-    A single version needs no select at all, and one whose major/minor cannot be parsed
-    has nothing to compare against `--@rules_cuda//cuda:version`, so both are dropped.
-
-    Args:
-        toolkit_versions: Every version declared with `cuda.redist_json`.
-
-    Returns:
-        The versions to emit a select branch for, or [] to keep the attribute a literal.
-    """
-    if not toolkit_versions or len(toolkit_versions) < 2:
-        return []
-    return [v for v in toolkit_versions if _major_minor(v) != None]
-
-def _version_config_settings(toolkit_versions):
-    """config_settings matching `--@rules_cuda//cuda:version`, one per declared version.
-
-    Emitted into the same package as the selects that read them.
-
-    Args:
-        toolkit_versions: The versions returned by `_versions_to_select_on`.
-
-    Returns:
-        The config_setting definitions, or "" when no select is needed.
-    """
-    if not toolkit_versions:
-        return ""
-
-    lines = []
-    for version in toolkit_versions:
-        lines.extend([
-            "config_setting(",
-            '    name = "toolkit_version_is_{}",'.format(_version_label(version)),
-            '    flag_values = {{"@rules_cuda//cuda:version": "{}"}},'.format(version),
-            ")",
-            "",
-        ])
-    return "\n".join(lines).rstrip("\n")
-
-def _substitute_version_config_settings(substitutions, toolkit_versions):
-    """Add the config_setting substitution, keyed so an empty value leaves no blank line.
-
-    The placeholder sits on its own line in the template. Substituting an empty string
-    would leave that line blank, so when there is nothing to emit the surrounding newlines
-    are consumed along with it.
-
-    Args:
-        substitutions: The substitution dict to add to.
-        toolkit_versions: The versions returned by `_versions_to_select_on`.
-    """
-    config_settings = _version_config_settings(toolkit_versions)
-    if config_settings:
-        substitutions["# %{toolkit_version_config_settings}"] = config_settings
-    else:
-        substitutions["\n# %{toolkit_version_config_settings}\n"] = ""
-
-def _version_select(attr_name, toolkit_versions, value_of_version, default_value):
-    """An attribute assignment selecting its value on the active CUDA version.
-
-    Args:
-        attr_name: Name of the attribute to assign.
-        toolkit_versions: The versions returned by `_versions_to_select_on`.
-        value_of_version: Callback mapping a version to its already-quoted attribute value.
-        default_value: Already-quoted value used when `cuda:version` is unset, which
-            leaves the toolchain reporting the same version the component aliases
-            resolve to by default (the maximum declared one).
-
-    Returns:
-        Either `attr = <default>,` or `attr = select({...}),`.
-    """
-    if not toolkit_versions:
-        return "{} = {},".format(attr_name, default_value)
-
-    lines = ["{} = select({{".format(attr_name)]
-    for version in toolkit_versions:
-        lines.append('    ":toolkit_version_is_{}": {},'.format(
-            _version_label(version),
-            value_of_version(version),
-        ))
-    lines.append('    "//conditions:default": {},'.format(default_value))
-    lines.append("}),")
-    return "\n    ".join(lines)
-
 def _expand_lctk_cuda(repository_ctx, components):
     tpl_label = Label("//cuda/private:templates/BUILD.lctk_cuda")
     substitutions = {
@@ -168,6 +69,8 @@ def _expand_dctk_component(repository_ctx, component):
 def _component_owns_cuda_repo_alias(component, target, components):
     if target == "culibos_a" and "culibos" in components:
         return component == "culibos"
+    if target in ["cicc", "libdevice", "libdevice.10.bc"] and "nvvm" in components:
+        return component == "nvvm"
     return True
 
 def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable):
@@ -187,10 +90,15 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
         comp = components.keys()[0]
         fragments.append(_expand_dctk_component(repository_ctx, comp))
         fragments.append(Label("//cuda/private:templates/BUILD.{}".format(comp)))
+        if comp == "nvcc":
+            fragments.append(Label("//cuda/private:templates/BUILD.nvvm"))
     else:
         fail("unreachable")
 
     template_content = []
+    if not is_cuda_repo or not is_deliverable:
+        # Only components and local toolkits evaluate version-dependent fragments.
+        template_content.append('load("//:defs.bzl", "additional_header_deps", "any_or_first", "if_cuda_toolkit_version_ge", "if_local_cuda_toolkit")')
     for frag in fragments:
         if type(frag) == type(""):
             template_content.append(frag)
@@ -248,6 +156,42 @@ def _generate_build(repository_ctx, libpath, components = None, is_cuda_repo = T
 
     _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable)
 
+# Targets a generated `@cuda` repo defines besides the REGISTRY ones.
+_CUDA_REPO_TARGETS = ["cuda_all_files", "cuda_device_runtime_static_libs", "cuda_headers", "cuda_license"]
+
+def _generate_disabled_build(repository_ctx):
+    """Generate `@cuda//BUILD` when no CUDA Toolkit is found
+
+    Besides the targets the disabled toolchain needs, it declares an incompatible
+    placeholder for every other target an enabled `@cuda` exposes, so `select()`
+    branches naming them still load in `bazel query`.
+
+    Args:
+        repository_ctx: repository_ctx
+    """
+    content = repository_ctx.read(Label("//cuda/private:templates/BUILD.cuda_disabled"))
+    names = {name: None for name in _CUDA_REPO_TARGETS}
+    for targets in REGISTRY.values():
+        for name in targets:
+            names[name] = None
+    placeholders = sorted([name for name in names if 'name = "{}"'.format(name) not in content])
+    lines = [
+        content,
+        "# Placeholders for the targets an enabled @cuda repo exposes.",
+        "[",
+        "    filegroup(",
+        "        name = name,",
+        "        srcs = [],",
+        "        target_compatible_with = [\"@platforms//:incompatible\"],",
+        "    )",
+        "    for name in [",
+    ] + ['        "{}",'.format(name) for name in placeholders] + [
+        "    ]",
+        "]",
+        "",
+    ]
+    repository_ctx.file("BUILD", content = "\n".join(lines), executable = False)
+
 def _generate_defs_bzl(repository_ctx, version_major, version_minor, is_local_ctk):
     tpl_label = Label("//cuda/private:templates/defs.bzl.tpl")
     substitutions = {
@@ -277,6 +221,7 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
         strip_prefix = {strip_prefix},
         urls = {urls},
         version = "{version}",
+        toolkit_version = "{toolkit_version}",
     )"""
 
     for spec in component_specs:
@@ -291,6 +236,7 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
                 strip_prefix = repr(spec["strip_prefix"]),
                 urls = repr(spec["urls"]),
                 version = spec["version"],
+                toolkit_version = redist_version,
             ),
         )
         mapping[spec["component_name"]] = "@" + repo_name
@@ -304,11 +250,7 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
     repository_ctx.template("redist.bzl", tpl_label, substitutions = substitutions, executable = False)
 
 def _generate_toolchain_build(repository_ctx, cuda):
-    tpl_label = Label(
-        "//cuda/private:templates/BUILD.toolchain_" +
-        ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
-    )
-    compiler_files = ["@cuda//:compiler_deps"]
+    compiler_files = ["//:compiler_deps"]
     if cuda.cicc_label != None:
         compiler_files.append(cuda.cicc_label)
     if cuda.libdevice_label != None:
@@ -316,46 +258,64 @@ def _generate_toolchain_build(repository_ctx, cuda):
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
     device_runtime_static_libs_line = "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","
 
-    select_versions = _versions_to_select_on(repository_ctx.attr.toolkit_versions)
     substitutions = {
         "# %{compiler_files_line}": compiler_files_line,
         "# %{device_runtime_static_libs_line}": device_runtime_static_libs_line,
         "%{cuda_path}": _to_forward_slash(cuda.path) if cuda.path else "cuda-not-found",
-        "# %{cuda_version_line}": _version_select(
-            "version",
-            select_versions,
-            lambda v: '"{}.{}"'.format(*_major_minor(v)),
-            '"{}.{}"'.format(cuda.version_major, cuda.version_minor),
-        ),
-        "# %{nvcc_version_major_line}": _version_select(
-            "nvcc_version_major",
-            select_versions,
-            lambda v: _major_minor(v)[0],
-            str(cuda.nvcc_version_major),
-        ),
-        "# %{nvcc_version_minor_line}": _version_select(
-            "nvcc_version_minor",
-            select_versions,
-            lambda v: _major_minor(v)[1],
-            str(cuda.nvcc_version_minor),
-        ),
+        "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
+        "# %{nvcc_version_major_line}": "nvcc_version_major = {},".format(cuda.nvcc_version_major),
+        "# %{nvcc_version_minor_line}": "nvcc_version_minor = {},".format(cuda.nvcc_version_minor),
         "%{nvcc_label}": cuda.nvcc_label,
         "%{nvlink_label}": cuda.nvlink_label,
         "%{link_stub_label}": cuda.link_stub_label,
         "%{bin2c_label}": cuda.bin2c_label,
         "%{fatbinary_label}": cuda.fatbinary_label,
         "%{ptxas_label}": cuda.ptxas_label,
+        "%{env_tmp}": _to_forward_slash(repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", ""))),
     }
     if cuda.cicc_label:
         substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
     if cuda.libdevice_label:
         substitutions["# %{libdevice_line}"] = "libdevice = " + repr(cuda.libdevice_label)
-    _substitute_version_config_settings(substitutions, select_versions)
 
-    env_tmp = repository_ctx.os.environ.get("TMP", repository_ctx.os.environ.get("TEMP", None))
-    if env_tmp != None:
-        substitutions["%{env_tmp}"] = _to_forward_slash(env_tmp)
+    if cuda.path != None:
+        _generate_local_toolchain_build(repository_ctx, substitutions)
+    else:
+        _generate_redist_toolchain_build(repository_ctx, substitutions)
+
+def _generate_local_toolchain_build(repository_ctx, substitutions):
+    tpl_label = Label(
+        "//cuda/private:templates/BUILD.toolchain_" +
+        ("nvcc" if _is_linux(repository_ctx) else "nvcc_msvc"),
+    )
     repository_ctx.template("toolchain/BUILD", tpl_label, substitutions = substitutions, executable = False)
+
+def _generate_redist_toolchain_build(repository_ctx, substitutions):
+    # Generate toolchain/nvcc and toolchain/nvcc_msvc packages, with aliases
+    # in toolchain/BUILD preserving the Linux, Windows, and host-default labels.
+    aliases = {"cuda-toolkit": "//toolchain/nvcc:cuda-toolkit"}
+    for os, compiler in [("linux", "nvcc"), ("windows", "nvcc_msvc")]:
+        repository_ctx.template(
+            "toolchain/{}/BUILD".format(compiler),
+            Label("//cuda/private:templates/BUILD.toolchain_" + compiler),
+            substitutions = substitutions,
+            executable = False,
+        )
+        for suffix in ["", "-config", "-toolchain"]:
+            aliases["nvcc-" + os + suffix] = "//toolchain/{}:nvcc-local{}".format(compiler, suffix)
+    aliases["nvcc-local-toolchain"] = ":nvcc-linux-toolchain" if _is_linux(repository_ctx) else ":nvcc-windows-toolchain"
+    repository_ctx.file(
+        "toolchain/BUILD",
+        content = "\n\n".join([
+            "alias(name = {}, actual = {}, visibility = [{}])".format(
+                repr(name),
+                repr(actual),
+                repr("//visibility:public" if name.endswith("-toolchain") else "//visibility:private"),
+            )
+            for name, actual in aliases.items()
+        ]) + "\n",
+        executable = False,
+    )
 
 def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     tpl_label = Label("//cuda/private:templates/BUILD.toolchain_clang")
@@ -384,26 +344,25 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     cuda_path_for_subst = ""
     path_data = None
     if cuda.path:  # local installation
-        compiler_files.append("@cuda//:compiler_deps")
+        compiler_files.append("//:compiler_deps")
         cuda_path_for_subst = _to_forward_slash(cuda.path)
     else:  # scattered components
-        cuda_path_for_subst = "$(location @cuda//:compiler_root)"
-        path_data = ["@cuda//:compiler_root"]
+        cuda_path_for_subst = "$(location //:compiler_root)"
+        path_data = ["//:compiler_root"]
         compiler_files.extend([
-            "@cuda//:nvcc_all_files",
-            "@cuda//:cccl_all_files",
-            "@cuda//:cudart_all_files",
-            "@cuda//:curand_all_files",
+            "//:nvcc_all_files",
+            "//:cccl_all_files",
+            "//:cudart_all_files",
+            "//:curand_all_files",
         ])
         if int(cuda.version_major) >= 13:
             compiler_files.extend([
-                "@cuda//:nvvm_all_files",
+                "//:nvvm_all_files",
             ])
     path_data_line = "path_data = " + repr(path_data) + ","
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
     device_runtime_static_libs_line = "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","
 
-    select_versions = _versions_to_select_on(repository_ctx.attr.toolkit_versions)
     substitutions = {
         "# %{compiler_attribute_line}": compiler_attr_line,
         "# %{compiler_files_line}": compiler_files_line,
@@ -412,12 +371,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{clang_label}": clang_label_for_subst,  # Will be empty if path is used
         "%{cuda_path}": cuda_path_for_subst,
         "# %{path_data_line}": path_data_line,
-        "# %{cuda_version_line}": _version_select(
-            "version",
-            select_versions,
-            lambda v: '"{}.{}"'.format(*_major_minor(v)),
-            '"{}.{}"'.format(cuda.version_major, cuda.version_minor),
-        ),
+        "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_label}": cuda.nvcc_label,
         "%{nvlink_label}": cuda.nvlink_label,
         "%{link_stub_label}": cuda.link_stub_label,
@@ -429,7 +383,6 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
     if cuda.libdevice_label:
         substitutions["# %{libdevice_line}"] = "libdevice = " + repr(cuda.libdevice_label)
-    _substitute_version_config_settings(substitutions, select_versions)
 
     if clang_label_for_subst:
         substitutions.pop("%{clang_path}")
@@ -443,10 +396,105 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         executable = False,
     )
 
+def _toolchain_declaration(name, implementation, compiler_setting, version_setting, exec_constraints = []):
+    lines = [
+        "toolchain(",
+        '    name = "{}",'.format(name),
+    ]
+    if exec_constraints:
+        lines.extend([
+            "    exec_compatible_with = {},".format(repr(exec_constraints)),
+            "    target_compatible_with = {},".format(repr(exec_constraints)),
+        ])
+    lines.extend([
+        "    target_settings = [",
+        '        "@rules_cuda//cuda:is_enabled",',
+        '        "{}",'.format(compiler_setting),
+        '        ":{}",'.format(version_setting),
+        "    ],",
+        '    toolchain = "{}",'.format(implementation),
+        '    toolchain_type = "@rules_cuda//cuda:toolchain_type",',
+        '    visibility = ["//visibility:public"],',
+        ")",
+    ])
+    return "\n".join(lines)
+
+def _generate_toolchain_facade(repository_ctx):
+    versions = sorted(repository_ctx.attr.toolchain_repositories.keys())
+    default_version = repository_ctx.attr.version
+    host_os = "linux" if _is_linux(repository_ctx) else "windows"
+
+    nvcc = []
+    clang = []
+    for version in versions:
+        label = _version_label(version)
+        setting = "toolkit_version_is_{}".format(label)
+        definition = [
+            "config_setting(",
+            '    name = "{}",'.format(setting),
+            '    flag_values = {{"@rules_cuda//cuda:version": "{}"}},'.format(version),
+            ")",
+        ]
+        nvcc.extend(definition)
+        clang.extend(definition)
+        repo = repository_ctx.attr.toolchain_repositories[version]
+        nvcc.extend(_nvcc_toolchain_declarations(repo, setting, host_os, label))
+        clang.append(_toolchain_declaration(
+            "clang-{}-toolchain".format(label),
+            repo + "//toolchain/clang:clang-local",
+            "@rules_cuda//cuda:compiler_is_clang",
+            setting,
+        ))
+
+    default_setting = [
+        "config_setting(",
+        '    name = "toolkit_version_is_default",',
+        '    flag_values = {"@rules_cuda//cuda:version": ""},',
+        ")",
+    ]
+    nvcc.extend(default_setting)
+    clang.extend(default_setting)
+    default_repo = repository_ctx.attr.toolchain_repositories[default_version]
+    nvcc.extend(_nvcc_toolchain_declarations(default_repo, "toolkit_version_is_default", host_os))
+    clang.append(_toolchain_declaration(
+        "clang-local-toolchain",
+        default_repo + "//toolchain/clang:clang-local",
+        "@rules_cuda//cuda:compiler_is_clang",
+        "toolkit_version_is_default",
+    ))
+
+    repository_ctx.file("toolchain/BUILD", "\n\n".join(nvcc) + "\n")
+    repository_ctx.file("toolchain/clang/BUILD", "\n\n".join(clang) + "\n")
+
+def _nvcc_toolchain_declarations(repo, setting, host_os, version_label = ""):
+    suffix = "-" + version_label if version_label else ""
+    declarations = []
+    for os in ["linux", "windows"]:
+        constraints = ["@platforms//os:" + os]
+        if os == "windows":
+            constraints.append("@platforms//cpu:x86_64")
+        declarations.append(_toolchain_declaration(
+            "nvcc-{}{}-toolchain".format(os, suffix),
+            repo + "//toolchain:nvcc-" + os,
+            "@rules_cuda//cuda:compiler_is_nvcc",
+            setting,
+            constraints,
+        ))
+    declarations.append(
+        'alias(name = "nvcc-{}-toolchain", actual = ":nvcc-{}{}-toolchain", visibility = ["//visibility:public"])'.format(
+            version_label or "local",
+            host_os,
+            suffix,
+        ),
+    )
+    return declarations
+
 template_helper = struct(
     generate_build = _generate_build,
+    generate_disabled_build = _generate_disabled_build,
     generate_defs_bzl = _generate_defs_bzl,
     generate_redist_bzl = _generate_redist_bzl,
     generate_toolchain_build = _generate_toolchain_build,
     generate_toolchain_clang_build = _generate_toolchain_clang_build,
+    generate_toolchain_facade = _generate_toolchain_facade,
 )

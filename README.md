@@ -197,7 +197,27 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 
   Set the default cudart to link; for example, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static` links the static CUDA runtime.
 
-- `--features=cuda_device_debug`
+#### Available features
+
+CUDA toolchain features can be enabled with Bazel's `--features=<feature_name>` option.
+
+- `cuda_host_use_copts`
+
+  Forward values passed through Bazel's `--copt` option to the CUDA host compiler. This feature is disabled by default.
+
+- `cuda_host_use_cxxopts`
+
+  Forward values passed through Bazel's `--cxxopt` option to the CUDA host compiler. This feature is disabled by default.
+
+- `cuda_host_use_linkopts`
+
+  Forward values passed through Bazel's `--linkopt` option to the CUDA host linker. This feature is disabled by default.
+
+- `nvcc_allow_unsupported_compiler`
+
+  Pass `--allow-unsupported-compiler` to nvcc. This feature is only available with nvcc.
+
+- `cuda_device_debug`
 
   Sets nvcc flags to enable debug information in device code.
   Currently ignored for clang, where `--compilation_mode=debug` applies to both

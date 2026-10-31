@@ -124,20 +124,35 @@ cuda_library_compute61_sm61_flag_test = _create_cuda_library_flag_test(config_se
 # Config settings for testing cpp opts propagation
 config_settings_use_copts = {
     "//command_line_option:features": ["cuda_host_use_copts"],
-    "//command_line_option:copt": ["-Wall"],
+    "//command_line_option:copt": ["-DRULES_CUDA_TEST_COPT_PROBE"],
 }
 config_settings_use_cxxopts = {
     "//command_line_option:features": ["cuda_host_use_cxxopts"],
-    "//command_line_option:cxxopt": ["-std=c++17"],
+    "//command_line_option:cxxopt": ["-DRULES_CUDA_TEST_CXXOPT_PROBE"],
 }
 config_settings_use_linkopts = {
     "//command_line_option:features": ["cuda_host_use_linkopts"],
-    "//command_line_option:linkopt": ["-Wl,--verbose"],
+    "//command_line_option:linkopt": ["-DRULES_CUDA_TEST_LINKOPT_PROBE"],
+}
+config_settings_copts_without_feature = {
+    "//command_line_option:features": ["-cuda_host_use_copts"],
+    "//command_line_option:copt": ["-DRULES_CUDA_TEST_COPT_PROBE"],
+}
+config_settings_cxxopts_without_feature = {
+    "//command_line_option:features": ["-cuda_host_use_cxxopts"],
+    "//command_line_option:cxxopt": ["-DRULES_CUDA_TEST_CXXOPT_PROBE"],
+}
+config_settings_linkopts_without_feature = {
+    "//command_line_option:features": ["-cuda_host_use_linkopts"],
+    "//command_line_option:linkopt": ["-DRULES_CUDA_TEST_LINKOPT_PROBE"],
 }
 
 cuda_library_use_copts_flag_test = _create_cuda_library_flag_test(config_settings_use_copts)
 cuda_library_use_cxxopts_flag_test = _create_cuda_library_flag_test(config_settings_use_cxxopts)
 cuda_library_use_linkopts_flag_test = _create_cuda_library_flag_test(config_settings_use_linkopts)
+cuda_library_copts_without_feature_flag_test = _create_cuda_library_flag_test(config_settings_copts_without_feature)
+cuda_library_cxxopts_without_feature_flag_test = _create_cuda_library_flag_test(config_settings_cxxopts_without_feature)
+cuda_library_linkopts_without_feature_flag_test = _create_cuda_library_flag_test(config_settings_linkopts_without_feature)
 
 # Config settings for testing external_include_paths feature
 config_settings_external_include_paths = {

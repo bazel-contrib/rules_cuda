@@ -7,6 +7,7 @@ bzl_library(
     srcs = glob(["**/*.bzl"]),
     visibility = ["//visibility:public"],
     deps = [
+        "@bazel_features//:features",
         "@bazel_skylib//lib:partial",
         "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:unittest",

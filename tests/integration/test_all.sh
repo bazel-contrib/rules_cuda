@@ -13,6 +13,7 @@ skip_redist_json_multi=false
 skip_redist_json_collision=false
 skip_redist_json_version_gate=false
 skip_cccl_headers=false
+skip_redist_json_cross_major=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -38,6 +39,8 @@ while [[ $# -gt 0 ]]; do
             skip_redist_json_version_gate=true; shift ;;
         --no-cccl-headers)
             skip_cccl_headers=true; shift ;;
+        --no-redist-cross-major)
+            skip_redist_json_cross_major=true; shift ;;
         *)
             echo "Unknown option: $1" >&2; shift ;;
     esac
@@ -54,6 +57,67 @@ if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$(uname -s 2>/dev/null)" =~ MINGW|MSYS
     redist_platform_args=(
         --@rules_cuda//cuda:exec_platform=windows-x86_64
     )
+fi
+
+# Check each release's CCCL include path across the CUDA 12/13 layout change.
+if [ "$skip_redist_json_cross_major" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: TOOLCHAIN WITH REDISTRIB.JSON (BZLMOD CROSS-MAJOR)
+============================================================
+EOF
+pushd "$this_dir/toolchain_redist_json_cross_major"
+    # CcInfo is native under Bazel 7 and Starlark-defined under Bazel 9 with the
+    # rules_cc toolchain, so match its provider key and inspect both include fields.
+    cccl_includes_expr='[v for k, v in providers(target).items() if k.endswith("CcInfo")][0].compilation_context.includes.to_list() + [v for k, v in providers(target).items() if k.endswith("CcInfo")][0].compilation_context.system_includes.to_list()'
+    cccl_12=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery \
+        '@cuda//:thrust' --enable_bzlmod --output=starlark \
+        "--starlark:expr=${cccl_includes_expr}" \
+        --@rules_cuda//cuda:version=12.8.1 "${redist_platform_args[@]}")
+    if ! [[ $cccl_12 == *'/cccl/include"'* ]]; then exit 1; fi
+    if [[ $cccl_12 == *'/cccl/include/cccl"'* ]]; then exit 1; fi
+
+    cccl_13=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery \
+        '@cuda//:thrust' --enable_bzlmod --output=starlark \
+        "--starlark:expr=${cccl_includes_expr}" \
+        --@rules_cuda//cuda:version=13.0.1 "${redist_platform_args[@]}")
+    if ! [[ $cccl_13 == *'/cccl/include/cccl"'* ]]; then exit 1; fi
+
+    # Both execution OSes must remain available, independently of the client OS.
+    for exec_os in linux windows; do
+        for version in 12_8_1 13_0_1; do
+            versioned_toolchain=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel query \
+                "@cuda//toolchain:nvcc-${exec_os}-${version}-toolchain" --enable_bzlmod --output=build)
+            if ! [[ $versioned_toolchain == *"cuda_toolchain_${version}//toolchain:nvcc-${exec_os}"* ]]; then exit 1; fi
+        done
+        default_toolchain=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel query \
+            "@cuda//toolchain:nvcc-${exec_os}-toolchain" --enable_bzlmod --output=build)
+        if ! [[ $default_toolchain == *"cuda_toolchain_13_0_1//toolchain:nvcc-${exec_os}"* ]]; then exit 1; fi
+    done
+    host_os=linux
+    if [[ ${#redist_platform_args[@]} -gt 0 ]]; then host_os=windows; fi
+    for version in local 12_8_1 13_0_1; do
+        suffix="-${version}"
+        if [[ $version == local ]]; then suffix=; fi
+        host_toolchain=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel query \
+            "@cuda//toolchain:nvcc-${version}-toolchain" --enable_bzlmod --output=build)
+        if ! [[ $host_toolchain == *"//toolchain:nvcc-${host_os}${suffix}-toolchain"* ]]; then exit 1; fi
+    done
+
+    cross_major_args=(--enable_bzlmod --@rules_cuda//cuda:archs=sm_80 "${redist_platform_args[@]}")
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib \
+        --@rules_cuda//cuda:compiler=nvcc --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib \
+        --@rules_cuda//cuda:compiler=nvcc --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib \
+        --@rules_cuda//cuda:compiler=nvcc --@rules_cuda//cuda:version= "${cross_major_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib --nobuild \
+        --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib --nobuild \
+        --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}"
+    bazel clean && bazel shutdown
+popd
 fi
 
 # toolchain configured by the root module of the user
@@ -110,6 +174,12 @@ pushd "$this_dir/toolchain_none"
 
     # use library should analyse build successfully (empty cuda_runtime target exists)
     bazel build //:use_library
+
+    # every @cuda target loads, so query works through select() branches that name them
+    bazel query 'deps(//:optionally_use_library)'
+    bazel build //:optionally_use_library --@rules_cuda//cuda:enable=False
+    ERR=$(bazel build //:optionally_use_library --@rules_cuda//cuda:enable=True 2>&1 || true)
+    if ! [[ $ERR =~ "is incompatible" ]]; then exit 1; fi
 
     # use rule analyses correctly but fails during compilation because cuda toolkit doesn't exist
     ERR=$(bazel build //:use_rule 2>&1 || true)
@@ -206,14 +276,16 @@ cat <<- EOF
 ============================================================
 EOF
 pushd "$this_dir/toolchain_redist_json_multi"
-    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
-    bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=True "${redist_platform_args[@]}"
-    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
-    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=12.6.3 "${redist_platform_args[@]}"
-    bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=11.7.0 "${redist_platform_args[@]}"
-    bazel build --enable_bzlmod //:use_library "${redist_platform_args[@]}"
-    bazel build --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=12.6.3 "${redist_platform_args[@]}"
-    bazel build --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=11.7.0 "${redist_platform_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //... --@rules_cuda//cuda:enable=True "${redist_platform_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=False "${redist_platform_args[@]}"
+    # Use analysis-only checks for older releases: CI's compiler may be unsupported
+    # or emit PTX those toolkits cannot consume.
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --nobuild --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=12.6.3 "${redist_platform_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --nobuild --enable_bzlmod //:optionally_use_rule --@rules_cuda//cuda:enable=True --@rules_cuda//cuda:version=11.7.0 "${redist_platform_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:use_library "${redist_platform_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --nobuild --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=12.6.3 "${redist_platform_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --nobuild --enable_bzlmod //:use_rule --@rules_cuda//cuda:version=11.7.0 "${redist_platform_args[@]}"
 
     # Keep the override-only dedupe probe isolated so it cannot pollute later versioned builds.
     bazel clean && bazel shutdown
@@ -245,8 +317,12 @@ cat <<- EOF
 EOF
 pushd "$this_dir/toolchain_redist_json_version_gate"
     version_gate_args=(--@rules_cuda//cuda:compiler=nvcc "${redist_platform_args[@]}")
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:kernel_lib "${version_gate_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:kernel_lib --@rules_cuda//cuda:version=12.9.1 "${version_gate_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:kernel_lib --@rules_cuda//cuda:version=12.8.1 "${version_gate_args[@]}"
+    ERR=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:kernel_lib \
+        --@rules_cuda//cuda:version=12.7.1 "${version_gate_args[@]}" 2>&1 || true)
+    if ! [[ $ERR == *"No matching toolchains found"* ]]; then exit 1; fi
     bazel clean && bazel shutdown
 popd
 fi

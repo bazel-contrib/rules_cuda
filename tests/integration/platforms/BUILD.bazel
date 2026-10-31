@@ -1,0 +1,31 @@
+load(
+    ":aarch64_linux_cc_toolchain.bzl",
+    "register_aarch64_linux_cc_toolchain",
+    "register_x86_64_linux_cc_toolchain",
+)
+
+package(default_visibility = ["//visibility:public"])
+
+# Target / exec platforms used by redist_json cross-compile integration tests.
+# linux_sbsa shares aarch64+linux constraints with Tegra; CUDA redist
+# disambiguation uses --@rules_cuda//cuda:aarch64=sbsa (default).
+
+platform(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+platform(
+    name = "linux_sbsa",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+register_aarch64_linux_cc_toolchain()
+
+register_x86_64_linux_cc_toolchain()

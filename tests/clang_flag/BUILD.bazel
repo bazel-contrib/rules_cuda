@@ -6,8 +6,11 @@ load(
     "clang_cuda_library_c_opt_flag_test",
     "clang_cuda_library_compute60_flag_test",
     "clang_cuda_library_compute60_sm61_flag_test",
+    "clang_cuda_library_copts_without_feature_flag_test",
+    "clang_cuda_library_cxxopts_without_feature_flag_test",
     "clang_cuda_library_external_include_paths_flag_test",
     "clang_cuda_library_flag_test",
+    "clang_cuda_library_linkopts_without_feature_flag_test",
     "clang_cuda_library_platform_no_sysroot_but_copt_flag_test",
     "clang_cuda_library_platform_no_sysroot_flag_test",
     "clang_cuda_library_platform_sysroot_flag_test",
@@ -236,7 +239,7 @@ cuda_library(
 clang_cuda_library_use_copts_flag_test(
     name = "cuda_library_use_copts_flag_test",
     action_mnemonic = "CudaCompile",
-    contain_flags = ["-Wall"],
+    contain_flags = ["-DRULES_CUDA_TEST_COPT_PROBE"],
     not_contain_flags = ["-Xcompiler"],
     target_compatible_with = ["@platforms//os:linux"],
     target_under_test = ":cpp_opts_test_lib",
@@ -245,7 +248,7 @@ clang_cuda_library_use_copts_flag_test(
 clang_cuda_library_use_cxxopts_flag_test(
     name = "cuda_library_use_cxxopts_flag_test",
     action_mnemonic = "CudaCompile",
-    contain_flags = ["-std=c++17"],
+    contain_flags = ["-DRULES_CUDA_TEST_CXXOPT_PROBE"],
     not_contain_flags = ["-Xcompiler"],
     target_compatible_with = ["@platforms//os:linux"],
     target_under_test = ":cpp_opts_test_lib",
@@ -254,8 +257,32 @@ clang_cuda_library_use_cxxopts_flag_test(
 clang_cuda_library_use_linkopts_flag_test(
     name = "cuda_library_use_linkopts_flag_test",
     action_mnemonic = "CudaCompile",
-    contain_flags = ["-Wl,--verbose"],
+    contain_flags = ["-DRULES_CUDA_TEST_LINKOPT_PROBE"],
     not_contain_flags = ["-Xlinker"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+clang_cuda_library_copts_without_feature_flag_test(
+    name = "cuda_library_copts_without_feature_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = ["-DRULES_CUDA_TEST_COPT_PROBE"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+clang_cuda_library_cxxopts_without_feature_flag_test(
+    name = "cuda_library_cxxopts_without_feature_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = ["-DRULES_CUDA_TEST_CXXOPT_PROBE"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = ":cpp_opts_test_lib",
+)
+
+clang_cuda_library_linkopts_without_feature_flag_test(
+    name = "cuda_library_linkopts_without_feature_flag_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = ["-DRULES_CUDA_TEST_LINKOPT_PROBE"],
     target_compatible_with = ["@platforms//os:linux"],
     target_under_test = ":cpp_opts_test_lib",
 )

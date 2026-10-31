@@ -28,12 +28,12 @@ jobs:
               toolchain-version: "16",
             }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: bazelbuild/setup-bazelisk@v3
       - name: Mount bazel cache
         if: ${{ !startsWith(matrix.cases.os, 'windows') }}
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/bazel
           key: ${{ matrix.cases.toolchain }}-${{ matrix.cases.toolchain-version }}
@@ -99,14 +99,14 @@ jobs:
         uses: xt0rted/pull-request-comment-branch@v2
         id: comment-branch
       - name: Checkout PR branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
 
       - uses: bazelbuild/setup-bazelisk@v3
       - name: Mount bazel cache
         if: ${{ !startsWith(matrix.cases.os, 'windows') }}
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/bazel
           key: ${{ matrix.cases.toolchain }}-${{ matrix.cases.toolchain-version }}

@@ -48,12 +48,12 @@ jobs:
           - { os: "windows-2025", cuda-version: "12.6.3", source: "nvidia" }
           - { os: "windows-2025", cuda-version: "13.0.2", source: "nvidia" }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: bazelbuild/setup-bazelisk@v3
       - name: Mount bazel cache
         if: ${{ !startsWith(matrix.cases.os, 'windows') }}
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/bazel
           key: bazel-${{ matrix.cases.os }}-cuda-${{ matrix.cases.cuda-version }}-${{ hashFiles('.bazelversion') }}

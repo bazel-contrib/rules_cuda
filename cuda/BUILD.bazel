@@ -5,7 +5,7 @@ load(
     "string_flag",
 )
 load("//cuda/private:platforms.bzl", "SUPPORTED_PLATFORMS")
-load("//cuda/private:rules/flags.bzl", "cuda_archs_flag", "repeatable_string_flag")
+load("//cuda/private:rules/flags.bzl", "cuda_archs_flag", "repeatable_string_flag", "runtime_label_flag")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -198,7 +198,7 @@ repeatable_string_flag(
 # This target is implicitly added as a dependency to cuda_library() targets.
 #
 # Example usage: --@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static
-label_flag(
+runtime_label_flag(
     name = "runtime",
     build_setting_default = "@cuda//:cuda_runtime",
 )

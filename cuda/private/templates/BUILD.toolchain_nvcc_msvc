@@ -1,4 +1,4 @@
-# This becomes the BUILD file for @cuda//toolchain/ under Windows.
+# NVCC with an MSVC host compiler, which requires Windows execution.
 
 load(
     "@rules_cuda//cuda:defs.bzl",
@@ -7,7 +7,7 @@ load(
     cuda_toolchain_config = "cuda_toolchain_config_nvcc_msvc",
 )
 
-# %{toolkit_version_config_settings}
+package(default_visibility = ["//toolchain:__pkg__"])
 
 cuda_toolkit_info(
     name = "cuda-toolkit",
@@ -20,12 +20,13 @@ cuda_toolkit_info(
     # %{device_runtime_static_libs_line}
     path = "%{cuda_path}",
     ptxas = "%{ptxas_label}",
-    # %{cuda_version_line}
+    version = "%{cuda_version}",
 )
 
 cuda_toolchain_config(
     name = "nvcc-local-config",
     cuda_toolkit = ":cuda-toolkit",
+    exec_path_separator = ";",  # MSVC executes only on Windows.
     msvc_env_tmp = "%{env_tmp}",
     # %{nvcc_version_major_line}
     # %{nvcc_version_minor_line}
