@@ -9,8 +9,18 @@ local_path_override(
 )
 
 cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+
+# Keep aggregate header checks from downloading unrelated libraries for both releases.
 cuda.redist_json(
     name = "cuda_13_0_1",
+    components = [
+        "cccl",
+        "crt",
+        "cudart",
+        "curand",
+        "nvcc",
+        "nvvm",
+    ],
     platforms = [
         "linux-x86_64",
         "windows-x86_64",
@@ -19,6 +29,12 @@ cuda.redist_json(
 )
 cuda.redist_json(
     name = "cuda_12_8_1",
+    components = [
+        "cccl",
+        "cudart",
+        "curand",
+        "nvcc",
+    ],
     platforms = [
         "linux-x86_64",
         "windows-x86_64",

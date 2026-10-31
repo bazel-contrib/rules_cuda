@@ -12,7 +12,7 @@ skip_redist_json=false
 skip_redist_json_multi=false
 skip_redist_json_collision=false
 skip_redist_json_version_gate=false
-skip_cccl_headers=false
+skip_versioned_headers=false
 skip_redist_json_cross_major=false
 
 while [[ $# -gt 0 ]]; do
@@ -37,8 +37,8 @@ while [[ $# -gt 0 ]]; do
             skip_redist_json_collision=true; shift ;;
         --no-redist-version-gate)
             skip_redist_json_version_gate=true; shift ;;
-        --no-cccl-headers)
-            skip_cccl_headers=true; shift ;;
+        --no-versioned-headers)
+            skip_versioned_headers=true; shift ;;
         --no-redist-cross-major)
             skip_redist_json_cross_major=true; shift ;;
         *)
@@ -59,7 +59,7 @@ if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$(uname -s 2>/dev/null)" =~ MINGW|MSYS
     )
 fi
 
-# Check each release's CCCL include path across the CUDA 12/13 layout change.
+# Check toolchain declarations and compiler selection across CUDA releases.
 if [ "$skip_redist_json_cross_major" = false ]; then
 cat <<- EOF
 
@@ -68,22 +68,6 @@ cat <<- EOF
 ============================================================
 EOF
 pushd "$this_dir/toolchain_redist_json_cross_major"
-    # CcInfo is native under Bazel 7 and Starlark-defined under Bazel 9 with the
-    # rules_cc toolchain, so match its provider key and inspect both include fields.
-    cccl_includes_expr='[v for k, v in providers(target).items() if k.endswith("CcInfo")][0].compilation_context.includes.to_list() + [v for k, v in providers(target).items() if k.endswith("CcInfo")][0].compilation_context.system_includes.to_list()'
-    cccl_12=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery \
-        '@cuda//:thrust' --enable_bzlmod --output=starlark \
-        "--starlark:expr=${cccl_includes_expr}" \
-        --@rules_cuda//cuda:version=12.8.1 "${redist_platform_args[@]}")
-    if ! [[ $cccl_12 == *'/cccl/include"'* ]]; then exit 1; fi
-    if [[ $cccl_12 == *'/cccl/include/cccl"'* ]]; then exit 1; fi
-
-    cccl_13=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery \
-        '@cuda//:thrust' --enable_bzlmod --output=starlark \
-        "--starlark:expr=${cccl_includes_expr}" \
-        --@rules_cuda//cuda:version=13.0.1 "${redist_platform_args[@]}")
-    if ! [[ $cccl_13 == *'/cccl/include/cccl"'* ]]; then exit 1; fi
-
     # Both execution OSes must remain available, independently of the client OS.
     for exec_os in linux windows; do
         for version in 12_8_1 13_0_1; do
@@ -327,17 +311,34 @@ pushd "$this_dir/toolchain_redist_json_version_gate"
 popd
 fi
 
-# `<thrust/...>` resolving through the header-only targets. CUDA 13 moved the CCCL headers
-# into `include/cccl/`, so a version-unaware `includes` resolves `<cccl/thrust/...>` and
-# these stop compiling. One declared version, so CUDA_REDIST_VERSION_OVERRIDE sweeps this
-# across the CUDA versions in the CI matrix and covers both layouts.
-if [ "$skip_cccl_headers" = false ]; then
+# Check header paths with two releases declared, then compile with the CI toolkit.
+if [ "$skip_versioned_headers" = false ]; then
 cat <<- EOF
 
 ============================================================
-=== TEST: CCCL HEADER-ONLY TARGETS (BZLMOD)
+=== TEST: VERSIONED HEADERS (BZLMOD)
 ============================================================
 EOF
+pushd "$this_dir/toolchain_redist_json_cross_major"
+    # CcInfo is native under Bazel 7 and Starlark-defined under Bazel 9 with the
+    # rules_cc toolchain, so match its provider key and inspect both include fields.
+    cccl_includes_expr='[v for k, v in providers(target).items() if k.endswith("CcInfo")][0].compilation_context.includes.to_list() + [v for k, v in providers(target).items() if k.endswith("CcInfo")][0].compilation_context.system_includes.to_list()'
+    for header_target in thrust cccl_headers cuda_headers; do
+        cccl_12=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery \
+            "@cuda//:${header_target}" --enable_bzlmod --output=starlark \
+            "--starlark:expr=${cccl_includes_expr}" \
+            --@rules_cuda//cuda:version=12.8.1 "${redist_platform_args[@]}")
+        if ! [[ $cccl_12 == *'/cccl/include"'* ]]; then exit 1; fi
+        if [[ $cccl_12 == *'/cccl/include/cccl"'* ]]; then exit 1; fi
+
+        cccl_13=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery \
+            "@cuda//:${header_target}" --enable_bzlmod --output=starlark \
+            "--starlark:expr=${cccl_includes_expr}" \
+            --@rules_cuda//cuda:version=13.0.1 "${redist_platform_args[@]}")
+        if ! [[ $cccl_13 == *'/cccl/include/cccl"'* ]]; then exit 1; fi
+    done
+    bazel clean && bazel shutdown
+popd
 pushd "$this_dir/toolchain_cccl_headers"
     bazel build --enable_bzlmod //:via_cccl_headers "${redist_platform_args[@]}"
     bazel build --enable_bzlmod //:via_cuda_headers "${redist_platform_args[@]}"
