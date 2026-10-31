@@ -12,7 +12,7 @@ skip_redist_json=false
 skip_redist_json_multi=false
 skip_redist_json_collision=false
 skip_redist_json_version_gate=false
-skip_cccl_headers=false
+skip_versioned_headers=false
 skip_redist_json_cross_major=false
 
 while [[ $# -gt 0 ]]; do
@@ -37,8 +37,8 @@ while [[ $# -gt 0 ]]; do
             skip_redist_json_collision=true; shift ;;
         --no-redist-version-gate)
             skip_redist_json_version_gate=true; shift ;;
-        --no-cccl-headers)
-            skip_cccl_headers=true; shift ;;
+        --no-versioned-headers)
+            skip_versioned_headers=true; shift ;;
         --no-redist-cross-major)
             skip_redist_json_cross_major=true; shift ;;
         *)
@@ -331,7 +331,7 @@ fi
 # into `include/cccl/`, so a version-unaware `includes` resolves `<cccl/thrust/...>` and
 # these stop compiling. One declared version, so CUDA_REDIST_VERSION_OVERRIDE sweeps this
 # across the CUDA versions in the CI matrix and covers both layouts.
-if [ "$skip_cccl_headers" = false ]; then
+if [ "$skip_versioned_headers" = false ]; then
 cat <<- EOF
 
 ============================================================
