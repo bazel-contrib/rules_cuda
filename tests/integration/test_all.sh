@@ -12,6 +12,7 @@ skip_redist_json=false
 skip_redist_json_multi=false
 skip_redist_json_collision=false
 skip_redist_json_version_gate=false
+skip_cccl_headers=false
 skip_redist_json_cross_major=false
 
 while [[ $# -gt 0 ]]; do
@@ -36,6 +37,8 @@ while [[ $# -gt 0 ]]; do
             skip_redist_json_collision=true; shift ;;
         --no-redist-version-gate)
             skip_redist_json_version_gate=true; shift ;;
+        --no-cccl-headers)
+            skip_cccl_headers=true; shift ;;
         --no-redist-cross-major)
             skip_redist_json_cross_major=true; shift ;;
         *)
@@ -320,6 +323,24 @@ pushd "$this_dir/toolchain_redist_json_version_gate"
     ERR=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:kernel_lib \
         --@rules_cuda//cuda:version=12.7.1 "${version_gate_args[@]}" 2>&1 || true)
     if ! [[ $ERR == *"No matching toolchains found"* ]]; then exit 1; fi
+    bazel clean && bazel shutdown
+popd
+fi
+
+# `<thrust/...>` resolving through the header-only targets. CUDA 13 moved the CCCL headers
+# into `include/cccl/`, so a version-unaware `includes` resolves `<cccl/thrust/...>` and
+# these stop compiling. One declared version, so CUDA_REDIST_VERSION_OVERRIDE sweeps this
+# across the CUDA versions in the CI matrix and covers both layouts.
+if [ "$skip_cccl_headers" = false ]; then
+cat <<- EOF
+
+============================================================
+=== TEST: CCCL HEADER-ONLY TARGETS (BZLMOD)
+============================================================
+EOF
+pushd "$this_dir/toolchain_cccl_headers"
+    bazel build --enable_bzlmod //:via_cccl_headers "${redist_platform_args[@]}"
+    bazel build --enable_bzlmod //:via_cuda_headers "${redist_platform_args[@]}"
     bazel clean && bazel shutdown
 popd
 fi
