@@ -30,7 +30,7 @@ jobs:
 
       - uses: bazelbuild/setup-bazelisk@v3
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
 
@@ -62,7 +62,7 @@ jobs:
       - name: Inspect docs site directory structure
         run: find ${{ github.workspace }}/docs/generated -maxdepth 2
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
       - run: |
