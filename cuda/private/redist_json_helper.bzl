@@ -80,6 +80,13 @@ def _get_redist_version(ctx, attr, redist):
 
     return redist_ver
 
+def _manifest_key(redist, c):
+    # CUDA 13.3+ manifests key CCCL as "cccl" instead of "cuda_cccl".
+    for key in [FULL_COMPONENT_NAME[c], c]:
+        if key in redist:
+            return key
+    return FULL_COMPONENT_NAME[c]
+
 def _collect_specs(ctx, attr, platform, redist, the_url):
     """Convert redistrib_<version>.json content to the specs for instantiating cuda_component repos.
 
@@ -94,11 +101,11 @@ def _collect_specs(ctx, attr, platform, redist, the_url):
     """
 
     specs = []
-    all_components_on_platform = [k for k, v in FULL_COMPONENT_NAME.items() if v in redist and platform in redist[v]]
+    all_components_on_platform = [k for k in FULL_COMPONENT_NAME if platform in redist.get(_manifest_key(redist, k), {})]
     components = attr.components if attr.components else all_components_on_platform
 
     for c in components:
-        c_full = FULL_COMPONENT_NAME[c]
+        c_full = _manifest_key(redist, c)
 
         payload = redist[c_full][platform]
         payload_relative_path = payload["relative_path"]
