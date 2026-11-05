@@ -1,0 +1,3 @@
+load(":redist_json_test.bzl", "collect_specs_test")
+
+collect_specs_test(name = "collect_specs_test")
