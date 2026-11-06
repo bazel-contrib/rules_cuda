@@ -1,0 +1,34 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+
+cc_test(
+    name = "optional_component_test",
+    srcs = ["optional_component.cc"],
+    tags = ["manual"],
+    deps = ["@cuda//:nvjitlink"],
+)
+
+# Even the unselected dependency must have a resolvable label for query/loading.
+cc_test(
+    name = "disabled_component_test",
+    srcs = ["optional_component.cc"],
+    tags = ["manual"],
+    deps = select({
+        "@rules_cuda//cuda:is_enabled": ["@cuda//:nvjitlink"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_library(
+    name = "required_component",
+    srcs = ["optional_component.cc"],
+    defines = ["REQUIRE_NVJITLINK"],
+    tags = ["manual"],
+    deps = ["@cuda//:nvjitlink"],
+)
+
+cuda_library(
+    name = "required_compiler",
+    srcs = ["kernel.cu"],
+    tags = ["manual"],
+)

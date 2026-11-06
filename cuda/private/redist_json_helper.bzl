@@ -1,4 +1,4 @@
-load("//cuda/private:templates/registry.bzl", "FULL_COMPONENT_NAME")
+load("//cuda/private:templates/registry.bzl", "FULL_COMPONENT_NAME", "get_full_component_name")
 
 def _is_linux(ctx):
     return ctx.os.name.startswith("linux")
@@ -80,13 +80,6 @@ def _get_redist_version(ctx, attr, redist):
 
     return redist_ver
 
-def _manifest_key(redist, c):
-    # CUDA 13.3+ manifests key CCCL as "cccl" instead of "cuda_cccl".
-    for key in [FULL_COMPONENT_NAME[c], c]:
-        if key in redist:
-            return key
-    return FULL_COMPONENT_NAME[c]
-
 def _collect_specs(ctx, attr, platform, redist, the_url):
     """Convert redistrib_<version>.json content to the specs for instantiating cuda_component repos.
 
@@ -100,12 +93,18 @@ def _collect_specs(ctx, attr, platform, redist, the_url):
         the_url: string, the very unique url from which we get the redistrib_<version>.json file.
     """
 
+    version = _get_redist_version(ctx, attr, redist)
+    component_names = {c: get_full_component_name(c, version) for c in FULL_COMPONENT_NAME}
     specs = []
-    all_components_on_platform = [k for k in FULL_COMPONENT_NAME if platform in redist.get(_manifest_key(redist, k), {})]
-    components = attr.components if attr.components else all_components_on_platform
+    components = attr.components if attr.components else component_names.keys()
 
     for c in components:
-        c_full = _manifest_key(redist, c)
+        c_full = component_names[c]
+
+        # A component may be absent from this release or platform, even when
+        # explicitly requested. Consumers decide whether they need it at build time.
+        if platform not in redist.get(c_full, {}):
+            continue
 
         payload = redist[c_full][platform]
         payload_relative_path = payload["relative_path"]

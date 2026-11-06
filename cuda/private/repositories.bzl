@@ -145,32 +145,28 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
     cuda_version_major, cuda_version_minor = cuda_version_str.split(".")[:2]
     nvcc_version_major, nvcc_version_minor = nvcc_version_str.split(".")[:2]
 
-    # NOTE: component nvcc contains some headers that will be used.
-    required_components = ["cccl", "cudart", "nvcc"]
-    if int(cuda_version_major) >= 13:
-        required_components.extend(["crt", "nvvm"])
-    for rc in required_components:
-        if rc not in repository_ctx.attr.components_mapping:
-            fail('component "{}" is required.'.format(rc))
+    # Missing components must not prevent analysis of optional CUDA consumers.
+    # The dummy tools report missing executables when a build actually uses them.
+    nvcc_repo = repository_ctx.attr.components_mapping.get("nvcc")
+    nvcc_package = nvcc_repo + "//" if nvcc_repo else "@rules_cuda//cuda/dummy"
 
-    nvcc_repo = repository_ctx.attr.components_mapping["nvcc"]
-
-    nvcc = "{}//:nvcc".format(nvcc_repo)
-    nvlink = "{}//:nvlink".format(nvcc_repo)
-    link_stub = "{}//:link.stub".format(nvcc_repo)
-    bin2c = "{}//:bin2c".format(nvcc_repo)
-    fatbinary = "{}//:fatbinary".format(nvcc_repo)
-    ptxas = "{}//:ptxas".format(nvcc_repo)
+    nvcc = "{}:nvcc".format(nvcc_package)
+    nvlink = "{}:nvlink".format(nvcc_package)
+    link_stub = "{}:link.stub".format(nvcc_package)
+    bin2c = "{}:bin2c".format(nvcc_package)
+    fatbinary = "{}:fatbinary".format(nvcc_package)
+    ptxas = "{}:ptxas".format(nvcc_package)
 
     cicc = None
     libdevice = None
     if int(cuda_version_major) < 13:
-        cicc = "{}//:cicc".format(nvcc_repo)
-        libdevice = "{}//:libdevice.10.bc".format(nvcc_repo)
-    elif "nvvm" in repository_ctx.attr.components_mapping:
-        nvvm_repo = repository_ctx.attr.components_mapping["nvvm"]
-        cicc = "{}//:cicc".format(nvvm_repo)
-        libdevice = "{}//:libdevice.10.bc".format(nvvm_repo)
+        cicc = "{}:cicc".format(nvcc_package)
+        libdevice = "{}:libdevice.10.bc".format(nvcc_package)
+    else:
+        nvvm_repo = repository_ctx.attr.components_mapping.get("nvvm")
+        nvvm_package = nvvm_repo + "//" if nvvm_repo else "@rules_cuda//cuda/dummy"
+        cicc = "{}:cicc".format(nvvm_package)
+        libdevice = "{}:libdevice.10.bc".format(nvvm_package)
 
     return struct(
         path = None,  # scattered components
@@ -189,6 +185,11 @@ def _detect_deliverable_cuda_toolkit(repository_ctx):
         device_runtime_static_libs_labels = ["@cuda//:cuda_device_runtime_static_libs"],
     )
 
+def _is_deliverable_toolkit(repository_ctx):
+    # An explicitly versioned release stays a deliverable even if none of its
+    # requested components exist. Do not silently fall back to the local toolkit.
+    return bool(repository_ctx.attr.components_mapping) or (bool(repository_ctx.attr.version) and not repository_ctx.attr.toolkit_path)
+
 def detect_cuda_toolkit(repository_ctx):
     """Detect CUDA Toolkit.
 
@@ -205,7 +206,7 @@ def detect_cuda_toolkit(repository_ctx):
     Returns:
         A struct contains the information of CUDA Toolkit.
     """
-    if repository_ctx.attr.components_mapping != {}:
+    if _is_deliverable_toolkit(repository_ctx):
         return _detect_deliverable_cuda_toolkit(repository_ctx)
     else:
         return _detect_local_cuda_toolkit(repository_ctx)
@@ -223,7 +224,7 @@ def config_cuda_toolkit_and_nvcc(repository_ctx, cuda):
     # None: cuda toolkit is not presented
     is_local_ctk = None
 
-    if len(repository_ctx.attr.components_mapping) != 0:
+    if _is_deliverable_toolkit(repository_ctx):
         is_local_ctk = False
 
     if is_local_ctk == None and cuda.path != None:

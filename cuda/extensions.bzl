@@ -185,7 +185,7 @@ def _impl(module_ctx):
         if redist_version not in redist_versions:
             redist_versions.append(redist_version)
 
-    if len(component_entries) > 0:
+    if redist_versions:
         components_mapping = {}
         redist_components_mapping = {}
         versioned_repos = {}
