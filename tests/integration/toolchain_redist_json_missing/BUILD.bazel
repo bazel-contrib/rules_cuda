@@ -21,8 +21,7 @@ cc_test(
 
 cc_library(
     name = "required_component",
-    srcs = ["optional_component.cc"],
-    defines = ["REQUIRE_NVJITLINK"],
+    srcs = ["required_component.cc"],
     tags = ["manual"],
     deps = ["@cuda//:nvjitlink"],
 )

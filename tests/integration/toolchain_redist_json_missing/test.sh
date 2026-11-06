@@ -28,6 +28,7 @@ for version in 11.0.3 11.8.0 13.3.1; do
 
     # Mandatory use fails during an action, after the successful analysis above.
     if output=$(bazel build //:required_component "${args[@]}" 2>&1); then
+        echo "$output" >&2
         echo "Expected compilation to fail without nvJitLink" >&2
         exit 1
     fi
@@ -36,6 +37,7 @@ for version in 11.0.3 11.8.0 13.3.1; do
         exit 1
     fi
     if output=$(bazel build //:required_compiler "${args[@]}" 2>&1); then
+        echo "$output" >&2
         echo "Expected compilation to fail without nvcc" >&2
         exit 1
     fi

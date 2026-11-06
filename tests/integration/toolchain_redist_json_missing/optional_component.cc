@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#if defined(REQUIRE_NVJITLINK) || __has_include(<nvJitLink.h>)
+#if __has_include(<nvJitLink.h>)
 #include <nvJitLink.h>
 int main() {
   // This fixture deliberately makes nvJitLink unavailable.
