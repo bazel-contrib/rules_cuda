@@ -107,6 +107,7 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
             template_content.append(repository_ctx.read(frag))
 
     if is_cuda_repo and is_deliverable:  # generate `@cuda//BUILD` for CTK with deliverables
+        defined_targets = {}
         for comp in components:
             for target in REGISTRY[comp]:
                 if not _component_owns_cuda_repo_alias(comp, target, components):
@@ -114,9 +115,23 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
                 repo = components[comp]
                 line = 'alias(name = "{target}", actual = "{repo}//:{target}")'.format(target = target, repo = repo)
                 template_content.append(line)
+                defined_targets[target] = True
 
             # add an empty line to separate aliased targets from different components
             template_content.append("")
+
+        # Keep labels and CcInfo available for optional consumers. Missing
+        # headers/libraries fail only when used; missing tools fail when executed.
+        dummy_files = ["nvcc", "nvlink", "ptxas", "bin2c", "fatbinary", "cicc", "link.stub", "libdevice.10.bc"]
+        for targets in REGISTRY.values():
+            for target in targets:
+                if target in defined_targets:
+                    continue
+                dummy = target if target in dummy_files else "dummy"
+                if target == "compiler_root":
+                    dummy = "link.stub"
+                template_content.append('alias(name = "{}", actual = "@rules_cuda//cuda/dummy:{}")'.format(target, dummy))
+                defined_targets[target] = True
 
     template_content = "\n".join(template_content)
 

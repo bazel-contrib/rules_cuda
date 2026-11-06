@@ -14,6 +14,7 @@ skip_redist_json_collision=false
 skip_redist_json_version_gate=false
 skip_versioned_headers=false
 skip_redist_json_cross_major=false
+skip_redist_json_missing=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -41,12 +42,18 @@ while [[ $# -gt 0 ]]; do
             skip_versioned_headers=true; shift ;;
         --no-redist-cross-major)
             skip_redist_json_cross_major=true; shift ;;
+        --no-redist-missing)
+            skip_redist_json_missing=true; shift ;;
         *)
             echo "Unknown option: $1" >&2; shift ;;
     esac
 done
 
 set -ex
+
+if [ "$skip_redist_json_missing" = false ]; then
+    bash "$this_dir/toolchain_redist_json_missing/test.sh"
+fi
 
 redist_platform_args=()
 if [[ "$RUNNER_OS" == "Windows" ]] || [[ "$(uname -s 2>/dev/null)" =~ MINGW|MSYS|CYGWIN ]]; then
