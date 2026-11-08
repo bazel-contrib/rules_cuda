@@ -422,9 +422,16 @@ def _cuda_component_impl(repository_ctx):
 
     patch_nvcc_profile, rename_files = _patch_nvcc_profile_pre(repository_ctx, component_name)
 
+    # Python wheels are zip archives, but older Bazel versions do not infer
+    # the archive type from a .whl suffix. NVIDIA publishes CUDA components
+    # as wheels on PyPI.
+    first_url = repository_ctx.attr.url or repository_ctx.attr.urls[0]
+    archive_type = "zip" if first_url.endswith(".whl") else ""
+
     repository_ctx.download_and_extract(
         url = repository_ctx.attr.url or repository_ctx.attr.urls,
         output = component_name,
+        type = archive_type,
         integrity = repository_ctx.attr.integrity,
         sha256 = repository_ctx.attr.sha256,
         stripPrefix = repository_ctx.attr.strip_prefix,
