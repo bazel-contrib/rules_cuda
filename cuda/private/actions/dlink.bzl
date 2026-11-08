@@ -64,6 +64,9 @@ def _compiler_device_link(
         unsupported_features = ctx.disabled_features,
     )
     host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
+    host_ccbin_path, host_ccbin_files = cuda_helper.host_ccbin_override(ctx)
+    if host_ccbin_path != None:
+        host_compiler = host_ccbin_path
     cuda_compiler = cuda_toolchain.compiler_executable
     cuda_toolkit = find_cuda_toolkit(ctx)
     device_runtime_static_libs = cuda_toolkit.device_runtime_static_libs
@@ -102,7 +105,7 @@ def _compiler_device_link(
         executable = cuda_compiler,
         arguments = [args],
         outputs = [obj_file],
-        inputs = depset(transitive = [objects, common.headers, device_runtime_static_libs, cc_toolchain.all_files, cuda_toolchain.all_files]),
+        inputs = depset(transitive = [objects, common.headers, device_runtime_static_libs, cc_toolchain.all_files, cuda_toolchain.all_files, host_ccbin_files]),
         env = env,
         mnemonic = "CudaDeviceLink",
         progress_message = "Device linking %{output}",

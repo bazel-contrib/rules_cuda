@@ -168,3 +168,26 @@ config_settings_platform_copt_sysroot_test = {"//command_line_option:copt": ["--
 cuda_library_platform_sysroot_flag_test = _create_cuda_library_flag_test(config_settings_platform_sysroot_test, config_settings_toolchain_resolution)
 cuda_library_platform_no_sysroot_flag_test = _create_cuda_library_flag_test(config_settings_platform_no_sysroot_test, config_settings_toolchain_resolution)
 cuda_library_platform_no_sysroot_but_copt_flag_test = _create_cuda_library_flag_test(config_settings_platform_no_sysroot_test, config_settings_platform_copt_sysroot_test)
+
+# Config settings for testing the //cuda:host_ccbin override
+config_settings_host_ccbin = {_rules_cuda_target("cuda:host_ccbin"): _rules_cuda_target("tests/flag:fake_host_ccbin")}
+cuda_library_host_ccbin_flag_test = _create_cuda_library_flag_test(config_settings_host_ccbin)
+
+def _host_ccbin_inputs_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    actions = analysistest.target_actions(env)
+    matched = [a for a in actions if a.mnemonic == ctx.attr.action_mnemonic]
+    asserts.true(env, len(matched) > 0, 'no action with mnemonic "{}"'.format(ctx.attr.action_mnemonic))
+    for action in matched:
+        inputs = [f.short_path for f in action.inputs.to_list()]
+        asserts.true(env, ctx.attr.expected_input in inputs, '"{}" not in inputs of {} action'.format(ctx.attr.expected_input, action.mnemonic))
+    return analysistest.end(env)
+
+host_ccbin_inputs_test = analysistest.make(
+    _host_ccbin_inputs_test_impl,
+    config_settings = config_settings_host_ccbin,
+    attrs = {
+        "action_mnemonic": attr.string(mandatory = True),
+        "expected_input": attr.string(mandatory = True),
+    },
+)

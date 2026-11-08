@@ -206,6 +206,7 @@ cuda_library = rule(
         "_default_cuda_copts": attr.label(default = "//cuda:copts"),
         "_default_host_copts": attr.label(default = "//cuda:host_copts"),
         "_cc_host_compile_flags_to_skip": attr.label(default = "//cuda:cc_host_compile_flags_to_skip"),
+        "_host_ccbin": attr.label(default = "//cuda:host_ccbin", cfg = "exec"),
         "_default_cuda_archs": attr.label(default = "//cuda:archs"),
     },
     fragments = ["cpp"],

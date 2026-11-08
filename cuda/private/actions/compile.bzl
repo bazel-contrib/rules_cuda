@@ -42,6 +42,9 @@ def compile(
         unsupported_features = ctx.disabled_features,
     )
     host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
+    host_ccbin_path, host_ccbin_files = cuda_helper.host_ccbin_override(ctx)
+    if host_ccbin_path != None:
+        host_compiler = host_ccbin_path
     cuda_compiler = cuda_toolchain.compiler_executable
 
     cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.cuda_compile])
@@ -106,7 +109,7 @@ def compile(
             executable = cuda_compiler,
             arguments = [args],
             outputs = [obj_file],
-            inputs = depset([src], transitive = [common.headers, cc_toolchain.all_files, cuda_toolchain.all_files]),
+            inputs = depset([src], transitive = [common.headers, cc_toolchain.all_files, cuda_toolchain.all_files, host_ccbin_files]),
             env = env,
             mnemonic = "CudaCompile",
             progress_message = "Compiling %s" % src.path,

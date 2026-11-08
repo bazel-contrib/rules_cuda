@@ -193,6 +193,12 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
   This defaults to skipping `-c`, and can be repeated, for example:
   `--@rules_cuda//cuda:cc_host_compile_flags_to_skip=-c --@rules_cuda//cuda:cc_host_compile_flags_to_skip=-fno-canonical-system-headers`.
 
+- `@rules_cuda//cuda:host_ccbin`
+
+  Override the host compiler that nvcc invokes via `-ccbin`. Point it at an executable target when the C++ toolchain's compiler is not a supported nvcc host compiler (for example, a clang/libc++ toolchain).
+  When set, the C++ toolchain's compile flags are not forwarded to the host compiler; pass any required host flags through `@rules_cuda//cuda:host_copts`.
+  By default, `-ccbin` is the C++ toolchain's compiler.
+
 - `@rules_cuda//cuda:runtime`
 
   Set the default cudart to link; for example, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static` links the static CUDA runtime.

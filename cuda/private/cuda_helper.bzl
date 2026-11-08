@@ -261,7 +261,33 @@ def _get_cc_sysroot(ctx):
     cuda_toolchain = find_cuda_toolchain(ctx)
     return getattr(cuda_toolchain, "cc_sysroot", None)
 
+def _host_ccbin_override(ctx):
+    """Returns the `//cuda:host_ccbin` override as a `(path, inputs)` tuple.
+
+    Returns `(None, depset())` when the flag is unset (the default empty
+    filegroup) or the rule has no `_host_ccbin` attribute.
+    """
+    target = getattr(ctx.attr, "_host_ccbin", None)
+    if target == None:
+        return None, depset()
+    info = target[DefaultInfo]
+    exe = info.files_to_run.executable if info.files_to_run != None else None
+    if exe == None:
+        files = info.files.to_list()
+        if len(files) == 1:
+            exe = files[0]
+    if exe == None:
+        return None, depset()
+    runfiles = info.default_runfiles.files if info.default_runfiles != None else depset()
+    return exe.path, depset([exe], transitive = [info.files, runfiles])
+
 def _get_cc_host_compile_flags(ctx):
+    # With a -ccbin override the C++ toolchain's flags target a different
+    # compiler; do not forward them (see //cuda:host_ccbin).
+    override_path, _ = _host_ccbin_override(ctx)
+    if override_path != None:
+        return []
+
     dummy_src = "__rules_cuda_host_compile_source__"
     dummy_out = "__rules_cuda_host_compile_output__"
     user_flags = ctx.fragments.cpp.copts + ctx.fragments.cpp.cxxopts
@@ -692,6 +718,7 @@ def _configure_features(ctx, cuda_toolchain, requested_features = None, unsuppor
     )
 
 cuda_helper = struct(
+    host_ccbin_override = _host_ccbin_override,
     get_arch_specs = _get_arch_specs,
     check_srcs_extensions = _check_srcs_extensions,
     check_must_enforce_rdc = _check_must_enforce_rdc,

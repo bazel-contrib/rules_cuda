@@ -14,6 +14,7 @@ load(
     "cuda_library_cxxopts_without_feature_flag_test",
     "cuda_library_external_include_paths_flag_test",
     "cuda_library_flag_test",
+    "cuda_library_host_ccbin_flag_test",
     "cuda_library_linkopts_without_feature_flag_test",
     "cuda_library_platform_no_sysroot_but_copt_flag_test",
     "cuda_library_platform_no_sysroot_flag_test",
@@ -26,6 +27,7 @@ load(
     "cuda_library_use_copts_flag_test",
     "cuda_library_use_cxxopts_flag_test",
     "cuda_library_use_linkopts_flag_test",
+    "host_ccbin_inputs_test",
     "num_actions_test",
 )
 
@@ -512,4 +514,74 @@ cuda_library_platform_sysroot_flag_test(
     output_name = "kernel.pic.o",
     target_compatible_with = ["@platforms//os:linux"],
     target_under_test = "@rules_cuda_examples//basic:kernel",
+)
+
+###################################################
+# Tests for the //cuda:host_ccbin override
+###################################################
+filegroup(
+    name = "fake_host_ccbin",
+    srcs = ["fake_host_ccbin.sh"],
+)
+
+# Default (flag unset): -ccbin comes from the C++ toolchain.
+cuda_library_flag_test(
+    name = "cuda_library_host_ccbin_default_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-ccbin"],
+    not_contain_flags = ["tests/flag/fake_host_ccbin.sh"],
+    target_under_test = "examples_basic_kernel_with_flags",
+)
+
+cuda_library_host_ccbin_flag_test(
+    name = "cuda_library_host_ccbin_compile_flag_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = [
+        "-ccbin tests/flag/fake_host_ccbin.sh",
+        # //cuda:host_copts and per-target host_copts still apply.
+        "-Xcompiler -O1",
+    ],
+    target_under_test = "examples_basic_kernel_with_flags",
+)
+
+cuda_library_host_ccbin_flag_test(
+    name = "cuda_library_host_ccbin_dlink_flag_test",
+    action_mnemonic = "CudaDeviceLink",
+    contain_flags = [
+        "-ccbin tests/flag/fake_host_ccbin.sh",
+        "-Xcompiler -O1",
+    ],
+    target_under_test = "examples_basic_kernel_with_flags",
+)
+
+# The C++ toolchain's compile flags target a different compiler and are
+# not forwarded when the override is set.
+cuda_library_flag_test(
+    name = "cuda_library_host_ccbin_default_forwards_toolchain_flags_test",
+    action_mnemonic = "CudaCompile",
+    contain_flags = ["-Xcompiler -fstack-protector"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "examples_basic_kernel_with_flags",
+)
+
+cuda_library_host_ccbin_flag_test(
+    name = "cuda_library_host_ccbin_no_toolchain_flags_test",
+    action_mnemonic = "CudaCompile",
+    not_contain_flags = ["-Xcompiler -fstack-protector"],
+    target_compatible_with = ["@platforms//os:linux"],
+    target_under_test = "examples_basic_kernel_with_flags",
+)
+
+host_ccbin_inputs_test(
+    name = "cuda_library_host_ccbin_compile_inputs_test",
+    action_mnemonic = "CudaCompile",
+    expected_input = "tests/flag/fake_host_ccbin.sh",
+    target_under_test = "examples_basic_kernel_with_flags",
+)
+
+host_ccbin_inputs_test(
+    name = "cuda_library_host_ccbin_dlink_inputs_test",
+    action_mnemonic = "CudaDeviceLink",
+    expected_input = "tests/flag/fake_host_ccbin.sh",
+    target_under_test = "examples_basic_kernel_with_flags",
 )

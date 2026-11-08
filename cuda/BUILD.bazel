@@ -192,6 +192,26 @@ repeatable_string_flag(
     build_setting_default = "-c",
 )
 
+# Overrides the host compiler nvcc invokes via -ccbin. Point this at an
+# executable target (e.g. a wrapper script around a specific gcc) when the
+# resolved C++ toolchain's compiler is not a supported nvcc host compiler,
+# for example a clang/libc++ toolchain (CUDA rejects libc++ on x86).
+#
+# When set, the C++ toolchain's compile flags are NOT forwarded to the host
+# compiler, since they target a different compiler; supply any required host
+# flags via //cuda:host_copts instead. The default (an empty filegroup) keeps
+# the existing behaviour of using the C++ toolchain's compiler.
+#
+# Example usage: --@rules_cuda//cuda:host_ccbin=//tools:nvcc_host_gcc
+label_flag(
+    name = "host_ccbin",
+    build_setting_default = ":host_ccbin_unset",
+)
+
+filegroup(
+    name = "host_ccbin_unset",
+)
+
 # Command line flag to specify the CUDA runtime. Use this target as CUDA
 # runtime dependency.
 #
