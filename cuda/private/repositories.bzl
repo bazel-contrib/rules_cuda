@@ -26,7 +26,7 @@ def _detect_platform(ctx):
     if arch in ["x86_64", "amd64"]:
         arch = "x86_64"
     elif arch in ["aarch64", "arm64"]:
-        arch = "aarch64"
+        arch = "arm64" if os == "windows" else "aarch64"
     else:
         fail("Unsupported arch '{}' for CUDA redist.".format(ctx.os.arch))
 
@@ -96,6 +96,7 @@ def _detect_local_cuda_toolkit(repository_ctx):
         if _is_windows(repository_ctx):
             cudadevrt = _find_local_cuda_file_label(repository_ctx, cuda_path, [
                 "lib/x64/cudadevrt.lib",
+                "lib/arm64/cudadevrt.lib",
                 "lib/cudadevrt.lib",
             ])
             if cudadevrt:

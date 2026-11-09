@@ -471,8 +471,6 @@ def _nvcc_toolchain_declarations(repo, setting, host_os, version_label = ""):
     declarations = []
     for os in ["linux", "windows"]:
         constraints = ["@platforms//os:" + os]
-        if os == "windows":
-            constraints.append("@platforms//cpu:x86_64")
         declarations.append(_toolchain_declaration(
             "nvcc-{}{}-toolchain".format(os, suffix),
             repo + "//toolchain:nvcc-" + os,

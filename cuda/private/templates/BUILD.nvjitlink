@@ -7,6 +7,7 @@ cc_import(
     name = "nvJitLink_lib",
     interface_library = any_or_first(
         "%{component_name}/%{libpath}/x64/nvJitLink.lib",
+        "%{component_name}/%{libpath}/arm64/nvJitLink.lib",
         "%{component_name}/%{libpath}/nvJitLink.lib",
     ),
     system_provided = 1,

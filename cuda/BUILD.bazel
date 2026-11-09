@@ -144,6 +144,14 @@ config_setting(
     ],
 )
 
+config_setting(
+    name = "is_windows_arm64",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
 # Command line flag to specify the list of CUDA architectures to compile for.
 #
 # Provides CudaArchsInfo of the list of archs to build.

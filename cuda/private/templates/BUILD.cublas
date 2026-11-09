@@ -12,6 +12,7 @@ cc_import(
     name = "cublas_lib",
     interface_library = any_or_first(
         "%{component_name}/%{libpath}/x64/cublas.lib",
+        "%{component_name}/%{libpath}/arm64/cublas.lib",
         "%{component_name}/%{libpath}/cublas.lib",
     ),
     system_provided = 1,
@@ -22,6 +23,7 @@ cc_import(
     name = "cublasLt_lib",
     interface_library = any_or_first(
         "%{component_name}/%{libpath}/x64/cublasLt.lib",
+        "%{component_name}/%{libpath}/arm64/cublasLt.lib",
         "%{component_name}/%{libpath}/cublasLt.lib",
     ),
     system_provided = 1,

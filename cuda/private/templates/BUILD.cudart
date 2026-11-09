@@ -36,6 +36,7 @@ cc_import(
     name = "cudart_lib",
     interface_library = any_or_first(
         "%{component_name}/%{libpath}/x64/cudart.lib",
+        "%{component_name}/%{libpath}/arm64/cudart.lib",
         "%{component_name}/%{libpath}/cudart.lib",
     ),
     system_provided = 1,
@@ -46,6 +47,7 @@ cc_import(
     name = "cudadevrt_lib",
     interface_library = any_or_first(
         "%{component_name}/%{libpath}/x64/cudadevrt.lib",
+        "%{component_name}/%{libpath}/arm64/cudadevrt.lib",
         "%{component_name}/%{libpath}/cudadevrt.lib",
     ),
     system_provided = 1,
@@ -108,6 +110,7 @@ cc_import(
     name = "cuda_lib",
     interface_library = any_or_first(
         "%{component_name}/%{libpath}/x64/cuda.lib",
+        "%{component_name}/%{libpath}/arm64/cuda.lib",
         "%{component_name}/%{libpath}/cuda.lib",
     ),
     system_provided = 1,
