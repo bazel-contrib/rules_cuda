@@ -25,4 +25,4 @@ cuda.redist_json(
     version = "13.4.2",
 )
 cuda.toolkit(name = "cuda")
-use_repo(cuda, "cuda", "cuda_cudart_windows_arm64_13_4_2", "cuda_toolchain_13_4_2")
+use_repo(cuda, "cuda")

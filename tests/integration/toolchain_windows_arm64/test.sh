@@ -26,23 +26,30 @@ files=$(bazel cquery @cuda//:nvcc --enable_bzlmod \
     --@rules_cuda//cuda:exec_platform=windows-arm64 --output=files)
 [[ "$files" == *windows_arm64*bin/nvcc.exe* ]]
 
-# Imports must reference actual ARM64 library paths, rather than missing x64 files.
-for target in cudart_lib cudadevrt_lib cuda_lib; do
-    library=$(bazel query "labels(interface_library, deps(@cuda_cudart_windows_arm64_13_4_2//:${target}))" --enable_bzlmod)
+# Follow the public aliases to inspect the ARM64 component's import libraries.
+# Unconfigured query also visits x86_64 branches, so select the ARM64 results.
+for target in cuda_runtime cudadevrt_lib cuda; do
+    library=$(bazel query "filter(windows_arm64, labels(interface_library, deps(@cuda//:${target})))" --enable_bzlmod)
     [[ "$library" == *lib/arm64/* ]]
     [[ "$library" != *lib/x64/* ]]
 done
 
-# Check default, versioned, and underlying Windows registrations. None may require
+# Check default and versioned Windows registrations. Neither may require
 # x86_64 on either the execution or target platform.
 for target in \
     @cuda//toolchain:nvcc-windows-toolchain \
-    @cuda//toolchain:nvcc-windows-13_4_2-toolchain \
-    @cuda_toolchain_13_4_2//toolchain/nvcc_msvc:nvcc-local-toolchain; do
+    @cuda//toolchain:nvcc-windows-13_4_2-toolchain; do
     declaration=$(bazel query "$target" --enable_bzlmod --output=build)
     [[ "$declaration" == *os:windows* ]]
     [[ "$declaration" != *cpu:x86_64* ]]
 done
+
+# Discover the underlying registration beside the implementation reached through
+# the public facade, without importing an implementation repository by name.
+declaration=$(bazel query 'kind("^toolchain rule$", siblings(kind("^cuda_toolchain rule$", deps(labels(toolchain, @cuda//toolchain:nvcc-windows-toolchain), 1))))' \
+    --enable_bzlmod --output=build)
+[[ "$declaration" == *os:windows* ]]
+[[ "$declaration" != *cpu:x86_64* ]]
 
 # Avoid leaving execution-root symlinks in the parent workspace's //tests/... scan.
 bazel clean
