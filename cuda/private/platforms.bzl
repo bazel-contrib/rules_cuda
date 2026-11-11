@@ -5,6 +5,7 @@
 SUPPORTED_PLATFORMS = [
     "linux-x86_64",
     "windows-x86_64",
+    "windows-arm64",
     "linux-sbsa",
     "linux-aarch64",
 ]

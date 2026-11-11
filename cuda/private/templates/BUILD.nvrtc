@@ -7,6 +7,7 @@ cc_import(
     name = "nvrtc_lib",
     interface_library = any_or_first(
         "%{component_name}/%{libpath}/x64/nvrtc.lib",
+        "%{component_name}/%{libpath}/arm64/nvrtc.lib",
         "%{component_name}/%{libpath}/nvrtc.lib",
     ),
     system_provided = 1,

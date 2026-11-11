@@ -33,6 +33,7 @@ TARGET_MAPPING = REGISTRY
 _AUTO_FROM_CONSTRAINT = [
     ("is_linux_x86_64", "linux-x86_64"),
     ("is_windows_x86_64", "windows-x86_64"),
+    ("is_windows_arm64", "windows-arm64"),
 ]
 
 # Mapping from :aarch64-flag config_settings to the aarch64-linux CUDA

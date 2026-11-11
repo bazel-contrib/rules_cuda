@@ -1,0 +1,28 @@
+module(name = "windows_arm64_redist")
+
+bazel_dep(name = "platforms", version = "0.0.6")
+bazel_dep(name = "rules_cuda", version = "0.0.0")
+local_path_override(
+    module_name = "rules_cuda",
+    path = "../../..",
+)
+
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.redist_json(
+    name = "cuda_13_4_2",
+    components = [
+        "cccl",
+        "crt",
+        "cudart",
+        "curand",
+        "nvcc",
+        "nvvm",
+    ],
+    platforms = [
+        "windows-arm64",
+        "windows-x86_64",
+    ],
+    version = "13.4.2",
+)
+cuda.toolkit(name = "cuda")
+use_repo(cuda, "cuda")

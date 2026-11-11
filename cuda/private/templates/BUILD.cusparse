@@ -7,6 +7,7 @@ cc_import(
     name = "cusparse_lib",
     interface_library = any_or_first(
         "%{component_name}/%{libpath}/x64/cusparse.lib",
+        "%{component_name}/%{libpath}/arm64/cusparse.lib",
         "%{component_name}/%{libpath}/cusparse.lib",
     ),
     system_provided = 1,

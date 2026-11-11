@@ -39,6 +39,7 @@ _NPP_LIBS = {
         name = name + "_lib",
         interface_library = any_or_first(
             "%{component_name}/%{libpath}/x64/{}.lib".format(name),
+            "%{component_name}/%{libpath}/arm64/{}.lib".format(name),
             "%{component_name}/%{libpath}/{}.lib".format(name),
         ),
         system_provided = 1,
