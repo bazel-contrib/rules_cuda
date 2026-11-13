@@ -63,13 +63,21 @@ def compile(
         filename = None
         filename = cuda_helper.get_artifact_name(cuda_toolchain, artifact_category_name, basename)
 
-        # Objects are placed in <_prefix>/<tgt_name>/<filename>.
+        # Keep action output variants in separate directories because NVCC may place 
+        # temporary files beside the output object, see 
+        # https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#objdir-as-tempdir-objtemp
+        # ... same file is compiled with different options ...
+        # Compiling them in the same directory can either cause the compilation to fail or produce incorrect results.
+        #
+        # Objects are placed in <_prefix>/<tgt_name>/<artifact_category>/<filename>.
         # For files with the same basename, say srcs = ["kernel.cu", "foo/kernel.cu", "bar/kernel.cu"], we get
-        # <_prefix>/<tgt_name>/0/kernel.<ext>, <_prefix>/<tgt_name>/1/kernel.<ext>, <_prefix>/<tgt_name>/2/kernel.<ext>.
+        # <_prefix>/<tgt_name>/object_file/0/kernel.<ext>,
+        # <_prefix>/<tgt_name>/pic_object_file/0/kernel.<ext>,
+        # <_prefix>/<tgt_name>/pic_object_file/1/kernel.<ext>.
         # Otherwise, the index is not presented.
         if basename_counter[basename] > 1:
             filename = "{}/{}".format(basename_index, filename)
-        obj_file = actions.declare_file("{}/{}/{}".format(_prefix, ctx.attr.name, filename))
+        obj_file = actions.declare_file("{}/{}/{}/{}".format(_prefix, ctx.attr.name, artifact_category_name, filename))
         ret.append(obj_file)
 
         var = cuda_helper.create_compile_variables(
