@@ -102,9 +102,37 @@ runtime_libraries_test(
         requested = requested,
     )
     for name, crt_flag, requested in [
-        ("mt", "/MT", ["opt", "static_link_msvcrt_no_debug"]),
-        ("mtd", "/MTd", ["dbg", "static_link_msvcrt_debug"]),
-        ("md", "/MD", ["opt", "dynamic_link_msvcrt_no_debug"]),
-        ("mdd", "/MDd", ["dbg", "dynamic_link_msvcrt_debug"]),
+        (
+            "mt",
+            "/MT",
+            [
+                "opt",
+                "static_link_msvcrt_no_debug",
+            ],
+        ),
+        (
+            "mtd",
+            "/MTd",
+            [
+                "dbg",
+                "static_link_msvcrt_debug",
+            ],
+        ),
+        (
+            "md",
+            "/MD",
+            [
+                "opt",
+                "dynamic_link_msvcrt_no_debug",
+            ],
+        ),
+        (
+            "mdd",
+            "/MDd",
+            [
+                "dbg",
+                "dynamic_link_msvcrt_debug",
+            ],
+        ),
     ]
 ]
