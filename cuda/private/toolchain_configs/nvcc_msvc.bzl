@@ -80,7 +80,7 @@ def _impl(ctx):
         enabled = True,
         flag_sets = [
             flag_set(
-                actions = [ACTION_NAMES.cuda_compile],
+                actions = [ACTION_NAMES.cuda_compile, ACTION_NAMES.device_link],
                 flag_groups = [flag_group(flags = ["-ccbin", "%{host_compiler}"])],
             ),
         ],
@@ -501,7 +501,7 @@ def _impl(ctx):
         name = "static_link_msvcrt_debug",
         flag_sets = [
             flag_set(
-                actions = [ACTION_NAMES.cuda_compile],
+                actions = [ACTION_NAMES.cuda_compile, ACTION_NAMES.device_link],
                 flag_groups = [flag_group(flags = ["-Xcompiler", "/MTd"])],
             ),
         ],
@@ -512,7 +512,7 @@ def _impl(ctx):
         name = "static_link_msvcrt_no_debug",
         flag_sets = [
             flag_set(
-                actions = [ACTION_NAMES.cuda_compile],
+                actions = [ACTION_NAMES.cuda_compile, ACTION_NAMES.device_link],
                 flag_groups = [flag_group(flags = ["-Xcompiler", "/MT"])],
             ),
         ],
@@ -526,7 +526,7 @@ def _impl(ctx):
         name = "dynamic_link_msvcrt_debug",
         flag_sets = [
             flag_set(
-                actions = [ACTION_NAMES.cuda_compile],
+                actions = [ACTION_NAMES.cuda_compile, ACTION_NAMES.device_link],
                 flag_groups = [flag_group(flags = ["-Xcompiler", "/MDd"])],
             ),
         ],
@@ -537,7 +537,7 @@ def _impl(ctx):
         name = "dynamic_link_msvcrt_no_debug",
         flag_sets = [
             flag_set(
-                actions = [ACTION_NAMES.cuda_compile],
+                actions = [ACTION_NAMES.cuda_compile, ACTION_NAMES.device_link],
                 flag_groups = [flag_group(flags = ["-Xcompiler", "/MD"])],
             ),
         ],
