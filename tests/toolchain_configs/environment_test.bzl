@@ -1,5 +1,6 @@
 """Regression tests for CUDA toolchain environments and runtime libraries."""
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
@@ -83,5 +84,44 @@ msvc_device_link_flags_test = unittest.make(
         "config": attr.label(mandatory = True, providers = [CudaToolchainConfigInfo]),
         "crt_flag": attr.string(mandatory = True),
         "requested": attr.string_list(mandatory = True),
+    },
+)
+
+def _assembled_root_test_impl(ctx):
+    env = unittest.begin(ctx)
+    toolkit = ctx.attr.toolkit[CudaToolkitInfo]
+    asserts.equals(env, sorted([
+        "bin/" + toolkit.ptxas.basename,
+        "bin/" + toolkit.fatbinary.basename,
+        "include/cuda.h",
+        "nvvm/libdevice/libdevice.10.bc",
+    ]), sorted([
+        paths.relativize(f.path, toolkit.path)
+        for f in ctx.attr.toolkit[DefaultInfo].files.to_list()
+    ]))
+    return unittest.end(env)
+
+assembled_root_test = unittest.make(
+    _assembled_root_test_impl,
+    attrs = {
+        "toolkit": attr.label(mandatory = True, providers = [CudaToolkitInfo]),
+    },
+)
+
+def _clang_cuda_path_test_impl(ctx):
+    env = unittest.begin(ctx)
+    config = ctx.attr.config[CudaToolchainConfigInfo]
+    features = config_helper.configure_features(selectables = config.features, requested_features = ["cuda_path"])
+    flags = []
+    for feature in config.features:
+        if feature.name == "cuda_path":
+            flags.extend(eval_feature(feature, struct(), ACTION_NAMES.cuda_compile, features))
+    asserts.equals(env, ["--cuda-path=" + config.cuda_toolkit[CudaToolkitInfo].path], flags)
+    return unittest.end(env)
+
+clang_cuda_path_test = unittest.make(
+    _clang_cuda_path_test_impl,
+    attrs = {
+        "config": attr.label(mandatory = True, providers = [CudaToolchainConfigInfo]),
     },
 )
