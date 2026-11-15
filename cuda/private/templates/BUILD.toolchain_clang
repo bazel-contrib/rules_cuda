@@ -10,6 +10,7 @@ load(
 cuda_toolkit_info(
     name = "cuda-toolkit",
     bin2c = "%{bin2c_label}",
+    # %{cuda_h_line}
     fatbinary = "%{fatbinary_label}",
     link_stub = "%{link_stub_label}",
     nvlink = "%{nvlink_label}",
@@ -18,7 +19,6 @@ cuda_toolkit_info(
     # %{device_runtime_static_libs_line}
     path = "%{cuda_path}",
     ptxas = "%{ptxas_label}",
-    # %{path_data_line}
     version = "%{cuda_version}",
 )
 
