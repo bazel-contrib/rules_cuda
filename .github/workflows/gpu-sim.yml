@@ -1,0 +1,67 @@
+name: Examples on simulated H100
+
+# Builds the CUDA examples with the local CUDA 13.0 toolkit and runs each
+# binary on a simulated NVIDIA H100 (https://github.com/pantheongpu/pantheonsim),
+# since the hosted runners have no GPU. Device code is PTX only
+# (--@rules_cuda//cuda:archs=compute_90) and the default shared cudart is used.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "cuda/**"
+      - "examples/**"
+      - "MODULE.bazel"
+      - ".bazelversion"
+      - ".github/workflows/gpu-sim.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  examples:
+    name: Examples, CUDA 13.0, simulated H100
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up the simulated GPU and CUDA toolkit
+        uses: pantheongpu/setup-pantheonsim@a1b9d4237411f9b2b0e0bb895b4d83377f336a7b # v0.1.9
+        with:
+          gpu: nvidia/h100
+          cuda-toolkit: "13.0"
+          library-path: "false"
+
+      - uses: bazelbuild/setup-bazelisk@b39c379c82683a5f25d34f0d062761f62693e0b2 # v3
+
+      - name: Build the examples
+        working-directory: examples
+        run: |
+          export USE_BAZEL_VERSION="$(cat ../.bazelversion)"
+          export CUDA_PATH=/usr/local/cuda-13.0
+          bazelisk build --jobs=3 --verbose_failures \
+            --@rules_cuda//cuda:archs=compute_90 \
+            //basic:main //rdc:main_from_objects //rdc:main_from_library \
+            //thrust:main //cublas:main
+
+      # basic, thrust and cublas print a line and return 0 on success; rdc
+      # prints PASSED or FAILED but always returns 0, so its output is checked.
+      - name: Run the examples
+        working-directory: examples
+        run: |
+          set -o pipefail
+          run() { echo "::group::$1"; vgpu run --gpu nvidia/h100 "bazel-bin/$1" 2>&1 | tee "$RUNNER_TEMP/out.txt"; echo "::endgroup::"; }
+          expect() { grep -q -- "$1" "$RUNNER_TEMP/out.txt" || { echo "missing expected output: $1"; exit 1; }; }
+          run basic/main;                   expect "cuda kernel called!"
+          run rdc/main_from_objects;        expect "PASSED"
+          run rdc/main_from_library;        expect "PASSED"
+          run thrust/main;                  expect "sum reduce as 344064, mean: 42"
+          run cublas/main;                  expect "cublas handle created"
