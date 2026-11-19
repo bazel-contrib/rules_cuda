@@ -32,6 +32,48 @@ application returns success. It also sets `--target-processes all` to check chil
 processes. Additional sanitizer options follow these defaults. Use `--test_arg` for
 arguments to the test itself.
 
+## Compilation options
+
+By default, Compute Sanitizer instruments kernels at runtime. No special compiler
+flags or sanitizer-specific build rules are required.
+
+With NVCC, add `-lineinfo` for source file and line numbers in reports while preserving
+compiler optimization. The existing `cuda:copts` flag forwards it to CUDA compilation:
+
+```sh
+bazel test \
+    --@rules_cuda//cuda:compiler=nvcc \
+    --@rules_cuda//cuda:copts=-lineinfo \
+    --run_under=@rules_cuda//:compute_sanitizer \
+    //path/to:gpu_test
+```
+
+Full device debugging with `-G` is optional; `-lineinfo` is sufficient for source-line
+attribution without selecting a debug build.
+
+### Optional compile-time instrumentation
+
+NVCC toolkits supporting `-fdevice-sanitize=memcheck`, such as CUDA 13.2, can instrument
+code during compilation. This option can improve memcheck performance and detect
+additional allocation-boundary errors. Use the existing repeatable `cuda:copts` flag:
+
+```sh
+bazel test \
+    --@rules_cuda//cuda:compiler=nvcc \
+    --@rules_cuda//cuda:copts=-lineinfo \
+    --@rules_cuda//cuda:copts=-fdevice-sanitize=memcheck \
+    --run_under=@rules_cuda//:compute_sanitizer \
+    //path/to:gpu_test
+```
+
+This still checks errors during execution under Compute Sanitizer; it is not static
+analysis. The compiler/PTX compiler and sanitizer must come from the same CUDA toolkit
+version. The CUDA 13.0.2 setup example below supports runtime instrumentation, but not
+this optional compiler flag. `initcheck`, `racecheck`, and `synccheck` use runtime
+instrumentation. See NVIDIA's [compilation options](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/#compilation-options)
+and [compile-time patching](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/#compile-time-patching)
+documentation for details and limitations.
+
 ## Configure the toolkit
 
 For a local CUDA toolkit, use the [toolchain setup](../index.md#toolchain-detection).
