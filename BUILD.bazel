@@ -1,6 +1,0 @@
-alias(
-    name = "compute_sanitizer",
-    actual = "//tools/compute_sanitizer",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
-)

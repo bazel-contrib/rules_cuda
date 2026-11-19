@@ -8,16 +8,15 @@ process launch helpers. It does not search `PATH` for another installation.
 ## Run tests
 
 ```sh
-bazel test --run_under=@rules_cuda//:compute_sanitizer //path/to:gpu_test
+bazel test --run_under=@rules_cuda//tools/compute_sanitizer //path/to:gpu_test
 ```
 
-The same target is available as `@rules_cuda//tools/compute_sanitizer`.
 The default tool is `memcheck`. Select other tools by adding options after the label:
 
 ```sh
-bazel test --run_under='@rules_cuda//:compute_sanitizer --tool initcheck' //path/to:gpu_test
-bazel test --run_under='@rules_cuda//:compute_sanitizer --tool racecheck' //path/to:gpu_test
-bazel test --run_under='@rules_cuda//:compute_sanitizer --tool synccheck' //path/to:gpu_test
+bazel test --run_under='@rules_cuda//tools/compute_sanitizer --tool initcheck' //path/to:gpu_test
+bazel test --run_under='@rules_cuda//tools/compute_sanitizer --tool racecheck' //path/to:gpu_test
+bazel test --run_under='@rules_cuda//tools/compute_sanitizer --tool synccheck' //path/to:gpu_test
 ```
 
 | Tool        | Checks                                           |
@@ -44,7 +43,7 @@ compiler optimization. The existing `cuda:copts` flag forwards it to CUDA compil
 bazel test \
     --@rules_cuda//cuda:compiler=nvcc \
     --@rules_cuda//cuda:copts=-lineinfo \
-    --run_under=@rules_cuda//:compute_sanitizer \
+    --run_under=@rules_cuda//tools/compute_sanitizer \
     //path/to:gpu_test
 ```
 
@@ -62,7 +61,7 @@ bazel test \
     --@rules_cuda//cuda:compiler=nvcc \
     --@rules_cuda//cuda:copts=-lineinfo \
     --@rules_cuda//cuda:copts=-fdevice-sanitize=memcheck \
-    --run_under=@rules_cuda//:compute_sanitizer \
+    --run_under=@rules_cuda//tools/compute_sanitizer \
     //path/to:gpu_test
 ```
 
@@ -109,15 +108,15 @@ The repository includes manual GPU fixtures. From a checkout configured with CUD
 the sanitizer component, the clean fixture should pass:
 
 ```sh
-bazel test --run_under=//:compute_sanitizer //tests/compute_sanitizer/gpu:clean
+bazel test --run_under=//tools/compute_sanitizer //tests/compute_sanitizer/gpu:clean
 ```
 
 These two fixtures intentionally return application success after an invalid device
 read or an uninitialized device read. Each command should fail with sanitizer diagnostics:
 
 ```sh
-bazel test --run_under=//:compute_sanitizer //tests/compute_sanitizer/gpu:invalid_access
-bazel test --run_under='//:compute_sanitizer --tool initcheck' //tests/compute_sanitizer/gpu:uninitialized
+bazel test --run_under=//tools/compute_sanitizer //tests/compute_sanitizer/gpu:invalid_access
+bazel test --run_under='//tools/compute_sanitizer --tool initcheck' //tests/compute_sanitizer/gpu:uninitialized
 ```
 
 All three fixtures are tagged `manual` and require a GPU. The ordinary utility suite

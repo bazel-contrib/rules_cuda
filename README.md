@@ -148,8 +148,8 @@ On Windows, this means that you will also need to set the environment variable `
 On Linux, run GPU tests under [NVIDIA Compute Sanitizer](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/):
 
 ```sh
-bazel test --run_under=@rules_cuda//:compute_sanitizer //path/to:gpu_test
-bazel test --run_under='@rules_cuda//:compute_sanitizer --tool initcheck' //path/to:gpu_test
+bazel test --run_under=@rules_cuda//tools/compute_sanitizer //path/to:gpu_test
+bazel test --run_under='@rules_cuda//tools/compute_sanitizer --tool initcheck' //path/to:gpu_test
 ```
 
 The target uses the configured CUDA toolkit and sets a nonzero exit code for sanitizer
