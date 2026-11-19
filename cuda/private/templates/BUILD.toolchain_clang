@@ -17,7 +17,7 @@ load("//:defs.bzl", "if_cuda_toolkit_version_ge", "if_local_cuda_toolkit")
 [
     merged_ctk(
         name = "merged_ctk",
-        components = [
+        deps = [
             "//:nvcc_all_files",
             "//:cccl_all_files",
             "//:cudart_all_files",

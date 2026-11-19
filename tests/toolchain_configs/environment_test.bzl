@@ -97,6 +97,11 @@ def _merged_ctk_test_impl(ctx):
 
     cc_ctx = target[CcInfo].compilation_context
     asserts.equals(env, [out_dir], cc_ctx.headers.to_list())
+    rebased_includes = sorted(
+        cc_ctx.includes.to_list() +
+        cc_ctx.system_includes.to_list() +
+        cc_ctx.external_includes.to_list(),
+    )
     asserts.equals(
         env,
         sorted([
@@ -104,7 +109,7 @@ def _merged_ctk_test_impl(ctx):
             out_dir.path + "/include/cccl",
             out_dir.path + "/nvvm/include",
         ]),
-        sorted(cc_ctx.system_includes.to_list()),
+        rebased_includes,
     )
     return unittest.end(env)
 

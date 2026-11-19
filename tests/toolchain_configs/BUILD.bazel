@@ -157,19 +157,27 @@ runtime_libraries_test(
 filegroup(
     name = "fake_nvcc_all_files",
     srcs = [
-        ":fake_fake_nvcc_bin_ptxas",
         ":fake_fake_nvcc_LICENSE",
+        ":fake_fake_nvcc_bin_ptxas",
     ],
 )
 
-filegroup(
-    name = "fake_cudart_all_files",
-    srcs = [":fake_fake_cudart_include_cuda_h"],
+cc_library(
+    name = "fake_cudart_headers",
+    hdrs = [":fake_fake_cudart_include_cuda_h"],
+    includes = ["fake_cudart/include"],
 )
 
-filegroup(
-    name = "fake_cccl_all_files",
-    srcs = [":fake_fake_cccl_include_cccl_thrust_version_h"],
+cc_library(
+    name = "fake_cccl_headers",
+    hdrs = [":fake_fake_cccl_include_cccl_thrust_version_h"],
+    includes = ["fake_cccl/include/cccl"],
+)
+
+cc_library(
+    name = "fake_nvvm_headers",
+    hdrs = [":fake_fake_nvvm_nvvm_include_nvvm_h"],
+    includes = ["fake_nvvm/nvvm/include"],
 )
 
 filegroup(
@@ -182,11 +190,12 @@ filegroup(
 
 merged_ctk(
     name = "test_merged_ctk",
-    components = [
+    deps = [
+        ":fake_cccl_headers",
+        ":fake_cudart_headers",
         ":fake_nvcc_all_files",
-        ":fake_cudart_all_files",
-        ":fake_cccl_all_files",
         ":fake_nvvm_all_files",
+        ":fake_nvvm_headers",
     ],
 )
 

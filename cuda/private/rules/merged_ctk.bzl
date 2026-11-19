@@ -5,12 +5,14 @@ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
 _WINDOWS_COPY_BAT = """@echo off
 setlocal
+set "ROBOCOPY=C:\\Windows\\System32\\robocopy.exe"
+if defined SystemRoot set "ROBOCOPY=%SystemRoot%\\System32\\robocopy.exe"
 set "OUT=%~1"
 shift
 if not exist "%OUT%" mkdir "%OUT%"
 :loop
 if "%~1"=="" goto done
-robocopy "%~1" "%OUT%" /E /XF LICENSE version.json /NFL /NDL /NJH /NJS /NC /NS /NP >nul
+"%ROBOCOPY%" "%~1" "%OUT%" /E /XF LICENSE version.json /NFL /NDL /NJH /NJS /NC /NS /NP >nul
 if errorlevel 8 exit /b 1
 shift
 goto loop
@@ -35,8 +37,8 @@ for src in "$@"; do
 done
 """
 
-def _split_component_path(f):
-    """Return (component_root, rel_path_within_component) for a component file."""
+def _component_root(f):
+    """Return the component root directory for a file inside a component repo/package."""
     path = f.path
     prefix = ""
     if f.root.path:
@@ -53,33 +55,64 @@ def _split_component_path(f):
 
     parts = rest.split("/", 1)
     if len(parts) < 2:
-        return None, None
-    comp_dir, rel_path = parts[0], parts[1]
-    return prefix + comp_dir, rel_path
+        return None
+    return prefix + parts[0]
+
+def _rebase_include(inc, comp_roots, out_path):
+    """Rebase an include directory from a component root onto out_path."""
+    for root in comp_roots:
+        if inc == root:
+            return out_path
+        if inc.startswith(root + "/"):
+            return out_path + inc[len(root):]
+    return None
 
 def _merged_ctk_impl(ctx):
     out_dir = ctx.actions.declare_directory(ctx.label.name)
 
-    inputs = ctx.files.components
+    inputs = []
     comp_roots = []
     seen_roots = {}
-    has_include = False
-    has_cccl_include = False
-    has_nvvm_include = False
+    includes = []
+    system_includes = []
+    has_cc_info = False
 
-    for f in inputs:
-        comp_root, rel_path = _split_component_path(f)
-        if not comp_root:
-            continue
-        if comp_root not in seen_roots:
-            seen_roots[comp_root] = True
-            comp_roots.append(comp_root)
-        if rel_path.startswith("include/"):
-            has_include = True
-            if rel_path.startswith("include/cccl/"):
-                has_cccl_include = True
-        elif rel_path.startswith("nvvm/include/"):
-            has_nvvm_include = True
+    for target in ctx.attr.deps:
+        if CcInfo in target:
+            has_cc_info = True
+            cc_ctx = target[CcInfo].compilation_context
+            target_files = cc_ctx.headers.to_list()
+            target_roots = []
+            for f in target_files:
+                inputs.append(f)
+                root = _component_root(f)
+                if root:
+                    if root not in target_roots:
+                        target_roots.append(root)
+                    if root not in seen_roots:
+                        seen_roots[root] = True
+                        comp_roots.append(root)
+            for src_list, dst_list in [
+                (cc_ctx.includes.to_list(), includes),
+                (cc_ctx.system_includes.to_list(), system_includes),
+                (cc_ctx.external_includes.to_list(), system_includes),
+            ]:
+                for inc in src_list:
+                    rebased = _rebase_include(inc, target_roots, out_dir.path)
+                    if rebased and rebased not in dst_list:
+                        dst_list.append(rebased)
+        else:
+            default_info = target[DefaultInfo]
+            target_files = default_info.files.to_list()
+            executable = default_info.files_to_run.executable
+            if executable and executable not in target_files:
+                target_files.append(executable)
+            for f in target_files:
+                inputs.append(f)
+                root = _component_root(f)
+                if root and root not in seen_roots:
+                    seen_roots[root] = True
+                    comp_roots.append(root)
 
     is_windows = ctx.target_platform_has_constraint(
         ctx.attr._windows_constraint[platform_common.ConstraintValueInfo],
@@ -100,6 +133,7 @@ def _merged_ctk_impl(ctx):
             inputs = inputs,
             outputs = [out_dir],
             arguments = [args],
+            use_default_shell_env = True,
             mnemonic = "MergedCtk",
             progress_message = "Assembling merged CUDA Toolkit %{output}",
         )
@@ -116,16 +150,9 @@ def _merged_ctk_impl(ctx):
             command = _POSIX_COPY_SH,
         )
 
-    system_includes = []
-    if has_include:
-        system_includes.append(out_dir.path + "/include")
-    if has_cccl_include:
-        system_includes.append(out_dir.path + "/include/cccl")
-    if has_nvvm_include:
-        system_includes.append(out_dir.path + "/nvvm/include")
-
     compilation_context = cc_common.create_compilation_context(
-        headers = depset([out_dir]),
+        headers = depset([out_dir] if has_cc_info else []),
+        includes = depset(includes),
         system_includes = depset(system_includes),
     )
 
@@ -138,10 +165,10 @@ merged_ctk = rule(
     doc = "Copies deliverable CUDA component trees into a single merged CTK directory and provides DefaultInfo and CcInfo.",
     implementation = _merged_ctk_impl,
     attrs = {
-        "components": attr.label_list(
+        "deps": attr.label_list(
             allow_files = True,
             mandatory = True,
-            doc = "Component filegroups (e.g. //:nvcc_all_files, //:cudart_all_files) to merge into a single CTK directory.",
+            doc = "Component targets (filegroups like //:nvcc_all_files, executables, or CcInfo header targets) to merge into a single CTK directory.",
         ),
         "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     },
