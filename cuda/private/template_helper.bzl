@@ -52,9 +52,11 @@ def _expand_dctk_cuda(repository_ctx, components):
 
 # Components whose own fragment declares `<component>_headers`, so BUILD.dctk_comp must
 # not: both fragments land in one BUILD file, and only one may declare a given target.
-# cccl does, because CUDA 13 moved its headers into an `include/cccl/` subdirectory and
-# only its fragment knows to follow that.
-_COMPONENTS_DECLARING_OWN_HEADERS = ["cccl"]
+# - cccl: CUDA 13 moved its headers into an `include/cccl/` subdirectory.
+# - nvvm: its real headers live in `<component_repo_root>/nvvm/include/`, while
+#   `<component_repo_root>/include/` holds the synthetic `cuda.h` for Clang version
+#   detection and must not be propagated.
+_COMPONENTS_DECLARING_OWN_HEADERS = ["cccl", "nvvm"]
 
 def _expand_dctk_component(repository_ctx, component):
     tpl_label = Label("//cuda/private:templates/BUILD.dctk_comp")
@@ -69,7 +71,7 @@ def _expand_dctk_component(repository_ctx, component):
 def _component_owns_cuda_repo_alias(component, target, components):
     if target == "culibos_a" and "culibos" in components:
         return component == "culibos"
-    if target in ["cicc", "libdevice", "libdevice.10.bc"] and "nvvm" in components:
+    if target in ["cicc", "compiler_root", "libdevice", "libdevice.10.bc"] and "nvvm" in components:
         return component == "nvvm"
     return True
 
@@ -221,11 +223,14 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
         strip_prefix = {strip_prefix},
         urls = {urls},
         version = "{version}",
-        toolkit_version = "{toolkit_version}",
+        toolkit_version = "{toolkit_version}",{cudart_version_line}
     )"""
 
     for spec in component_specs:
         repo_name = redist_json_helper.get_repo_name(repository_ctx, spec)
+        cudart_version_line = ""
+        if spec.get("cudart_version"):
+            cudart_version_line = '\n        cudart_version = "{}",'.format(spec["cudart_version"])
 
         rules_cuda_components_body.append(
             component_tpl.format(
@@ -237,6 +242,7 @@ def _generate_redist_bzl(repository_ctx, component_specs, redist_version):
                 urls = repr(spec["urls"]),
                 version = spec["version"],
                 toolkit_version = redist_version,
+                cudart_version_line = cudart_version_line,
             ),
         )
         mapping[spec["component_name"]] = "@" + repo_name

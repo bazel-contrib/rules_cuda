@@ -24,6 +24,21 @@ def _collect_specs_test_impl(ctx):
             names = sorted([s["component_name"] for s in specs])
             asserts.equals(env, ["cccl", "nvcc"] if not components else ["cccl"], names)
 
+    # cudart_version is propagated to nvcc and nvvm so synthetic cuda.h matches cudart.
+    cudart_entry = _entry("CUDA Runtime")
+    cudart_entry["version"] = "13.0.96"
+    redist = {
+        "cuda_cccl": _entry("CCCL"),
+        "cuda_cudart": cudart_entry,
+        "cuda_nvcc": _entry("CUDA NVCC"),
+        "libnvvm": _entry("NVVM"),
+    }
+    specs = redist_json_helper.collect_specs(ctx, struct(components = []), "linux-x86_64", redist, _URL)
+    specs_by_name = {s["component_name"]: s for s in specs}
+    asserts.equals(env, "13.0.96", specs_by_name["nvvm"].get("cudart_version"))
+    asserts.equals(env, "13.0.96", specs_by_name["nvcc"].get("cudart_version"))
+    asserts.equals(env, None, specs_by_name["cccl"].get("cudart_version"))
+
     return unittest.end(env)
 
 _collect_specs_test = unittest.make(_collect_specs_test_impl)

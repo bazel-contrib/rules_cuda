@@ -36,6 +36,7 @@ cuda_component_tag = tag_class(attrs = {
     ),
     "version": attr.string(doc = "A unique version number for component."),
     "toolkit_version": attr.string(doc = "CUDA Toolkit release containing this component."),
+    "cudart_version": attr.string(doc = "Version of the cudart component in the same toolkit release."),
 })
 
 cuda_redist_json_tag = tag_class(attrs = {

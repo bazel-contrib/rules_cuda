@@ -2,7 +2,7 @@
 REGISTRY = {
     "cudart": ["cudart_all_files", "cudart_license", "cudart_headers", "cuda", "cuda_runtime", "cuda_runtime_static", "cudadevrt_a", "cudadevrt_lib", "culibos_a"],  # device-runtime targets are not for end users.
     "nvcc": ["nvcc_all_files", "nvcc_license", "nvcc_headers", "compiler_root", "compiler_deps", "nvptxcompiler", "nvcc", "nvlink", "ptxas", "bin2c", "fatbinary", "link.stub", "cicc", "libdevice", "libdevice.10.bc"],
-    "nvvm": ["nvvm_all_files", "nvvm_license", "nvvm_headers", "cicc", "libdevice", "libdevice.10.bc"],
+    "nvvm": ["nvvm_all_files", "nvvm_license", "nvvm_headers", "compiler_root", "cicc", "libdevice", "libdevice.10.bc"],
     "cccl": ["cccl_all_files", "cccl_license", "cccl_headers", "libcudacxx", "cub", "thrust"],
     "crt": ["crt_all_files", "crt_license", "crt_headers", "crt"],
     "culibos": ["culibos_all_files", "culibos_license", "culibos_headers", "culibos_a"],  # culibos_a is not for end users.

@@ -107,6 +107,12 @@ pushd "$this_dir/toolchain_redist_json_cross_major"
         --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib --nobuild \
         --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel test \
+        //:nvcc_headers_no_synthetic_include_test //:cuda_headers_no_synthetic_include_test \
+        --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel test \
+        //:nvvm_headers_no_synthetic_include_test //:nvcc_headers_no_synthetic_include_test //:cuda_headers_no_synthetic_include_test \
+        --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}"
     bazel clean && bazel shutdown
 popd
 fi

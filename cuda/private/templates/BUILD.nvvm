@@ -36,3 +36,26 @@ alias(
     name = "libdevice",
     actual = ":libdevice.10.bc",
 )
+
+# Deliverable nvvm repos patch `<component_repo_root>/include/cuda.h` for Clang version
+# detection; expose only the component's real headers under `<component_repo_root>/nvvm/include`
+# so the synthetic `cuda.h` is never propagated to consumers.
+[
+    cc_library(
+        name = "nvvm_headers",
+        hdrs = glob(
+            ["%{component_name}/nvvm/include/**"],
+            allow_empty = True,
+        ),
+        includes = ["%{component_name}/nvvm/include"],
+    )
+    for _ in ([None] if "%{component_name}" == "nvvm" else [])
+]
+
+[
+    filegroup(
+        name = "compiler_root",
+        srcs = ["%{component_name}/include/cuda.h"],
+    )
+    for _ in ([None] if "%{component_name}" == "nvvm" else [])
+]

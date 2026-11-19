@@ -103,6 +103,8 @@ def _collect_specs(ctx, attr, platform, redist, the_url):
     specs = []
     all_components_on_platform = [k for k in FULL_COMPONENT_NAME if platform in redist.get(_manifest_key(redist, k), {})]
     components = attr.components if attr.components else all_components_on_platform
+    cudart_key = _manifest_key(redist, "cudart")
+    cudart_version = redist.get(cudart_key, {}).get("version", "")
 
     for c in components:
         c_full = _manifest_key(redist, c)
@@ -113,14 +115,17 @@ def _collect_specs(ctx, attr, platform, redist, the_url):
         archive_name = payload_relative_path.rsplit("/", 1)[1].split("-archive.")[0] + "-archive"
         desc_name = redist[c_full].get("name", c_full)
 
-        specs.append({
+        spec = {
             "component_name": c,
             "descriptive_name": desc_name,
             "urls": [payload_url],
             "sha256": payload["sha256"],
             "strip_prefix": archive_name,
             "version": redist[c_full]["version"],
-        })
+        }
+        if c in ["nvvm", "nvcc"] and cudart_version:
+            spec["cudart_version"] = cudart_version
+        specs.append(spec)
 
     return specs
 

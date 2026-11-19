@@ -85,3 +85,25 @@ msvc_device_link_flags_test = unittest.make(
         "requested": attr.string_list(mandatory = True),
     },
 )
+
+def _clang_cuda_path_test_impl(ctx):
+    env = unittest.begin(ctx)
+    config = ctx.attr.config[CudaToolchainConfigInfo]
+    features = config_helper.configure_features(
+        selectables = config.features,
+        requested_features = ["cuda_path"],
+    )
+    flags = []
+    for feature in config.features:
+        if feature.name == "cuda_path":
+            flags.extend(eval_feature(feature, struct(), ACTION_NAMES.cuda_compile, features))
+    asserts.equals(env, ["--cuda-path=" + ctx.attr.expected_cuda_path], flags)
+    return unittest.end(env)
+
+clang_cuda_path_test = unittest.make(
+    _clang_cuda_path_test_impl,
+    attrs = {
+        "config": attr.label(mandatory = True, providers = [CudaToolchainConfigInfo]),
+        "expected_cuda_path": attr.string(mandatory = True),
+    },
+)

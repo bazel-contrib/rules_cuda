@@ -1,5 +1,6 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cuda//cuda:defs.bzl", "cuda_library")
+load(":clang_root_test.bzl", "no_synthetic_include_test")
 
 write_file(
     name = "kernel",
@@ -13,4 +14,24 @@ cuda_library(
     rdc = True,
     tags = ["manual"],
     deps = ["@cuda//:cuda_runtime"],
+)
+
+no_synthetic_include_test(
+    name = "nvvm_headers_no_synthetic_include_test",
+    require_nvvm_inner_include = True,
+    tags = ["manual"],
+    target_under_test = "@cuda//:nvvm_headers",
+)
+
+no_synthetic_include_test(
+    name = "nvcc_headers_no_synthetic_include_test",
+    tags = ["manual"],
+    target_under_test = "@cuda//:nvcc_headers",
+)
+
+no_synthetic_include_test(
+    name = "cuda_headers_no_synthetic_include_test",
+    allow_cudart_cuda_h = True,
+    tags = ["manual"],
+    target_under_test = "@cuda//:cuda_headers",
 )
