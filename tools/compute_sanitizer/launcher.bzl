@@ -16,7 +16,7 @@ def _compute_sanitizer_launcher_impl(ctx):
         substitutions = {"%{sanitizer}": _runfiles_path(ctx, binaries[0])},
         is_executable = True,
     )
-    runfiles = ctx.runfiles(files = binaries)
+    runfiles = ctx.runfiles()
     for dep in ctx.attr.data + [ctx.attr.sanitizer, ctx.attr._runfiles]:
         runfiles = runfiles.merge(ctx.runfiles(transitive_files = dep[DefaultInfo].files))
         runfiles = runfiles.merge(dep[DefaultInfo].default_runfiles)

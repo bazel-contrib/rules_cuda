@@ -152,23 +152,10 @@ bazel test --run_under=@rules_cuda//:compute_sanitizer //path/to:gpu_test
 bazel test --run_under='@rules_cuda//:compute_sanitizer --tool initcheck' //path/to:gpu_test
 ```
 
-The target is also available as `@rules_cuda//tools/compute_sanitizer`.
-It uses the sanitizer from the configured CUDA toolkit, including its injection libraries
-and process launch helpers; it does not search `PATH` for another installation.
-For `cuda.redist_json`, include `"sanitizer"` if you explicitly list `components`
-(otherwise all available components are included). Local CUDA installations must contain
-`compute-sanitizer/compute-sanitizer` and its accompanying support files.
-
-The launcher sets `--error-exitcode 1` so sanitizer findings fail the Bazel test,
-and `--target-processes all` to include child processes. The default tool is `memcheck`;
-additional sanitizer options go after the label in `--run_under`, as above.
-The test execution environment must already provide a supported GPU and driver.
-This wrapper does not configure GPU scheduling or sandbox access. Sanitized tests can
-require a longer `--test_timeout` than ordinary runs.
-
-Opt-in GPU fixtures are in [`tests/compute_sanitizer/gpu`](tests/compute_sanitizer/gpu).
-The `clean` test should pass; `invalid_access` under `memcheck` and `uninitialized`
-under `initcheck` should fail with sanitizer diagnostics. All three are tagged `manual`.
+The target uses the configured CUDA toolkit and sets a nonzero exit code for sanitizer
+findings. With `cuda.redist_json`, include `"sanitizer"` if you explicitly list `components`.
+See the [Compute Sanitizer guide](https://bazel-contrib.github.io/rules_cuda/latest/user/compute_sanitizer/)
+for setup, sanitizer modes, execution requirements, and opt-in GPU fixtures.
 
 ### Flags
 

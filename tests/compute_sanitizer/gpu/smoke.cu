@@ -1,4 +1,5 @@
 #include <cuda_runtime.h>
+#include <sanitizer.h>
 
 __global__ void read_value(int *input, int *output) {
 #ifdef INVALID_ACCESS

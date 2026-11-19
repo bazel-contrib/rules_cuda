@@ -1,3 +1,16 @@
+cc_library(
+    name = "sanitizer_headers",
+    hdrs = glob(
+        ["%{component_name}/compute-sanitizer/include/**"],
+        allow_empty = True,
+    ),
+    includes = ["%{component_name}/compute-sanitizer/include"],
+    deps = if_local_cuda_toolkit(
+        [":cuda_headers"],
+        ["@cuda//:cudart_headers"],
+    ),
+)
+
 # Keep the executable beside its injection libraries and process launch helpers.
 filegroup(
     name = "compute_sanitizer_bin",

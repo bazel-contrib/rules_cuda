@@ -11,6 +11,7 @@ load("//cuda:defs.bzl", "cuda_test")
             "requires-gpu",
         ],
         target_compatible_with = ["@platforms//os:linux"],
+        deps = ["@cuda//:sanitizer_headers"],
     )
     for name, defines in [
         ("clean", []),
