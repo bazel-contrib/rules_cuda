@@ -1,0 +1,16 @@
+load("//tools/compute_sanitizer:launcher.bzl", "compute_sanitizer_launcher")
+load(":tests.bzl", "launcher_test")
+
+compute_sanitizer_launcher(
+    name = "fake_launcher",
+    data = ["support.txt"],
+    sanitizer = "fake_sanitizer.sh",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+launcher_test(
+    name = "launcher_test",
+    size = "small",
+    launcher = ":fake_launcher",
+    target_compatible_with = ["@platforms//os:linux"],
+)

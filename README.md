@@ -143,6 +143,33 @@ On Windows, this means that you will also need to set the environment variable `
 - `cuda_test`: A convenience macro for CUDA-enabled tests.
   It behaves like `cuda_binary` but creates a `cc_test`-style target that can be run with `bazel test`.
 
+### Compute Sanitizer
+
+On Linux, run GPU tests under [NVIDIA Compute Sanitizer](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/):
+
+```sh
+bazel test --run_under=@rules_cuda//:compute_sanitizer //path/to:gpu_test
+bazel test --run_under='@rules_cuda//:compute_sanitizer --tool initcheck' //path/to:gpu_test
+```
+
+The target is also available as `@rules_cuda//tools/compute_sanitizer`.
+It uses the sanitizer from the configured CUDA toolkit, including its injection libraries
+and process launch helpers; it does not search `PATH` for another installation.
+For `cuda.redist_json`, include `"sanitizer"` if you explicitly list `components`
+(otherwise all available components are included). Local CUDA installations must contain
+`compute-sanitizer/compute-sanitizer` and its accompanying support files.
+
+The launcher sets `--error-exitcode 1` so sanitizer findings fail the Bazel test,
+and `--target-processes all` to include child processes. The default tool is `memcheck`;
+additional sanitizer options go after the label in `--run_under`, as above.
+The test execution environment must already provide a supported GPU and driver.
+This wrapper does not configure GPU scheduling or sandbox access. Sanitized tests can
+require a longer `--test_timeout` than ordinary runs.
+
+Opt-in GPU fixtures are in [`tests/compute_sanitizer/gpu`](tests/compute_sanitizer/gpu).
+The `clean` test should pass; `invalid_access` under `memcheck` and `uninitialized`
+under `initcheck` should fail with sanitizer diagnostics. All three are tagged `manual`.
+
 ### Flags
 
 Some flags are defined in [cuda/BUILD.bazel](cuda/BUILD.bazel). To use them, for example:

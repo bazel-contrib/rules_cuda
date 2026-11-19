@@ -19,6 +19,7 @@ REGISTRY = {
     "nvjpeg": ["nvjpeg_all_files", "nvjpeg_license", "nvjpeg_headers", "nvjpeg", "nvjpeg_static"],
     "nvml": ["nvml_all_files", "nvml_license", "nvml_headers", "nvml"],
     "nvprof": [],
+    "sanitizer": ["sanitizer_all_files", "sanitizer_license", "sanitizer_headers", "compute_sanitizer_bin", "compute_sanitizer_files"],
     "nvrtc": ["nvrtc_all_files", "nvrtc_license", "nvrtc_headers", "nvrtc"],
     "nvtx": ["nvtx_all_files", "nvtx_license", "nvtx_headers", "nvtx", "nvtx3"],
 }
@@ -43,6 +44,7 @@ FULL_COMPONENT_NAME = {
     "nvjitlink": "libnvjitlink",
     "nvjpeg": "libnvjpeg",
     "nvml": "cuda_nvml_dev",
+    "sanitizer": "cuda_sanitizer_api",
     "nvrtc": "cuda_nvrtc",
     "nvtx": "cuda_nvtx",
 }

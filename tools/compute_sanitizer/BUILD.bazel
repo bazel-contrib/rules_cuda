@@ -1,0 +1,10 @@
+load(":launcher.bzl", "compute_sanitizer_launcher")
+
+compute_sanitizer_launcher(
+    name = "compute_sanitizer",
+    data = ["@cuda//:compute_sanitizer_files"],
+    sanitizer = "@cuda//:compute_sanitizer_bin",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    visibility = ["//visibility:public"],
+)

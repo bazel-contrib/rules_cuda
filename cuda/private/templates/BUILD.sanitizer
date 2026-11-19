@@ -1,0 +1,23 @@
+# Keep the executable beside its injection libraries and process launch helpers.
+filegroup(
+    name = "compute_sanitizer_bin",
+    srcs = glob(
+        [
+            "%{component_name}/compute-sanitizer/compute-sanitizer",
+            "%{component_name}/compute-sanitizer/compute-sanitizer.exe",
+        ],
+        allow_empty = True,
+    ),
+)
+
+filegroup(
+    name = "compute_sanitizer_files",
+    srcs = glob(
+        ["%{component_name}/compute-sanitizer/**"],
+        exclude = [
+            "%{component_name}/compute-sanitizer/docs/**",
+            "%{component_name}/compute-sanitizer/include/**",
+        ],
+        allow_empty = True,
+    ),
+)
