@@ -32,6 +32,14 @@ jobs:
               toolchain: "llvm_host_device", # clang as cuda compiler driver
               toolchain-version: "19",
             }
+          # New Clang with older CUDA catches CUDA version misdetection (PTX ISA mismatch); see #532.
+          - {
+              os: "ubuntu-24.04",
+              cuda-version: "12.6.2",
+              source: "nvidia",
+              toolchain: "llvm_host_device", # clang as cuda compiler driver
+              toolchain-version: "22",
+            }
           - {
               os: "ubuntu-24.04",
               cuda-version: "13.0.2",
