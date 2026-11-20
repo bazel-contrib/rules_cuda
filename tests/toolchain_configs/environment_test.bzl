@@ -1,6 +1,7 @@
 """Regression tests for CUDA toolchain environments and runtime libraries."""
 
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("//cuda/private:action_names.bzl", "ACTION_NAMES")
 load("//cuda/private:providers.bzl", "CudaToolchainConfigInfo", "CudaToolkitInfo")
 load("//cuda/private:toolchain_config_lib.bzl", "config_helper", "eval_feature")
@@ -83,5 +84,75 @@ msvc_device_link_flags_test = unittest.make(
         "config": attr.label(mandatory = True, providers = [CudaToolchainConfigInfo]),
         "crt_flag": attr.string(mandatory = True),
         "requested": attr.string_list(mandatory = True),
+    },
+)
+
+def _merged_ctk_test_impl(ctx):
+    env = unittest.begin(ctx)
+    target = ctx.attr.target
+    files = target[DefaultInfo].files.to_list()
+    asserts.equals(env, 1, len(files))
+    out_dir = files[0]
+    asserts.true(env, out_dir.is_directory, "merged_ctk output should be a directory")
+
+    cc_ctx = target[CcInfo].compilation_context
+    asserts.equals(env, [out_dir], cc_ctx.headers.to_list())
+    rebased_includes = sorted(
+        cc_ctx.includes.to_list() +
+        cc_ctx.system_includes.to_list() +
+        cc_ctx.external_includes.to_list(),
+    )
+    asserts.equals(
+        env,
+        sorted([
+            out_dir.path + "/include",
+            out_dir.path + "/include/cccl",
+            out_dir.path + "/nvvm/include",
+        ]),
+        rebased_includes,
+    )
+    return unittest.end(env)
+
+merged_ctk_test = unittest.make(
+    _merged_ctk_test_impl,
+    attrs = {
+        "target": attr.label(mandatory = True, providers = [DefaultInfo, CcInfo]),
+    },
+)
+
+def _clang_cuda_path_test_impl(ctx):
+    env = unittest.begin(ctx)
+    config = ctx.attr.config[CudaToolchainConfigInfo]
+    features = config_helper.configure_features(
+        selectables = config.features,
+        requested_features = ["cuda_path"],
+    )
+    flags = []
+    for feature in config.features:
+        if feature.name == "cuda_path":
+            flags.extend(eval_feature(feature, struct(), ACTION_NAMES.cuda_compile, features))
+    asserts.equals(env, ["--cuda-path=" + config.cuda_toolkit[CudaToolkitInfo].path], flags)
+    return unittest.end(env)
+
+clang_cuda_path_test = unittest.make(
+    _clang_cuda_path_test_impl,
+    attrs = {
+        "config": attr.label(mandatory = True, providers = [CudaToolchainConfigInfo]),
+    },
+)
+
+def _merge_directory_test_impl(ctx):
+    env = unittest.begin(ctx)
+    files = ctx.attr.target[DefaultInfo].files.to_list()
+    asserts.equals(env, 1, len(files))
+    out_dir = files[0]
+    asserts.true(env, out_dir.is_directory, "merge_directory output should be a directory")
+    asserts.equals(env, "merged_dir_out", out_dir.basename)
+    return unittest.end(env)
+
+merge_directory_test = unittest.make(
+    _merge_directory_test_impl,
+    attrs = {
+        "target": attr.label(mandatory = True),
     },
 )

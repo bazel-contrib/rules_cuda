@@ -340,37 +340,15 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         clang_path = "%{clang_path}",
     )
 
-    compiler_files = []
-    cuda_path_for_subst = ""
-    path_data = None
-    if cuda.path:  # local installation
-        compiler_files.append("//:compiler_deps")
-        cuda_path_for_subst = _to_forward_slash(cuda.path)
-    else:  # scattered components
-        cuda_path_for_subst = "$(location //:compiler_root)"
-        path_data = ["//:compiler_root"]
-        compiler_files.extend([
-            "//:nvcc_all_files",
-            "//:cccl_all_files",
-            "//:cudart_all_files",
-            "//:curand_all_files",
-        ])
-        if int(cuda.version_major) >= 13:
-            compiler_files.extend([
-                "//:nvvm_all_files",
-            ])
-    path_data_line = "path_data = " + repr(path_data) + ","
-    compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
+    cuda_path_for_subst = _to_forward_slash(cuda.path) if cuda.path else ""
     device_runtime_static_libs_line = "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","
 
     substitutions = {
         "# %{compiler_attribute_line}": compiler_attr_line,
-        "# %{compiler_files_line}": compiler_files_line,
         "# %{device_runtime_static_libs_line}": device_runtime_static_libs_line,
         "%{clang_path}": clang_path_for_subst,  # Will be empty if label is used
         "%{clang_label}": clang_label_for_subst,  # Will be empty if path is used
         "%{cuda_path}": cuda_path_for_subst,
-        "# %{path_data_line}": path_data_line,
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_label}": cuda.nvcc_label,
         "%{nvlink_label}": cuda.nvlink_label,
@@ -379,10 +357,6 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{fatbinary_label}": cuda.fatbinary_label,
         "%{ptxas_label}": cuda.ptxas_label,
     }
-    if cuda.cicc_label:
-        substitutions["# %{cicc_line}"] = "cicc = " + repr(cuda.cicc_label)
-    if cuda.libdevice_label:
-        substitutions["# %{libdevice_line}"] = "libdevice = " + repr(cuda.libdevice_label)
 
     if clang_label_for_subst:
         substitutions.pop("%{clang_path}")

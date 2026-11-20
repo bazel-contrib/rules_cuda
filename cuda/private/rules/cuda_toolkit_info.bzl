@@ -38,7 +38,7 @@ cuda_toolkit_info = rule(
     implementation = _impl,
     attrs = {
         "path": attr.string(mandatory = True, doc = "Root path to the CUDA Toolkit. Will expand location."),
-        "path_data": attr.label_list(mandatory = False, doc = "Required if expand location."),
+        "path_data": attr.label_list(mandatory = False, cfg = "exec", doc = "Required if expand location."),
         "version": attr.string(mandatory = True, doc = "Version of the CUDA Toolkit."),
         "nvlink": attr.label(allow_single_file = True, cfg = "exec", doc = "The nvlink executable."),
         "link_stub": attr.label(allow_single_file = True, cfg = "exec", doc = "The link.stub text file."),

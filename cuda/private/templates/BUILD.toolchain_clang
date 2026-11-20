@@ -4,8 +4,34 @@ load(
     "@rules_cuda//cuda:defs.bzl",
     "cuda_toolchain",
     "cuda_toolkit_info",
+    "merged_ctk",
     cuda_toolchain_config = "cuda_toolchain_config_clang",
 )
+load("//:defs.bzl", "if_cuda_toolkit_version_ge", "if_local_cuda_toolkit")
+
+# Clang's CUDA driver requires a single `--cuda-path` tree containing `bin/`,
+# `include/cuda.h` (for version detection — Clang has no flag to override it),
+# `nvvm/libdevice/libdevice.10.bc`, and headers like `curand.h`. Deliverable
+# toolkits scatter these across separate component repos, so merge them into
+# one CTK directory instead of playing whack-a-mole with Clang's layout checks.
+[
+    merged_ctk(
+        name = "merged_ctk",
+        deps = [
+            "//:nvcc_all_files",
+            "//:cccl_all_files",
+            "//:cudart_all_files",
+            "//:curand_all_files",
+        ] + if_cuda_toolkit_version_ge(
+            (13, 0),
+            [
+                "//:crt_all_files",
+                "//:nvvm_all_files",
+            ],
+        ),
+    )
+    for _ in if_local_cuda_toolkit([], [None])
+]
 
 cuda_toolkit_info(
     name = "cuda-toolkit",
@@ -13,12 +39,10 @@ cuda_toolkit_info(
     fatbinary = "%{fatbinary_label}",
     link_stub = "%{link_stub_label}",
     nvlink = "%{nvlink_label}",
-    # %{cicc_line},
-    # %{libdevice_line},
     # %{device_runtime_static_libs_line}
-    path = "%{cuda_path}",
+    path = if_local_cuda_toolkit("%{cuda_path}", "$(location :merged_ctk)"),
+    path_data = if_local_cuda_toolkit([], [":merged_ctk"]),
     ptxas = "%{ptxas_label}",
-    # %{path_data_line}
     version = "%{cuda_version}",
 )
 
@@ -31,7 +55,7 @@ cuda_toolchain_config(
 cuda_toolchain(
     name = "clang-local",
     # %{compiler_attribute_line}
-    # %{compiler_files_line}
+    compiler_files = if_local_cuda_toolkit(["//:compiler_deps"], [":merged_ctk"]),
     toolchain_config = ":clang-local-config",
 )
 

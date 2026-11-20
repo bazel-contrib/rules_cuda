@@ -11,6 +11,7 @@ load("//cuda/private:providers.bzl", _CudaArchsInfo = "CudaArchsInfo", _cuda_arc
 load("//cuda/private:rules/cuda_library.bzl", _cuda_library = "cuda_library")
 load("//cuda/private:rules/cuda_objects.bzl", _cuda_objects = "cuda_objects")
 load("//cuda/private:rules/cuda_toolkit_info.bzl", _cuda_toolkit_info = "cuda_toolkit_info")
+load("//cuda/private:rules/merged_ctk.bzl", _merged_ctk = "merged_ctk")
 load(
     "//cuda/private:toolchain.bzl",
     _cuda_toolchain = "cuda_toolchain",
@@ -23,6 +24,7 @@ load("//cuda/private:toolchain_configs/nvcc.bzl", _cuda_toolchain_config_nvcc = 
 load("//cuda/private:toolchain_configs/nvcc_msvc.bzl", _cuda_toolchain_config_nvcc_msvc = "cuda_toolchain_config")
 
 cuda_toolkit_info = _cuda_toolkit_info
+merged_ctk = _merged_ctk
 cuda_toolchain = _cuda_toolchain
 find_cuda_toolchain = _find_cuda_toolchain
 use_cuda_toolchain = _use_cuda_toolchain
