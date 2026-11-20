@@ -140,3 +140,19 @@ clang_cuda_path_test = unittest.make(
         "config": attr.label(mandatory = True, providers = [CudaToolchainConfigInfo]),
     },
 )
+
+def _merge_directory_test_impl(ctx):
+    env = unittest.begin(ctx)
+    files = ctx.attr.target[DefaultInfo].files.to_list()
+    asserts.equals(env, 1, len(files))
+    out_dir = files[0]
+    asserts.true(env, out_dir.is_directory, "merge_directory output should be a directory")
+    asserts.equals(env, "merged_dir_out", out_dir.basename)
+    return unittest.end(env)
+
+merge_directory_test = unittest.make(
+    _merge_directory_test_impl,
+    attrs = {
+        "target": attr.label(mandatory = True),
+    },
+)

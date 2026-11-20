@@ -1,6 +1,12 @@
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("//cuda/private:rules/merge_directory.bzl", "is_windows")
 
 package(default_visibility = ["//visibility:private"])
+
+is_windows(
+    name = "is_windows",
+    visibility = ["//visibility:public"],
+)
 
 bzl_library(
     name = "bzl_srcs",

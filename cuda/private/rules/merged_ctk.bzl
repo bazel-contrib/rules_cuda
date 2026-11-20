@@ -2,40 +2,7 @@
 
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
-
-_WINDOWS_COPY_BAT = """@echo off
-setlocal
-set "ROBOCOPY=C:\\Windows\\System32\\robocopy.exe"
-if defined SystemRoot set "ROBOCOPY=%SystemRoot%\\System32\\robocopy.exe"
-set "OUT=%~1"
-shift
-if not exist "%OUT%" mkdir "%OUT%"
-:loop
-if "%~1"=="" goto done
-"%ROBOCOPY%" "%~1" "%OUT%" /E /XF LICENSE version.json /NFL /NDL /NJH /NJS /NC /NS /NP >nul
-if errorlevel 8 exit /b 1
-shift
-goto loop
-:done
-exit /b 0
-"""
-
-_POSIX_COPY_SH = """set -eu
-out="$1"
-shift
-mkdir -p "$out"
-for src in "$@"; do
-    for entry in "$src"/*; do
-        [ -e "$entry" ] || [ -L "$entry" ] || continue
-        base="${entry##*/}"
-        case "$base" in
-            LICENSE|version.json) continue ;;
-        esac
-        cp -RLf "$entry" "$out/"
-    done
-    find "$out" -type d -exec chmod u+w {} +
-done
-"""
+load("//cuda/private:rules/merge_directory.bzl", "OsInfo", "merge_directory_action")
 
 def _component_root(f):
     """Return the component root directory for a file inside a component repo/package."""
@@ -114,41 +81,16 @@ def _merged_ctk_impl(ctx):
                     seen_roots[root] = True
                     comp_roots.append(root)
 
-    is_windows = ctx.target_platform_has_constraint(
-        ctx.attr._windows_constraint[platform_common.ConstraintValueInfo],
+    merge_directory_action(
+        ctx,
+        srcs = comp_roots,
+        dst = out_dir,
+        inputs = inputs,
+        exclude_files = ["LICENSE", "version.json"],
+        is_windows = ctx.attr._exec_is_windows[OsInfo].is_windows,
+        mnemonic = "MergedCtk",
+        progress_message = "Assembling merged CUDA Toolkit %{output}",
     )
-
-    if is_windows:
-        script = ctx.actions.declare_file(ctx.label.name + "_copy.bat")
-        ctx.actions.write(
-            output = script,
-            content = _WINDOWS_COPY_BAT.replace("\n", "\r\n"),
-            is_executable = True,
-        )
-        args = ctx.actions.args()
-        args.add(out_dir.path.replace("/", "\\"))
-        args.add_all([r.replace("/", "\\") for r in comp_roots])
-        ctx.actions.run(
-            executable = script,
-            inputs = inputs,
-            outputs = [out_dir],
-            arguments = [args],
-            use_default_shell_env = True,
-            mnemonic = "MergedCtk",
-            progress_message = "Assembling merged CUDA Toolkit %{output}",
-        )
-    else:
-        args = ctx.actions.args()
-        args.add(out_dir.path)
-        args.add_all(comp_roots)
-        ctx.actions.run_shell(
-            inputs = inputs,
-            outputs = [out_dir],
-            arguments = [args],
-            mnemonic = "MergedCtk",
-            progress_message = "Assembling merged CUDA Toolkit %{output}",
-            command = _POSIX_COPY_SH,
-        )
 
     compilation_context = cc_common.create_compilation_context(
         headers = depset([out_dir] if has_cc_info else []),
@@ -170,7 +112,10 @@ merged_ctk = rule(
             mandatory = True,
             doc = "Component targets (filegroups like //:nvcc_all_files, executables, or CcInfo header targets) to merge into a single CTK directory.",
         ),
-        "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+        "_exec_is_windows": attr.label(
+            default = Label("//cuda/private:is_windows"),
+            cfg = "exec",
+        ),
     },
     provides = [DefaultInfo, CcInfo],
 )
