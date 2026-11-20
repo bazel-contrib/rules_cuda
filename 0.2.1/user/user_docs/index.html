@@ -1,0 +1,1069 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../..">
+      
+      
+        <link rel="next" href="../toolchain_config_docs/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.4.2">
+    
+    
+      
+        <title>Using the rules - rules_cuda: Starlark implementation of bazel rules for CUDA</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.d451bc0e.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.a5377069.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="indigo">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cuda_archs" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="rules_cuda: Starlark implementation of bazel rules for CUDA" class="md-header__button md-logo" aria-label="rules_cuda: Starlark implementation of bazel rules for CUDA" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            rules_cuda: Starlark implementation of bazel rules for CUDA
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Using the rules
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_1">
+    
+  
+</form>
+      
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/bazel-contrib/rules_cuda" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  User
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../developer/providers_docs/" class="md-tabs__link">
+          
+  
+  Developer
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="rules_cuda: Starlark implementation of bazel rules for CUDA" class="md-nav__button md-logo" aria-label="rules_cuda: Starlark implementation of bazel rules for CUDA" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    rules_cuda: Starlark implementation of bazel rules for CUDA
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/bazel-contrib/rules_cuda" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+    
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    User
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            User
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Using the rules
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Using the rules
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_archs" class="md-nav__link">
+    cuda_archs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_library" class="md-nav__link">
+    cuda_library
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_objects" class="md-nav__link">
+    cuda_objects
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_test" class="md-nav__link">
+    cuda_test
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#register_detected_cuda_toolchains" class="md-nav__link">
+    register_detected_cuda_toolchains
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules_cuda_dependencies" class="md-nav__link">
+    rules_cuda_dependencies
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../toolchain_config_docs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configure the toolchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    
+    
+      
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Developer
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/providers_docs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Providers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/developer_docs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rule Authoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_archs" class="md-nav__link">
+    cuda_archs
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_library" class="md-nav__link">
+    cuda_library
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_objects" class="md-nav__link">
+    cuda_objects
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cuda_test" class="md-nav__link">
+    cuda_test
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#register_detected_cuda_toolchains" class="md-nav__link">
+    register_detected_cuda_toolchains
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rules_cuda_dependencies" class="md-nav__link">
+    rules_cuda_dependencies
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Using the rules</h1>
+
+<!-- Generated with Stardoc: http://skydoc.bazel.build -->
+
+<p><a id="cuda_archs"></a></p>
+<h2 id="cuda_archs">cuda_archs</h2>
+<div class="stardoc-pre"><pre>
+cuda_archs(<a href="#cuda_archs-name">name</a>)
+</pre></div>
+
+<p>A build setting for specifying cuda archs to compile for.</p>
+<p>To retain the flexiblity of NVCC, the <a href="https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#extended-notation">extended notation</a> is adopted.</p>
+<p>When passing cuda_archs from commandline, its spec grammar is as follows:</p>
+<pre><code>ARCH_SPECS   ::= ARCH_SPEC [ ';' ARCH_SPECS ]
+ARCH_SPEC    ::= [ VIRTUAL_ARCH ':' ] GPU_ARCHS
+GPU_ARCHS    ::= GPU_ARCH [ ',' GPU_ARCHS ]
+GPU_ARCH     ::= 'sm_' ARCH_NUMBER
+               | 'lto_' ARCH_NUMBER
+               | VIRTUAL_ARCH
+VIRTUAL_ARCH ::= 'compute_' ARCH_NUMBER
+               | 'lto_' ARCH_NUMBER
+ARCH_NUMBER  ::= (a string in predefined cuda_archs list)
+</code></pre>
+<p>E.g.:</p>
+<ul>
+<li><code>compute_80:sm_80,sm_86</code>:
+  Use <code>compute_80</code> PTX, generate cubin with <code>sm_80</code> and <code>sm_86</code>, no PTX embedded</li>
+<li><code>compute_80:compute_80,sm_80,sm_86</code>:
+  Use <code>compute_80</code> PTX, generate cubin with <code>sm_80</code> and <code>sm_86</code>, PTX embedded</li>
+<li><code>compute_80:compute_80</code>:
+  Embed <code>compute_80</code> PTX, fully relay on <code>ptxas</code></li>
+<li><code>sm_80,sm_86</code>:
+  Same as <code>compute_80:sm_80,sm_86</code>, the arch with minimum integer value will be automatically populated.</li>
+<li><code>sm_80;sm_86</code>:
+  Two specs used.</li>
+<li><code>compute_80</code>:
+  Same as <code>compute_80:compute_80</code></li>
+</ul>
+<p>Best Practices:</p>
+<ul>
+<li>Library supports a full range of archs from xx to yy, you should embed the yy PTX</li>
+<li>Library supports a sparse range of archs from xx to yy, you should embed the xx PTX</li>
+</ul>
+<p><strong>ATTRIBUTES</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Mandatory</th>
+<th style="text-align: left;">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_archs-name"></a>name</td>
+<td style="text-align: left;">A unique name for this target.</td>
+<td style="text-align: left;"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td>
+<td style="text-align: left;">required</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_library"></a></p>
+<h2 id="cuda_library">cuda_library</h2>
+<div class="stardoc-pre"><pre>
+cuda_library(<a href="#cuda_library-name">name</a>, <a href="#cuda_library-deps">deps</a>, <a href="#cuda_library-srcs">srcs</a>, <a href="#cuda_library-hdrs">hdrs</a>, <a href="#cuda_library-alwayslink">alwayslink</a>, <a href="#cuda_library-copts">copts</a>, <a href="#cuda_library-defines">defines</a>, <a href="#cuda_library-host_copts">host_copts</a>, <a href="#cuda_library-host_defines">host_defines</a>,
+             <a href="#cuda_library-host_linkopts">host_linkopts</a>, <a href="#cuda_library-host_local_defines">host_local_defines</a>, <a href="#cuda_library-includes">includes</a>, <a href="#cuda_library-linkopts">linkopts</a>, <a href="#cuda_library-local_defines">local_defines</a>, <a href="#cuda_library-ptxasopts">ptxasopts</a>, <a href="#cuda_library-rdc">rdc</a>)
+</pre></div>
+
+<p>This rule compiles and creates static library for CUDA kernel code. The resulting targets can then be consumed by
+<a href="https://bazel.build/reference/be/c-cpp#rules">C/C++ Rules</a>.</p>
+<p><strong>ATTRIBUTES</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Mandatory</th>
+<th style="text-align: left;">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-name"></a>name</td>
+<td style="text-align: left;">A unique name for this target.</td>
+<td style="text-align: left;"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td>
+<td style="text-align: left;">required</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-deps"></a>deps</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><a href="https://bazel.build/concepts/labels">List of labels</a></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-srcs"></a>srcs</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><a href="https://bazel.build/concepts/labels">List of labels</a></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-hdrs"></a>hdrs</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><a href="https://bazel.build/concepts/labels">List of labels</a></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-alwayslink"></a>alwayslink</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;">Boolean</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-copts"></a>copts</td>
+<td style="text-align: left;">Add these options to the CUDA device compilation command.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-defines"></a>defines</td>
+<td style="text-align: left;">List of defines to add to the compile line.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-host_copts"></a>host_copts</td>
+<td style="text-align: left;">Add these options to the CUDA host compilation command.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-host_defines"></a>host_defines</td>
+<td style="text-align: left;">List of defines to add to the compile line.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-host_linkopts"></a>host_linkopts</td>
+<td style="text-align: left;">Add these flags to the host library link command.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-host_local_defines"></a>host_local_defines</td>
+<td style="text-align: left;">List of defines to add to the compile line, but only apply to this rule.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-includes"></a>includes</td>
+<td style="text-align: left;">List of include dirs to be added to the compile line.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-linkopts"></a>linkopts</td>
+<td style="text-align: left;">Add these flags to the CUDA device link command.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-local_defines"></a>local_defines</td>
+<td style="text-align: left;">List of defines to add to the compile line, but only apply to this rule.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-ptxasopts"></a>ptxasopts</td>
+<td style="text-align: left;">Add these flags to the ptxas command.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_library-rdc"></a>rdc</td>
+<td style="text-align: left;">Whether to perform device linking for relocateable device code. Transitive deps that contain device code must all either be cuda_objects or cuda_library(rdc = True).</td>
+<td style="text-align: left;">Boolean</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_objects"></a></p>
+<h2 id="cuda_objects">cuda_objects</h2>
+<div class="stardoc-pre"><pre>
+cuda_objects(<a href="#cuda_objects-name">name</a>, <a href="#cuda_objects-deps">deps</a>, <a href="#cuda_objects-srcs">srcs</a>, <a href="#cuda_objects-hdrs">hdrs</a>, <a href="#cuda_objects-copts">copts</a>, <a href="#cuda_objects-defines">defines</a>, <a href="#cuda_objects-host_copts">host_copts</a>, <a href="#cuda_objects-host_defines">host_defines</a>, <a href="#cuda_objects-host_local_defines">host_local_defines</a>,
+             <a href="#cuda_objects-includes">includes</a>, <a href="#cuda_objects-local_defines">local_defines</a>, <a href="#cuda_objects-ptxasopts">ptxasopts</a>)
+</pre></div>
+
+<p>This rule produces incomplete object files that can only be consumed by <code>cuda_library</code>. It is created for relocatable device
+code and device link time optimization source files.</p>
+<p><strong>ATTRIBUTES</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Mandatory</th>
+<th style="text-align: left;">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-name"></a>name</td>
+<td style="text-align: left;">A unique name for this target.</td>
+<td style="text-align: left;"><a href="https://bazel.build/concepts/labels#target-names">Name</a></td>
+<td style="text-align: left;">required</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-deps"></a>deps</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><a href="https://bazel.build/concepts/labels">List of labels</a></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-srcs"></a>srcs</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><a href="https://bazel.build/concepts/labels">List of labels</a></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-hdrs"></a>hdrs</td>
+<td style="text-align: left;">-</td>
+<td style="text-align: left;"><a href="https://bazel.build/concepts/labels">List of labels</a></td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-copts"></a>copts</td>
+<td style="text-align: left;">Add these options to the CUDA device compilation command.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-defines"></a>defines</td>
+<td style="text-align: left;">List of defines to add to the compile line.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-host_copts"></a>host_copts</td>
+<td style="text-align: left;">Add these options to the CUDA host compilation command.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-host_defines"></a>host_defines</td>
+<td style="text-align: left;">List of defines to add to the compile line.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-host_local_defines"></a>host_local_defines</td>
+<td style="text-align: left;">List of defines to add to the compile line, but only apply to this rule.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-includes"></a>includes</td>
+<td style="text-align: left;">List of include dirs to be added to the compile line.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-local_defines"></a>local_defines</td>
+<td style="text-align: left;">List of defines to add to the compile line, but only apply to this rule.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_objects-ptxasopts"></a>ptxasopts</td>
+<td style="text-align: left;">Add these flags to the ptxas command.</td>
+<td style="text-align: left;">List of strings</td>
+<td style="text-align: left;">optional</td>
+<td style="text-align: left;"><code>[]</code></td>
+</tr>
+</tbody>
+</table>
+<p><a id="cuda_test"></a></p>
+<h2 id="cuda_test">cuda_test</h2>
+<div class="stardoc-pre"><pre>
+cuda_test(<a href="#cuda_test-name">name</a>, <a href="#cuda_test-attrs">attrs</a>)
+</pre></div>
+
+<p>Wrapper to ensure the test is compiled with the CUDA compiler.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="cuda_test-name"></a>name</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a id="cuda_test-attrs"></a>attrs</td>
+<td style="text-align: left;"><p align="center"> - </p></td>
+<td style="text-align: left;">none</td>
+</tr>
+</tbody>
+</table>
+<p><a id="register_detected_cuda_toolchains"></a></p>
+<h2 id="register_detected_cuda_toolchains">register_detected_cuda_toolchains</h2>
+<div class="stardoc-pre"><pre>
+register_detected_cuda_toolchains()
+</pre></div>
+
+<p>Helper to register the automatically detected CUDA toolchain(s).</p>
+<p>User can setup their own toolchain if needed and ignore the detected ones by not calling this macro.</p>
+<p><a id="rules_cuda_dependencies"></a></p>
+<h2 id="rules_cuda_dependencies">rules_cuda_dependencies</h2>
+<div class="stardoc-pre"><pre>
+rules_cuda_dependencies(<a href="#rules_cuda_dependencies-toolkit_path">toolkit_path</a>)
+</pre></div>
+
+<p>Populate the dependencies for rules_cuda. This will setup workspace dependencies (other bazel rules) and local toolchains.</p>
+<p><strong>PARAMETERS</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a id="rules_cuda_dependencies-toolkit_path"></a>toolkit_path</td>
+<td style="text-align: left;">Optionally specify the path to CUDA toolkit. If not specified, it will be detected automatically.</td>
+<td style="text-align: left;"><code>None</code></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.a264c092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.726fbb30.min.js"></script>
+      
+    
+  </body>
+</html>
