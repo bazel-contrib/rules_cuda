@@ -1,0 +1,27 @@
+load("//cuda:defs.bzl", "cuda_test")
+
+# Explicit opt-in: the negative fixtures intentionally fail under the sanitizer.
+[
+    cuda_test(
+        name = name,
+        srcs = ["smoke.cu"],
+        defines = defines,
+        tags = [
+            "manual",
+            "requires-gpu",
+        ],
+        target_compatible_with = ["@platforms//os:linux"],
+        deps = ["@cuda//:sanitizer_headers"],
+    )
+    for name, defines in [
+        ("clean", []),
+        (
+            "invalid_access",
+            ["INVALID_ACCESS"],
+        ),
+        (
+            "uninitialized",
+            ["UNINITIALIZED"],
+        ),
+    ]
+]

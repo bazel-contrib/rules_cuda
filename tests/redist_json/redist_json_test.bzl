@@ -24,6 +24,12 @@ def _collect_specs_test_impl(ctx):
             names = sorted([s["component_name"] for s in specs])
             asserts.equals(env, ["cccl", "nvcc"] if not components else ["cccl"], names)
 
+    # The Compute Sanitizer CLI and its support libraries ship in cuda_sanitizer_api.
+    redist = {"cuda_sanitizer_api": _entry("CUDA Compute Sanitizer API")}
+    for components in [["sanitizer"], []]:
+        specs = redist_json_helper.collect_specs(ctx, struct(components = components), "linux-x86_64", redist, _URL)
+        asserts.equals(env, ["sanitizer"], [s["component_name"] for s in specs])
+
     return unittest.end(env)
 
 _collect_specs_test = unittest.make(_collect_specs_test_impl)

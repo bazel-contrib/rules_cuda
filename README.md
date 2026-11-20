@@ -143,6 +143,20 @@ On Windows, this means that you will also need to set the environment variable `
 - `cuda_test`: A convenience macro for CUDA-enabled tests.
   It behaves like `cuda_binary` but creates a `cc_test`-style target that can be run with `bazel test`.
 
+### Compute Sanitizer
+
+On Linux, run GPU tests under [NVIDIA Compute Sanitizer](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/):
+
+```sh
+bazel test --run_under=@rules_cuda//tools/compute_sanitizer //path/to:gpu_test
+bazel test --run_under='@rules_cuda//tools/compute_sanitizer --tool initcheck' //path/to:gpu_test
+```
+
+The target uses the configured CUDA toolkit and sets a nonzero exit code for sanitizer
+findings. With `cuda.redist_json`, include `"sanitizer"` if you explicitly list `components`.
+See the [Compute Sanitizer guide](https://bazel-contrib.github.io/rules_cuda/latest/user/compute_sanitizer/)
+for setup, sanitizer modes, execution requirements, and opt-in GPU fixtures.
+
 ### Flags
 
 Some flags are defined in [cuda/BUILD.bazel](cuda/BUILD.bazel). To use them, for example:

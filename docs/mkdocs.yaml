@@ -32,6 +32,7 @@ nav:
   - User:
       - Using the rules: user/user_docs.md
       - Configure the toolchain: user/toolchain_config_docs.md
+      - Compute Sanitizer: user/compute_sanitizer.md
   - Developer:
       - Toolchain Repositories: developer/toolchain_repositories.md
       - Providers: developer/providers_docs.md
