@@ -262,7 +262,7 @@ pushd "$this_dir/toolchain_redist_json"
 
         dynamic_bin=$(bazel cquery "${runtime_auto_args[@]}" --output=files //:use_runtime_auto_dynamic 2>/dev/null)
         dynamic_needed=$(readelf -d "$dynamic_bin" | grep '(NEEDED)')
-        if ! grep -Eq '\[libcudart\.so\.[0-9]+\]' <<< "$dynamic_needed"; then
+        if ! grep -Eq '\[libcudart\.so(\.[0-9]+)+\]' <<< "$dynamic_needed"; then
             echo "//:use_runtime_auto_dynamic must depend on a versioned libcudart.so, got:" >&2
             echo "$dynamic_needed" >&2
             exit 1
