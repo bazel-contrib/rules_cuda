@@ -93,6 +93,37 @@ cc_library(
     # visibility = ["@rules_cuda//cuda:__pkg__"],
 )
 
+cc_import_static_and_versioned_so(
+    name = "cudart_static_and_so",
+    static_library = "%{component_name}/%{libpath}/libcudart_static.a",
+    shared_library = "%{component_name}/%{libpath}/libcudart.so",
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+# Links libcudart_static.a into statically linked targets and the shared
+# libcudart.so.<major> into dynamically linked ones (e.g. tests with the default
+# --dynamic_mode), avoiding hidden-visibility symbols from libcudart_static.a
+# being referenced by other shared objects.
+#
+# Note: do not use this target directly, use the configurable label_flag
+# @rules_cuda//cuda:runtime instead.
+cc_library(
+    name = "cuda_runtime_auto",
+    linkopts = if_linux([
+        "-ldl",
+        "-lpthread",
+        "-lrt",
+    ]),
+    target_compatible_with = ["@platforms//os:linux"],
+    deps = additional_header_deps("cudart") + [
+        ":%{component_name}_headers",
+        ":cudadevrt_a",
+        ":cudart_static_and_so",
+    ],
+    # FIXME:
+    # visibility = ["@rules_cuda//cuda:__pkg__"],
+)
+
 cc_library(
     name = "no_cuda_runtime",
     # FIXME:

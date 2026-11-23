@@ -47,3 +47,13 @@ cc_binary(
         "//conditions:default": [],
     }),
 )
+
+# Built with --@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_auto to exercise
+# linking against the shared libcudart.so.<major>.
+cc_binary(
+    name = "use_runtime_auto_dynamic",
+    srcs = ["@rules_cuda_examples//basic:main.cpp"],
+    linkstatic = False,
+    tags = ["manual"],
+    deps = ["@rules_cuda_examples//basic:kernel"],
+)

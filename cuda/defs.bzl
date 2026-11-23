@@ -6,7 +6,7 @@ load("//cuda/private:defs.bzl", _requires_cuda = "requires_cuda")
 load("//cuda/private:errors.bzl", _unsupported_cuda_platform = "unsupported_cuda_platform", _unsupported_cuda_version = "unsupported_cuda_version")
 load("//cuda/private:macros/cuda_binary.bzl", _cuda_binary = "cuda_binary")
 load("//cuda/private:macros/cuda_test.bzl", _cuda_test = "cuda_test")
-load("//cuda/private:os_helpers.bzl", _cc_import_versioned_sos = "cc_import_versioned_sos", _if_linux = "if_linux", _if_windows = "if_windows")
+load("//cuda/private:os_helpers.bzl", _cc_import_static_and_versioned_so = "cc_import_static_and_versioned_so", _cc_import_versioned_sos = "cc_import_versioned_sos", _if_linux = "if_linux", _if_windows = "if_windows")
 load("//cuda/private:providers.bzl", _CudaArchsInfo = "CudaArchsInfo", _cuda_archs = "cuda_archs")
 load("//cuda/private:rules/cuda_library.bzl", _cuda_library = "cuda_library")
 load("//cuda/private:rules/cuda_objects.bzl", _cuda_objects = "cuda_objects")
@@ -46,6 +46,7 @@ if_linux = _if_linux
 if_windows = _if_windows
 
 cc_import_versioned_sos = _cc_import_versioned_sos
+cc_import_static_and_versioned_so = _cc_import_static_and_versioned_so
 
 requires_cuda = _requires_cuda
 unsupported_cuda_version = _unsupported_cuda_version

@@ -254,6 +254,11 @@ pushd "$this_dir/toolchain_redist_json"
     bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=True "${redist_platform_args[@]}"
     bazel build --enable_workspace //:use_library "${redist_platform_args[@]}"
     bazel build --enable_workspace //:use_rule "${redist_platform_args[@]}"
+    if [[ ${#redist_platform_args[@]} -eq 0 ]]; then
+        # cuda_runtime_auto is Linux-only.
+        bazel build --enable_workspace //:use_runtime_auto_dynamic @rules_cuda_examples//basic:main \
+            --@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_auto
+    fi
     bazel clean && bazel shutdown
 popd
 fi
