@@ -1,0 +1,3 @@
+load(":cc_import_static_and_versioned_so_test.bzl", "static_and_versioned_so_tests")
+
+static_and_versioned_so_tests()

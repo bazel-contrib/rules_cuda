@@ -254,6 +254,28 @@ pushd "$this_dir/toolchain_redist_json"
     bazel build --enable_workspace //:optionally_use_rule --@rules_cuda//cuda:enable=True "${redist_platform_args[@]}"
     bazel build --enable_workspace //:use_library "${redist_platform_args[@]}"
     bazel build --enable_workspace //:use_rule "${redist_platform_args[@]}"
+    if [[ ${#redist_platform_args[@]} -eq 0 ]]; then
+        # cuda_runtime_auto is Linux-only. Check the linkage mode of each binary
+        # from its ELF dynamic section, not just that it builds.
+        runtime_auto_args=(--enable_workspace --@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_auto)
+        bazel build "${runtime_auto_args[@]}" //:use_runtime_auto_dynamic //:use_runtime_auto_static
+
+        dynamic_bin=$(bazel cquery "${runtime_auto_args[@]}" --output=files //:use_runtime_auto_dynamic 2>/dev/null)
+        dynamic_needed=$(readelf -d "$dynamic_bin" | grep '(NEEDED)')
+        if ! grep -Eq '\[libcudart\.so(\.[0-9]+)+\]' <<< "$dynamic_needed"; then
+            echo "//:use_runtime_auto_dynamic must depend on a versioned libcudart.so, got:" >&2
+            echo "$dynamic_needed" >&2
+            exit 1
+        fi
+
+        static_bin=$(bazel cquery "${runtime_auto_args[@]}" --output=files //:use_runtime_auto_static 2>/dev/null)
+        static_needed=$(readelf -d "$static_bin" | grep '(NEEDED)' || true)
+        if grep -q 'libcudart' <<< "$static_needed"; then
+            echo "//:use_runtime_auto_static must not depend on a shared libcudart, got:" >&2
+            echo "$static_needed" >&2
+            exit 1
+        fi
+    fi
     bazel clean && bazel shutdown
 popd
 fi

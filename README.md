@@ -210,6 +210,7 @@ bazel build --cuda_archs=compute_61:compute_61,sm_61
 - `@rules_cuda//cuda:runtime`
 
   Set the default cudart to link; for example, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static` links the static CUDA runtime.
+  On Linux, `--@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_auto` links the static CUDA runtime into statically linked targets and the shared `libcudart.so.<major>` into dynamically linked ones (e.g. tests with the default `--dynamic_mode`).
 
 #### Available features
 
