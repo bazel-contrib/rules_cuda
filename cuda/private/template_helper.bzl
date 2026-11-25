@@ -344,7 +344,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
     if cuda.path:  # local installation
         compiler_files.append("//:compiler_deps")
         cuda_path_for_subst = _to_forward_slash(cuda.path)
-    else:  # scattered components
+    elif repository_ctx.attr.components_mapping:  # scattered components
         cuda_h_line = 'cuda_h = "//:cuda.h",'
         compiler_files.extend([
             "//:nvcc_all_files",
@@ -356,6 +356,9 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
             compiler_files.extend([
                 "//:nvvm_all_files",
             ])
+    else:  # cuda toolkit not found
+        cuda_path_for_subst = "cuda-not-found"
+        compiler_files.append("//:compiler_deps")
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
     device_runtime_static_libs_line = "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","
 
