@@ -340,13 +340,12 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
 
     compiler_files = []
     cuda_path_for_subst = ""
-    path_data = None
+    cuda_h_line = ""
     if cuda.path:  # local installation
         compiler_files.append("//:compiler_deps")
         cuda_path_for_subst = _to_forward_slash(cuda.path)
-    else:  # scattered components
-        cuda_path_for_subst = "$(location //:compiler_root)"
-        path_data = ["//:compiler_root"]
+    elif repository_ctx.attr.components_mapping:  # scattered components
+        cuda_h_line = 'cuda_h = "//:cuda.h",'
         compiler_files.extend([
             "//:nvcc_all_files",
             "//:cccl_all_files",
@@ -357,7 +356,9 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
             compiler_files.extend([
                 "//:nvvm_all_files",
             ])
-    path_data_line = "path_data = " + repr(path_data) + ","
+    else:  # cuda toolkit not found
+        cuda_path_for_subst = "cuda-not-found"
+        compiler_files.append("//:compiler_deps")
     compiler_files_line = "compiler_files = " + repr(compiler_files) + ","
     device_runtime_static_libs_line = "device_runtime_static_libs = " + repr(cuda.device_runtime_static_libs_labels) + ","
 
@@ -368,7 +369,7 @@ def _generate_toolchain_clang_build(repository_ctx, cuda, clang_path_or_label):
         "%{clang_path}": clang_path_for_subst,  # Will be empty if label is used
         "%{clang_label}": clang_label_for_subst,  # Will be empty if path is used
         "%{cuda_path}": cuda_path_for_subst,
-        "# %{path_data_line}": path_data_line,
+        "# %{cuda_h_line}": cuda_h_line,
         "%{cuda_version}": "{}.{}".format(cuda.version_major, cuda.version_minor),
         "%{nvcc_label}": cuda.nvcc_label,
         "%{nvlink_label}": cuda.nvlink_label,

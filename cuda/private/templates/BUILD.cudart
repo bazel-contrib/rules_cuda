@@ -130,6 +130,11 @@ cc_library(
     # visibility = ["@rules_cuda//cuda:__pkg__"],
 )
 
+alias(
+    name = "cuda.h",
+    actual = "%{component_name}/include/cuda.h",
+)
+
 cc_import(
     name = "cuda_so",
     interface_library = "%{component_name}/%{libpath}/stubs/libcuda.so",

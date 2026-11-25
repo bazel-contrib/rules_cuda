@@ -95,7 +95,8 @@ def _cuda_toolchain_impl(ctx):
             fail("compiler_label specified is not an executable, specify a valid compiler_label")
         compiler_depset = depset(direct = [compiler_target_info.files_to_run.executable], transitive = [compiler_target_info.default_runfiles.files])
 
-    toolchain_files = depset(transitive = [compiler_depset] + [cf.files for cf in ctx.attr.compiler_files])
+    toolkit_files = cuda_toolchain_config.cuda_toolkit[DefaultInfo].files
+    toolchain_files = depset(transitive = [compiler_depset, toolkit_files] + [cf.files for cf in ctx.attr.compiler_files])
 
     optional_attributes = {}
     cc_sysroot = _get_cc_sysroot(ctx, cc_toolchain)
