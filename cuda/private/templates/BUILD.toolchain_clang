@@ -6,6 +6,7 @@ load(
     "cuda_toolkit_info",
     cuda_toolchain_config = "cuda_toolchain_config_clang",
 )
+load("//:defs.bzl", "if_cuda_toolkit_version_ge", "if_local_cuda_toolkit")
 
 cuda_toolkit_info(
     name = "cuda-toolkit",
@@ -14,7 +15,6 @@ cuda_toolkit_info(
     fatbinary = "%{fatbinary_label}",
     link_stub = "%{link_stub_label}",
     nvlink = "%{nvlink_label}",
-    # %{cicc_line},
     # %{libdevice_line},
     # %{device_runtime_static_libs_line}
     path = "%{cuda_path}",
@@ -31,7 +31,18 @@ cuda_toolchain_config(
 cuda_toolchain(
     name = "clang-local",
     # %{compiler_attribute_line}
-    # %{compiler_files_line}
+    compiler_files = if_local_cuda_toolkit(
+        ["//:compiler_deps"],
+        [
+            "//:nvcc_all_files",
+            "//:cccl_all_files",
+            "//:cudart_all_files",
+            "//:curand_all_files",
+        ] + if_cuda_toolkit_version_ge(
+            (13, 0),
+            ["//:nvvm_all_files"],
+        ),
+    ),
     toolchain_config = ":clang-local-config",
 )
 

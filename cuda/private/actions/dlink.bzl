@@ -214,6 +214,7 @@ def _wrapper_device_link(
         # this is useless
         cuda_archs_info = common.cuda_archs_info,
         headers = [fatbin_h, register_h],
+        transitive_headers = [common.headers],
         defines = [
             # Silence warning about including internal header.
             "__CUDA_INCLUDE_COMPILER_INTERNAL_HEADERS__",

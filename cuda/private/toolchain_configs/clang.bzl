@@ -58,7 +58,7 @@ def _impl(ctx):
     ]
 
     path_separator = exec_path_separator(ctx)
-    env_paths, env_includes, _, libdevice_dir = collect_paths(ctx, path_separator)
+    env_paths, env_includes, _, _ = collect_paths(ctx, path_separator)
     env_entry_include = [env_entry("INCLUDE", path_separator.join(env_includes))] if env_includes else []
 
     # Clang ships `cuda_wrappers/` headers (e.g. bits/shared_ptr_base.h) that
@@ -127,14 +127,8 @@ def _impl(ctx):
     )
 
     cuda_root = ctx.attr.cuda_toolkit[CudaToolkitInfo].path
-    has_cuda_root = cuda_root and cuda_root != "cuda-not-found"
-    nvvm_root = None
-    if libdevice_dir and not has_cuda_root:
-        # Clang expects --cuda-path to point at a CTK root containing
-        # bin/, include/, and nvvm/libdevice/libdevice.10.bc.
-        nvvm_root = paths.dirname(paths.dirname(libdevice_dir))
-    if not has_cuda_root and ctx.attr.cuda_toolkit[CudaToolkitInfo].nvlink:
-        # For deliverable toolkits, infer CUDA root from nvlink location.
+    if (not cuda_root or cuda_root == "cuda-not-found") and ctx.attr.cuda_toolkit[CudaToolkitInfo].nvlink:
+        # Fallback: infer CUDA root from nvlink location.
         cuda_root = paths.dirname(ctx.attr.cuda_toolkit[CudaToolkitInfo].nvlink.dirname)
 
     if cuda_root:
@@ -152,7 +146,7 @@ def _impl(ctx):
                 actions = [
                     ACTION_NAMES.cuda_compile,
                 ],
-                flag_groups = [flag_group(flags = ["--cuda-path=" + (nvvm_root or cuda_root)])],
+                flag_groups = [flag_group(flags = ["--cuda-path=" + cuda_root])],
             ),
         ],
     )
