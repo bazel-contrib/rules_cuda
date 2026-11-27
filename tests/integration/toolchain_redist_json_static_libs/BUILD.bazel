@@ -1,0 +1,27 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+write_file(
+    name = "nvjpeg_main",
+    out = "nvjpeg_main.cc",
+    content = [
+        "#include <nvjpeg.h>",
+        "int main() {",
+        "  nvjpegHandle_t handle;",
+        "  if (nvjpegCreateSimple(&handle) != NVJPEG_STATUS_SUCCESS) return 1;",
+        "  return nvjpegDestroy(handle);",
+        "}",
+    ],
+)
+
+# A plain cc_binary gets the runtime from the flag but never names culibos, so the
+# static library target must bring it.
+cc_binary(
+    name = "nvjpeg_static",
+    srcs = [":nvjpeg_main"],
+    tags = ["manual"],
+    deps = [
+        "@cuda//:nvjpeg_static",
+        "@rules_cuda//cuda:runtime",
+    ],
+)

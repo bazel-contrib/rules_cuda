@@ -67,6 +67,7 @@ cc_library(
         ":%{component_name}_headers",
     ] + if_linux([
         ":cufftw_static_a",
+        "@cuda//:culibos_a",
     ]),
 )
 
@@ -77,6 +78,7 @@ cc_library(
     ] + if_linux([
         ":cufftw_static_a",
         ":cufft_static_a",
+        "@cuda//:culibos_a",
     ]),
 )
 
@@ -87,5 +89,6 @@ cc_library(
     ] + if_linux([
         ":cufftw_static_a",
         ":cufft_static_nocallback_a",
+        "@cuda//:culibos_a",
     ]),
 )

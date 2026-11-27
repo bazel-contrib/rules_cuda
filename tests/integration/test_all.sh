@@ -10,6 +10,7 @@ skip_components_workspace=false
 skip_components_bzlmod=false
 skip_redist_json=false
 skip_redist_json_multi=false
+skip_redist_json_static_libs=false
 skip_redist_json_collision=false
 skip_redist_json_version_gate=false
 skip_versioned_headers=false
@@ -34,6 +35,8 @@ while [[ $# -gt 0 ]]; do
             skip_redist_json=true; shift ;;
         --no-redist-multi)
             skip_redist_json_multi=true; shift ;;
+        --no-redist-static-libs)
+            skip_redist_json_static_libs=true; shift ;;
         --no-redist-collision)
             skip_redist_json_collision=true; shift ;;
         --no-redist-version-gate)
@@ -336,6 +339,22 @@ pushd "$this_dir/toolchain_redist_json_version_gate"
     ERR=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:kernel_lib \
         --@rules_cuda//cuda:version=12.7.1 "${version_gate_args[@]}" 2>&1 || true)
     if ! [[ $ERR == *"No matching toolchains found"* ]]; then exit 1; fi
+    bazel clean && bazel shutdown
+popd
+fi
+
+# Static CUDA libraries are Linux-only. Link one from a plain cc_binary with either runtime.
+if [ "$skip_redist_json_static_libs" = false ] && [[ ${#redist_platform_args[@]} -eq 0 ]]; then
+cat <<- EOF
+
+============================================================
+=== TEST: STATIC LIBRARIES WITH REDISTRIB.JSON (BZLMOD)
+============================================================
+EOF
+pushd "$this_dir/toolchain_redist_json_static_libs"
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:nvjpeg_static
+    env -u CUDA_REDIST_VERSION_OVERRIDE bazel build --enable_bzlmod //:nvjpeg_static \
+        --@rules_cuda//cuda:runtime=@cuda//:cuda_runtime_static
     bazel clean && bazel shutdown
 popd
 fi

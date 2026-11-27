@@ -37,5 +37,6 @@ cc_library(
         ":%{component_name}_headers",
     ] + if_linux([
         ":nvjpeg_static_a",
+        "@cuda//:culibos_a",
     ]),
 )
