@@ -107,6 +107,15 @@ pushd "$this_dir/toolchain_redist_json_cross_major"
         --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib --nobuild \
         --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}"
+    # CUDA 13 moved cicc and libdevice from nvcc to nvvm; @cuda must follow the selected release.
+    for target in cicc libdevice.10.bc; do
+        files=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery "@cuda//:${target}" --output=files \
+            --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}")
+        if ! [[ $files == *"cuda_nvcc_"* ]]; then exit 1; fi
+        files=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery "@cuda//:${target}" --output=files \
+            --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}")
+        if ! [[ $files == *"cuda_nvvm_"* ]]; then exit 1; fi
+    done
     bazel clean && bazel shutdown
 popd
 fi
