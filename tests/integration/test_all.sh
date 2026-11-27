@@ -14,6 +14,7 @@ skip_redist_json_collision=false
 skip_redist_json_version_gate=false
 skip_versioned_headers=false
 skip_redist_json_cross_major=false
+skip_redist_json_rdc_culibos=false
 skip_windows_arm64=false
 
 while [[ $# -gt 0 ]]; do
@@ -42,6 +43,8 @@ while [[ $# -gt 0 ]]; do
             skip_versioned_headers=true; shift ;;
         --no-redist-cross-major)
             skip_redist_json_cross_major=true; shift ;;
+        --no-redist-rdc-culibos)
+            skip_redist_json_rdc_culibos=true; shift ;;
         --no-windows-arm64)
             skip_windows_arm64=true; shift ;;
         *)
@@ -107,6 +110,35 @@ pushd "$this_dir/toolchain_redist_json_cross_major"
         --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}"
     env -u CUDA_REDIST_VERSION_OVERRIDE bazel build //:kernel_lib --nobuild \
         --@rules_cuda//cuda:compiler=clang --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}"
+    # CUDA 13 moved cicc and libdevice from nvcc to nvvm; @cuda must follow the selected release.
+    for target in cicc libdevice.10.bc; do
+        files=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery "@cuda//:${target}" --output=files \
+            --@rules_cuda//cuda:version=12.8.1 "${cross_major_args[@]}")
+        if ! [[ $files == *"cuda_nvcc_"* ]]; then exit 1; fi
+        files=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel cquery "@cuda//:${target}" --output=files \
+            --@rules_cuda//cuda:version=13.0.1 "${cross_major_args[@]}")
+        if ! [[ $files == *"cuda_nvvm_"* ]]; then exit 1; fi
+    done
+    bazel clean && bazel shutdown
+popd
+fi
+
+# CUDA 13 moved libculibos.a from cudart to culibos. RDC device links must take it from
+# the selected release. The culibos component has no Windows archive.
+if [ "$skip_redist_json_rdc_culibos" = false ] && [[ ${#redist_platform_args[@]} -eq 0 ]]; then
+cat <<- EOF
+
+============================================================
+=== TEST: RDC CULIBOS WITH REDISTRIB.JSON (BZLMOD CROSS-MAJOR)
+============================================================
+EOF
+pushd "$this_dir/toolchain_redist_json_rdc_culibos"
+    for spec in 12.8.1:cuda_cudart_ 13.0.1:cuda_culibos_; do
+        IFS=: read -r version culibos_owner <<< "$spec"
+        dlink_inputs=$(env -u CUDA_REDIST_VERSION_OVERRIDE bazel aquery 'mnemonic("CudaDeviceLink", //:kernel_lib)' \
+            --enable_bzlmod --@rules_cuda//cuda:version="$version" --output=text | grep 'Inputs: ')
+        if ! grep -q "${culibos_owner}[^ ,]*/libculibos\.a" <<< "$dlink_inputs"; then exit 1; fi
+    done
     bazel clean && bazel shutdown
 popd
 fi

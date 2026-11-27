@@ -64,12 +64,39 @@ def _expand_dctk_component(repository_ctx, component):
     }
     return _expand_template(repository_ctx, tpl_label, substitutions = substitutions)
 
+# Targets that CUDA 13 moved to a new owning component. Older releases still
+# provide them from their previous owner.
+_RELOCATED_TARGET_OWNERS = {
+    "culibos_a": "culibos",
+    "cicc": "nvvm",
+    "libdevice": "nvvm",
+    "libdevice.10.bc": "nvvm",
+}
+
 def _component_owns_cuda_repo_alias(component, target, components):
-    if target == "culibos_a" and "culibos" in components:
-        return component == "culibos"
-    if target in ["cicc", "libdevice", "libdevice.10.bc"] and "nvvm" in components:
-        return component == "nvvm"
-    return True
+    owner = _RELOCATED_TARGET_OWNERS.get(target)
+    return owner not in components or component == owner
+
+def _version_dependent_alias(target, toolchain_repositories, default_version):
+    lines = [
+        "alias(",
+        '    name = "{}",'.format(target),
+        "    actual = select({",
+    ]
+    for version in sorted(toolchain_repositories.keys()):
+        lines.append('        ":toolkit_version_is_{}": "{}//:{}",'.format(_version_label(version), toolchain_repositories[version], target))
+    lines.extend([
+        '        "//conditions:default": "{}//:{}",'.format(toolchain_repositories[default_version], target),
+        "    }),",
+        ")",
+    ])
+    return "\n".join(lines)
+
+def _version_settings(versions):
+    return "\n".join([
+        'config_setting(name = "toolkit_version_is_{}", flag_values = {{"@rules_cuda//cuda:version": "{}"}})'.format(_version_label(version), version)
+        for version in sorted(versions)
+    ])
 
 def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_deliverable):
     # stitch template fragment
@@ -105,12 +132,26 @@ def _generate_build_impl(repository_ctx, libpath, components, is_cuda_repo, is_d
             template_content.append(repository_ctx.read(frag))
 
     if is_cuda_repo and is_deliverable:  # generate `@cuda//BUILD` for CTK with deliverables
+        # A facade over several releases cannot know which component owns a
+        # relocated target, so it forwards to the selected release's repository.
+        toolchain_repositories = repository_ctx.attr.toolchain_repositories
+        version_dependent_targets = [
+            target
+            for target, owner in _RELOCATED_TARGET_OWNERS.items()
+            if toolchain_repositories and owner in components
+        ]
+        if version_dependent_targets:
+            template_content.append(_version_settings(toolchain_repositories.keys()))
+            template_content.append("")
         for comp in components:
             for target in REGISTRY[comp]:
                 if not _component_owns_cuda_repo_alias(comp, target, components):
                     continue
-                repo = components[comp]
-                line = 'alias(name = "{target}", actual = "{repo}//:{target}")'.format(target = target, repo = repo)
+                if target in version_dependent_targets:
+                    line = _version_dependent_alias(target, toolchain_repositories, repository_ctx.attr.version)
+                else:
+                    repo = components[comp]
+                    line = 'alias(name = "{target}", actual = "{repo}//:{target}")'.format(target = target, repo = repo)
                 template_content.append(line)
 
             # add an empty line to separate aliased targets from different components
