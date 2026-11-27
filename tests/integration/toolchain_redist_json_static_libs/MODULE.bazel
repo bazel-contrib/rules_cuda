@@ -1,0 +1,26 @@
+module(name = "bzlmod_redist_json_static_libs")
+
+bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_cc", version = "0.2.14")
+bazel_dep(name = "rules_cuda", version = "0.0.0")
+local_path_override(
+    module_name = "rules_cuda",
+    path = "../../..",
+)
+
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+
+# Static CUDA libraries are Linux-only. This release's libnvjpeg_static.a references culibos.
+cuda.redist_json(
+    name = "cuda_12_6_3",
+    components = [
+        "cccl",
+        "cudart",
+        "nvcc",
+        "nvjpeg",
+    ],
+    platforms = ["linux-x86_64"],
+    version = "12.6.3",
+)
+cuda.toolkit(name = "cuda")
+use_repo(cuda, "cuda")
