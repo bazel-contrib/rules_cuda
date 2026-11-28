@@ -31,11 +31,12 @@ def _cuda_objects_impl(ctx):
     archive_rdc_pic_objects = depset(transitive = [dep[CudaInfo].rdc_pic_objects for dep in attr.deps if CudaInfo in dep] +
                                                   [dep[CudaInfo].archive_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
 
-    # direct outputs
+    # direct outputs, only the rdc compiles keep their files for coverage, see the note on `DefaultInfo` below
+    keep_dirs = []
     objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False))
     pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False))
-    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True))
-    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True))
+    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True, keep_dirs = keep_dirs))
+    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True, keep_dirs = keep_dirs))
 
     compilation_ctx = cc_common.create_compilation_context(
         headers = common.headers,
@@ -86,6 +87,12 @@ def _cuda_objects_impl(ctx):
             archive_rdc_objects = archive_rdc_objects,
             archive_rdc_pic_objects = archive_rdc_pic_objects,
         ),
+        coverage_common.instrumented_files_info(
+            ctx,
+            source_attributes = ["srcs", "hdrs"],
+            dependency_attributes = ["deps"],
+            metadata_files = keep_dirs,
+        ),
     ]
 
 cuda_objects = rule(
@@ -115,5 +122,5 @@ code and device link time optimization source files.""",
     },
     fragments = ["cpp"],
     toolchains = use_cpp_toolchain() + use_cuda_toolchain(),
-    provides = [DefaultInfo, OutputGroupInfo, CcInfo, CudaInfo],
+    provides = [DefaultInfo, OutputGroupInfo, CcInfo, CudaInfo, InstrumentedFilesInfo],
 )

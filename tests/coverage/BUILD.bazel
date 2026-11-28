@@ -1,0 +1,38 @@
+load("@rules_cuda//cuda:defs.bzl", "cuda_library", "cuda_objects")
+load(":coverage_test.bzl", "coverage_disabled_test", "coverage_library_test", "coverage_objects_test")
+
+cuda_library(
+    name = "lib",
+    srcs = ["kernel.cu"],
+    hdrs = ["kernel.cuh"],
+)
+
+cuda_objects(
+    name = "objs",
+    srcs = ["kernel.cu"],
+    hdrs = ["kernel.cuh"],
+)
+
+coverage_library_test(
+    name = "coverage_library_test",
+    target_under_test = ":lib",
+)
+
+coverage_objects_test(
+    name = "coverage_objects_test",
+    target_under_test = ":objs",
+)
+
+coverage_disabled_test(
+    name = "coverage_disabled_test",
+    target_under_test = ":lib",
+)
+
+test_suite(
+    name = "coverage_tests",
+    tests = [
+        ":coverage_disabled_test",
+        ":coverage_library_test",
+        ":coverage_objects_test",
+    ],
+)
