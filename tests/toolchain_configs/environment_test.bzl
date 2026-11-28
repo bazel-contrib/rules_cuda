@@ -125,3 +125,23 @@ clang_cuda_path_test = unittest.make(
         "config": attr.label(mandatory = True, providers = [CudaToolchainConfigInfo]),
     },
 )
+
+def _objdir_as_tempdir_test_impl(ctx):
+    env = unittest.begin(ctx)
+    config = ctx.attr.config[CudaToolchainConfigInfo]
+    features = config_helper.configure_features(selectables = config.features, requested_features = ["nvcc_objdir_as_tempdir"])
+    flags = []
+    for feature in config.features:
+        if feature.name == "nvcc_objdir_as_tempdir":
+            flags.extend(eval_feature(feature, struct(), ACTION_NAMES.cuda_compile, features))
+            asserts.equals(env, [], eval_feature(feature, struct(), ACTION_NAMES.device_link, features))
+    asserts.equals(env, ctx.attr.expected, flags)
+    return unittest.end(env)
+
+objdir_as_tempdir_test = unittest.make(
+    _objdir_as_tempdir_test_impl,
+    attrs = {
+        "config": attr.label(mandatory = True, providers = [CudaToolchainConfigInfo]),
+        "expected": attr.string_list(),
+    },
+)
