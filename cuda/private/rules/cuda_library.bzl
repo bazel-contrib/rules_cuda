@@ -64,10 +64,11 @@ def _cuda_library_impl(ctx):
     dlink_rdc_pic_objects = depset(transitive = [dep[CudaInfo].dlink_rdc_pic_objects for dep in attr.deps if CudaInfo in dep])
 
     # direct outputs
-    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False)) if not use_rdc else depset([])
-    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False)) if not use_rdc else depset([])
-    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True)) if use_rdc else depset([])
-    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True)) if use_rdc else depset([])
+    keep_dirs = []
+    objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = False, keep_dirs = keep_dirs)) if not use_rdc else depset([])
+    pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = False, keep_dirs = keep_dirs)) if not use_rdc else depset([])
+    rdc_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = False, rdc = True, keep_dirs = keep_dirs)) if use_rdc else depset([])
+    rdc_pic_objects = depset(compile(ctx, cuda_toolchain, cc_toolchain, src_files, common, pic = True, rdc = True, keep_dirs = keep_dirs)) if use_rdc else depset([])
 
     # if rdc is enabled for this `cuda_library`, then we need to do a pass of device link further.
     rdc_dlink_inputs = None
@@ -174,6 +175,12 @@ def _cuda_library_impl(ctx):
             dlink_rdc_objects = rdc_dlink_inputs,
             dlink_rdc_pic_objects = rdc_pic_dlink_inputs,
         ),
+        coverage_common.instrumented_files_info(
+            ctx,
+            source_attributes = ["srcs", "hdrs"],
+            dependency_attributes = ["deps"],
+            metadata_files = keep_dirs,
+        ),
     ]
 
 cuda_library = rule(
@@ -210,5 +217,5 @@ cuda_library = rule(
     },
     fragments = ["cpp"],
     toolchains = use_cpp_toolchain() + use_cuda_toolchain(),
-    provides = [DefaultInfo, OutputGroupInfo, CcInfo, CudaInfo],
+    provides = [DefaultInfo, OutputGroupInfo, CcInfo, CudaInfo, InstrumentedFilesInfo],
 )

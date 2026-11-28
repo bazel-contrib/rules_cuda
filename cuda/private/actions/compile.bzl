@@ -12,6 +12,7 @@ def compile(
         common,
         pic = False,
         rdc = False,
+        keep_dirs = None,
         _prefix = "_objs"):
     """Perform CUDA compilation, return compiled object files.
 
@@ -29,6 +30,8 @@ def compile(
         common: A cuda common object. Can be obtained with `cuda_helper.create_common(ctx)`
         pic: Whether the `srcs` are compiled for position independent code.
         rdc: Whether the `srcs` are compiled for relocatable device code.
+        keep_dirs: A list. When coverage instruments this target and the compiler is nvcc, each compile keeps nvcc's
+            intermediate files in a declared directory and appends that directory to this list.
         _prefix: DON'T USE IT! Prefix of the output dir. Exposed for device link to redirect the output.
 
     Returns:
@@ -44,7 +47,15 @@ def compile(
     host_compiler = cc_common.get_tool_for_action(feature_configuration = cc_feature_configuration, action_name = CC_ACTION_NAMES.cpp_compile)
     cuda_compiler = cuda_toolchain.compiler_executable
 
-    cuda_feature_config = cuda_helper.configure_features(ctx, cuda_toolchain, requested_features = [ACTION_NAMES.cuda_compile])
+    keep = keep_dirs != None and cuda_toolchain.toolchain_identifier == "nvcc" and ctx.coverage_instrumented()
+
+    # --objdir-as-tempdir would write the kept files next to the object instead of into --keep-dir.
+    cuda_feature_config = cuda_helper.configure_features(
+        ctx,
+        cuda_toolchain,
+        requested_features = [ACTION_NAMES.cuda_compile],
+        unsupported_features = ["nvcc_objdir_as_tempdir"] if keep else None,
+    )
     artifact_category_name = cuda_helper.get_artifact_category_from_action(ACTION_NAMES.cuda_compile, pic, rdc)
 
     basename_counter = {}
@@ -101,11 +112,18 @@ def compile(
 
         args = actions.args()
         args.add_all(cmd)
+        outputs = [obj_file]
+        if keep:
+            keep_dir = actions.declare_directory("{}/{}/{}.keep".format(_prefix, ctx.attr.name, filename))
+            args.add("--keep")
+            args.add("--keep-dir", keep_dir.path)
+            outputs.append(keep_dir)
+            keep_dirs.append(keep_dir)
 
         actions.run(
             executable = cuda_compiler,
             arguments = [args],
-            outputs = [obj_file],
+            outputs = outputs,
             inputs = depset([src], transitive = [common.headers, cc_toolchain.all_files, cuda_toolchain.all_files]),
             env = env,
             mnemonic = "CudaCompile",
