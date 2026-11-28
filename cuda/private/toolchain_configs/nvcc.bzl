@@ -596,6 +596,18 @@ def _impl(ctx):
         ] if nvcc_version_ge(ctx, 12, 9) else [],
     )
 
+    # NOTE: this only works on compiler newer than 12.9
+    nvcc_objdir_as_tempdir_feature = feature(
+        name = "nvcc_objdir_as_tempdir",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cuda_compile],
+                flag_groups = [flag_group(flags = ["--objdir-as-tempdir"])],
+            ),
+        ] if nvcc_version_ge(ctx, 12, 9) else [],
+    )
+
     cuda_device_debug_feature = feature(
         name = "cuda_device_debug",
         flag_sets = [
@@ -641,6 +653,7 @@ def _impl(ctx):
         nvcc_relaxed_constexpr_feature,
         nvcc_extended_lambda_feature,
         nvcc_fixed_random_seed_feature,
+        nvcc_objdir_as_tempdir_feature,
         cuda_device_debug_feature,
     ]
 
